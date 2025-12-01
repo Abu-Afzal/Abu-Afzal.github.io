@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Absen Digital MAN BANTAENG</title>
+
+<!-- Tailwind sesuai file asli -->
+<script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+
+<style>
+/* ...[SEMUA CSS ASLI DIPERTAHANKAN, TIDAK DIKURANGI]... */
+body{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100%;overflow-x:hidden;}
+*{box-sizing:border-box;}
+.login-container{display:flex;justify-content:center;align-items:center;min-height:100%;padding:20px;}
+.login-box{background:white;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);width:100%;max-width:400px;text-align:center;}
+.login-logo{width:100px;height:100px;margin:0 auto 20px;border-radius:50%;object-fit:cover;border:4px solid #667eea;}
+.login-title{font-size:24px;font-weight:bold;color:#333;margin-bottom:10px;}
+.login-subtitle{font-size:14px;color:#666;margin-bottom:30px;}
+.form-group{margin-bottom:20px;text-align:left;}
+.form-label{display:block;font-size:14px;font-weight:600;color:#333;margin-bottom:8px;}
+.form-input{width:100%;padding:12px 15px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;transition:all 0.3s;}
+.form-input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.1);}
+.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;transition:transform 0.2s;}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(102,126,234,0.3);}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.error-message{color:#e74c3c;font-size:13px;margin-top:10px;display:none;}
+.main-container{display:none;padding:20px;max-width:1400px;margin:0 auto;background:white;min-height:100%;width:100%;}
+.header{background:white;padding:20px;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:20px;display:flex;align-items:center;gap:20px;}
+.header-logo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #667eea;}
+.header-info{flex:1;}
+.header-title{font-size:28px;font-weight:bold;color:#333;margin-bottom:5px;}
+.header-subtitle{font-size:14px;color:#666;}
+.header-user{text-align:right;}
+.user-name{font-size:16px;font-weight:bold;color:#333;margin-bottom:5px;}
+.logout-btn{padding:8px 20px;background:#e74c3c;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;transition:all 0.3s;}
+.logout-btn:hover{background:#c0392b;}
+.menu-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-bottom:20px;}
+.menu-card{background:white;padding:0;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.3s;text-align:center;aspect-ratio:1;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+.menu-card:hover{transform:translateY(-3px);box-shadow:0 6px 15px rgba(0,0,0,0.15);}
+.menu-icon{font-size:28px;margin-bottom:6px;line-height:1;}
+.menu-title{font-size:10px;font-weight:600;color:#333;line-height:1.2;}
+.content-area{background:transparent;padding:0;border-radius:0;box-shadow:none;display:none;}
+.content-area.active{display:block;}
+.section-title{font-size:24px;font-weight:bold;color:#333;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #667eea;}
+.date-display{font-size:18px;color:#666;margin-bottom:15px;padding:12px;background:#f8f9fa;border-radius:8px;text-align:center;}
+.action-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;}
+.btn-primary{background:#667eea;color:white;}
+.btn-primary:hover{background:#5568d3;}
+.btn-success{background:#27ae60;color:white;}
+.btn-success:hover{background:#229954;}
+.btn-danger{background:#e74c3c;color:white;}
+.btn-danger:hover{background:#c0392b;}
+.btn-secondary{background:#95a5a6;color:white;}
+.btn-secondary:hover{background:#7f8c8d;}
+.tabs{display:flex;gap:5px;margin-bottom:20px;border-bottom:2px solid #e0e0e0;overflow-x:auto;}
+.tab{padding:12px 20px;background:transparent;border:none;border-bottom:3px solid transparent;font-size:14px;font-weight:600;color:#666;cursor:pointer;transition:all 0.3s;white-space:nowrap;}
+.tab.active{color:#667eea;border-bottom-color:#667eea;}
+.tab:hover{color:#667eea;}
+.student-list{display:flex;flex-direction:column;gap:15px;margin-bottom:20px;}
+.student-card{display:flex;align-items:center;gap:15px;padding:15px;background:#f8f9fa;border-radius:10px;border:2px solid #e0e0e0;transition:all 0.3s;}
+.student-card:hover{border-color:#667eea;box-shadow:0 4px 10px rgba(102,126,234,0.1);}
+.student-photo{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid #667eea;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-size:24px;color:#666;}
+.student-info{flex:1;}
+.student-name{font-size:16px;font-weight:600;color:#333;margin-bottom:5px;}
+.status-buttons{display:flex;gap:5px;flex-wrap:wrap;}
+.status-btn{padding:6px 12px;border:2px solid #e0e0e0;background:white;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.3s;}
+.status-btn.active{color:white;}
+.status-btn.hadir.active{background:#27ae60;border-color:#27ae60;}
+.status-btn.izin.active{background:#3498db;border-color:#3498db;}
+.status-btn.sakit.active{background:#f39c12;border-color:#f39c12;}
+.status-btn.alpa.active{background:#e74c3c;border-color:#e74c3c;}
+.status-btn.bolos.active{background:#8e44ad;border-color:#8e44ad;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center;padding:20px;}
+.modal.active{display:flex;}
+.modal-content{background:white;padding:30px;border-radius:15px;max-width:500px;width:100%;max-height:90%;overflow-y:auto;}
+.modal-title{font-size:20px;font-weight:bold;color:#333;margin-bottom:20px;}
+.form-row{margin-bottom:15px;}
+.table-container{overflow-x:auto;margin-top:20px;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #e0e0e0;}
+th{background:#f8f9fa;font-weight:600;color:#333;}
+tr:hover{background:#f8f9fa;}
+.empty-state{text-align:center;padding:40px;color:#999;}
+.empty-icon{font-size:60px;margin-bottom:15px;}
+.loading{display:inline-block;width:20px;height:20px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.file-input-wrapper{position:relative;display:inline-block;width:100%;}
+.file-input{width:100%;padding:10px;border:2px dashed #667eea;border-radius:8px;cursor:pointer;text-align:center;background:#f8f9fa;transition:all 0.3s;}
+.file-input:hover{background:#e9ecef;}
+.document-item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:10px;}
+.document-name{font-weight:600;color:#333;}
+@media(max-width:768px){
+  .header{flex-direction:column;text-align:center;}
+  .header-user{text-align:center;}
+  .menu-grid{grid-template-columns:repeat(3, 1fr);gap:8px;}
+  .student-card{flex-direction:column;text-align:center;}
+  .status-buttons{justify-content:center;}
+}
+</style>
+<style>@view-transition{navigation:auto;}</style>
+</head>
+
+<body>
+<!-- Login Screen -->
+<div id="loginScreen" class="login-container">
+  <div class="login-box">
+    <img src="https://iili.io/KSGDE9s.jpg" alt="Logo MAN BANTAENG" class="login-logo" onerror="this.style.display='none'">
+    <div class="login-title">Absen Digital</div>
+    <div class="login-subtitle">MAN BANTAENG</div>
+
+    <!-- Login Form -->
+    <form id="loginForm" style="display:block;">
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" id="username" class="form-input" placeholder="Masukkan username" required>
+      </div>
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" class="form-input" placeholder="Masukkan password" required>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn"><span id="loginBtnText">Masuk</span></button>
+      <div class="error-message" id="errorMessage">Username atau password salah!</div>
+      <div style="text-align:center;margin-top:20px;">
+        <button type="button" onclick="showRegisterForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">
+          Belum punya akun? Daftar di sini
+        </button>
+      </div>
+    </form>
+
+    <!-- Register Form -->
+    <form id="registerForm" style="display:none;">
+      <div class="form-group">
+        <label for="regUsername" class="form-label">Username</label>
+        <input type="text" id="regUsername" class="form-input" placeholder="Buat username baru" required>
+      </div>
+      <div class="form-group">
+        <label for="regPassword" class="form-label">Password</label>
+        <input type="password" id="regPassword" class="form-input" placeholder="Buat password" required>
+      </div>
+      <div class="form-group">
+        <label for="regPasswordConfirm" class="form-label">Konfirmasi Password</label>
+        <input type="password" id="regPasswordConfirm" class="form-input" placeholder="Ketik ulang password" required>
+      </div>
+      <button type="submit" class="login-btn" id="registerBtn"><span id="registerBtnText">Daftar</span></button>
+      <div class="error-message" id="registerErrorMessage"></div>
+      <div style="color:#27ae60;font-size:13px;margin-top:10px;display:none;" id="registerSuccessMessage">Pendaftaran berhasil! Silakan login.</div>
+      <div style="text-align:center;margin-top:20px;">
+        <button type="button" onclick="showLoginForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">
+          Sudah punya akun? Login di sini
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Main Application -->
+<div id="mainApp" class="main-container">
+  <!-- Header -->
+  <div class="header">
+    <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+    <div class="header-info">
+      <div class="header-title" id="schoolName">MAN BANTAENG</div>
+      <div class="header-subtitle" id="schoolAddress">Sistem Absensi Digital - Multi Guru</div>
+    </div>
+    <div class="header-user">
+      <div class="user-name" id="currentUser">Guru</div>
+      <button class="logout-btn" onclick="logout()">Keluar</button>
+    </div>
+  </div>
+
+  <!-- Menu Grid -->
+  <div class="menu-grid">
+    <!-- Presensi -->
+    <div class="menu-card" onclick="showContent('presensi')">
+      <div class="menu-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="6" width="32" height="36" rx="3" fill="#4CAF50"/><line x1="14" y1="16" x2="34" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="24" x2="34" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="32" x2="34" y2="32" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="16" r="2" fill="white"/><circle cx="14" cy="24" r="2" fill="white"/><circle cx="14" cy="32" r="2" fill="white"/></svg>
+      </div>
+      <div class="menu-title">Presensi</div>
+    </div>
+
+    <!-- Kelola Kelas -->
+    <div class="menu-card" onclick="showContent('kelola-kelas')">
+      <div class="menu-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 8L8 16V18H40V16L24 8Z" fill="#FF9800"/><rect x="10" y="18" width="28" height="20" fill="#FF9800"/><rect x="14" y="22" width="6" height="6" fill="white"/><rect x="22" y="22" width="6" height="6" fill="white"/><rect x="30" y="22" width="6" height="6" fill="white"/><rect x="14" y="30" width="6" height="6" fill="white"/><rect x="22" y="30" width="6" height="6" fill="white"/><rect x="30" y="30" width="6" height="6" fill="white"/><rect x="18" y="32" width="12" height="6" fill="#FFA726"/></svg>
+      </div>
+      <div class="menu-title">Kelola Kelas</div>
+    </div>
+
+    <!-- Rekap -->
+    <div class="menu-card" onclick="showContent('rekap')">
+      <div class="menu-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="28" width="6" height="12" rx="2" fill="#2196F3"/><rect x="21" y="20" width="6" height="20" rx="2" fill="#2196F3"/><rect x="32" y="12" width="6" height="28" rx="2" fill="#2196F3"/><path d="M12 16L24 8L36 12" stroke="#FF5722" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="menu-title">Rekap</div>
+    </div>
+
+    <!-- Penilaian -->
+    <div class="menu-card" onclick="showContent('penilaian')">
+      <div class="menu-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="28" height="34" rx="3" fill="#9C27B0"/><line x1="16" y1="16" x2="32" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="22" x2="32" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="28" x2="26" y2="28" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M32 32L35 35L40 28" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="menu-title">Penilaian</div>
+    </div>
+
+    <!-- Bank Soal -->
+    <div class="menu-card" onclick="showContent('bank-soal')">
+      <div class="menu-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="10" width="24" height="28" rx="2" fill="#FF5722"/><rect x="16" y="6" width="16" height="4" rx="1" fill="#FF7043"/><line x1="18" y1="18" x2="30" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="24" x2="30" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="30" x2="26" y2="30" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+      <div class="menu-title">Bank Soal</div>
+    </div>
+
+    <!-- Hapus Data -->
+    <div class="menu-card" onclick="showDeleteDataModal()">
+      <div class="menu-icon">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 16V38C14 39.1046 14.8954 40 16 40H32C33.1046 40 34 39.1046 34 38V16" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><path d="M10 12H38" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><path d="M18 12V10C18 8.89543 18.8954 8 20 8H28C29.1046 8 30 8.89543 30 10V12" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="22" x2="20" y2="34" stroke="#F44336" stroke-width="2.5" stroke-linecap="round"/><line x1="28" y1="22" x2="28" y2="34" stroke="#F44336" stroke-width="2.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="menu-title">Hapus Data Saya</div>
+    </div>
+  </div>
+
+  <!-- Presensi -->
+  <div id="presensi" class="content-area">
+    <div class="section-title">Presensi Siswa</div>
+    <div class="date-display" id="currentDate"></div>
+    <div class="action-bar">
+      <button class="btn btn-success" onclick="markAllPresent()">Hadir Semua</button>
+      <button class="btn btn-primary" onclick="submitAttendance()">Kirim Absen</button>
+    </div>
+    <div class="tabs" id="classTabs"></div>
+    <div id="studentListContainer" class="student-list"></div>
+  </div>
+
+  <!-- Kelola Kelas -->
+  <div id="kelola-kelas" class="content-area">
+    <div class="section-title">Kelola Kelas</div>
+    <div class="action-bar"><button class="btn btn-primary" onclick="showAddClassModal()">Tambah Kelas</button></div>
+    <div class="table-container">
+      <table id="classTable">
+        <thead><tr><th>Nama Kelas</th><th>Jumlah Siswa</th><th>Aksi</th></tr></thead>
+        <tbody id="classTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Rekap -->
+  <div id="rekap" class="content-area">
+    <div class="section-title">Rekap Kehadiran</div>
+    <div class="tabs">
+      <button class="tab active" onclick="showRekapTab('harian')">Harian</button>
+      <button class="tab" onclick="showRekapTab('bulanan')">Bulanan</button>
+      <button class="tab" onclick="showRekapTab('semester')">Semester</button>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="printRekap()">Cetak Rekap</button>
+      <button class="btn btn-success" onclick="exportRekapToExcel()">📥 Ekspor ke Excel</button>
+    </div>
+    <div id="rekapFilters" style="margin-bottom:20px;"></div>
+    <div id="rekapContent"></div>
+  </div>
+
+  <!-- Penilaian -->
+  <div id="penilaian" class="content-area">
+    <div class="section-title">Penilaian</div>
+    <div class="tabs">
+      <button class="tab active" onclick="showPenilaianTab('pengetahuan')">Penilaian Pengetahuan</button>
+      <button class="tab" onclick="showPenilaianTab('sikap')">Penilaian Sikap</button>
+    </div>
+    <div class="action-bar"><button class="btn btn-success" onclick="exportToExcel()">📥 Ekspor ke Excel</button></div>
+    <div id="penilaianContent"></div>
+  </div>
+
+  <!-- Bank Soal -->
+  <div id="bank-soal" class="content-area">
+    <div class="section-title">Bank Soal</div>
+    <div class="action-bar"><button class="btn btn-primary" onclick="showUploadModal()">Upload Dokumen</button></div>
+    <div id="documentList"></div>
+  </div>
+</div>
+
+<!-- Modals (Tambah/Edit/Hapus) -->
+<div id="addClassModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">Tambah Kelas</div>
+    <form id="addClassForm">
+      <div class="form-row"><label class="form-label">Nama Kelas</label><input type="text" id="className" class="form-input" placeholder="Contoh: X IPA 1" required></div>
+      <div class="action-bar"><button type="submit" class="btn btn-primary">Simpan</button><button type="button" class="btn btn-secondary" onclick="closeModal('addClassModal')">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="addStudentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">Tambah Siswa</div>
+    <form id="addStudentForm">
+      <div class="form-row"><label class="form-label">Nama Siswa</label><input type="text" id="studentName" class="form-input" placeholder="Nama lengkap siswa" required></div>
+      <div class="form-row"><label class="form-label">Foto Siswa (URL)</label><input type="text" id="studentPhoto" class="form-input" placeholder="https://... (opsional)"></div>
+      <div class="action-bar"><button type="submit" class="btn btn-primary">Simpan</button><button type="button" class="btn btn-secondary" onclick="closeModal('addStudentModal')">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="uploadModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">Upload Dokumen</div>
+    <form id="uploadForm">
+      <div class="form-row"><label class="form-label">Nama Dokumen</label><input type="text" id="documentName" class="form-input" placeholder="Nama dokumen" required></div>
+      <div class="form-row"><label class="form-label">File</label><input type="file" id="documentFile" class="form-input" required></div>
+      <div class="action-bar"><button type="submit" class="btn btn-primary">Upload</button><button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="deleteDataModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title" style="color:#e74c3c;">⚠️ Hapus Semua Data Saya</div>
+    <div style="background:#fff3cd;border:2px solid #ffc107;padding:15px;border-radius:8px;margin-bottom:20px;">
+      <p style="margin:0;color:#856404;font-weight:600;">Peringatan!</p>
+      <p style="margin:5px 0 0 0;color:#856404;font-size:14px;">Semua data KELAS, SISWA, ABSENSI, dan NILAI yang Anda buat akan dihapus permanen. Data guru lain tidak akan terhapus.</p>
+    </div>
+    <form id="deleteDataForm">
+      <div class="form-row"><label class="form-label">Masukkan Password untuk Verifikasi</label><input type="password" id="deletePassword" class="form-input" placeholder="Masukkan password Anda" required></div>
+      <div id="deletePasswordError" class="error-message">Password salah!</div>
+      <div class="action-bar"><button type="submit" class="btn btn-danger">Hapus Semua Data Saya</button><button type="button" class="btn btn-secondary" onclick="closeModal('deleteDataModal')">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="editClassModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">Edit Kelas</div>
+    <form id="editClassForm">
+      <div class="form-row"><label class="form-label">Nama Kelas</label><input type="text" id="editClassName" class="form-input" placeholder="Contoh: X IPA 1" required></div>
+      <div class="action-bar"><button type="submit" class="btn btn-primary">Simpan</button><button type="button" class="btn btn-secondary" onclick="closeModal('editClassModal')">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="editStudentModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">Edit Siswa</div>
+    <form id="editStudentForm">
+      <div class="form-row"><label class="form-label">Nama Siswa</label><input type="text" id="editStudentName" class="form-input" placeholder="Nama lengkap siswa" required></div>
+      <div class="form-row"><label class="form-label">Foto Siswa</label><input type="file" id="editStudentPhoto" class="form-input" accept="image/*"><div style="font-size:12px;color:#666;margin-top:5px;">Kosongkan jika tidak ingin mengubah foto</div></div>
+      <div class="action-bar"><button type="submit" class="btn btn-primary">Simpan</button><button type="button" class="btn btn-secondary" onclick="closeModal('editStudentModal')">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- Firebase + App Logic -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, onValue, push, set, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDMPPZWZYuI7O5ufcoU9q-l8B0kM7mDcpM",
+  authDomain: "absen-man-bantaeng.firebaseapp.com",
+  databaseURL: "https://absen-man-bantaeng-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "absen-man-bantaeng",
+  storageBucket: "absen-man-bantaeng.firebasestorage.app",
+  messagingSenderId: "920786708487",
+  appId: "1:920786708487:web:67a330ad3ead0731b622a2",
+  measurementId: "G-XDWW1GB2C9"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const ROOT = ref(db, 'appData');
+
+/* ===== STATE ===== */
+let currentUser = '';
+let currentClass = '';
+let allData = [];
+let attendanceData = {};
+let currentRekapTab = 'harian';
+let currentPenilaianTab = 'pengetahuan';
+let currentRekapClass = '';
+let selectedMonth = null;
+let selectedYear = null;
+let selectedSemester = null;
+let knowledgeColumns = [];
+let currentKnowledgeClass = '';
+let currentEditingClass = null;
+
+/* ===== HELPERS ===== */
+function arrayFromSnapshot(val) {
+  if (!val) return [];
+  return Object.keys(val).map(k => ({ __key: k, ...val[k] }));
+}
+function findByType(predicate){ return allData.filter(predicate); }
+function findOne(predicate){ return allData.find(predicate); }
+
+async function fbCreate(item){ const r = push(ROOT); await set(r, item); return { isOk:true, key:r.key }; }
+async function fbUpdateByKey(key, updated){ await update(ref(db, `appData/${key}`), updated); return { isOk:true }; }
+async function fbDeleteByKey(key){ await remove(ref(db, `appData/${key}`)); return { isOk:true }; }
+
+function updateCurrentDate(){
+  const now = new Date();
+  const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  const dateStr = now.toLocaleDateString('id-ID', options);
+  const el = document.getElementById('currentDate'); if (el) el.textContent = dateStr;
+}
+
+function showToast(message, type='success'){
+  const bgColor = type === 'success' ? '#27ae60' : '#e74c3c';
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;top:20px;right:20px;background:${bgColor};color:white;padding:15px 25px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);z-index:9999;`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),3000);
+}
+
+/* ===== INIT ===== */
+function initApp(){
+  // Realtime listener: aktif duluan
+  onValue(ROOT, (snap)=>{
+    allData = arrayFromSnapshot(snap.val());
+    renderAllContent();
+  });
+
+  // Set header text (kompatibel dengan defaultConfig)
+  const schoolNameEl = document.getElementById('schoolName');
+  const schoolAddressEl = document.getElementById('schoolAddress');
+  if (schoolNameEl) schoolNameEl.textContent = 'MAN BANTAENG';
+  if (schoolAddressEl) schoolAddressEl.textContent = 'Sistem Absensi Digital - Multi Guru';
+
+  updateCurrentDate();
+  setInterval(updateCurrentDate, 60000);
+}
+window.addEventListener('load', initApp);
+
+/* ===== AUTH ===== */
+window.showRegisterForm = function(){
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('registerForm').style.display='block';
+  document.getElementById('registerErrorMessage').style.display='none';
+  document.getElementById('registerSuccessMessage').style.display='none';
+  document.getElementById('regUsername').value='';
+  document.getElementById('regPassword').value='';
+  document.getElementById('regPasswordConfirm').value='';
+}
+window.showLoginForm = function(){
+  document.getElementById('loginForm').style.display='block';
+  document.getElementById('registerForm').style.display='none';
+  document.getElementById('errorMessage').style.display='none';
+  document.getElementById('username').value='';
+  document.getElementById('password').value='';
+}
+
+document.getElementById('registerForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const passwordConfirm = document.getElementById('regPasswordConfirm').value;
+  const errorMsg = document.getElementById('registerErrorMessage');
+  const successMsg = document.getElementById('registerSuccessMessage');
+  const registerBtn = document.getElementById('registerBtn');
+
+  errorMsg.style.display='none'; successMsg.style.display='none';
+  if (username.length<3){ errorMsg.textContent='Username minimal 3 karakter'; errorMsg.style.display='block'; return; }
+  if (password.length<6){ errorMsg.textContent='Password minimal 6 karakter'; errorMsg.style.display='block'; return; }
+  if (password!==passwordConfirm){ errorMsg.textContent='Password tidak sama'; errorMsg.style.display='block'; return; }
+
+  // Cek duplikasi pada snapshot saat ini
+  const existingUser = findOne(d => d.type==='user' && d.username===username);
+  if (existingUser){ errorMsg.textContent='Username sudah digunakan'; errorMsg.style.display='block'; return; }
+
+  if (allData.length>=999){ errorMsg.textContent='Maksimum 999 data tercapai'; errorMsg.style.display='block'; return; }
+
+  registerBtn.disabled=true; registerBtn.innerHTML='<span class="loading"></span> Mendaftar...';
+  try{
+    await fbCreate({ type:'user', username, password, created_at:new Date().toISOString() });
+    registerBtn.disabled=false; registerBtn.innerHTML='Daftar';
+    successMsg.style.display='block';
+    document.getElementById('regUsername').value=''; document.getElementById('regPassword').value=''; document.getElementById('regPasswordConfirm').value='';
+    setTimeout(()=>showLoginForm(), 1500);
+  }catch(err){
+    registerBtn.disabled=false; registerBtn.innerHTML='Daftar';
+    errorMsg.textContent='Gagal mendaftar, coba lagi'; errorMsg.style.display='block';
+  }
+});
+
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errorMsg = document.getElementById('errorMessage');
+  const loginBtn = document.getElementById('loginBtn');
+
+  errorMsg.style.display='none'; loginBtn.disabled=true; loginBtn.innerHTML='<span class="loading"></span> Masuk...';
+
+  // Gunakan allData yang realtime
+  const user = findOne(d => d.type==='user' && d.username===username && d.password===password);
+
+  loginBtn.disabled=false; loginBtn.innerHTML='Masuk';
+  if (user){
+    currentUser = username;
+    document.getElementById('currentUser').textContent = currentUser;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainApp').style.display='block';
+    errorMsg.style.display='none';
+    showContent('presensi');
+  }else{
+    errorMsg.style.display='block';
+  }
+});
+
+window.logout = function(){
+  currentUser='';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('mainApp').style.display='none';
+  document.getElementById('username').value='';
+  document.getElementById('password').value='';
+  document.getElementById('errorMessage').style.display='none';
+}
+
+/* ===== NAV ===== */
+window.showContent = function(contentId){
+  document.querySelectorAll('.content-area').forEach(a=>a.classList.remove('active'));
+  document.getElementById(contentId).classList.add('active');
+  if (contentId==='presensi') renderPresensi();
+  else if (contentId==='kelola-kelas') renderKelolaKelas();
+  else if (contentId==='rekap') renderRekap();
+  else if (contentId==='penilaian') renderPenilaian();
+  else if (contentId==='bank-soal') renderBankSoal();
+}
+function renderAllContent(){
+  const active = document.querySelector('.content-area.active'); if (!active) return;
+  const id = active.id;
+  if (id==='presensi') renderPresensi();
+  else if (id==='kelola-kelas') renderKelolaKelas();
+  else if (id==='rekap') renderRekap();
+  else if (id==='penilaian') renderPenilaian();
+  else if (id==='bank-soal') renderBankSoal();
+}
+
+/* ===== PRESENSI ===== */
+function renderPresensi(){
+  const classes = findByType(d=>d.type==='class' && d.user_name===currentUser);
+  const tabsContainer = document.getElementById('classTabs');
+  if (classes.length===0){
+    tabsContainer.innerHTML = '<div class="empty-state"><div class="empty-icon">🏫</div><p>Belum ada kelas. Silakan tambah kelas terlebih dahulu.</p></div>';
+    document.getElementById('studentListContainer').innerHTML='';
+    return;
+  }
+  tabsContainer.innerHTML = classes.map((cls, idx)=>
+    `<button class="tab ${idx===0 && !currentClass ? 'active' : currentClass===cls.class_name ? 'active' : ''}" onclick="selectClass('${cls.class_name}')">${cls.class_name}</button>`
+  ).join('');
+  if (!currentClass && classes.length>0) currentClass = classes[0].class_name;
+  renderStudentList();
+}
+window.selectClass = function(className){
+  currentClass = className;
+  document.querySelectorAll('#classTabs .tab').forEach(tab=>{
+    tab.classList.remove('active');
+    if (tab.textContent===className) tab.classList.add('active');
+  });
+  renderStudentList();
+}
+function renderStudentList(){
+  const students = findByType(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser);
+  const container = document.getElementById('studentListContainer');
+  if (students.length===0){
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada siswa di kelas ini.</p></div>';
+    return;
+  }
+  container.innerHTML = students.map(student=>{
+    const currentStatus = attendanceData[student.__key] || '';
+    return `
+      <div class="student-card">
+        <div class="student-photo">
+          ${student.student_photo ? `<img src="${student.student_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='👤'">` : '👤'}
+        </div>
+        <div class="student-info">
+          <div class="student-name">${student.student_name}</div>
+          <div class="status-buttons">
+            <button class="status-btn hadir ${currentStatus==='HADIR'?'active':''}" onclick="setAttendance('${student.__key}','HADIR')">HADIR</button>
+            <button class="status-btn izin ${currentStatus==='IZIN'?'active':''}" onclick="setAttendance('${student.__key}','IZIN')">IZIN</button>
+            <button class="status-btn sakit ${currentStatus==='SAKIT'?'active':''}" onclick="setAttendance('${student.__key}','SAKIT')">SAKIT</button>
+            <button class="status-btn alpa ${currentStatus==='ALPA'?'active':''}" onclick="setAttendance('${student.__key}','ALPA')">ALPA</button>
+            <button class="status-btn bolos ${currentStatus==='BOLOS'?'active':''}" onclick="setAttendance('${student.__key}','BOLOS')">BOLOS</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+window.setAttendance = function(studentKey, status){ attendanceData[studentKey]=status; renderStudentList(); }
+window.markAllPresent = function(){
+  const students = findByType(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser);
+  students.forEach(s=>{ attendanceData[s.__key]='HADIR'; });
+  renderStudentList();
+}
+window.submitAttendance = async function(){
+  const students = findByType(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser);
+  const today = new Date().toISOString().split('T')[0];
+  if (students.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  const btn = event.target; btn.disabled=true; btn.innerHTML='<span class="loading"></span> Mengirim...';
+  for (const student of students){
+    const status = attendanceData[student.__key] || 'ALPA';
+    const existing = findOne(d=>d.type==='attendance' && d.student_name===student.student_name && d.class_name===currentClass && d.date===today && d.user_name===currentUser);
+    if (existing){ await fbUpdateByKey(existing.__key, {...existing, status}); }
+    else{
+      await fbCreate({ type:'attendance', class_name:currentClass, student_name:student.student_name, date:today, status, user_name:currentUser, created_at:new Date().toISOString() });
+    }
+  }
+  attendanceData={}; btn.disabled=false; btn.textContent='Kirim Absen'; showToast('Absen berhasil dikirim!','success');
+}
+
+/* ===== KELOLA KELAS ===== */
+function renderKelolaKelas(){
+  const classes = findByType(d=>d.type==='class' && d.user_name===currentUser);
+  const tbody = document.getElementById('classTableBody');
+  if (classes.length===0){
+    tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><div class="empty-icon">🏫</div><p>Belum ada kelas</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = classes.map(cls=>{
+    const count = findByType(d=>d.type==='student' && d.class_name===cls.class_name && d.user_name===currentUser).length;
+    return `
+      <tr>
+        <td>${cls.class_name}</td>
+        <td>${count} siswa</td>
+        <td>
+          <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin-right:5px;" onclick="showStudentManagement('${cls.class_name}')">Kelola Siswa</button>
+          <button class="btn btn-success" style="padding:6px 12px;font-size:12px;margin-right:5px;" onclick="showEditClassModal('${cls.class_name}')">Edit</button>
+          <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="deleteClass('${cls.class_name}')">Hapus</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+window.showAddClassModal = function(){ document.getElementById('addClassModal').classList.add('active'); }
+document.getElementById('addClassForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const className = document.getElementById('className').value;
+  if (allData.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menyimpan...';
+  const res = await fbCreate({ type:'class', class_name:className, user_name:currentUser, created_at:new Date().toISOString() });
+  btn.disabled=false; btn.textContent='Simpan';
+  if (res.isOk){ closeModal('addClassModal'); document.getElementById('className').value=''; }
+  else{ showToast('⚠️ Gagal menambahkan kelas','error'); }
+});
+window.deleteClass = function(className){
+  const classData = findOne(d=>d.type==='class' && d.class_name===className && d.user_name===currentUser);
+  if (!classData) return;
+  const confirmDiv = document.createElement('div');
+  confirmDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:30px;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:9999;text-align:center;';
+  confirmDiv.innerHTML = `
+    <p style="margin-bottom:20px;font-size:16px;color:#333;">Hapus kelas <strong>${className}</strong>?</p>
+    <button onclick="confirmDeleteClass('${className}', this.parentElement)" class="btn btn-danger" style="margin-right:10px;">Hapus</button>
+    <button onclick="this.parentElement.remove()" class="btn btn-secondary">Batal</button>`;
+  document.body.appendChild(confirmDiv);
+}
+window.confirmDeleteClass = async function(className, confirmDiv){
+  const classData = findOne(d=>d.type==='class' && d.class_name===className && d.user_name===currentUser);
+  if (!classData) return;
+  const res = await fbDeleteByKey(classData.__key);
+  if (res.isOk){
+    const students = findByType(d=>d.type==='student' && d.class_name===className && d.user_name===currentUser);
+    for (const s of students) await fbDeleteByKey(s.__key);
+    confirmDiv.remove();
+  }else{ showToast('⚠️ Gagal menghapus kelas','error'); }
+}
+window.showStudentManagement = function(className){
+  const modal = document.createElement('div');
+  modal.className='modal active'; modal.id='studentManagementModal';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:800px;">
+      <div class="modal-title">Kelola Siswa - ${className}</div>
+      <div style="background:#f8f9fa;padding:20px;border-radius:10px;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:15px;">Tambah Siswa Baru</div>
+        <form id="quickAddStudentForm">
+          <div class="form-row"><label class="form-label">Nama Siswa</label><input type="text" id="quickStudentName" class="form-input" placeholder="Nama lengkap siswa" required></div>
+          <div class="form-row"><label class="form-label">Foto Siswa</label><input type="file" id="quickStudentPhoto" class="form-input" accept="image/*"></div>
+          <button type="submit" class="btn btn-primary">Tambah Siswa</button>
+        </form>
+      </div>
+      <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:15px;">Daftar Siswa</div>
+      <div id="studentManagementList"></div>
+      <div class="action-bar"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Tutup</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+  renderStudentManagement(className);
+
+  document.getElementById('quickAddStudentForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    const studentName = document.getElementById('quickStudentName').value;
+    const file = document.getElementById('quickStudentPhoto').files[0];
+    if (allData.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+    const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menyimpan...';
+    let studentPhoto='';
+    if (file){
+      const reader = new FileReader();
+      reader.onload = async (ev)=>{ studentPhoto = ev.target.result; await createStudent(className, studentName, studentPhoto, btn); };
+      reader.readAsDataURL(file);
+    }else{ await createStudent(className, studentName, studentPhoto, btn); }
+  });
+
+  async function createStudent(className, studentName, studentPhoto, btn){
+    const res = await fbCreate({ type:'student', class_name:className, student_name:studentName, student_photo:studentPhoto, user_name:currentUser, created_at:new Date().toISOString() });
+    btn.disabled=false; btn.textContent='Tambah Siswa';
+    if (res.isOk){ document.getElementById('quickStudentName').value=''; document.getElementById('quickStudentPhoto').value=''; showToast('Siswa berhasil ditambahkan','success'); }
+    else{ showToast('⚠️ Gagal menambahkan siswa','error'); }
+  }
+}
+function renderStudentManagement(className){
+  const students = findByType(d=>d.type==='student' && d.class_name===className && d.user_name===currentUser);
+  const container = document.getElementById('studentManagementList'); if (!container) return;
+  if (students.length===0){ container.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada siswa</p></div>'; return; }
+  container.innerHTML = students.map(student=>`
+    <div class="student-card" id="student-card-${student.__key}">
+      <div class="student-photo" id="photo-${student.__key}">
+        ${student.student_photo ? `<img src="${student.student_photo}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='👤'">` : '👤'}
+      </div>
+      <div class="student-info" style="flex:1;">
+        <div class="student-name" id="name-display-${student.__key}">${student.student_name}</div>
+        <div id="edit-form-${student.__key}" style="display:none;margin-top:10px;">
+          <input type="text" id="edit-name-${student.__key}" class="form-input" value="${student.student_name}" style="margin-bottom:10px;" placeholder="Nama siswa">
+          <input type="file" id="edit-photo-${student.__key}" class="form-input" accept="image/*" style="font-size:12px;">
+          <div style="font-size:11px;color:#666;margin-top:5px;">Kosongkan foto jika tidak ingin mengubah</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:flex-start;">
+        <div id="view-buttons-${student.__key}">
+          <button class="btn btn-success" style="padding:8px 16px;font-size:12px;margin-bottom:5px;" onclick="toggleEditMode('${student.__key}', true)">Edit</button>
+          <button class="btn btn-danger" style="padding:8px 16px;font-size:12px;" onclick="deleteStudent('${student.__key}', '${className}')">Hapus</button>
+        </div>
+        <div id="edit-buttons-${student.__key}" style="display:none;">
+          <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;margin-bottom:5px;" onclick="saveStudentEdit('${student.__key}', '${className}')">Simpan</button>
+          <button class="btn btn-secondary" style="padding:8px 16px;font-size:12px;" onclick="toggleEditMode('${student.__key}', false)">Batal</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+window.toggleEditMode = function(studentKey, isEdit){
+  const nameDisplay = document.getElementById(`name-display-${studentKey}`);
+  const editForm = document.getElementById(`edit-form-${studentKey}`);
+  const viewButtons = document.getElementById(`view-buttons-${studentKey}`);
+  const editButtons = document.getElementById(`edit-buttons-${studentKey}`);
+  if (isEdit){ nameDisplay.style.display='none'; editForm.style.display='block'; viewButtons.style.display='none'; editButtons.style.display='block'; }
+  else{
+    nameDisplay.style.display='block'; editForm.style.display='none'; viewButtons.style.display='block'; editButtons.style.display='none';
+    const student = findOne(d=>d.__key===studentKey); if (student){ document.getElementById(`edit-name-${studentKey}`).value=student.student_name; document.getElementById(`edit-photo-${studentKey}`).value=''; }
+  }
+}
+window.saveStudentEdit = async function(studentKey, className){
+  const student = findOne(d=>d.__key===studentKey); if (!student) return;
+  const newName = document.getElementById(`edit-name-${studentKey}`).value.trim();
+  const file = document.getElementById(`edit-photo-${studentKey}`).files[0];
+  if (!newName){ showToast('⚠️ Nama siswa tidak boleh kosong','error'); return; }
+  const saveBtn = event.target; saveBtn.disabled=true; saveBtn.innerHTML='<span class="loading"></span>';
+  const oldStudentName = student.student_name;
+  let newPhoto = student.student_photo;
+  if (file){
+    const reader = new FileReader();
+    reader.onload = async (e)=>{ newPhoto = e.target.result; await updateStudentData(student, oldStudentName, newName, newPhoto, className, saveBtn); };
+    reader.readAsDataURL(file);
+  }else{
+    await updateStudentData(student, oldStudentName, newName, newPhoto, className, saveBtn);
+  }
+}
+async function updateStudentData(student, oldStudentName, newName, photo, className, saveBtn){
+  await fbUpdateByKey(student.__key, {...student, student_name:newName, student_photo:photo});
+  const atts = findByType(d=>d.type==='attendance' && d.student_name===oldStudentName && d.class_name===className && d.user_name===currentUser);
+  for (const a of atts) await fbUpdateByKey(a.__key, {...a, student_name:newName});
+  const scores = findByType(d=>(d.type==='knowledge_score'||d.type==='attitude_score') && d.student_name===oldStudentName && d.class_name===className && d.user_name===currentUser);
+  for (const s of scores) await fbUpdateByKey(s.__key, {...s, student_name:newName});
+  showToast('Siswa berhasil diperbarui','success'); toggleEditMode(student.__key, false);
+  if (saveBtn){ saveBtn.disabled=false; saveBtn.textContent='Simpan'; }
+}
+window.deleteStudent = async function(studentKey, className){
+  const student = findOne(d=>d.__key===studentKey); if (!student) return;
+  const res = await fbDeleteByKey(student.__key);
+  if (res.isOk){ renderStudentManagement(className); } else { showToast('⚠️ Gagal menghapus siswa','error'); }
+}
+
+/* ===== REKAP ===== */
+window.selectRekapClass = function(className){
+  currentRekapClass = className;
+  document.querySelectorAll('#rekapClassTabs .tab').forEach(tab=>{
+    tab.classList.remove('active'); tab.style.background=''; tab.style.color=''; tab.style.borderRadius='';
+    if (tab.textContent===className){ tab.classList.add('active'); tab.style.background='#667eea'; tab.style.color='white'; tab.style.borderRadius='8px'; }
+  });
+  showRekapTab(currentRekapTab);
+}
+window.showRekapTab = function(tab){
+  currentRekapTab = tab;
+  document.querySelectorAll('#rekap .tabs .tab').forEach(t=>{
+    t.classList.remove('active'); if (t.textContent.toLowerCase().includes(tab)) t.classList.add('active');
+  });
+  if (tab==='bulanan'){ const now=new Date(); selectedMonth=now.getMonth()+1; selectedYear=now.getFullYear(); }
+  else if (tab==='semester'){ const now=new Date(); const m=now.getMonth()+1; selectedSemester = m>=7 ? 'ganjil':'genap'; selectedYear=now.getFullYear(); }
+  renderRekapFilters();
+  const atts = findByType(d=>d.type==='attendance' && d.class_name===currentRekapClass && d.user_name===currentUser);
+  if (atts.length===0){ const cont=document.getElementById('rekapClassContent'); if (cont) cont.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><p>Belum ada data kehadiran untuk kelas ini</p></div>'; return; }
+  if (tab==='harian') renderRekapHarian(atts);
+  else if (tab==='bulanan') renderRekapBulanan(atts);
+  else if (tab==='semester') renderRekapSemester(atts);
+}
+function renderRekap(){
+  const classes = findByType(d=>d.type==='class' && d.user_name===currentUser);
+  const content = document.getElementById('rekapContent');
+  if (classes.length===0){ content.innerHTML='<div class="empty-state"><div class="empty-icon">🏫</div><p>Belum ada kelas</p></div>'; return; }
+  if (!currentRekapClass && classes.length>0) currentRekapClass = classes[0].class_name;
+  const classTabsHtml = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:14px;font-weight:600;color:#666;margin-bottom:10px;">Pilih Kelas:</div>
+      <div class="tabs" id="rekapClassTabs">
+        ${classes.map(cls=>`
+          <button class="tab ${currentRekapClass===cls.class_name?'active':''}" onclick="selectRekapClass('${cls.class_name}')" style="${currentRekapClass===cls.class_name ? 'background:#667eea;color:white;border-radius:8px;' : ''}">${cls.class_name}</button>
+        `).join('')}
+      </div>
+    </div>`;
+  content.innerHTML = classTabsHtml + '<div id="rekapClassContent"></div>';
+  showRekapTab(currentRekapTab);
+}
+function renderRekapFilters(){
+  const filtersContainer = document.getElementById('rekapFilters'); if (!filtersContainer) return;
+  if (currentRekapTab==='bulanan'){
+    const years=[]; for (let i=2025;i<=2050;i++) years.push(i);
+    const months=[{value:1,label:'Januari'},{value:2,label:'Februari'},{value:3,label:'Maret'},{value:4,label:'April'},{value:5,label:'Mei'},{value:6,label:'Juni'},{value:7,label:'Juli'},{value:8,label:'Agustus'},{value:9,label:'September'},{value:10,label:'Oktober'},{value:11,label:'November'},{value:12,label:'Desember'}];
+    filtersContainer.innerHTML = `
+      <div style="background:#f8f9fa;padding:20px;border-radius:10px;">
+        <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:15px;">Filter Periode</div>
+        <div style="display:flex;gap:15px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Bulan</label>
+            <select id="monthFilter" class="form-input" onchange="updateRekapBulanan()">
+              ${months.map(m=>`<option value="${m.value}" ${selectedMonth===m.value?'selected':''}>${m.label}</option>`).join('')}
+            </select>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Tahun</label>
+            <select id="yearFilter" class="form-input" onchange="updateRekapBulanan()">
+              ${years.map(y=>`<option value="${y}" ${selectedYear===y?'selected':''}>${y}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>`;
+  }else if (currentRekapTab==='semester'){
+    const years=[]; for (let i=2025;i<=2050;i++) years.push(i);
+    filtersContainer.innerHTML = `
+      <div style="background:#f8f9fa;padding:20px;border-radius:10px;">
+        <div style="font-size:16px;font-weight:600;color:#333;margin-bottom:15px;">Filter Periode</div>
+        <div style="display:flex;gap:15px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Semester</label>
+            <select id="semesterFilter" class="form-input" onchange="updateRekapSemester()">
+              <option value="ganjil" ${selectedSemester==='ganjil'?'selected':''}>Semester Ganjil (Juli - Desember)</option>
+              <option value="genap" ${selectedSemester==='genap'?'selected':''}>Semester Genap (Januari - Juni)</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label class="form-label">Tahun Ajaran</label>
+            <select id="yearSemesterFilter" class="form-input" onchange="updateRekapSemester()">
+              ${years.map(y=>{
+                const label = selectedSemester==='ganjil' ? `${y}/${y+1}` : `${y-1}/${y}`;
+                return `<option value="${y}" ${selectedYear===y?'selected':''}>${label}</option>`;
+              }).join('')}
+            </select>
+          </div>
+        </div>
+      </div>`;
+  }else{ filtersContainer.innerHTML=''; }
+}
+window.updateRekapBulanan = function(){
+  selectedMonth = parseInt(document.getElementById('monthFilter').value);
+  selectedYear = parseInt(document.getElementById('yearFilter').value);
+  const atts = findByType(d=>d.type==='attendance' && d.class_name===currentRekapClass && d.user_name===currentUser);
+  renderRekapBulanan(atts);
+}
+window.updateRekapSemester = function(){
+  selectedSemester = document.getElementById('semesterFilter').value;
+  selectedYear = parseInt(document.getElementById('yearSemesterFilter').value);
+  const yearSelect = document.getElementById('yearSemesterFilter');
+  const years=[]; for (let i=2025;i<=2050;i++) years.push(i);
+  yearSelect.innerHTML = years.map(y=>{
+    const label = selectedSemester==='ganjil' ? `${y}/${y+1}` : `${y-1}/${y}`;
+    return `<option value="${y}" ${selectedYear===y?'selected':''}>${label}</option>`;
+  }).join('');
+  const atts = findByType(d=>d.type==='attendance' && d.class_name===currentRekapClass && d.user_name===currentUser);
+  renderRekapSemester(atts);
+}
+function renderRekapHarian(atts){
+  const today = new Date().toISOString().split('T')[0];
+  const list = atts.filter(a=>a.date===today);
+  const content = document.getElementById('rekapClassContent');
+  if (list.length===0){ content.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><p>Belum ada data kehadiran hari ini untuk kelas ini</p></div>'; return; }
+  const summary = { HADIR:0,IZIN:0,SAKIT:0,ALPA:0,BOLOS:0 };
+  list.forEach(a=>{ summary[a.status] = (summary[a.status]||0)+1; });
+  content.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;margin-bottom:20px;">
+      <div style="background:#27ae60;color:white;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:32px;font-weight:bold;">${summary.HADIR}</div><div>Hadir</div></div>
+      <div style="background:#3498db;color:white;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:32px;font-weight:bold;">${summary.IZIN}</div><div>Izin</div></div>
+      <div style="background:#f39c12;color:white;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:32px;font-weight:bold;">${summary.SAKIT}</div><div>Sakit</div></div>
+      <div style="background:#e74c3c;color:white;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:32px;font-weight:bold;">${summary.ALPA}</div><div>Alpa</div></div>
+      <div style="background:#8e44ad;color:white;padding:20px;border-radius:10px;text-align:center;"><div style="font-size:32px;font-weight:bold;">${summary.BOLOS}</div><div>Bolos</div></div>
+    </div>
+    <div class="table-container"><table>
+      <thead><tr><th>Nama Siswa</th><th>Status</th></tr></thead>
+      <tbody>
+        ${list.map(a=>`<tr><td>${a.student_name}</td><td><span style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;background:${getStatusColor(a.status)};color:white;">${a.status}</span></td></tr>`).join('')}
+      </tbody></table></div>`;
+}
+function renderRekapBulanan(atts){
+  const list = atts.filter(a=>{ const d=new Date(a.date); return d.getMonth()+1===selectedMonth && d.getFullYear()===selectedYear; });
+  const content = document.getElementById('rekapClassContent');
+  const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  if (list.length===0){ content.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><p>Belum ada data kehadiran untuk ${monthNames[selectedMonth-1]} ${selectedYear} pada kelas ini</p></div>`; return; }
+  const stats={};
+  list.forEach(a=>{
+    if (!stats[a.student_name]) stats[a.student_name]={name:a.student_name,HADIR:0,IZIN:0,SAKIT:0,ALPA:0,BOLOS:0};
+    stats[a.student_name][a.status]++;
+  });
+  content.innerHTML = `
+    <div style="background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;"><div style="font-size:18px;font-weight:bold;color:#333;">Rekap Bulan ${monthNames[selectedMonth-1]} ${selectedYear}</div></div>
+    <div class="table-container"><table>
+      <thead><tr><th>Nama Siswa</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Bolos</th><th>Total</th></tr></thead>
+      <tbody>
+        ${Object.values(stats).map(s=>{ const total=s.HADIR+s.IZIN+s.SAKIT+s.ALPA+s.BOLOS;
+          return `<tr><td>${s.name}</td><td>${s.HADIR}</td><td>${s.IZIN}</td><td>${s.SAKIT}</td><td>${s.ALPA}</td><td>${s.BOLOS}</td><td><strong>${total}</strong></td></tr>`; }).join('')}
+      </tbody></table></div>`;
+}
+function renderRekapSemester(atts){
+  let semesterMonths, label;
+  if (selectedSemester==='ganjil'){ semesterMonths=[7,8,9,10,11,12]; label=`Semester Ganjil ${selectedYear}/${selectedYear+1}`; }
+  else{ semesterMonths=[1,2,3,4,5,6]; label=`Semester Genap ${selectedYear-1}/${selectedYear}`; }
+  const list = atts.filter(a=>{
+    const d=new Date(a.date); const m=d.getMonth()+1; const y=d.getFullYear();
+    if (selectedSemester==='ganjil') return y===selectedYear && semesterMonths.includes(m);
+    else return ((y===selectedYear && m<=6) || (y===selectedYear-1 && m>=7));
+  });
+  const content = document.getElementById('rekapClassContent');
+  if (list.length===0){ content.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><p>Belum ada data kehadiran ${label} untuk kelas ini</p></div>`; return; }
+  const stats={};
+  list.forEach(a=>{
+    if (!stats[a.student_name]) stats[a.student_name]={name:a.student_name,HADIR:0,IZIN:0,SAKIT:0,ALPA:0,BOLOS:0};
+    stats[a.student_name][a.status]++;
+  });
+  content.innerHTML = `
+    <div style="background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center;">
+      <div style="font-size:18px;font-weight:bold;color:#333;">${label}</div>
+      <div style="font-size:14px;color:#666;margin-top:5px;">${selectedSemester==='ganjil'?'Juli - Desember':'Januari - Juni'}</div>
+    </div>
+    <div class="table-container"><table>
+      <thead><tr><th>Nama Siswa</th><th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Bolos</th><th>Total</th><th>Persentase Kehadiran</th></tr></thead>
+      <tbody>
+        ${Object.values(stats).map(s=>{
+          const total=s.HADIR+s.IZIN+s.SAKIT+s.ALPA+s.BOLOS;
+          const pct = total>0 ? ((s.HADIR/total)*100).toFixed(1) : 0;
+          const color = pct>=80 ? '#27ae60' : pct>=60 ? '#f39c12' : '#e74c3c';
+          return `<tr><td>${s.name}</td><td>${s.HADIR}</td><td>${s.IZIN}</td><td>${s.SAKIT}</td><td>${s.ALPA}</td><td>${s.BOLOS}</td><td><strong>${total}</strong></td><td><span style="padding:6px 12px;border-radius:6px;font-weight:bold;background:${color};color:white;">${pct}%</span></td></tr>`;
+        }).join('')}
+      </tbody></table></div>`;
+}
+function getStatusColor(status){ const c={'HADIR':'#27ae60','IZIN':'#3498db','SAKIT':'#f39c12','ALPA':'#e74c3c','BOLOS':'#8e44ad'}; return c[status]||'#95a5a6'; }
+window.printRekap = function(){ window.print(); }
+window.exportRekapToExcel = function(){
+  if (!currentRekapClass){ showToast('⚠️ Pilih kelas terlebih dahulu','error'); return; }
+  const atts = findByType(d=>d.type==='attendance' && d.class_name===currentRekapClass && d.user_name===currentUser);
+  if (atts.length===0){ showToast('⚠️ Tidak ada data kehadiran untuk diekspor','error'); return; }
+  let csv='', fname='';
+  if (currentRekapTab==='harian'){
+    const today = new Date().toISOString().split('T')[0];
+    const list = atts.filter(a=>a.date===today);
+    if (list.length===0){ showToast('⚠️ Tidak ada data kehadiran hari ini','error'); return; }
+    csv='No,Nama Siswa,Status\n'; list.forEach((a,i)=>{ csv+=`${i+1},"${a.student_name}",${a.status}\n`; }); fname=`Rekap_Harian_${currentRekapClass}_${today}.csv`;
+  }else if (currentRekapTab==='bulanan'){
+    csv='No,Nama Siswa,Hadir,Izin,Sakit,Alpa,Bolos,Total\n';
+    const list = atts.filter(a=>{ const d=new Date(a.date); return d.getMonth()+1===selectedMonth && d.getFullYear()===selectedYear; });
+    if (list.length===0){ showToast('⚠️ Tidak ada data kehadiran bulan ini','error'); return; }
+    const stats={}; list.forEach(a=>{ if (!stats[a.student_name]) stats[a.student_name]={name:a.student_name,HADIR:0,IZIN:0,SAKIT:0,ALPA:0,BOLOS:0}; stats[a.student_name][a.status]++; });
+    let i=1; Object.values(stats).forEach(s=>{ const total=s.HADIR+s.IZIN+s.SAKIT+s.ALPA+s.BOLOS; csv+=`${i},"${s.name}",${s.HADIR},${s.IZIN},${s.SAKIT},${s.ALPA},${s.BOLOS},${total}\n`; i++; });
+    fname=`Rekap_Bulanan_${currentRekapClass}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.csv`;
+  }else{
+    csv='No,Nama Siswa,Hadir,Izin,Sakit,Alpa,Bolos,Total,Persentase Kehadiran\n';
+    let months = selectedSemester==='ganjil' ? [7,8,9,10,11,12] : [1,2,3,4,5,6];
+    const list = atts.filter(a=>{ const d=new Date(a.date); const m=d.getMonth()+1; const y=d.getFullYear(); return selectedSemester==='ganjil' ? (y===selectedYear && months.includes(m)) : ((y===selectedYear && m<=6)||(y===selectedYear-1 && m>=7)); });
+    if (list.length===0){ showToast('⚠️ Tidak ada data kehadiran untuk periode ini','error'); return; }
+    const stats={}; list.forEach(a=>{ if (!stats[a.student_name]) stats[a.student_name]={name:a.student_name,HADIR:0,IZIN:0,SAKIT:0,ALPA:0,BOLOS:0}; stats[a.student_name][a.status]++; });
+    let i=1; Object.values(stats).forEach(s=>{ const t=s.HADIR+s.IZIN+s.SAKIT+s.ALPA+s.BOLOS; const p=t>0?((s.HADIR/t)*100).toFixed(1):0; csv+=`${i},"${s.name}",${s.HADIR},${s.IZIN},${s.SAKIT},${s.ALPA},${s.BOLOS},${t},${p}%\n`; i++; });
+    const label = selectedSemester==='ganjil' ? `Ganjil_${selectedYear}-${selectedYear+1}` : `Genap_${selectedYear-1}-${selectedYear}`; fname=`Rekap_Semester_${label}_${currentRekapClass}.csv`;
+  }
+  const BOM='\uFEFF'; const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'}); const link=document.createElement('a'); const url=URL.createObjectURL(blob);
+  link.setAttribute('href',url); link.setAttribute('download',fname); link.style.visibility='hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast('File berhasil diekspor!','success');
+}
+
+/* ===== PENILAIAN ===== */
+function renderPenilaian(){ showPenilaianTab('pengetahuan'); }
+window.showPenilaianTab = function(tab){
+  currentPenilaianTab = tab;
+  document.querySelectorAll('#penilaian .tab').forEach(t=>{ t.classList.remove('active'); if (t.textContent.toLowerCase().includes(tab)) t.classList.add('active'); });
+  const content = document.getElementById('penilaianContent');
+  const classes = findByType(d=>d.type==='class' && d.user_name===currentUser);
+  if (classes.length===0){ content.innerHTML='<div class="empty-state"><div class="empty-icon">📝</div><p>Belum ada kelas</p></div>'; return; }
+  content.innerHTML = `
+    <div class="form-row">
+      <label class="form-label">Pilih Kelas</label>
+      <select id="penilaianClassSelect" class="form-input" onchange="renderPenilaianTable()">
+        ${classes.map(c=>`<option value="${c.class_name}">${c.class_name}</option>`).join('')}
+      </select>
+    </div>
+    <div id="penilaianTable"></div>`;
+  renderPenilaianTable();
+}
+function loadKnowledgeColumns(className){
+  const cfg = findOne(d=>d.type==='knowledge_config' && d.class_name===className && d.user_name===currentUser);
+  if (cfg && cfg.columns){ try{ knowledgeColumns = JSON.parse(cfg.columns); }catch{ knowledgeColumns=[]; } }
+  else knowledgeColumns=[];
+}
+async function saveKnowledgeColumns(className){
+  const cfg = findOne(d=>d.type==='knowledge_config' && d.class_name===className && d.user_name===currentUser);
+  const columnsJson = JSON.stringify(knowledgeColumns);
+  if (cfg){ await fbUpdateByKey(cfg.__key, {...cfg, columns:columnsJson}); return true; }
+  else{
+    if (allData.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return false; }
+    await fbCreate({ type:'knowledge_config', class_name:className, user_name:currentUser, columns:columnsJson, created_at:new Date().toISOString() });
+    return true;
+  }
+}
+function renderKnowledgeAssessment(students, selectedClass, container){
+  const sasExists = knowledgeColumns.some(col=>col.type==='SAS');
+  const headerCols = knowledgeColumns.map(col=>`<th>${col.label}<br><span style="font-size:11px;font-weight:normal;color:#666;">(${col.type})</span></th>`).join('');
+  const rows = students.map(st=>{
+    const scoreData = findOne(d=>d.type==='knowledge_score' && d.student_name===st.student_name && d.class_name===selectedClass && d.user_name===currentUser);
+    let scores={}; if (scoreData && scoreData.scores){ try{ scores=JSON.parse(scoreData.scores); }catch{ scores={}; } }
+    const inputs = knowledgeColumns.map(col=>{ const v = scores[col.id]||''; return `<td><input type="number" class="form-input knowledge-input" data-student="${st.student_name}" data-col="${col.id}" style="width:80px;padding:6px;" value="${v}" min="0" max="100"></td>`; }).join('');
+    const valid = knowledgeColumns.map(col=>parseFloat(scores[col.id])).filter(v=>!isNaN(v) && v>0);
+    const avg = valid.length>0 ? (valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1) : '-';
+    return `<tr><td>${st.student_name}</td>${inputs}<td><strong>${avg}</strong></td></tr>`;
+  }).join('');
+  container.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="addKnowledgeColumn('PH')">+ Tambah Kolom PH</button>
+        <button class="btn btn-primary" onclick="addKnowledgeColumn('UH')">+ Tambah Kolom UH</button>
+        <button class="btn btn-primary" onclick="addKnowledgeColumn('SAS')" id="btnAddSAS" ${sasExists ? 'disabled style="opacity:0.5;cursor:not-allowed;"':''}>+ Tambah Kolom SAS</button>
+        <button class="btn btn-success" onclick="saveAllKnowledgeScores('${selectedClass}')" style="margin-left:auto;">💾 Simpan Semua Nilai</button>
+      </div>
+      ${knowledgeColumns.length>0 ? `
+      <div style="margin-top:15px;padding:12px;background:#f8f9fa;border-radius:8px;">
+        <strong>Kolom Penilaian:</strong>
+        ${knowledgeColumns.map((col,idx)=>`
+          <span style="display:inline-flex;align-items:center;margin:5px 8px 5px 0;padding:6px 12px;background:white;border-radius:6px;border:2px solid #667eea;">
+            ${col.label} (${col.type})
+            <button onclick="removeKnowledgeColumn(${idx})" style="margin-left:8px;background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;padding:0;">×</button>
+          </span>`).join('')}
+      </div>`:''}
+    </div>
+    ${knowledgeColumns.length===0 ? `
+      <div class="empty-state"><div class="empty-icon">📊</div><p>Belum ada kolom penilaian. Tambahkan kolom UH atau SAS terlebih dahulu.</p></div>
+    ` : `
+      <div class="table-container"><table>
+        <thead><tr><th style="min-width:150px;">Nama Siswa</th>${headerCols}<th>Rata-rata</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+    `}`;
+}
+window.addKnowledgeColumn = async function(type){
+  if (type==='SAS'){ const exists = knowledgeColumns.some(c=>c.type==='SAS'); if (exists){ showToast('⚠️ Kolom SAS hanya bisa ditambahkan 1 kali','error'); return; } }
+  const count = knowledgeColumns.filter(c=>c.type===type).length;
+  const label = type==='SAS' ? 'SAS' : type==='PH' ? `PH${count+1}` : `UH${count+1}`;
+  knowledgeColumns.push({ id:`col_${Date.now()}_${Math.random().toString(36).substr(2,9)}`, label, type });
+  const saved = await saveKnowledgeColumns(currentKnowledgeClass);
+  if (saved) renderPenilaianTable();
+}
+window.removeKnowledgeColumn = async function(index){
+  knowledgeColumns.splice(index,1);
+  const ph = knowledgeColumns.filter(c=>c.type==='PH'); const uh = knowledgeColumns.filter(c=>c.type==='UH');
+  ph.forEach((c,i)=>c.label=`PH${i+1}`); uh.forEach((c,i)=>c.label=`UH${i+1}`);
+  const saved = await saveKnowledgeColumns(currentKnowledgeClass);
+  if (saved) renderPenilaianTable();
+}
+window.saveAllKnowledgeScores = async function(className){
+  const students = findByType(d=>d.type==='student' && d.class_name===className && d.user_name===currentUser);
+  if (knowledgeColumns.length===0){ showToast('⚠️ Tambahkan kolom penilaian terlebih dahulu','error'); return; }
+  const btn = event.target; btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menyimpan...';
+  const inputs = document.querySelectorAll('.knowledge-input'); const data={};
+  inputs.forEach(inp=>{ const s=inp.dataset.student; const c=inp.dataset.col; const v=inp.value; if (!data[s]) data[s]={}; if (v && v.trim()!=='') data[s][c]=parseFloat(v); });
+  let failed=0;
+  for (const st of students){
+    const scores = data[st.student_name] || {}; const json = JSON.stringify(scores);
+    const existing = findOne(d=>d.type==='knowledge_score' && d.student_name===st.student_name && d.class_name===className && d.user_name===currentUser);
+    try{
+      if (existing){ await fbUpdateByKey(existing.__key, {...existing, scores:json}); }
+      else{
+        if (allData.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); break; }
+        await fbCreate({ type:'knowledge_score', class_name:className, student_name:st.student_name, user_name:currentUser, scores:json, created_at:new Date().toISOString() });
+      }
+    }catch{ failed++; }
+  }
+  btn.disabled=false; btn.innerHTML='💾 Simpan Semua Nilai';
+  if (failed===0) showToast('✅ Semua nilai berhasil disimpan!','success'); else showToast(`⚠️ ${failed} nilai gagal disimpan`,'error');
+}
+window.renderPenilaianTable = function(){
+  const sel = document.getElementById('penilaianClassSelect'); if (!sel) return;
+  const selectedClass = sel.value;
+  if (currentKnowledgeClass!==selectedClass){ currentKnowledgeClass=selectedClass; loadKnowledgeColumns(selectedClass); }
+  const students = findByType(d=>d.type==='student' && d.class_name===selectedClass && d.user_name===currentUser);
+  const container = document.getElementById('penilaianTable');
+  if (students.length===0){ container.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada siswa di kelas ini</p></div>'; return; }
+  if (currentPenilaianTab==='pengetahuan'){ renderKnowledgeAssessment(students, selectedClass, container); }
+  else{
+    container.innerHTML = `
+      <div class="table-container"><table>
+        <thead><tr><th>Nama Siswa</th><th>Penilaian</th><th>Catatan</th><th>Aksi</th></tr></thead>
+        <tbody>
+          ${students.map(s=>{
+            const notes = findByType(d=>d.type==='attitude_score' && d.student_name===s.student_name && d.class_name===selectedClass && d.user_name===currentUser);
+            const count = notes.length;
+            return `
+              <tr>
+                <td>${s.student_name}</td>
+                <td>
+                  <select id="attitude_${s.__key}" class="form-input">
+                    <option value="">Pilih</option><option value="Sangat Baik">Sangat Baik</option><option value="Baik">Baik</option><option value="Cukup">Cukup</option><option value="Kurang">Kurang</option>
+                  </select>
+                </td>
+                <td><textarea id="notes_${s.__key}" class="form-input" rows="2" placeholder="Tulis catatan sikap siswa..."></textarea></td>
+                <td>
+                  <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin-bottom:5px;display:block;width:100%;" onclick="saveAttitudeScore('${s.__key}', '${s.student_name}', '${selectedClass}')">Simpan Catatan</button>
+                  ${count>0 ? `<button class="btn btn-success" style="padding:6px 12px;font-size:12px;width:100%;" onclick="showAttitudeHistory('${s.student_name}', '${selectedClass}')">📝 Lihat Riwayat (${count})</button>` : ''}
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody></table></div>`;
+  }
+}
+window.saveAttitudeScore = async function(studentKey, studentName, className){
+  const attitude = document.getElementById(`attitude_${studentKey}`).value;
+  const notes = (document.getElementById(`notes_${studentKey}`).value||'').trim();
+  if (!attitude){ showToast('⚠️ Pilih penilaian sikap terlebih dahulu','error'); return; }
+  if (!notes){ showToast('⚠️ Tulis catatan sikap terlebih dahulu','error'); return; }
+  if (allData.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  const btn = event.target; btn.disabled=true; btn.innerHTML='<span class="loading"></span>';
+  const res = await fbCreate({ type:'attitude_score', class_name:className, student_name:studentName, user_name:currentUser, attitude_score:attitude, notes, created_at:new Date().toISOString() });
+  btn.disabled=false; btn.textContent='Simpan Catatan';
+  if (res.isOk){
+    document.getElementById(`attitude_${studentKey}`).value=''; document.getElementById(`notes_${studentKey}`).value='';
+    showToast('Catatan sikap berhasil disimpan','success'); renderPenilaianTable();
+  }else{ showToast('⚠️ Gagal menyimpan catatan sikap','error'); }
+}
+window.showAttitudeHistory = function(studentName, className){
+  const notes = findByType(d=>d.type==='attitude_score' && d.student_name===studentName && d.class_name===className && d.user_name===currentUser)
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const modal = document.createElement('div'); modal.className='modal active';
+  modal.innerHTML = `
+    <div class="modal-content" style="max-width:700px;">
+      <div class="modal-title">📝 Riwayat Catatan Sikap - ${studentName}</div>
+      <div style="max-height:400px;overflow-y:auto;">
+        ${notes.map(note=>{
+          const date = new Date(note.created_at);
+          const dStr = date.toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+          const tStr = date.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+          const color = note.attitude_score==='Sangat Baik' ? '#27ae60' : note.attitude_score==='Baik' ? '#3498db' : note.attitude_score==='Cukup' ? '#f39c12' : '#e74c3c';
+          return `
+            <div style="background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:15px;border-left:4px solid ${color};">
+              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;">
+                <div><span style="display:inline-block;padding:4px 12px;background:${color};color:white;border-radius:6px;font-size:12px;font-weight:600;">${note.attitude_score}</span></div>
+                <div style="text-align:right;"><div style="font-size:12px;color:#666;">${dStr}</div><div style="font-size:11px;color:#999;">${tStr}</div></div>
+              </div>
+              <div style="color:#333;line-height:1.6;">${note.notes}</div>
+              <div style="margin-top:10px;"><button class="btn btn-danger" style="padding:6px 12px;font-size:11px;" onclick="deleteAttitudeNote('${note.__key}')">Hapus</button></div>
+            </div>`;
+        }).join('')}
+      </div>
+      <div class="action-bar" style="margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Tutup</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+window.deleteAttitudeNote = async function(noteKey){
+  const note = findOne(d=>d.__key===noteKey); if (!note) return;
+  const btn = event.target; btn.disabled=true; btn.innerHTML='<span class="loading"></span>';
+  const res = await fbDeleteByKey(note.__key);
+  if (res.isOk){
+    document.querySelectorAll('.modal').forEach(m=>m.remove());
+    renderPenilaianTable(); showToast('Catatan berhasil dihapus','success');
+  }else{
+    showToast('⚠️ Gagal menghapus catatan','error'); btn.disabled=false; btn.textContent='Hapus';
+  }
+}
+
+/* ===== BANK SOAL ===== */
+function renderBankSoal(){
+  const docs = findByType(d=>d.type==='document' && d.user_name===currentUser);
+  const container = document.getElementById('documentList');
+  if (docs.length===0){ container.innerHTML='<div class="empty-state"><div class="empty-icon">📚</div><p>Belum ada dokumen</p></div>'; return; }
+  container.innerHTML = docs.map(doc=>`
+    <div class="document-item">
+      <div>
+        <div class="document-name">📄 ${doc.document_name}</div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">${new Date(doc.created_at).toLocaleDateString('id-ID')}</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="downloadDocument('${doc.__key}')">Download</button>
+        <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="deleteDocument('${doc.__key}')">Hapus</button>
+      </div>
+    </div>`).join('');
+}
+window.showUploadModal = function(){ document.getElementById('uploadModal').classList.add('active'); }
+document.getElementById('uploadForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const name = document.getElementById('documentName').value;
+  const fileInput = document.getElementById('documentFile');
+  const file = fileInput.files[0];
+  if (!file){ showToast('⚠️ Pilih file terlebih dahulu','error'); return; }
+  if (allData.length>=999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Mengupload...';
+  const reader = new FileReader();
+  reader.onload = async (ev)=>{
+    const res = await fbCreate({ type:'document', document_name:name, document_data:ev.target.result, user_name:currentUser, created_at:new Date().toISOString() });
+    btn.disabled=false; btn.textContent='Upload';
+    if (res.isOk){ closeModal('uploadModal'); document.getElementById('documentName').value=''; fileInput.value=''; showToast('Dokumen berhasil diupload','success'); }
+    else{ showToast('⚠️ Gagal mengupload dokumen','error'); }
+  };
+  reader.readAsDataURL(file);
+});
+window.downloadDocument = function(key){
+  const doc = findOne(d=>d.__key===key); if (!doc) return;
+  const link = document.createElement('a');
+  link.href = doc.document_data; link.download = doc.document_name; link.click();
+}
+window.deleteDocument = async function(key){
+  const doc = findOne(d=>d.__key===key); if (!doc) return;
+  const res = await fbDeleteByKey(doc.__key);
+  if (res.isOk){ showToast('Dokumen berhasil dihapus','success'); } else { showToast('⚠️ Gagal menghapus dokumen','error'); }
+}
+
+/* ===== HAPUS SEMUA DATA SAYA ===== */
+window.showDeleteDataModal = function(){
+  document.getElementById('deleteDataModal').classList.add('active');
+  document.getElementById('deletePassword').value='';
+  document.getElementById('deletePasswordError').style.display='none';
+}
+document.getElementById('deleteDataForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const password = document.getElementById('deletePassword').value;
+  const err = document.getElementById('deletePasswordError');
+  const user = findOne(d=>d.type==='user' && d.username===currentUser);
+  if (!user || user.password!==password){ err.style.display='block'; return; }
+  err.style.display='none';
+  const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menghapus...';
+  const mine = findByType(d=>d.user_name===currentUser && d.type!=='user');
+  for (const data of mine){ await fbDeleteByKey(data.__key); }
+  btn.disabled=false; btn.textContent='Hapus Semua Data Saya'; closeModal('deleteDataModal');
+  const successMsg = document.createElement('div');
+  successMsg.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:40px;border-radius:15px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:9999;text-align:center;';
+  successMsg.innerHTML = `<div style="font-size:48px;margin-bottom:15px;">✅</div><div style="font-size:18px;font-weight:600;color:#333;margin-bottom:10px;">Semua Data Anda Berhasil Dihapus!</div><div style="font-size:14px;color:#666;">Data guru lain tetap aman</div>`;
+  document.body.appendChild(successMsg); setTimeout(()=>successMsg.remove(),3000);
+});
+
+/* ===== EDIT KELAS ===== */
+window.showEditClassModal = function(className){
+  const classData = findOne(d=>d.type==='class' && d.class_name===className && d.user_name===currentUser);
+  if (!classData) return;
+  currentEditingClass = classData;
+  document.getElementById('editClassName').value = className;
+  document.getElementById('editClassModal').classList.add('active');
+}
+document.getElementById('editClassForm').addEventListener('submit', async function(e){
+  e.preventDefault(); if (!currentEditingClass) return;
+  const newName = document.getElementById('editClassName').value;
+  const oldName = currentEditingClass.class_name;
+  const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menyimpan...';
+  const res = await fbUpdateByKey(currentEditingClass.__key, {...currentEditingClass, class_name:newName});
+  if (res.isOk){
+    const students = findByType(d=>d.type==='student' && d.class_name===oldName && d.user_name===currentUser);
+    for (const s of students) await fbUpdateByKey(s.__key, {...s, class_name:newName});
+    const atts = findByType(d=>d.type==='attendance' && d.class_name===oldName && d.user_name===currentUser);
+    for (const a of atts) await fbUpdateByKey(a.__key, {...a, class_name:newName});
+    const scores = findByType(d=>(d.type==='knowledge_score'||d.type==='attitude_score') && d.class_name===oldName && d.user_name===currentUser);
+    for (const sc of scores) await fbUpdateByKey(sc.__key, {...sc, class_name:newName});
+    closeModal('editClassModal'); showToast('Kelas berhasil diperbarui','success');
+  }else{ showToast('⚠️ Gagal memperbarui kelas','error'); }
+  btn.disabled=false; btn.textContent='Simpan'; currentEditingClass=null;
+});
+
+/* ===== MISC ===== */
+window.closeModal = function(id){ const m=document.getElementById(id); if (m) m.classList.remove('active'); }
+window.exportToExcel = function(){
+  const sel = document.getElementById('penilaianClassSelect'); if (!sel){ showToast('⚠️ Pilih kelas terlebih dahulu','error'); return; }
+  const selectedClass = sel.value;
+  const students = findByType(d=>d.type==='student' && d.class_name===selectedClass && d.user_name===currentUser);
+  if (students.length===0){ showToast('⚠️ Tidak ada data siswa untuk diekspor','error'); return; }
+  let csv='';
+  if (currentPenilaianTab==='pengetahuan'){
+    const headers = ['No','Nama Siswa']; knowledgeColumns.forEach(col=>headers.push(`${col.label} (${col.type})`)); headers.push('Rata-rata');
+    csv = headers.join(',')+'\n';
+    students.forEach((st,i)=>{
+      const scoreData = findOne(d=>d.type==='knowledge_score' && d.student_name===st.student_name && d.class_name===selectedClass && d.user_name===currentUser);
+      let scores={}; if (scoreData && scoreData.scores){ try{ scores=JSON.parse(scoreData.scores); }catch{ scores={}; } }
+      const row = [i+1, `"${st.student_name}"`];
+      knowledgeColumns.forEach(col=>{ row.push(scores[col.id]||''); });
+      const valid = knowledgeColumns.map(col=>parseFloat(scores[col.id])).filter(v=>!isNaN(v) && v>0);
+      const avg = valid.length>0 ? (valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1) : '';
+      row.push(avg); csv += row.join(',')+'\n';
+    });
+    downloadCSV(csv, `Nilai_Pengetahuan_${selectedClass}_${new Date().toISOString().split('T')[0]}.csv`);
+  }else{
+    csv = 'No,Nama Siswa,Tanggal,Penilaian,Catatan\n'; let idx=1;
+    students.forEach(st=>{
+      const notes = findByType(d=>d.type==='attitude_score' && d.student_name===st.student_name && d.class_name===selectedClass && d.user_name===currentUser)
+        .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+      if (notes.length===0){ csv += `${idx},"${st.student_name}","-","-","-"\n`; idx++; }
+      else{
+        notes.forEach(n=>{ const date=new Date(n.created_at).toLocaleDateString('id-ID'); csv += `${idx},"${st.student_name}","${date}","${n.attitude_score}","${(n.notes||'').replace(/"/g,'""')}"\n`; idx++; });
+      }
+    });
+    downloadCSV(csv, `Nilai_Sikap_${selectedClass}_${new Date().toISOString().split('T')[0]}.csv`);
+  }
+}
+function downloadCSV(csv, filename){
+  const BOM='\uFEFF'; const blob=new Blob([BOM+csv],{type:'text/csv;charset=utf-8;'}); const link=document.createElement('a'); const url=URL.createObjectURL(blob);
+  link.setAttribute('href',url); link.setAttribute('download',filename); link.style.visibility='hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast('File berhasil diekspor!','success');
+}
+</script>
+
+<!-- Script kecil Cloudflare (dipertahankan bila perlu) -->
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a500ec4667c8a13',t:'MTc2NDIzMDA2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>
