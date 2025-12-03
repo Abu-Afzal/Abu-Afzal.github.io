@@ -37,14 +37,14 @@ body{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Gene
 .logout-btn{padding:8px 20px;background:#e74c3c;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;transition:all 0.3s;}
 .logout-btn:hover{background:#c0392b;}
 .menu-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-bottom:20px;}
-.menu-card{background:white;padding:0;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.3s;text-align:center;aspect-ratio:1;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+.menu-card{background:rgb(255, 255, 255);padding:0;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);cursor:pointer;transition:all 0.3s;text-align:center;aspect-ratio:1;display:flex;flex-direction:column;justify-content:center;align-items:center;}
 .menu-card:hover{transform:translateY(-3px);box-shadow:0 6px 15px rgba(0,0,0,0.15);}
 .menu-icon{font-size:28px;margin-bottom:6px;line-height:1;}
 .menu-title{font-size:10px;font-weight:600;color:#333;line-height:1.2;}
 .content-area{background:transparent;padding:0;border-radius:0;box-shadow:none;display:none;}
 .content-area.active{display:block;}
 .section-title{font-size:24px;font-weight:bold;color:#333;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #667eea;}
-.date-display{font-size:18px;color:#666;margin-bottom:15px;padding:12px;background:#f8f9fa;border-radius:8px;text-align:center;}
+.date-display{font-size:18px;font-weight:bold;color:#d13607;margin-bottom:15px;padding:12px;background:#f8f9fa;border-radius:8px;text-align:center;}
 .action-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
 .btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.3s;}
 .btn-primary{background:#667eea;color:white;}
@@ -109,7 +109,7 @@ tr:hover{background:#f8f9fa;}
   <div class="login-box">
     <img src="https://iili.io/KSGDE9s.jpg" alt="Logo MAN BANTAENG" class="login-logo" onerror="this.style.display='none'">
     <div class="login-title">Absen Digital</div>
-    <div class="login-subtitle">MAN BANTAENG</div>
+    <div class="login-title"><strong>MAN BANTAENG</strong></p></div>
 
     <!-- Login Form -->
     <form id="loginForm" style="display:block;">
@@ -125,7 +125,7 @@ tr:hover{background:#f8f9fa;}
       <div class="error-message" id="errorMessage">Username atau password salah!</div>
       <div style="text-align:center;margin-top:20px;">
         <button type="button" onclick="showRegisterForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">
-          Belum punya akun? Daftar di sini
+          </p>Belum punya akun? <strong>Daftar di sini</strong></p>
         </button>
       </div>
     </form>
@@ -149,7 +149,7 @@ tr:hover{background:#f8f9fa;}
       <div style="color:#27ae60;font-size:13px;margin-top:10px;display:none;" id="registerSuccessMessage">Pendaftaran berhasil! Silakan login.</div>
       <div style="text-align:center;margin-top:20px;">
         <button type="button" onclick="showLoginForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">
-          Sudah punya akun? Login di sini
+          Sudah punya akun? <strong>Login di sini</strong></p>
         </button>
       </div>
     </form>
@@ -425,7 +425,7 @@ function initApp(){
   const schoolNameEl = document.getElementById('schoolName');
   const schoolAddressEl = document.getElementById('schoolAddress');
   if (schoolNameEl) schoolNameEl.textContent = 'MAN BANTAENG';
-  if (schoolAddressEl) schoolAddressEl.textContent = 'Sistem Absensi Digital - Multi Guru';
+  if (schoolAddressEl) schoolAddressEl.textContent = 'Sistem Absensi Digital';
 
   updateCurrentDate();
   setInterval(updateCurrentDate, 60000);
@@ -1320,3 +1320,4 @@ function downloadCSV(csv, filename){
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a500ec4667c8a13',t:'MTc2NDIzMDA2OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
+
