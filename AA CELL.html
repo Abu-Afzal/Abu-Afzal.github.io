@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catatan Penjualan Pulsa V24 (Integrasi Firebase)</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-database-compat.js"></script>
+<script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+
+<style>
+/* Konten CSS LENGKAP dari baris 3095 hingga 3567 file Anda */
+body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100%;
+    height: 100%;
+}
+
+html {
+    height: 100%;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.header {
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.header-subtitle {
+    color: #10b981;
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 8px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.balance-display {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 15px 20px;
+    margin-top: 15px;
+    display: inline-block;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.data-status {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 12px 20px;
+    margin-top: 12px;
+    color: white;
+    font-size: 13px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.data-status.success {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.data-status.error {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 90px);
+    gap: 8px;
+    margin-bottom: 30px;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.menu-card {
+    background: white;
+    border-radius: 16px;
+    padding: 15px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+}
+
+.menu-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+
+.menu-card.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+}
+
+.menu-icon {
+    font-size: 32px;
+    margin-bottom: 6px;
+}
+
+.menu-title {
+    font-size: 11px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.content-area {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: none;
+}
+
+.content-area.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.filter-panel {
+    background: #f3f4f6;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.filter-group input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filter-info {
+    padding: 10px 15px;
+    background: white;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #6b7280;
+    display: none;
+}
+
+.transaction-list {
+    margin-top: 20px;
+}
+
+.transaction-item {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.transaction-item.balance {
+    border-left-color: #10b981;
+}
+
+.transaction-item.sale {
+    border-left-color: #f59e0b;
+}
+
+.transaction-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.transaction-type {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 18px;
+    color: #10b981;
+}
+
+.transaction-amount.expense {
+    color: #ef4444;
+}
+
+.transaction-details {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+.transaction-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.status-badge.paid {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.unpaid {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.recap-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.recap-card.highlight {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.recap-label {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.recap-value {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.recap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.customer-recap-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.customer-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-left: 4px solid #667eea;
+}
+
+.customer-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.customer-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.customer-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.customer-stat-label {
+    color: #6b7280;
+}
+
+.customer-stat-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.customer-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.customer-status.paid {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.customer-status.unpaid {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.customer-status.mixed {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.unpaid-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px dashed #e5e7eb;
+}
+
+.unpaid-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ef4444;
+    margin-bottom: 10px;
+}
+
+.unpaid-list {
+    background: #fef2f2;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.unpaid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #fecaca;
+    font-size: 13px;
+}
+
+.unpaid-item:last-child {
+    border-bottom: none;
+}
+
+.unpaid-date {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.unpaid-amount {
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.unpaid-total {
+    background: #fee2e2;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #6b7280;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    max-width: 350px;
+}
+
+.toast.show {
+    display: block;
+}
+
+.toast.error {
+    border-left: 4px solid #ef4444;
+}
+
+.toast.success {
+    border-left: 4px solid #10b981;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+</style>
+<style>@view-transition { navigation: auto; }</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1 id="app-title">Catatan Penjualan Pulsa</h1>
+<div class="header-subtitle">
+AA CELL
+</div>
+<div class="balance-display">
+💰 Saldo Saat Ini: Rp <span id="current-balance">0</span>
+</div>
+<div id="data-status" class="data-status">
+🔄 Menghubungkan ke Firebase...
+</div>
+</div>
+<div class="menu-grid">
+<div class="menu-card active" data-menu="balance">
+<div class="menu-icon">
+💵
+</div>
+<p class="menu-title" id="balance-menu-title">Saldo Awal</p>
+</div>
+<div class="menu-card" data-menu="transaction">
+<div class="menu-icon">
+📱
+</div>
+<p class="menu-title" id="transaction-menu-title">Transaksi</p>
+</div>
+<div class="menu-card" data-menu="list">
+<div class="menu-icon">
+📋
+</div>
+<p class="menu-title" id="list-menu-title">Daftar Transaksi</p>
+</div>
+<div class="menu-card" data-menu="recap">
+<div class="menu-icon">
+📊
+</div>
+<p class="menu-title" id="recap-menu-title">Rekap</p>
+</div>
+</div>
+<div id="balance-content" class="content-area active">
+<h2>Tambah Saldo</h2>
+<form id="balance-form">
+<div class="form-group"><label for="balance-amount">Jumlah Saldo (Rp)</label> <input type="number" id="balance-amount" required min="0" placeholder="Masukkan jumlah saldo">
+</div><button type="submit" class="btn btn-primary" id="balance-submit">Tambah Saldo</button>
+</form>
+</div>
+<div id="transaction-content" class="content-area">
+<h2>Transaksi Penjualan</h2>
+<form id="transaction-form">
+<div class="form-group"><label for="customer-name">Nama Pelanggan</label> <input type="text" id="customer-name" required placeholder="Masukkan nama pelanggan">
+</div>
+<div class="form-group"><label for="pulsa-amount">Jumlah Pulsa (Rp)</label> <input type="number" id="pulsa-amount" required min="0" placeholder="Contoh: 10000">
+</div>
+<div class="form-group"><label for="selling-price">Harga Jual (Rp)</label> <input type="number" id="selling-price" required min="0" placeholder="Contoh: 12000">
+</div><button type="submit" class="btn btn-primary" id="transaction-submit">Simpan Transaksi</button>
+</form>
+</div>
+<div id="list-content" class="content-area">
+<h2>Daftar Transaksi</h2>
+<div class="filter-panel">
+<div class="filter-row">
+<div class="filter-group"><label>Dari Tanggal:</label> <input type="date" id="filter-start-date">
+</div>
+<div class="filter-group"><label>Sampai Tanggal:</label> <input type="date" id="filter-end-date">
+</div>
+<div style="display: flex; gap: 8px;"><button onclick="applyDateFilter()" class="btn btn-primary" style="padding: 10px 20px; font-size: 14px;"> 🔍 Filter</button> <button onclick="clearDateFilter()" class="btn" style="padding: 10px 20px; font-size: 14px; background: #6b7280; color: white;"> ✕ Reset</button>
+</div>
+</div>
+<div class="filter-actions"><button onclick="exportToCSV()" class="btn btn-success" style="padding: 10px 20px; font-size: 14px;"> 📥 Export ke CSV</button> <span id="filter-info" class="filter-info"></span>
+</div>
+</div>
+<div id="transaction-list" class="transaction-list"></div>
+</div>
+<div id="recap-content" class="content-area">
+<h2>Rekap Keuangan</h2>
+<div id="recap-container" class="recap-grid">
+<div class="recap-card highlight">
+<div class="recap-label">
+💰 Total Top Up Saldo
+</div>
+<div class="recap-value"> Rp <span id="total-topup">0</span>
+</div>
+</div>
+<div class="recap-card">
+<div class="recap-label"> Total Saldo Keluar
+</div>
+<div class="recap-value"> Rp <span id="total-expense">0</span>
+</div>
+</div>
+<div class="recap-card">
+<div class="recap-label"> Total Harga Jual
+</div>
+<div class="recap-value"> Rp <span id="total-income">0</span>
+</div>
+</div>
+<div class="recap-card highlight">
+<div class="recap-label"> 📈 Total Laba Bersih
+</div>
+<div class="recap-value"> Rp <span id="total-profit">0</span>
+</div>
+</div>
+<div class="recap-card">
+<div class="recap-label"> Total Sudah Lunas
+</div>
+<div class="recap-value"> Rp <span id="total-paid">0</span>
+</div>
+</div>
+<div class="recap-card">
+<div class="recap-label"> ⏳ Total Belum Lunas
+</div>
+<div class="recap-value"> Rp <span id="total-unpaid">0</span>
+</div>
+</div>
+</div>
+<h2 style="margin-top: 30px;">Rekap Pelanggan</h2>
+<div id="customer-recap" class="customer-recap-container">
+<div class="loading">
+<span class="loading-spinner"></span> Memuat rekap pelanggan...
+</div>
+</div>
+</div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+// ----------------------------------------------------
+// 2. FIREBASE CONFIGURATION AND INITIALIZATION
+// ----------------------------------------------------
+
+// SILAKAN GANTI DENGAN KONFIGURASI LENGKAP DARI FIREBASE CONSOLE ANDA!
+const firebaseConfig = {
+    apiKey: "AIzaSyDHJHgRk6AggdTdRAB43I51aDVLH7RPYwQ",
+    authDomain: "aa-cell-49e91.firebaseapp.com",
+    databaseURL: "https://aa-cell-49e91-default-rtdb.asia-southeast1.firebasedatabase.app", // Perlu disesuaikan
+    projectId: "aa-cell-49e91",
+    storageBucket: "aa-cell-49e91.appspot.com",
+    messagingSenderId: "367303030467",
+    appId: "1:367303030467:web:8c5b0451a44c77c05b828a"
+};
+
+// Inisialisasi Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const transactionsRef = db.ref('transactions');
+
+// ----------------------------------------------------
+// 3. GLOBAL VARIABLES AND UTILITY FUNCTIONS
+// ----------------------------------------------------
+
+let allTransactions = [];
+let filteredTransactions = [];
+let currentBalance = 0;
+let currentRecordCount = 0;
+let isDataLoaded = false;
+let filterStartDate = null;
+let filterEndDate = null;
+let isFiltering = false;
+const MAX_TRANSACTIONS = 999; 
+
+function formatNumber(num) {
+    return (num || 0).toLocaleString('id-ID');
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Tanggal tidak tersedia';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch {
+        return dateString;
+    }
+}
+
+function formatDateShort(dateObject) {
+    return dateObject.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+}
+
+function showToast(message, type = 'normal') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
+
+function updateDataStatus(message, type = 'normal') {
+    const statusElement = document.getElementById('data-status');
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = 'data-status';
+        if (type === 'success') { statusElement.classList.add('success'); } 
+        else if (type === 'error') { statusElement.classList.add('error'); }
+        if (type !== 'normal') {
+            setTimeout(() => {
+                if (statusElement.textContent === message) {
+                    statusElement.style.display = 'none';
+                }
+            }, 5000);
+        }
+    }
+}
+
+// ----------------------------------------------------
+// 4. CORE DATA PROCESSING (ADAPTED FROM original dataHandler)
+// ----------------------------------------------------
+
+function onDataChanged(data) {
+    console.log(" 📊 Data received from Firebase:", data);
+    
+    // Filter out invalid/incomplete records
+    allTransactions = data.filter(item => {
+        return item && typeof item === 'object' && item.__backendId && item.type && (item.type === 'balance' || item.type === 'sale');
+    });
+
+    currentRecordCount = allTransactions.length;
+    isDataLoaded = true;
+
+    if (currentRecordCount > 0) {
+        const balanceCount = allTransactions.filter(t => t.type === 'balance').length;
+        const saleCount = allTransactions.filter(t => t.type === 'sale').length;
+        updateDataStatus(` ✅ Terhubung! ${currentRecordCount} transaksi (${balanceCount} saldo, ${saleCount} penjualan)`, 'success');
+        showToast(`Data berhasil dimuat: ${currentRecordCount} transaksi`, "success");
+    } else {
+        updateDataStatus(" 📝 Database kosong - Siap untuk data baru", 'normal');
+    }
+
+    calculateBalance();
+    if (isFiltering) {
+        applyDateFilter();
+    } else {
+        filteredTransactions = [...allTransactions];
+        updateUI();
+    }
+}
+
+function calculateBalance() {
+    let balance = 0;
+    allTransactions.forEach(transaction => {
+        if (transaction.type === 'balance') {
+            balance += transaction.amount || 0;
+        } else if (transaction.type === 'sale') {
+            balance -= transaction.pulsaAmount || 0;
+        }
+    });
+    currentBalance = balance;
+}
+
+function updateUI() {
+    document.getElementById('current-balance').textContent = formatNumber(currentBalance);
+    renderTransactionList();
+    updateRecap();
+}
+
+// ----------------------------------------------------
+// 5. FIREBASE INTEGRATION FUNCTIONS (Replaces Canva SDK calls)
+// ----------------------------------------------------
+
+async function handleBalanceSubmit() {
+    const submitBtn = document.getElementById('balance-submit');
+    if (!isDataLoaded) {
+        showToast("Sistem belum siap. Tunggu sebentar.", "error");
+        return;
+    }
+    const amount = parseFloat(document.getElementById('balance-amount').value);
+    if (!amount || amount <= 0) {
+        showToast("Masukkan jumlah saldo yang valid", "error");
+        return;
+    }
+    if (currentRecordCount >= MAX_TRANSACTIONS) {
+        showToast(`Maksimum ${MAX_TRANSACTIONS} transaksi tercapai. Hapus beberapa transaksi dulu.`, "error");
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Menyimpan...';
+
+    const newTransaction = {
+        type: 'balance',
+        amount: amount,
+        customerName: '',
+        pulsaAmount: 0,
+        sellingPrice: 0,
+        isPaid: true,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        // PENGGANTIAN: Menggunakan push() untuk membuat record baru di Firebase
+        await transactionsRef.push(newTransaction);
+        document.getElementById('balance-form').reset();
+        showToast(" ✅ Saldo berhasil ditambahkan!", "success");
+    } catch (error) {
+        console.error("Error adding balance to Firebase:", error);
+        showToast(" ❌ Gagal menambahkan saldo. Coba lagi.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Tambah Saldo';
+    }
+}
+
+async function handleTransactionSubmit() {
+    const submitBtn = document.getElementById('transaction-submit');
+    if (!isDataLoaded) {
+        showToast("Sistem belum siap. Tunggu sebentar.", "error");
+        return;
+    }
+
+    const customerName = document.getElementById('customer-name').value.trim();
+    const pulsaAmount = parseFloat(document.getElementById('pulsa-amount').value);
+    const sellingPrice = parseFloat(document.getElementById('selling-price').value);
+
+    if (customerName === "") {
+        showToast("Masukkan nama pelanggan", "error");
+        return;
+    }
+    if (!pulsaAmount || pulsaAmount <= 0) {
+        showToast("Masukkan jumlah pulsa yang valid", "error");
+        return;
+    }
+    if (!sellingPrice || sellingPrice <= 0) {
+        showToast("Masukkan harga jual yang valid", "error");
+        return;
+    }
+    if (pulsaAmount > currentBalance) {
+        showToast(" ❌ Saldo tidak mencukupi untuk transaksi ini!", "error");
+        return;
+    }
+    if (currentRecordCount >= MAX_TRANSACTIONS) {
+        showToast(`Maksimum ${MAX_TRANSACTIONS} transaksi tercapai. Hapus beberapa transaksi dulu.`, "error");
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Menyimpan...';
+
+    const newTransaction = {
+        type: 'sale',
+        amount: 0, // 'amount' hanya untuk type: 'balance'
+        customerName: customerName,
+        pulsaAmount: pulsaAmount,
+        sellingPrice: sellingPrice,
+        isPaid: false, // Default: Belum Lunas
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        // PENGGANTIAN: Menggunakan push() untuk membuat record baru di Firebase
+        await transactionsRef.push(newTransaction);
+        document.getElementById('transaction-form').reset();
+        showToast(" ✅ Transaksi berhasil disimpan!", "success");
+    } catch (error) {
+        console.error("Error adding transaction to Firebase:", error);
+        showToast(" ❌ Terjadi kesalahan. Coba lagi.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Simpan Transaksi';
+    }
+}
+
+async function updateTransactionStatus(transactionId, isPaidStatus) {
+    if (!transactionId) return;
+
+    try {
+        // PENGGANTIAN: Menggunakan update() di Firebase Realtime DB
+        const transactionItemRef = transactionsRef.child(transactionId);
+        await transactionItemRef.update({ isPaid: isPaidStatus });
+        showToast(` ✅ Status diubah menjadi ${isPaidStatus ? 'Lunas' : 'Belum Lunas'}`, "success");
+    } catch (error) {
+        console.error("Error updating transaction status in Firebase:", error);
+        showToast(" ❌ Gagal mengubah status", "error");
+    }
+}
+
+async function markAsPaid(transactionId) {
+    await updateTransactionStatus(transactionId, true);
+}
+
+async function markAsUnpaid(transactionId) {
+    await updateTransactionStatus(transactionId, false);
+}
+
+async function deleteTransaction(transactionId) {
+    if (!transactionId) return;
+
+    try {
+        // PENGGANTIAN: Menggunakan remove() di Firebase Realtime DB
+        const transactionItemRef = transactionsRef.child(transactionId);
+        await transactionItemRef.remove();
+        showToast(" ✅ Transaksi berhasil dihapus", "success");
+    } catch (error) {
+        console.error("Error deleting transaction in Firebase:", error);
+        showToast(" ❌ Gagal menghapus transaksi", "error");
+    }
+}
+
+// ----------------------------------------------------
+// 6. UI LOGIC (Minimal Changes, mostly using __backendId as Firebase key)
+// ----------------------------------------------------
+
+function initializeApp() {
+    setupEventListeners();
+    showInitialUI();
+    
+    // PENGGANTIAN: Listener Real-Time Firebase
+    transactionsRef.on('value', (snapshot) => {
+        const firebaseData = snapshot.val();
+        let transactions = [];
+
+        if (firebaseData) {
+            // Konversi objek data Firebase ke array
+            transactions = Object.keys(firebaseData).map(key => ({
+                ...firebaseData[key],
+                __backendId: key // Menggunakan key Firebase sebagai ID unik
+            }));
+        }
+        
+        onDataChanged(transactions);
+    }, (error) => {
+        console.error(" 💥 Error koneksi ke Firebase:", error);
+        updateDataStatus(" 💥 Error koneksi Firebase", 'error');
+        showToast("Terjadi kesalahan koneksi database.", "error");
+    });
+}
+
+function showInitialUI() {
+    document.getElementById('current-balance').textContent = '0';
+    filteredTransactions = [...allTransactions];
+    renderTransactionList();
+    updateRecap();
+}
+
+function setupEventListeners() {
+    document.querySelectorAll('.menu-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const menu = card.dataset.menu;
+            showMenu(menu);
+        });
+    });
+    document.getElementById('balance-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleBalanceSubmit();
+    });
+    document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleTransactionSubmit();
+    });
+}
+
+function showMenu(menuName) {
+    document.querySelectorAll('.menu-card').forEach(card => {
+        card.classList.remove('active');
+    });
+    document.querySelectorAll('.content-area').forEach(area => {
+        area.classList.remove('active');
+    });
+    document.querySelector(`[data-menu="${menuName}"]`).classList.add('active');
+    document.getElementById(`${menuName}-content`).classList.add('active');
+}
+
+function applyDateFilter() {
+    const startDateInput = document.getElementById('filter-start-date').value;
+    const endDateInput = document.getElementById('filter-end-date').value;
+
+    if (!startDateInput && !endDateInput) {
+        showToast("Pilih minimal satu tanggal untuk filter", "error");
+        return;
+    }
+    filterStartDate = startDateInput ? new Date(startDateInput) : null;
+    filterEndDate = endDateInput ? new Date(endDateInput) : null;
+    if (filterEndDate) { 
+        filterEndDate.setHours(23, 59, 59, 999);
+    }
+
+    if (filterStartDate && filterEndDate && filterStartDate > filterEndDate) {
+        showToast("Tanggal awal tidak boleh lebih besar dari tanggal akhir", "error");
+        return;
+    }
+    isFiltering = true;
+    filteredTransactions = allTransactions.filter(transaction => {
+        const transactionDate = new Date(transaction.createdAt);
+        if (filterStartDate && filterEndDate) {
+            return transactionDate >= filterStartDate && transactionDate <= filterEndDate;
+        } else if (filterStartDate) {
+            return transactionDate >= filterStartDate;
+        } else if (filterEndDate) {
+            return transactionDate <= filterEndDate;
+        }
+        return true;
+    });
+
+    const filterInfo = document.getElementById('filter-info');
+    filterInfo.style.display = 'inline-block';
+    let filterText = ` 📅 Menampilkan ${filteredTransactions.length} dari ${allTransactions.length} transaksi`;
+    if (filterStartDate && filterEndDate) {
+        filterText += ` (${formatDateShort(filterStartDate)} - ${formatDateShort(filterEndDate)})`;
+    } else if (filterStartDate) {
+        filterText += ` (dari ${formatDateShort(filterStartDate)})`;
+    } else if (filterEndDate) {
+        filterText += ` (sampai ${formatDateShort(filterEndDate)})`;
+    }
+    filterInfo.textContent = filterText;
+    renderTransactionList();
+    showToast(`Filter diterapkan: ${filteredTransactions.length} transaksi ditampilkan`, "success");
+}
+
+function clearDateFilter() {
+    document.getElementById('filter-start-date').value = '';
+    document.getElementById('filter-end-date').value = '';
+    filterStartDate = null;
+    filterEndDate = null;
+    isFiltering = false;
+    const filterInfo = document.getElementById('filter-info');
+    filterInfo.style.display = 'none';
+    filteredTransactions = [...allTransactions];
+    renderTransactionList();
+    showToast("Filter dihapus, menampilkan semua transaksi", "success");
+}
+
+function exportToCSV() {
+    if (filteredTransactions.length === 0) {
+        showToast("Tidak ada data untuk diekspor", "error");
+        return;
+    }
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += "Tanggal,Waktu,Tipe,Nama Pelanggan,Jumlah Pulsa,Harga Jual,Laba,Top Up Saldo,Status Bayar\n";
+
+    const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return dateB - dateA;
+    });
+
+    sortedTransactions.forEach(transaction => {
+        const date = new Date(transaction.createdAt);
+        const dateStr = date.toLocaleDateString('id-ID');
+        const timeStr = date.toLocaleTimeString('id-ID');
+        if (transaction.type === 'balance') {
+            csvContent += `"${dateStr}","${timeStr}","Tambah Saldo","","","","","${transaction.amount}","Lunas"\n`;
+        } else {
+            const profit = transaction.sellingPrice - transaction.pulsaAmount;
+            const status = transaction.isPaid ? 'Lunas' : 'Belum Lunas';
+            csvContent += `"${dateStr}","${timeStr}","Penjualan Pulsa","${transaction.customerName}","${transaction.pulsaAmount}","${transaction.sellingPrice}","${profit}","","${status}"\n`;
+        }
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    const now = new Date();
+    const filename = `Transaksi_AA_CELL_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.csv`;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(` ✅ Berhasil export ${filteredTransactions.length} transaksi ke CSV`, "success");
+}
+
+function renderTransactionList() {
+    const listContainer = document.getElementById('transaction-list');
+    if (filteredTransactions.length === 0) {
+        listContainer.innerHTML = ` 
+            <div class="empty-state"> 
+                <div class="empty-state-icon"> 📭 </div> 
+                <p>${isFiltering ? 'Tidak ada transaksi dalam periode ini' : 'Belum ada transaksi'}</p> 
+            </div> 
+        `; 
+        return;
+    }
+    const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        return dateB - dateA;
+    });
+    
+    // Menggunakan __backendId yang sekarang berisi key Firebase
+    listContainer.innerHTML = sortedTransactions.map(transaction => {
+        if (transaction.type === 'balance') {
+            return ` 
+                <div class="transaction-item balance"> 
+                    <div class="transaction-header"> 
+                        <span class="transaction-type"> 💵 Tambah Saldo</span> 
+                        <span class="transaction-amount">+Rp ${formatNumber(transaction.amount)}</span> 
+                    </div> 
+                    <div class="transaction-details"> 
+                        ${formatDate(transaction.createdAt)} 
+                    </div> 
+                    <div class="transaction-actions"> 
+                        <button class="btn btn-danger" onclick="deleteTransaction('${transaction.__backendId}')">Hapus</button> 
+                    </div> 
+                </div> 
+            `; 
+        } else { 
+            const profit = transaction.sellingPrice - transaction.pulsaAmount;
+            return ` 
+                <div class="transaction-item sale"> 
+                    <div class="transaction-header"> 
+                        <span class="transaction-type"> 📱 Penjualan Pulsa</span> 
+                        <span class="transaction-amount expense">-Rp ${formatNumber(transaction.pulsaAmount)}</span> 
+                    </div> 
+                    <div class="transaction-details"> 
+                        <strong>${transaction.customerName}</strong><br> 
+                        Pulsa: Rp ${formatNumber(transaction.pulsaAmount)} | Jual: Rp ${formatNumber(transaction.sellingPrice)}<br> 
+                        Laba: Rp ${formatNumber(profit)}<br> 
+                        ${formatDate(transaction.createdAt)} 
+                    </div> 
+                    <span class="status-badge ${transaction.isPaid ? 'paid' : 'unpaid'}"> 
+                        ${transaction.isPaid ? ' ✓ Lunas' : ' ⏳ Belum Lunas'} 
+                    </span> 
+                    <div class="transaction-actions"> 
+                        ${!transaction.isPaid ? `<button class="btn btn-success" onclick="markAsPaid('${transaction.__backendId}')">Tandai Lunas</button>` : ''} 
+                        ${transaction.isPaid ? `<button class="btn btn-warning" onclick="markAsUnpaid('${transaction.__backendId}')">Tandai Belum Lunas</button>` : ''} 
+                        <button class="btn btn-danger" onclick="deleteTransaction('${transaction.__backendId}')">Hapus</button> 
+                    </div> 
+                </div> 
+            `; 
+        }
+    }).join('');
+}
+
+function updateRecap() { 
+    let totalTopUp = 0; 
+    let totalExpense = 0; 
+    let totalIncome = 0; 
+    let totalPaid = 0; 
+    let totalUnpaid = 0; 
+    
+    allTransactions.forEach(transaction => { 
+        if (transaction.type === 'balance') { 
+            totalTopUp += transaction.amount || 0; 
+        } else if (transaction.type === 'sale') { 
+            totalExpense += transaction.pulsaAmount || 0; 
+            totalIncome += transaction.sellingPrice || 0; 
+            if (transaction.isPaid) { 
+                totalPaid += transaction.sellingPrice || 0; 
+            } else { 
+                totalUnpaid += transaction.sellingPrice || 0; 
+            } 
+        } 
+    }); 
+    
+    const totalProfit = totalIncome - totalExpense; 
+    document.getElementById('total-topup').textContent = formatNumber(totalTopUp); 
+    document.getElementById('total-expense').textContent = formatNumber(totalExpense); 
+    document.getElementById('total-income').textContent = formatNumber(totalIncome); 
+    document.getElementById('total-profit').textContent = formatNumber(totalProfit); 
+    document.getElementById('total-paid').textContent = formatNumber(totalPaid); 
+    document.getElementById('total-unpaid').textContent = formatNumber(totalUnpaid); 
+    updateCustomerRecap(); 
+} 
+
+function updateCustomerRecap() { 
+    const customerRecapContainer = document.getElementById('customer-recap'); 
+    const customerData = {}; 
+    
+    allTransactions.forEach(transaction => { 
+        if (transaction.type === 'sale' && transaction.customerName) { 
+            const customerName = transaction.customerName; 
+            if (!customerData[customerName]) { 
+                customerData[customerName] = { 
+                    totalTransactions: 0, 
+                    totalPulsaAmount: 0, 
+                    totalSellingPrice: 0, 
+                    paidTransactions: 0, 
+                    unpaidTransactions: 0, 
+                    unpaidDetails: [], 
+                    unpaidTotal: 0 
+                }; 
+            } 
+            customerData[customerName].totalTransactions++; 
+            customerData[customerName].totalPulsaAmount += transaction.pulsaAmount || 0; 
+            customerData[customerName].totalSellingPrice += transaction.sellingPrice || 0; 
+            if (transaction.isPaid) { 
+                customerData[customerName].paidTransactions++; 
+            } else { 
+                customerData[customerName].unpaidTransactions++; 
+                customerData[customerName].unpaidDetails.push({ 
+                    date: transaction.createdAt, 
+                    pulsaAmount: transaction.pulsaAmount, 
+                    sellingPrice: transaction.sellingPrice 
+                }); 
+                customerData[customerName].unpaidTotal += transaction.sellingPrice || 0; 
+            } 
+        } 
+    }); 
+
+    const customerNames = Object.keys(customerData); 
+    if (customerNames.length === 0) { 
+        customerRecapContainer.innerHTML = ` 
+            <div class="empty-state"> 
+                <div class="empty-state-icon"> 👥 </div> 
+                <p>Belum ada data pelanggan</p> 
+            </div> 
+        `; 
+        return; 
+    } 
+    customerNames.sort((a, b) => customerData[b].totalSellingPrice - customerData[a].totalSellingPrice); 
+    customerRecapContainer.innerHTML = customerNames.map(customerName => { 
+        const data = customerData[customerName]; 
+        const profit = data.totalSellingPrice - data.totalPulsaAmount; 
+        let statusClass, statusText; 
+        if (data.unpaidTransactions === 0) { 
+            statusClass = 'paid'; 
+            statusText = ' ✓ Semua Lunas'; 
+        } else if (data.paidTransactions === 0) { 
+            statusClass = 'unpaid'; 
+            statusText = ' ⏳ Belum Lunas'; 
+        } else { 
+            statusClass = 'mixed'; 
+            statusText = `${data.paidTransactions}/${data.totalTransactions} Lunas`; 
+        } 
+        let unpaidDetailsHtml = ''; 
+        if (data.unpaidTransactions > 0) { 
+            unpaidDetailsHtml = ` 
+                <div class="unpaid-section"> 
+                    <div class="unpaid-header"> ⏳ Transaksi Belum Lunas (${data.unpaidTransactions}x):</div> 
+                    <div class="unpaid-list"> 
+                        ${data.unpaidDetails.map(detail => ` 
+                            <div class="unpaid-item"> 
+                                <span class="unpaid-date">${formatDate(detail.date)}</span> 
+                                <span class="unpaid-amount">Rp ${formatNumber(detail.sellingPrice)}</span> 
+                            </div> 
+                        `).join('')} 
+                    </div> 
+                    <div class="unpaid-total"> 
+                        <strong>Total Belum Lunas:</strong> 
+                        <span style="color: #ef4444; font-weight: 700;">Rp ${formatNumber(data.unpaidTotal)}</span> 
+                    </div> 
+                </div> 
+            `; 
+        } 
+        return ` 
+            <div class="customer-card"> 
+                <div class="customer-name">${customerName}</div> 
+                <div class="customer-stats"> 
+                    <div class="customer-stat"> 
+                        <span class="customer-stat-label">Total Transaksi:</span> 
+                        <span class="customer-stat-value">${data.totalTransactions}x</span> 
+                    </div> 
+                    <div class="customer-stat"> 
+                        <span class="customer-stat-label">Total Pembelian:</span> 
+                        <span class="customer-stat-value">Rp ${formatNumber(data.totalSellingPrice)}</span> 
+                    </div> 
+                    <div class="customer-stat"> 
+                        <span class="customer-stat-label">Modal Keluar:</span> 
+                        <span class="customer-stat-value">Rp ${formatNumber(data.totalPulsaAmount)}</span> 
+                    </div> 
+                    <div class="customer-stat"> 
+                        <span class="customer-stat-label">Laba dari Pelanggan:</span> 
+                        <span class="customer-stat-value">Rp ${formatNumber(profit)}</span> 
+                    </div> 
+                </div> 
+                <div class="customer-status ${statusClass}">${statusText}</div> 
+                ${unpaidDetailsHtml} 
+            </div> 
+        `; 
+    }).join(''); 
+} 
+
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+</script>
+</body>
+</html>
