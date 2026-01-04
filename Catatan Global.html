@@ -1,0 +1,1477 @@
+
+<!doctype html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Voucher Internet</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase (compat untuk drop-in di 1 file) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <style>
+    body { box-sizing: border-box; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    .loading-spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+</head>
+
+<body class="h-full bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 font-sans">
+<div id="app" class="h-full w-full overflow-auto"></div>
+<div id="modalContainer"></div>
+
+<script>
+/* ==========================
+   Konfigurasi & Inisialisasi Firebase
+   ========================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyD2a8_s_TRL-fUXb-A4KM-LHQIU4v7gOKY",
+  authDomain: "database-global-net.firebaseapp.com",
+  databaseURL: "https://database-global-net-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "database-global-net",
+  storageBucket: "database-global-net.firebasestorage.app",
+  messagingSenderId: "300384504970",
+  appId: "1:300384504970:web:a48479e3a332c27013f173",
+  measurementId: "G-BWLMG8X3JZ"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ==========================
+   Konstanta Harga & Konfigurasi UI
+   ========================== */
+const PRICE_V3_SELL   = 2550;
+const PRICE_V5_SELL   = 4250;
+const PRICE_V3_GLOBAL = 2400;
+const PRICE_V5_GLOBAL = 4000;
+const FEE_V3 = 150;
+const FEE_V5 = 250;
+
+// Stokis tetap static (pembagian fee)
+const STOKIS = [
+  { name: 'Andi',   percentage: 37.5 },
+  { name: 'Risman', percentage: 32.5 },
+  { name: 'Anto',   percentage: 30   }
+];
+
+const config = {
+  app_title: "Sistem Voucher Internet",
+  company_name: "CV. Voucher Indonesia",
+  primary_color: "#8B5CF6",
+  secondary_color: "#EC4899",
+  background_color: "#FFFFFF",
+  text_color: "#1F2937",
+  success_color: "#10B981"
+};
+
+/* ==========================
+   State Aplikasi
+   ========================== */
+let currentUser = null;     // { username, role: 'admin'|'user'|'agent-viewer' }
+let currentView = 'login';  // 'login'|'admin'|'period'|'stock'|'transaction'|'history'|'report'|'fee'|'notes'
+let loginMode   = 'admin';  // 'admin'|'agent'
+let unreadNotesCount = 0;
+
+/* ==========================
+   Struktur Data dari Firebase
+   ========================== */
+// Kita simpan semua data di memori untuk render cepat.
+let users = [];              // [{id, username, password, role, created_at}]
+let agents = [];             // [{id, agent_name, created_at}]
+let periods = [];            // [{id, period_name, start_date, end_date, is_active, created_at}]
+let stocks = [];             // [{id, period_name, stock_v3_initial, stock_v5_initial, stock_v3_out, stock_v5_out, created_at, updated_at}]
+let transactions = [];       // [{id, period_name, agent_name, transaction_date, transaction_type:'taking'|'deposit', v3_qty, v5_qty, total_amount, created_at}]
+let globalTransfers = [];    // [{id, period_name, transaction_date, total_amount, created_at}]
+let notes = [];              // [{id, period_name, username, note_text, note_date, created_at}]
+let readNotes = [];          // [{id, note_id, username, period_name, read_at}]
+let adminCredential = null;  // {id, type:'admin_credential', password, created_at, updated_at}
+
+/* ==========================
+   Helper Firebase Refs
+   ========================== */
+const refUsers           = db.ref('voucherSystem/users');
+const refAgents          = db.ref('voucherSystem/agents');
+const refPeriods         = db.ref('voucherSystem/periods');
+const refStocks          = db.ref('voucherSystem/stocks');
+const refTransactions    = db.ref('voucherSystem/transactions');
+const refGlobalTransfers = db.ref('voucherSystem/global_transfers');
+const refNotes           = db.ref('voucherSystem/notes');
+const refReadNotes       = db.ref('voucherSystem/read_notes');
+const refAdminCredential = db.ref('voucherSystem/admin_credential'); // single-object (gunakan child 'main')
+
+/* ==========================
+   Utilitas
+   ========================== */
+function formatNumber(num) {
+  if (!num && num !== 0) return "0";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function formatDateTime(dateStr) {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function showMessage(message, type) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg text-white z-50 fade-in ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+  messageDiv.textContent = message;
+  document.body.appendChild(messageDiv);
+  setTimeout(() => messageDiv.remove(), 3000);
+}
+function generateId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+function getActivePeriod() {
+  return periods.find(p => p.is_active);
+}
+function calculateUnreadNotes() {
+  if (!currentUser) { unreadNotesCount = 0; return; }
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) { unreadNotesCount = 0; return; }
+  const periodName = activePeriod.period_name;
+  const periodNotes = notes.filter(n => n.period_name === periodName);
+  const userReads = readNotes.filter(r => r.username === currentUser.username && r.period_name === periodName);
+  const readIds = userReads.map(r => r.note_id);
+  unreadNotesCount = periodNotes.filter(n => !readIds.includes(n.id)).length;
+}
+
+/* ==========================
+   Rendering Root
+   ========================== */
+function render() {
+  const app = document.getElementById('app');
+  if (currentView === 'login') {
+    app.innerHTML = renderLogin();
+  } else if (currentView === 'admin') {
+    app.innerHTML = renderAdmin();
+  } else {
+    app.innerHTML = renderMainMenu();
+  }
+}
+
+/* ==========================
+   Login View
+   ========================== */
+function renderLogin() {
+  const agentOptions = agents.map(agent => `<option value="${agent.agent_name}">${agent.agent_name}</option>`).join('');
+  return `
+  <div class="min-h-full flex items-center justify-center p-3" style="background: linear-gradient(135deg, ${config.primary_color}15, ${config.secondary_color}15);">
+    <div class="w-full max-w-md">
+      <div class="rounded-2xl shadow-2xl p-5 fade-in" style="background-color: ${config.background_color};">
+        <div class="text-center mb-6">
+          <div class="inline-block p-3 rounded-full mb-3" style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});">
+            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold mb-1" style="color: ${config.text_color};">${config.app_title}</h1>
+          <p class="text-sm text-gray-500">${config.company_name}</p>
+        </div>
+
+        <div class="mb-3">
+          <div class="flex gap-2">
+            <button onclick="switchLoginMode('admin')" id="adminModeBtn" class="flex-1 py-2 text-sm rounded-lg font-semibold transition-all" style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color}); color: white;">Admin/User</button>
+            <button onclick="switchLoginMode('agent')" id="agentModeBtn" class="flex-1 py-2 text-sm rounded-lg font-semibold transition-all bg-gray-200" style="color: ${config.text_color};">Agen</button>
+          </div>
+        </div>
+
+        <form id="loginForm" class="space-y-3">
+          <div id="adminLoginFields">
+            <div class="mb-3">
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Username</label>
+              <input type="text" id="loginUsername" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Masukkan username">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Password</label>
+              <div class="relative">
+                <input type="password" id="loginPassword" class="w-full px-3 py-2 pr-10 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Masukkan password">
+                <button type="button" onclick="togglePassword()" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                  <svg id="eyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path id="eyePath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path id="eyePath2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="agentLoginFields" class="hidden">
+            <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Pilih Nama Agen</label>
+            <select id="agentSelect" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2">
+              <option value="">-- Pilih Agen --</option>
+              ${agentOptions}
+            </select>
+            ${agents.length === 0 ? '<p class="text-xs text-gray-500 mt-2">Belum ada agen yang terdaftar</p>' : ''}
+          </div>
+
+          <button type="submit" class="w-full py-2.5 text-sm rounded-lg text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center" style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});">
+            <span id="loginButtonText">Masuk</span>
+          </button>
+        </form>
+
+        <div id="loginError" class="mt-3 p-2 text-xs bg-red-100 text-red-700 rounded-lg hidden"></div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function switchLoginMode(mode) {
+  loginMode = mode;
+  const adminFields = document.getElementById('adminLoginFields');
+  const agentFields = document.getElementById('agentLoginFields');
+  const adminBtn = document.getElementById('adminModeBtn');
+  const agentBtn = document.getElementById('agentModeBtn');
+
+  if (mode === 'admin') {
+    adminFields.classList.remove('hidden');
+    agentFields.classList.add('hidden');
+    adminBtn.style.background = `linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color})`;
+    adminBtn.style.color = 'white';
+    agentBtn.style.background = '#E5E7EB';
+    agentBtn.style.color = config.text_color;
+  } else {
+    adminFields.classList.add('hidden');
+    agentFields.classList.remove('hidden');
+    agentBtn.style.background = `linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color})`;
+    agentBtn.style.color = 'white';
+    adminBtn.style.background = '#E5E7EB';
+    adminBtn.style.color = config.text_color;
+  }
+}
+
+/* ==========================
+   Admin Panel
+   ========================== */
+function renderAdmin() {
+  return `
+  <div class="min-h-full p-3 w-full" style="background: linear-gradient(135deg, ${config.primary_color}15, ${config.secondary_color}15);">
+    <div class="max-w-6xl mx-auto">
+      <div class="rounded-xl shadow-xl p-4 mb-4 fade-in" style="background-color: ${config.background_color};">
+        <div class="flex justify-between items-center flex-wrap gap-2">
+          <div>
+            <h1 class="text-xl font-bold" style="color: ${config.text_color};">Panel Admin</h1>
+            <p class="text-xs text-gray-500 mt-1">Kelola user dan agen</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button onclick="showChangeAdminPasswordModal()" class="px-4 py-1.5 text-xs text-white rounded-lg hover:shadow-lg transition-all" style="background: ${config.secondary_color};">Ganti Password</button>
+            <button onclick="backToMainMenu()" class="px-4 py-1.5 text-xs text-white rounded-lg hover:shadow-lg transition-all" style="background: ${config.primary_color};">Menu Utama</button>
+            <button onclick="logout()" class="px-4 py-1.5 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="rounded-xl shadow-xl p-4 fade-in" style="background-color: ${config.background_color};">
+          <h2 class="text-lg font-bold mb-3" style="color: ${config.text_color};">Tambah User</h2>
+          <form id="addUserForm" class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Username</label>
+              <input type="text" id="newUsername" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Username">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Password</label>
+              <input type="password" id="newPassword" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Password">
+            </div>
+            <button type="submit" class="w-full py-2 text-sm rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Tambah User</button>
+          </form>
+
+          <div class="mt-4">
+            <h3 class="font-semibold text-sm mb-2" style="color: ${config.text_color};">Daftar User</h3>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              ${users.map(user => `
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span class="text-sm" style="color: ${config.text_color};">${user.username}</span>
+                  <div class="flex gap-2">
+                    <button onclick="showChangePasswordModal('${user.id}', '${user.username}')" class="text-blue-500 hover:text-blue-700 text-xs font-medium">Ganti PW</button>
+                    <button onclick="deleteUser('${user.id}')" class="text-red-500 hover:text-red-700 text-xs font-medium">Hapus</button>
+                  </div>
+                </div>
+              `).join('') || '<p class="text-gray-500 text-xs">Belum ada user</p>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl shadow-xl p-4 fade-in" style="background-color: ${config.background_color};">
+          <h2 class="text-lg font-bold mb-3" style="color: ${config.text_color};">Tambah Agen</h2>
+          <form id="addAgentForm" class="space-y-3">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Nama Agen</label>
+              <input type="text" id="newAgentName" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Nama agen">
+            </div>
+            <button type="submit" class="w-full py-2 text-sm rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.secondary_color};">Tambah Agen</button>
+          </form>
+
+          <div class="mt-4">
+            <h3 class="font-semibold text-sm mb-2" style="color: ${config.text_color};">Daftar Agen</h3>
+            <div class="space-y-2 max-h-64 overflow-y-auto">
+              ${agents.map(agent => `
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                  <span class="text-sm" style="color: ${config.text_color};">${agent.agent_name}</span>
+                  <button onclick="deleteAgent('${agent.id}')" class="text-red-500 hover:text-red-700 text-xs">Hapus</button>
+                </div>
+              `).join('') || '<p class="text-gray-500 text-xs">Belum ada agen</p>'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function showChangePasswordModal(userId, username) {
+  const modalContainer = document.getElementById('modalContainer');
+  modalContainer.innerHTML = `
+  <div class="modal-overlay fade-in" onclick="closeModal(event)">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold" style="color: ${config.text_color};">Ganti Password</h3>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="mb-4 p-3 rounded-lg" style="background-color: ${config.primary_color}15;">
+        <p class="text-sm" style="color: ${config.text_color};"><strong>Username:</strong> ${username}</p>
+      </div>
+      <form id="changePasswordForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: ${config.text_color};">Password Baru</label>
+          <input type="password" id="newPasswordInput" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Masukkan password baru">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: ${config.text_color};">Konfirmasi Password</label>
+          <input type="password" id="confirmPasswordInput" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Ulangi password baru">
+        </div>
+        <div id="passwordError" class="hidden p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+        <div class="flex gap-3">
+          <button type="button" onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors" style="color: ${config.text_color};">Batal</button>
+          <button type="submit" class="flex-1 py-2 rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  `;
+  document.getElementById('changePasswordForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleChangePassword(userId);
+  });
+}
+
+function showChangeAdminPasswordModal() {
+  const modalContainer = document.getElementById('modalContainer');
+  modalContainer.innerHTML = `
+  <div class="modal-overlay fade-in" onclick="closeModal(event)">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold" style="color: ${config.text_color};">Ganti Password Admin</h3>
+        <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="mb-4 p-3 rounded-lg" style="background-color: ${config.secondary_color}15;">
+        <p class="text-sm" style="color: ${config.text_color};"><strong>⚠️ Perhatian:</strong> Anda akan mengubah password untuk akun admin utama. Pastikan Anda mengingat password baru!</p>
+      </div>
+      <form id="changeAdminPasswordForm" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: ${config.text_color};">Password Lama</label>
+          <input type="password" id="oldAdminPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Masukkan password lama">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: ${config.text_color};">Password Baru</label>
+          <input type="password" id="newAdminPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Masukkan password baru">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: ${config.text_color};">Konfirmasi Password Baru</label>
+          <input type="password" id="confirmAdminPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Ulangi password baru">
+        </div>
+        <div id="adminPasswordError" class="hidden p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+        <div class="flex gap-3">
+          <button type="button" onclick="closeModal()" class="flex-1 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors" style="color: ${config.text_color};">Batal</button>
+          <button type="submit" class="flex-1 py-2 rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.secondary_color};">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  `;
+  document.getElementById('changeAdminPasswordForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleChangeAdminPassword();
+  });
+}
+
+function closeModal(event) {
+  // tutup hanya jika klik area overlay
+  if (event && !event.target.classList.contains('modal-overlay')) return;
+  document.getElementById('modalContainer').innerHTML = '';
+}
+
+/* ==========================
+   Main Menu & Konten
+   ========================== */
+function renderMainMenu() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod && currentView !== 'period') {
+    currentView = 'period';
+  }
+  calculateUnreadNotes();
+  const agentMenus = ['stock', 'history', 'notes'];
+  const fullMenus  = ['period', 'stock', 'transaction', 'history', 'report', 'fee', 'notes'];
+  const menus      = currentUser.role === 'agent-viewer' ? agentMenus : fullMenus;
+
+  return `
+  <div class="min-h-full p-3 w-full" style="background: linear-gradient(135deg, ${config.primary_color}15, ${config.secondary_color}15);">
+    <div class="max-w-7xl mx-auto">
+      <div class="rounded-xl shadow-xl p-4 mb-4 fade-in" style="background-color: ${config.background_color};">
+        <div class="flex justify-between items-center flex-wrap gap-2">
+          <div>
+            <h1 class="text-xl font-bold" style="color: ${config.text_color};">${config.app_title}</h1>
+            <p class="text-xs text-gray-500 mt-1">Selamat datang, ${currentUser.username}${currentUser.role === 'agent-viewer' ? ' (Viewer)' : ''}</p>
+            ${activePeriod ? `<p class="text-xs mt-1" style="color: ${config.primary_color};">Periode: ${activePeriod.period_name}</p>` : ''}
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            ${currentUser.role === 'admin' ? `<button onclick="goToAdmin()" class="px-4 py-1.5 text-xs text-white rounded-lg hover:shadow-lg transition-all" style="background: ${config.secondary_color};">Admin Panel</button>` : ''}
+            <button onclick="logout()" class="px-4 py-1.5 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-3">
+        <div class="md:col-span-1">
+          <div class="rounded-xl shadow-xl p-3 fade-in" style="background-color: ${config.background_color};">
+            <h2 class="text-base font-bold mb-3" style="color: ${config.text_color};">Menu</h2>
+            <div class="space-y-1.5">
+              ${menus.map(view => {
+                const labels = {period: 'Periode', stock: 'Stok Voucher', transaction: 'Transaksi', history: 'Riwayat Transaksi', report: 'Laporan', fee: 'Fee Stokis', notes: 'Catatan'};
+                const isActive = currentView === view;
+                return `
+                  <button onclick="changeView('${view}')" class="w-full text-left px-3 py-2 text-sm rounded-lg transition-all ${isActive ? 'text-white shadow-lg' : 'hover:bg-gray-100'} relative" style="${isActive ? `background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});` : `color: ${config.text_color};`}">
+                    <span class="flex items-center justify-between">
+                      <span>${labels[view]}</span>
+                      ${view === 'notes' && unreadNotesCount > 0 ? `
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse">${unreadNotesCount}</span>
+                      ` : ''}
+                    </span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+
+        <div class="md:col-span-3">
+          <div class="rounded-xl shadow-xl p-4 fade-in" style="background-color: ${config.background_color};">
+            ${renderContent()}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function renderContent() {
+  switch(currentView) {
+    case 'period':     return renderPeriod();
+    case 'stock':      return renderStock();
+    case 'transaction':return renderTransaction();
+    case 'history':    return renderHistory();
+    case 'report':     return renderReport();
+    case 'fee':        return renderFee();
+    case 'notes':      return renderNotes();
+    default:           return '';
+  }
+}
+
+/* ==========================
+   Period
+   ========================== */
+function renderPeriod() {
+  const activePeriod = getActivePeriod();
+  return `
+    <h2 class="text-sm font-bold mb-3" style="color: ${config.text_color};">Kelola Periode</h2>
+    ${currentUser.role === 'admin' ? `
+    <form id="addPeriodForm" class="mb-3 p-3 bg-gray-50 rounded-lg">
+      <h3 class="text-xs font-semibold mb-2" style="color: ${config.text_color};">Tambah Periode Baru</h3>
+      <div class="grid md:grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Nama Periode</label>
+          <input type="text" id="periodName" required class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Contoh: Januari 2026">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Tanggal Mulai</label>
+          <input type="date" id="periodStart" required class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2">
+        </div>
+      </div>
+      <button type="submit" class="mt-2 px-3 py-1.5 text-xs rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Tambah Periode</button>
+    </form>
+    ` : `
+    <div class="mb-3 p-2 rounded-lg" style="background-color: ${config.primary_color}15; border-left: 4px solid ${config.primary_color};">
+      <p class="text-xs" style="color: ${config.text_color};"><strong>Info:</strong> Anda dapat melihat semua periode di bawah ini. Untuk menambah atau mengaktifkan periode, hubungi admin.</p>
+    </div>
+    `}
+
+    <div class="space-y-2">
+      ${periods.length > 0 ? periods.map(period => `
+        <div class="p-2 rounded-lg border-2 ${period.is_active ? 'border-green-500 bg-green-50' : 'border-gray-200'}" style="${period.is_active ? `border-color: ${config.success_color};` : ''}">
+          <div class="flex justify-between items-center">
+            <div>
+              <h3 class="font-semibold text-xs" style="color: ${config.text_color};">${period.period_name}</h3>
+              <p class="text-xs text-gray-600">Mulai: ${formatDate(period.start_date)}</p>
+              ${period.is_active ? `<span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs text-white" style="background-color: ${config.success_color};">Aktif</span>` : '<span class="inline-block mt-1 px-2 py-0.5 rounded-full text-xs bg-gray-400 text-white">Tidak Aktif</span>'}
+            </div>
+            ${currentUser.role === 'admin' ? `
+            <div class="flex gap-1">
+              ${period.is_active ? `
+                <button onclick="deactivatePeriod('${period.id}')" class="px-2 py-1 text-xs rounded-lg text-white hover:shadow-lg transition-all bg-orange-500 hover:bg-orange-600">Non-aktifkan</button>
+              ` : `
+                <button onclick="activatePeriod('${period.id}')" class="px-2 py-1 text-xs rounded-lg text-white hover:shadow-lg transition-all" style="background: ${config.primary_color};">Aktifkan</button>
+              `}
+              <button onclick="deletePeriod('${period.id}')" class="px-2 py-1 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all">Hapus</button>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('') : `<p class="text-gray-500 text-xs">${currentUser.role === 'admin' ? 'Belum ada periode. Silakan tambahkan periode baru.' : 'Belum ada periode yang tersedia.'}</p>`}
+    </div>
+  `;
+}
+
+/* ==========================
+   Stock
+   ========================== */
+function renderStock() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) return '<p class="text-gray-500 text-sm">Silakan aktifkan periode terlebih dahulu</p>';
+  const stock = stocks.find(s => s.period_name === activePeriod.period_name) || {
+    stock_v3_initial: 0, stock_v5_initial: 0, stock_v3_out: 0, stock_v5_out: 0
+  };
+  const remainingV3 = (stock.stock_v3_initial || 0) - (stock.stock_v3_out || 0);
+  const remainingV5 = (stock.stock_v5_initial || 0) - (stock.stock_v5_out || 0);
+
+  return `
+    <h2 class="text-lg font-bold mb-4" style="color: ${config.text_color};">Stok Voucher</h2>
+    ${currentUser.role === 'admin' ? `
+      <form id="setStockForm" class="mb-4 p-3 bg-gray-50 rounded-lg">
+        <div class="mb-3"><h3 class="font-semibold text-sm" style="color: ${config.text_color};">Tambah Stok</h3></div>
+        <div class="mb-3 p-2 rounded-lg" style="background-color: ${config.primary_color}15; border-left: 4px solid ${config.primary_color};">
+          <p class="text-xs" style="color: ${config.text_color};"><strong>💡 Info:</strong> Stok yang Anda input akan ditambahkan ke stok yang sudah ada.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Tambah Stok V3</label>
+            <input type="number" id="stockV3Initial" required min="0" value="" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="0">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Tambah Stok V5</label>
+            <input type="number" id="stockV5Initial" required min="0" value="" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="0">
+          </div>
+        </div>
+        <button type="submit" class="mt-3 px-4 py-2 text-sm rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Tambah Stok</button>
+      </form>
+    ` : ''}
+
+    <div class="space-y-2">
+      <div class="p-3 rounded-lg" style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});">
+        <p class="text-xs text-white font-semibold mb-2">VOUCHER V3</p>
+        <div class="grid grid-cols-3 gap-2 text-white">
+          <div class="bg-white bg-opacity-20 rounded p-2">
+            <p class="text-xs opacity-90">Stok Awal</p><p class="text-base font-bold">${stock.stock_v3_initial || 0}</p>
+          </div>
+          <div class="bg-white bg-opacity-20 rounded p-2">
+            <p class="text-xs opacity-90">Keluar</p><p class="text-base font-bold">${stock.stock_v3_out || 0}</p>
+          </div>
+          <div class="bg-white bg-opacity-30 rounded p-2">
+            <p class="text-xs opacity-90">Sisa</p><p class="text-lg font-bold">${remainingV3}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-lg" style="background: linear-gradient(135deg, ${config.success_color}, ${config.primary_color});">
+        <p class="text-xs text-white font-semibold mb-2">VOUCHER V5</p>
+        <div class="grid grid-cols-3 gap-2 text-white">
+          <div class="bg-white bg-opacity-20 rounded p-2">
+            <p class="text-xs opacity-90">Stok Awal</p><p class="text-base font-bold">${stock.stock_v5_initial || 0}</p>
+          </div>
+          <div class="bg-white bg-opacity-20 rounded p-2">
+            <p class="text-xs opacity-90">Keluar</p><p class="text-base font-bold">${stock.stock_v5_out || 0}</p>
+          </div>
+          <div class="bg-white bg-opacity-30 rounded p-2">
+            <p class="text-xs opacity-90">Sisa</p><p class="text-lg font-bold">${remainingV5}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ==========================
+   Transaction
+   ========================== */
+function renderTransaction() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) return '<p class="text-gray-500 text-xs">Silakan aktifkan periode terlebih dahulu</p>';
+  if (agents.length === 0) return '<p class="text-gray-500 text-xs">Belum ada agen. Silakan tambahkan agen terlebih dahulu di Admin Panel.</p>';
+
+  const agentOptions = agents.map(agent => `<option value="${agent.agent_name}">${agent.agent_name}</option>`).join('');
+  return `
+    <h2 class="text-sm font-bold mb-3" style="color: ${config.text_color};">Transaksi</h2>
+    <div class="grid md:grid-cols-2 gap-2 mb-3">
+      <div>
+        <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Pilih Agen</label>
+        <select id="transactionAgent" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2">
+          <option value="">-- Pilih Agen --</option>
+          ${agentOptions}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Tanggal Transaksi</label>
+        <input type="date" id="transactionDate" value="${new Date().toISOString().split('T')[0]}" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2">
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="p-3 rounded-lg" style="background: linear-gradient(135deg, ${config.primary_color}15, ${config.secondary_color}15);">
+        <h3 class="text-xs font-bold mb-2" style="color: ${config.text_color};">Transaksi Pengambilan</h3>
+        <form id="takingForm">
+          <div class="space-y-2">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Jumlah V3 (@ Rp ${formatNumber(PRICE_V3_SELL)})</label>
+              <input type="number" id="takingV3" min="0" value="0" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2" onchange="calculateTaking()">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Jumlah V5 (@ Rp ${formatNumber(PRICE_V5_SELL)})</label>
+              <input type="number" id="takingV5" min="0" value="0" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2" onchange="calculateTaking()">
+            </div>
+            <div class="p-2 rounded-lg" style="background-color: ${config.background_color};">
+              <p class="text-xs text-gray-600">Total Harga:</p>
+              <p id="takingTotal" class="text-sm font-bold" style="color: ${config.primary_color};">Rp 0</p>
+            </div>
+            <button type="submit" class="w-full py-1.5 text-xs rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Simpan Pengambilan</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="p-3 rounded-lg" style="background: linear-gradient(135deg, ${config.success_color}15, ${config.primary_color}15);">
+        <h3 class="text-xs font-bold mb-2" style="color: ${config.text_color};">Transaksi Penyetoran</h3>
+        <form id="depositForm">
+          <div class="space-y-2">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Jumlah Setoran (Rp)</label>
+              <input type="number" id="depositAmount" min="0" required class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="0">
+            </div>
+            <button type="submit" class="w-full py-1.5 text-xs rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background-color: ${config.success_color};">Simpan Setoran</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+}
+
+function calculateTaking() {
+  const v3 = parseInt(document.getElementById('takingV3').value) || 0;
+  const v5 = parseInt(document.getElementById('takingV5').value) || 0;
+  const total = (v3 * PRICE_V3_SELL) + (v5 * PRICE_V5_SELL);
+  document.getElementById('takingTotal').textContent = 'Rp ' + formatNumber(total);
+}
+
+/* ==========================
+   History
+   ========================== */
+function renderHistory() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) return '<p class="text-gray-500 text-xs">Silakan aktifkan periode terlebih dahulu</p>';
+
+  let periodTx = transactions.filter(t => t.period_name === activePeriod.period_name);
+  if (currentUser.role === 'agent-viewer') {
+    periodTx = periodTx.filter(t => t.agent_name === currentUser.username);
+  }
+  const agentNames = [...new Set(periodTx.map(t => t.agent_name))];
+
+  return `
+    <h2 class="text-sm font-bold mb-3" style="color: ${config.text_color};">Riwayat Transaksi${currentUser.role === 'agent-viewer' ? ' - ' + currentUser.username : ''}</h2>
+    ${agentNames.length === 0 ? '<p class="text-gray-500 text-xs">Belum ada transaksi</p>' : agentNames.map(agentName => {
+      const agentTx = periodTx.filter(t => t.agent_name === agentName);
+      const totalTaking = agentTx.filter(t => t.transaction_type === 'taking').reduce((s, t) => s + t.total_amount, 0);
+      const totalDeposit= agentTx.filter(t => t.transaction_type === 'deposit').reduce((s, t) => s + t.total_amount, 0);
+      const remaining   = totalTaking - totalDeposit;
+      const isPaid      = remaining <= 0;
+
+      return `
+      <div class="mb-3 p-2 rounded-lg border-2" style="border-color: ${isPaid ? config.success_color : '#EF4444'}; background-color: ${isPaid ? config.success_color : '#EF4444'}10;">
+        <div class="flex justify-between items-center mb-2">
+          <h3 class="text-xs font-bold" style="color: ${config.text_color};">${agentName}</h3>
+          <span class="px-2 py-0.5 rounded-full text-white text-xs font-semibold" style="background-color: ${isPaid ? config.success_color : '#EF4444'};">${isPaid ? 'LUNAS' : 'BELUM LUNAS'}</span>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-2 mb-2">
+          <div class="p-2 bg-white rounded-lg">
+            <p class="text-xs text-gray-600">Total Pengambilan</p>
+            <p class="text-xs font-bold" style="color: ${config.text_color};">Rp ${formatNumber(totalTaking)}</p>
+          </div>
+          <div class="p-2 bg-white rounded-lg">
+            <p class="text-xs text-gray-600">Total Setoran</p>
+            <p class="text-xs font-bold" style="color: ${config.success_color};">Rp ${formatNumber(totalDeposit)}</p>
+          </div>
+          <div class="p-2 bg-white rounded-lg">
+            <p class="text-xs text-gray-600">Sisa Hutang</p>
+            <p class="text-xs font-bold" style="color: ${remaining > 0 ? '#EF4444' : config.success_color};">Rp ${formatNumber(Math.max(0, remaining))}</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full bg-white rounded-lg">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="px-2 py-1 text-left text-xs font-semibold" style="color: ${config.text_color};">Tanggal</th>
+                <th class="px-2 py-1 text-left text-xs font-semibold" style="color: ${config.text_color};">Tipe</th>
+                <th class="px-2 py-1 text-left text-xs font-semibold" style="color: ${config.text_color};">V3</th>
+                <th class="px-2 py-1 text-left text-xs font-semibold" style="color: ${config.text_color};">V5</th>
+                <th class="px-2 py-1 text-left text-xs font-semibold" style="color: ${config.text_color};">Total</th>
+                ${currentUser.role === 'admin' ? `<th class="px-2 py-1 text-left text-xs font-semibold" style="color: ${config.text_color};">Aksi</th>` : ''}
+              </tr>
+            </thead>
+            <tbody>
+              ${agentTx.sort((a,b)=> new Date(b.transaction_date) - new Date(a.transaction_date)).map(t => `
+                <tr class="border-b">
+                  <td class="px-2 py-1 text-xs" style="color: ${config.text_color};">${formatDate(t.transaction_date)}</td>
+                  <td class="px-2 py-1 text-xs">
+                    <span class="px-1.5 py-0.5 rounded text-xs text-white" style="background-color: ${t.transaction_type === 'taking' ? config.primary_color : config.success_color};">
+                      ${t.transaction_type === 'taking' ? 'Pengambilan' : 'Setoran'}
+                    </span>
+                  </td>
+                  <td class="px-2 py-1 text-xs" style="color: ${config.text_color};">${t.v3_qty || '-'}</td>
+                  <td class="px-2 py-1 text-xs" style="color: ${config.text_color};">${t.v5_qty || '-'}</td>
+                  <td class="px-2 py-1 text-xs font-semibold" style="color: ${config.text_color};">Rp ${formatNumber(t.total_amount)}</td>
+                  ${currentUser.role === 'admin' ? `
+                  <td class="px-2 py-1 text-xs">
+                    <button onclick="deleteTransactionRecord('${t.id}', '${t.transaction_type}', ${t.v3_qty || 0}, ${t.v5_qty || 0}, '${activePeriod.period_name}')" class="text-red-500 hover:text-red-700 font-medium">Hapus</button>
+                  </td>` : ''}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      `;
+    }).join('')}
+  `;
+}
+
+/* ==========================
+   Report
+   ========================== */
+function renderReport() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) return '<p class="text-gray-500">Silakan aktifkan periode terlebih dahulu</p>';
+  const stock = stocks.find(s => s.period_name === activePeriod.period_name) || { stock_v3_initial: 0, stock_v5_initial: 0, stock_v3_out: 0, stock_v5_out: 0 };
+  const periodTx = transactions.filter(t => t.period_name === activePeriod.period_name);
+
+  const totalStockValue = (stock.stock_v3_initial * PRICE_V3_SELL) + (stock.stock_v5_initial * PRICE_V5_SELL);
+  const totalDeposit    = periodTx.filter(t => t.transaction_type === 'deposit').reduce((s, t) => s + t.total_amount, 0);
+  const totalTaking     = periodTx.filter(t => t.transaction_type === 'taking').reduce((s, t) => s + t.total_amount, 0);
+  const totalUnpaid     = totalStockValue - totalDeposit;
+
+  const totalV3Initial  = stock.stock_v3_initial || 0;
+  const totalV5Initial  = stock.stock_v5_initial || 0;
+  const totalGlobalCost = (totalV3Initial * PRICE_V3_GLOBAL) + (totalV5Initial * PRICE_V5_GLOBAL);
+  const periodGT        = globalTransfers.filter(g => g.period_name === activePeriod.period_name);
+  const totalGlobalPaid = periodGT.reduce((s, t) => s + t.total_amount, 0);
+  const totalGlobalUnpaid = totalGlobalCost - totalGlobalPaid;
+
+  const remainingV3Stock = totalV3Initial - (stock.stock_v3_out || 0);
+  const remainingV5Stock = totalV5Initial - (stock.stock_v5_out || 0);
+  const totalVoucherValue = (remainingV3Stock * PRICE_V3_SELL) + (remainingV5Stock * PRICE_V5_SELL);
+
+  return `
+    <h2 class="text-sm font-bold mb-3" style="color: ${config.text_color};">Laporan</h2>
+
+    <form id="globalTransferForm" class="mb-3 p-2 bg-gray-50 rounded-lg">
+      <h3 class="text-xs font-semibold mb-2" style="color: ${config.text_color};">Catat Transfer ke Global</h3>
+      <div class="grid md:grid-cols-2 gap-2">
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Jumlah Transfer (Rp)</label>
+          <input type="number" id="globalTransferAmount" required min="0" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="0">
+        </div>
+        <div>
+          <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Tanggal Transfer</label>
+          <input type="date" id="globalTransferDate" value="${new Date().toISOString().split('T')[0]}" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2">
+        </div>
+      </div>
+      <button type="submit" class="mt-2 px-3 py-1.5 text-xs rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Simpan Transfer</button>
+    </form>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});">
+            <th class="px-2 py-1.5 text-left text-white font-semibold text-xs">Keterangan</th>
+            <th class="px-2 py-1.5 text-right text-white font-semibold text-xs">Jumlah (Rp)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-b bg-blue-50">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">1. Total Harga Stok Awal</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs" style="color: ${config.text_color};">Rp ${formatNumber(totalStockValue)}</td>
+          </tr>
+          <tr class="border-b" style="background-color: ${config.success_color}15;">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">2. Total Setoran dari Agen</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs" style="color: ${config.success_color};">Rp ${formatNumber(totalDeposit)}</td>
+          </tr>
+          <tr class="border-b bg-red-50">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">3. Total yang Belum Disetor</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs text-red-600">Rp ${formatNumber(totalUnpaid)}</td>
+          </tr>
+          <tr class="border-b bg-purple-50">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">4. Total Transfer ke Global</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs" style="color: ${config.text_color};">Rp ${formatNumber(totalGlobalCost)}</td>
+          </tr>
+          <tr class="border-b" style="background-color: ${config.success_color}15;">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">5. Total yang Sudah di TF ke Global</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs" style="color: ${config.success_color};">Rp ${formatNumber(totalGlobalPaid)}</td>
+          </tr>
+          <tr class="border-b bg-orange-50">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">6. Total yang Belum di TF ke Global</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs text-orange-600">Rp ${formatNumber(totalGlobalUnpaid)}</td>
+          </tr>
+          <tr style="background: linear-gradient(135deg, ${config.primary_color}25, ${config.secondary_color}25);">
+            <td class="px-2 py-1.5 font-medium text-xs" style="color: ${config.text_color};">7. Total Voucher / Konversi Uang</td>
+            <td class="px-2 py-1.5 text-right font-semibold text-xs" style="color: ${config.text_color};">Rp ${formatNumber(totalVoucherValue)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    ${periodGT.length > 0 ? `
+      <div class="mt-3">
+        <h3 class="text-xs font-semibold mb-2" style="color: ${config.text_color};">Riwayat Transfer ke Global</h3>
+        <div class="space-y-1.5">
+          ${periodGT.sort((a,b)=> new Date(b.transaction_date) - new Date(a.transaction_date)).map(t => `
+            <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+              <div>
+                <span class="text-xs" style="color: ${config.text_color};">${formatDate(t.transaction_date)}</span>
+                <span class="font-semibold text-xs ml-3" style="color: ${config.success_color};">Rp ${formatNumber(t.total_amount)}</span>
+              </div>
+              ${currentUser.role === 'admin' ? `<button onclick="deleteGlobalTransferRecord('${t.id}')" class="text-red-500 hover:text-red-700 text-xs font-medium">Hapus</button>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : ''}
+  `;
+}
+
+/* ==========================
+   Fee
+   ========================== */
+function renderFee() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) return '<p class="text-gray-500 text-xs">Silakan aktifkan periode terlebih dahulu</p>';
+  const stock = stocks.find(s => s.period_name === activePeriod.period_name) || { stock_v3_initial: 0, stock_v5_initial: 0 };
+  const totalV3Initial = stock.stock_v3_initial || 0;
+  const totalV5Initial = stock.stock_v5_initial || 0;
+  const totalFeeV3 = totalV3Initial * FEE_V3;
+  const totalFeeV5 = totalV5Initial * FEE_V5;
+  const totalFee   = totalFeeV3 + totalFeeV5;
+
+  return `
+    <h2 class="text-sm font-bold mb-3" style="color: ${config.text_color};">Fee Stokis</h2>
+    <div class="mb-3 p-3 rounded-lg" style="background: linear-gradient(135deg, ${config.primary_color}15, ${config.secondary_color}15);">
+      <h3 class="text-xs font-bold mb-2" style="color: ${config.text_color};">Perhitungan Total Fee</h3>
+      <div class="space-y-2">
+        <div class="flex justify-between items-center p-2 bg-white rounded-lg">
+          <span class="text-xs" style="color: ${config.text_color};">Fee V3 (${totalV3Initial} × Rp ${formatNumber(FEE_V3)})</span>
+          <span class="font-bold text-xs" style="color: ${config.primary_color};">Rp ${formatNumber(totalFeeV3)}</span>
+        </div>
+        <div class="flex justify-between items-center p-2 bg-white rounded-lg">
+          <span class="text-xs" style="color: ${config.text_color};">Fee V5 (${totalV5Initial} × Rp ${formatNumber(FEE_V5)})</span>
+          <span class="font-bold text-xs" style="color: ${config.primary_color};">Rp ${formatNumber(totalFeeV5)}</span>
+        </div>
+        <div class="flex justify-between items-center p-2 rounded-lg" style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});">
+          <span class="text-white font-bold text-xs">Total Fee Stokis</span>
+          <span class="text-white font-bold text-sm">Rp ${formatNumber(totalFee)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-3">
+      ${STOKIS.map(stokis => {
+        const feeAmount = Math.round(totalFee * (stokis.percentage / 100));
+        return `
+          <div class="p-3 rounded-lg shadow-lg" style="background-color: ${config.background_color}; border-top: 4px solid ${config.primary_color};">
+            <div class="text-center mb-2">
+              <div class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center text-white text-sm font-bold" style="background: linear-gradient(135deg, ${config.primary_color}, ${config.secondary_color});">${stokis.name.charAt(0)}</div>
+              <h3 class="text-xs font-bold" style="color: ${config.text_color};">${stokis.name}</h3>
+            </div>
+            <div class="space-y-2">
+              <div class="p-2 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-600">Persentase</p>
+                <p class="text-xs font-bold" style="color: ${config.primary_color};">${stokis.percentage}%</p>
+              </div>
+              <div class="p-2 bg-gray-50 rounded-lg">
+                <p class="text-xs text-gray-600">Perhitungan</p>
+                <p class="text-xs" style="color: ${config.text_color};">${stokis.percentage}% × Rp ${formatNumber(totalFee)}</p>
+              </div>
+              <div class="p-2 rounded-lg" style="background: linear-gradient(135deg, ${config.success_color}15, ${config.primary_color}15);">
+                <p class="text-xs text-gray-600">Fee yang Didapat</p>
+                <p class="text-sm font-bold" style="color: ${config.success_color};">Rp ${formatNumber(feeAmount)}</p>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div class="mt-3 p-2 rounded-lg" style="background-color: ${config.primary_color}10; border-left: 4px solid ${config.primary_color};">
+      <p class="text-xs" style="color: ${config.text_color};"><strong>Catatan:</strong> Fee stokis dihitung berdasarkan total stok awal voucher. Fee V3 = Rp ${formatNumber(FEE_V3)} per voucher, Fee V5 = Rp ${formatNumber(FEE_V5)} per voucher.</p>
+    </div>
+  `;
+}
+
+/* ==========================
+   Notes
+   ========================== */
+function renderNotes() {
+  const activePeriod = getActivePeriod();
+  if (!activePeriod) return '<p class="text-gray-500 text-xs">Silakan aktifkan periode terlebih dahulu</p>';
+
+  const periodNotes = notes.filter(n => n.period_name === activePeriod.period_name);
+  const userReads   = readNotes.filter(r => r.username === currentUser.username && r.period_name === activePeriod.period_name);
+  const readIds     = userReads.map(r => r.note_id);
+
+  return `
+    <h2 class="text-sm font-bold mb-3" style="color: ${config.text_color};">Catatan</h2>
+    ${currentUser.role !== 'agent-viewer' ? `
+    <form id="addNoteForm" class="mb-3 p-2 bg-gray-50 rounded-lg">
+      <div>
+        <label class="block text-xs font-medium mb-1" style="color: ${config.text_color};">Tulis Catatan</label>
+        <textarea id="noteText" required rows="3" class="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2" placeholder="Tulis catatan Anda di sini..."></textarea>
+      </div>
+      <button type="submit" class="mt-2 px-3 py-1.5 text-xs rounded-lg text-white font-semibold hover:shadow-lg transition-all" style="background: ${config.primary_color};">Simpan Catatan</button>
+    </form>
+    ` : `
+    <div class="mb-3 p-2 rounded-lg" style="background-color: ${config.primary_color}15; border-left: 4px solid ${config.primary_color};">
+      <p class="text-xs" style="color: ${config.text_color};"><strong>Info:</strong> Anda dapat melihat semua catatan di bawah ini. Untuk menambah catatan, hubungi admin atau user.</p>
+    </div>
+    `}
+
+    <div class="space-y-2 max-h-96 overflow-y-auto">
+      ${periodNotes.sort((a, b) => new Date(b.note_date) - new Date(a.note_date)).map(note => {
+        const isRead = readIds.includes(note.id);
+        return `
+          <div class="p-3 rounded-lg shadow-md ${!isRead ? 'border-2 border-red-400' : ''}" style="background-color: ${config.background_color}; border-left: 4px solid ${config.primary_color};">
+            <div class="flex justify-between items-start mb-2 gap-2">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center flex-wrap gap-2 mb-1">
+                  <span class="font-semibold text-xs" style="color: ${config.text_color};">${note.username}</span>
+                  <span class="text-xs text-gray-500">${formatDateTime(note.note_date)}</span>
+                  ${!isRead ? `<span class="px-1.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">BARU</span>` : ''}
+                </div>
+              </div>
+              <div class="flex gap-2 flex-shrink-0">
+                ${!isRead ? `<button onclick="markNoteAsRead('${note.id}')" class="text-blue-500 hover:text-blue-700 text-xs font-medium whitespace-nowrap">Tandai Dibaca</button>` : ''}
+                ${currentUser.role === 'admin' ? `<button onclick="deleteNoteRecord('${note.id}')" class="text-red-500 hover:text-red-700 text-xs font-medium whitespace-nowrap">Hapus</button>` : ''}
+              </div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-2 max-h-32 overflow-y-auto">
+              <p class="text-gray-700 text-xs whitespace-pre-wrap break-words">${note.note_text}</p>
+            </div>
+          </div>
+        `;
+      }).join('') || '<p class="text-gray-500 text-xs">Belum ada catatan</p>'}
+    </div>
+  `;
+}
+
+/* ==========================
+   Auth & Navigasi
+   ========================== */
+function togglePassword() {
+  const passwordInput = document.getElementById('loginPassword');
+  const eyePath = document.getElementById('eyePath');
+  const eyePath2 = document.getElementById('eyePath2');
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    eyePath.setAttribute('d', 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21');
+    eyePath2.setAttribute('d', '');
+  } else {
+    passwordInput.type = 'password';
+    eyePath.setAttribute('d', 'M15 12a3 3 0 11-6 0 3 3 0 016 0z');
+    eyePath2.setAttribute('d', 'M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z');
+  }
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  if (loginMode === 'agent') {
+    const agentName = document.getElementById('agentSelect').value;
+    if (!agentName) {
+      const errorDiv = document.getElementById('loginError');
+      errorDiv.textContent = 'Silakan pilih nama agen!';
+      errorDiv.classList.remove('hidden');
+      setTimeout(() => errorDiv.classList.add('hidden'), 3000);
+      return;
+    }
+    currentUser = { username: agentName, role: 'agent-viewer' };
+    currentView = 'stock';
+    render();
+    return;
+  }
+
+  const username = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value;
+
+  if (username === 'admin') {
+    const correctAdminPassword = adminCredential?.password || 'admin';
+    if (password === correctAdminPassword) {
+      currentUser = { username: 'admin', role: 'admin' };
+      currentView = 'period';
+      render();
+      return;
+    }
+  }
+
+  const user = users.find(u => u.username === username && u.password === password);
+  if (user) {
+    currentUser = { username: user.username, role: user.role || 'user' };
+    currentView = 'period';
+    render();
+  } else {
+    const errorDiv = document.getElementById('loginError');
+    errorDiv.textContent = 'Username atau password salah!';
+    errorDiv.classList.remove('hidden');
+    setTimeout(() => errorDiv.classList.add('hidden'), 3000);
+  }
+}
+
+function logout() {
+  currentUser = null;
+  currentView = 'login';
+  loginMode = 'admin';
+  render();
+}
+function goToAdmin() { currentView = 'admin'; render(); }
+function backToMainMenu() { currentView = 'period'; render(); }
+function changeView(view) { currentView = view; render(); }
+
+/* ==========================
+   Operasi CRUD -> Firebase
+   ========================== */
+// Users
+async function handleAddUser(e) {
+  e.preventDefault();
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value.trim();
+  if (!username || !password) return;
+  const id = generateId();
+  await refUsers.child(id).set({ id, username, password, role: 'user', created_at: new Date().toISOString() });
+  showMessage('User berhasil ditambahkan!', 'success');
+}
+async function deleteUser(id) {
+  await refUsers.child(id).remove();
+  showMessage('User berhasil dihapus', 'success');
+}
+function handleChangePassword(userId) {
+  const newPassword = document.getElementById('newPasswordInput').value;
+  const confirmPassword = document.getElementById('confirmPasswordInput').value;
+  const errorDiv = document.getElementById('passwordError');
+  if (newPassword !== confirmPassword) {
+    errorDiv.textContent = 'Password dan konfirmasi password tidak sama!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  if (newPassword.length < 4) {
+    errorDiv.textContent = 'Password minimal 4 karakter!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  refUsers.child(userId).update({ password: newPassword }).then(() => {
+    showMessage('Password berhasil diubah!', 'success');
+    closeModal();
+  });
+}
+
+// Admin credential (single object at child "main")
+async function handleChangeAdminPassword() {
+  const oldPassword = document.getElementById('oldAdminPassword').value;
+  const newPassword = document.getElementById('newAdminPassword').value;
+  const confirmPassword = document.getElementById('confirmAdminPassword').value;
+  const errorDiv = document.getElementById('adminPasswordError');
+
+  const currentAdminPassword = adminCredential?.password || 'admin';
+  if (oldPassword !== currentAdminPassword) {
+    errorDiv.textContent = 'Password lama salah!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  if (newPassword !== confirmPassword) {
+    errorDiv.textContent = 'Password baru dan konfirmasi tidak sama!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  if (newPassword.length < 4) {
+    errorDiv.textContent = 'Password minimal 4 karakter!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  if (newPassword === oldPassword) {
+    errorDiv.textContent = 'Password baru harus berbeda dari password lama!';
+    errorDiv.classList.remove('hidden');
+    return;
+  }
+  await refAdminCredential.child('main').update({ password: newPassword, updated_at: new Date().toISOString() });
+  showMessage('Password admin berhasil diubah!', 'success');
+  closeModal();
+}
+
+// Agents
+async function handleAddAgent(e) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]') || document.querySelector('#addAgentForm button[type="submit"]');
+  const agentNameInput = document.getElementById('newAgentName');
+  const agent_name = agentNameInput.value.trim();
+  if (!agent_name) {
+    showMessage('Nama agen tidak boleh kosong!', 'error');
+    return;
+  }
+
+  const id = generateId();
+  const newAgent = { id, agent_name, created_at: new Date().toISOString() };
+
+  // Optimistic update: update lokal + render
+  agents = [...agents, newAgent];
+  render();
+
+  // Loading state
+  if (btn) {
+    btn.disabled = true;
+    const originalText = btn.textContent;
+    btn.textContent = 'Menyimpan...';
+    try {
+      await refAgents.child(id).set(newAgent);
+      // Reset input + feedback
+      agentNameInput.value = '';
+      showMessage(`Agen "${agent_name}" berhasil ditambahkan!`, 'success');
+    } catch (err) {
+      // Rollback jika gagal
+      agents = agents.filter(a => a.id !== id);
+      render();
+      showMessage('Gagal menambahkan agen', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  } else {
+    // Fallback jika tombol tidak ditemukan
+    try {
+      await refAgents.child(id).set(newAgent);
+      agentNameInput.value = '';
+      showMessage(`Agen "${agent_name}" berhasil ditambahkan!`, 'success');
+    } catch {
+      agents = agents.filter(a => a.id !== id);
+      render();
+      showMessage('Gagal menambahkan agen', 'error');
+    }
+  }
+}
+async function deleteAgent(id) {
+  const target = agents.find(a => a.id === id);
+  if (!target) return;
+
+  // Optimistic update: hapus dari lokal + render
+  const previousAgents = agents;
+  agents = agents.filter(a => a.id !== id);
+  render();
+
+  try {
+    await refAgents.child(id).remove();
+    showMessage(`Agen "${target.agent_name}" dihapus`, 'success');
+  } catch (err) {
+    // Rollback jika gagal
+    agents = previousAgents;
+    render();
+    showMessage('Gagal menghapus agen', 'error');
+  }
+}
+
+// Periods
+async function handleAddPeriod(e) {
+  e.preventDefault();
+  const period_name = document.getElementById('periodName').value.trim();
+  const start_date  = document.getElementById('periodStart').value;
+  if (!period_name || !start_date) { showMessage('Harap isi semua field!', 'error'); return; }
+  const id = generateId();
+  await refPeriods.child(id).set({ id, period_name, start_date, end_date: '', is_active: false, created_at: new Date().toISOString() });
+  showMessage('Periode berhasil ditambahkan!', 'success');
+}
+async function activatePeriod(id) {
+  // Nonaktifkan semua, aktifkan satu
+  const updates = {};
+  periods.forEach(p => { updates[p.id] = { ...p, is_active: p.id === id }; });
+  await refPeriods.update(updates);
+  showMessage('Periode berhasil diaktifkan!', 'success');
+}
+async function deactivatePeriod(id) {
+  const p = periods.find(x => x.id === id);
+  if (!p) return;
+  await refPeriods.child(id).update({ is_active: false });
+  showMessage('Periode berhasil dinonaktifkan!', 'success');
+}
+async function deletePeriod(id) {
+  const p = periods.find(x => x.id === id);
+  if (p && p.is_active) { showMessage('Tidak dapat menghapus periode yang sedang aktif!', 'error'); return; }
+  await refPeriods.child(id).remove();
+  showMessage('Periode berhasil dihapus!', 'success');
+}
+
+// Stock
+async function handleSetStock(e) {
+  e.preventDefault();
+  const active = getActivePeriod();
+  if (!active) return;
+  const v3ToAdd = parseInt(document.getElementById('stockV3Initial').value) || 0;
+  const v5ToAdd = parseInt(document.getElementById('stockV5Initial').value) || 0;
+  if (v3ToAdd === 0 && v5ToAdd === 0) { showMessage('Masukkan jumlah stok yang akan ditambahkan!', 'error'); return; }
+
+  const existing = stocks.find(s => s.period_name === active.period_name);
+  if (existing) {
+    const stock_v3_initial = (existing.stock_v3_initial || 0) + v3ToAdd;
+    const stock_v5_initial = (existing.stock_v5_initial || 0) + v5ToAdd;
+    await refStocks.child(existing.id).update({ stock_v3_initial, stock_v5_initial, updated_at: new Date().toISOString() });
+    showMessage(`Stok berhasil ditambahkan! (+${v3ToAdd} V3, +${v5ToAdd} V5)`, 'success');
+  } else {
+    const id = generateId();
+    await refStocks.child(id).set({
+      id, period_name: active.period_name,
+      stock_v3_initial: v3ToAdd, stock_v5_initial: v5ToAdd,
+      stock_v3_out: 0, stock_v5_out: 0, created_at: new Date().toISOString()
+    });
+    showMessage('Stok awal berhasil disimpan!', 'success');
+  }
+}
+
+// Transactions
+document.addEventListener('submit', (e) => {
+  const formId = e.target.id;
+  if (formId === 'loginForm') {
+    e.preventDefault(); handleLogin(e);
+  } else if (formId === 'addUserForm') {
+    e.preventDefault(); handleAddUser(e);
+  } else if (formId === 'addAgentForm') {
+    e.preventDefault(); handleAddAgent(e);
+  } else if (formId === 'addPeriodForm') {
+    e.preventDefault(); handleAddPeriod(e);
+  } else if (formId === 'setStockForm') {
+    e.preventDefault(); handleSetStock(e);
+  } else if (formId === 'takingForm') {
+    e.preventDefault(); handleTakingTransaction(e);
+  } else if (formId === 'depositForm') {
+    e.preventDefault(); handleDepositTransaction(e);
+  } else if (formId === 'globalTransferForm') {
+    e.preventDefault(); handleGlobalTransfer(e);
+  } else if (formId === 'addNoteForm') {
+    e.preventDefault(); handleAddNote(e);
+  }
+});
+
+async function handleTakingTransaction(e) {
+  e.preventDefault();
+  const active = getActivePeriod();
+  if (!active) return;
+
+  const agentName = document.getElementById('transactionAgent').value;
+  if (!agentName) { showMessage('Silakan pilih agen terlebih dahulu', 'error'); return; }
+  const transactionDate = document.getElementById('transactionDate').value;
+  const v3Qty = parseInt(document.getElementById('takingV3').value) || 0;
+  const v5Qty = parseInt(document.getElementById('takingV5').value) || 0;
+  if (v3Qty === 0 && v5Qty === 0) { showMessage('Masukkan jumlah voucher', 'error'); return; }
+
+  const totalAmount = (v3Qty * PRICE_V3_SELL) + (v5Qty * PRICE_V5_SELL);
+  const id = generateId();
+  await refTransactions.child(id).set({
+    id, period_name: active.period_name, agent_name: agentName,
+    transaction_date: transactionDate, transaction_type: 'taking',
+    v3_qty: v3Qty, v5_qty: v5Qty, total_amount: totalAmount,
+    is_paid: false, created_at: new Date().toISOString()
+  });
+
+  // update stock out
+  const stock = stocks.find(s => s.period_name === active.period_name);
+  if (stock) {
+    await refStocks.child(stock.id).update({
+      stock_v3_out: (stock.stock_v3_out || 0) + v3Qty,
+      stock_v5_out: (stock.stock_v5_out || 0) + v5Qty
+    });
+  }
+  showMessage('Transaksi pengambilan berhasil disimpan!', 'success');
+}
+
+async function handleDepositTransaction(e) {
+  e.preventDefault();
+  const active = getActivePeriod();
+  if (!active) return;
+
+  const agentName = document.getElementById('transactionAgent').value;
+  if (!agentName) { showMessage('Silakan pilih agen terlebih dahulu', 'error'); return; }
+  const transactionDate = document.getElementById('transactionDate').value;
+  const amount = parseInt(document.getElementById('depositAmount').value) || 0;
+
+  const id = generateId();
+  await refTransactions.child(id).set({
+    id, period_name: active.period_name, agent_name: agentName,
+    transaction_date: transactionDate, transaction_type: 'deposit',
+    v3_qty: 0, v5_qty: 0, total_amount: amount,
+    is_paid: false, created_at: new Date().toISOString()
+  });
+  showMessage('Transaksi setoran berhasil disimpan!', 'success');
+}
+
+async function deleteTransactionRecord(id, transactionType, v3Qty, v5Qty, periodName) {
+  // hapus transaksi
+  await refTransactions.child(id).remove();
+  // rollback stock jika pengambilan
+  if (transactionType === 'taking') {
+    const stock = stocks.find(s => s.period_name === periodName);
+    if (stock) {
+      await refStocks.child(stock.id).update({
+        stock_v3_out: Math.max(0, (stock.stock_v3_out || 0) - (v3Qty || 0)),
+        stock_v5_out: Math.max(0, (stock.stock_v5_out || 0) - (v5Qty || 0))
+      });
+    }
+  }
+  showMessage('Transaksi berhasil dihapus!', 'success');
+}
+
+// Global transfer
+async function handleGlobalTransfer(e) {
+  e.preventDefault();
+  const active = getActivePeriod();
+  if (!active) return;
+
+  const amount = parseInt(document.getElementById('globalTransferAmount').value) || 0;
+  const date = document.getElementById('globalTransferDate').value;
+  const id = generateId();
+  await refGlobalTransfers.child(id).set({
+    id, period_name: active.period_name, transaction_date: date, total_amount: amount, created_at: new Date().toISOString()
+  });
+  showMessage('Transfer ke Global berhasil dicatat!', 'success');
+}
+async function deleteGlobalTransferRecord(id) {
+  await refGlobalTransfers.child(id).remove();
+  showMessage('Transfer ke Global berhasil dihapus!', 'success');
+}
+
+// Notes
+async function handleAddNote(e) {
+  e.preventDefault();
+  const active = getActivePeriod();
+  if (!active) return;
+  const noteText = document.getElementById('noteText').value.trim();
+  if (!noteText) return;
+  const id = generateId();
+  await refNotes.child(id).set({
+    id, period_name: active.period_name, username: currentUser.username,
+    note_text: noteText, note_date: new Date().toISOString(), created_at: new Date().toISOString()
+  });
+  showMessage('Catatan berhasil disimpan!', 'success');
+}
+async function deleteNoteRecord(id) {
+  // hapus note, dan read_notes terkait
+  await refNotes.child(id).remove();
+  const relatedReads = readNotes.filter(r => r.note_id === id);
+  const updates = {};
+  relatedReads.forEach(r => { updates[r.id] = null; });
+  await refReadNotes.update(updates);
+  showMessage('Catatan berhasil dihapus!', 'success');
+}
+async function markNoteAsRead(noteId) {
+  const active = getActivePeriod();
+  if (!active || !currentUser) return;
+  const existingRead = readNotes.find(r => r.note_id === noteId && r.username === currentUser.username && r.period_name === active.period_name);
+  if (existingRead) return;
+  const id = generateId();
+  await refReadNotes.child(id).set({
+    id, note_id: noteId, username: currentUser.username, period_name: active.period_name, read_at: new Date().toISOString()
+  });
+  showMessage('Catatan ditandai sebagai sudah dibaca', 'success');
+}
+
+/* ==========================
+   Realtime Listeners
+   ========================== */
+function bindRealtime() {
+  refUsers.on('value', snap => {
+    const val = snap.val() || {};
+    users = Object.values(val);
+    if (currentView !== 'login') render();
+  });
+  refAgents.on('value', snap => {
+    const val = snap.val() || {};
+    agents = Object.values(val);
+    if (currentView === 'login') render();
+  });
+  refPeriods.on('value', snap => {
+    const val = snap.val() || {};
+    periods = Object.values(val);
+    render();
+  });
+  refStocks.on('value', snap => {
+    const val = snap.val() || {};
+    stocks = Object.values(val);
+    if (currentView !== 'login') render();
+  });
+  refTransactions.on('value', snap => {
+    const val = snap.val() || {};
+    transactions = Object.values(val);
+    if (currentView !== 'login') render();
+  });
+  refGlobalTransfers.on('value', snap => {
+    const val = snap.val() || {};
+    globalTransfers = Object.values(val);
+    if (currentView !== 'login') render();
+  });
+  refNotes.on('value', snap => {
+    const val = snap.val() || {};
+    notes = Object.values(val);
+    if (currentView !== 'login') render();
+  });
+  refReadNotes.on('value', snap => {
+    const val = snap.val() || {};
+    readNotes = Object.values(val);
+    if (currentView !== 'login') render();
+  });
+  refAdminCredential.child('main').on('value', snap => {
+    adminCredential = snap.val() || null;
+  });
+}
+
+/* ==========================
+   Init
+   ========================== */
+function initApp() {
+  // Seed admin credential jika belum ada
+  refAdminCredential.child('main').get().then(snap => {
+    if (!snap.exists()) {
+      refAdminCredential.child('main').set({ password: 'admin', created_at: new Date().toISOString() });
+    }
+  });
+  bindRealtime();
+  render();
+}
+
+// Submit handlers centralized di atas (document.addEventListener('submit', ...))
+initApp();
+</script>
+</body>
+</html>
