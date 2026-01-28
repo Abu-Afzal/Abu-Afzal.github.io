@@ -21,6 +21,7 @@
     .fade-in { animation: fadeIn 0.3s ease-out; }
     .tab-button { transition: all 0.3s ease; }
     .tab-button.active { border-bottom: 3px solid currentColor; }
+    @media (max-width: 480px) { /* Font size */ .text-3xl { font-size: 1.25rem !important; } /* ~20px */ .text-2xl { font-size: 1.125rem !important; } /* ~18px */ .text-xl { font-size: 1rem !important; } /* ~16px */ .text-lg { font-size: 0.9rem !important; } /* ~14px */ .text-base{ font-size: 0.85rem !important; } /* ~13px */ .text-sm { font-size: 0.75rem !important; } /* ~12px */ /* Padding & Margin */ .p-8 { padding: 1rem !important; } .p-6 { padding: 0.75rem !important; } .p-5 { padding: 0.75rem !important; } .p-4 { padding: 0.5rem !important; } .py-4 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; } .px-6 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; } .mb-6 { margin-bottom: 0.75rem !important; } .mb-8 { margin-bottom: 1rem !important; } /* Tombol */ button { font-size: 0.8rem !important; padding: 0.5rem 0.75rem !important; } /* Logo & Icon */ img.w-32, img.h-32 { width: 5rem !important; height: 5rem !important; } /* 80px */ .text-2xl { font-size: 1rem !important; } /* ikon lebih kecil */ .text-xl { font-size: 0.9rem !important; } /* Card */ .rounded-2xl { border-radius: 0.5rem !important; } .shadow-2xl { box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important; } }
   </style>
   <style>@view-transition { navigation: auto; }</style>
 </head>
@@ -921,4 +922,3 @@ function initializeApp() {
 </script>
 </body>
 </html>
-
