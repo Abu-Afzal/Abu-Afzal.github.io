@@ -519,7 +519,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 
   const exists = allData.find(d=>d.type==='user' && d.username===username);
   if (exists){ errorMsg.textContent='Username sudah digunakan'; errorMsg.style.display='block'; return; }
-  if (allData.length >= 999){ errorMsg.textContent='Maksimum 999 data tercapai'; errorMsg.style.display='block'; return; }
+  if (allData.length >= 9999){ errorMsg.textContent='Maksimum 9999 data tercapai'; errorMsg.style.display='block'; return; }
 
   btn.disabled = true; btn.innerHTML = '<span class="loading"></span> Mendaftar...';
   try{
@@ -660,7 +660,7 @@ window.markAllPresent = markAllPresent;
 async function submitAttendance(){
   const students = allData.filter(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser);
   const today = todayStr();
-  if (students.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  if (students.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return; }
   const btn = event.target; btn.disabled=true; btn.innerHTML='<span class="loading"></span> Mengirim...';
 
   for (const student of students){
@@ -716,7 +716,7 @@ window.showAddClassModal = function(){ document.getElementById('addClassModal').
 document.getElementById('addClassForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const className = document.getElementById('className').value;
-  if (allData.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return; }
   const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menyimpan...';
   await set(push(ROOT), { type:'class', class_name: className, user_name: currentUser, created_at: nowISO() });
   btn.disabled=false; btn.textContent='Simpan';
@@ -775,7 +775,7 @@ function showStudentManagement(className){
     const studentName = document.getElementById('quickStudentName').value;
     const photoInput = document.getElementById('quickStudentPhoto');
     const file = photoInput.files[0];
-    if (allData.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+    if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return; }
     const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Menyimpan...';
     let studentPhoto = '';
     if (file){
@@ -1234,7 +1234,7 @@ async function saveKnowledgeColumns(className){
     await update(ref(db, `appData/${config.__key}`), { columns: columnsJson });
     return true;
   }else{
-    if (allData.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return false; }
+    if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return false; }
     await set(push(ROOT), { type:'knowledge_config', class_name: className, user_name: currentUser, columns: columnsJson, created_at: nowISO() });
     return true;
   }
@@ -1324,7 +1324,7 @@ async function saveAllKnowledgeScores(className){
     if (existing){
       await update(ref(db, `appData/${existing.__key}`), { scores: scoresJson });
     }else{
-      if (allData.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); btn.disabled=false; btn.innerHTML='💾 Simpan Semua Nilai'; return; }
+      if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); btn.disabled=false; btn.innerHTML='💾 Simpan Semua Nilai'; return; }
       await set(push(ROOT), { type:'knowledge_score', class_name: className, student_name: student.student_name, user_name: currentUser, scores: scoresJson, created_at: nowISO() });
     }
   }
@@ -1385,7 +1385,7 @@ async function saveAttitudeScore(studentId, studentName, className){
   const attitude = attitudeSelect.value; const notes = notesInput.value.trim();
   if (!attitude){ showToast('⚠️ Pilih penilaian sikap terlebih dahulu','error'); return; }
   if (!notes){ showToast('⚠️ Tulis catatan sikap terlebih dahulu','error'); return; }
-  if (allData.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return; }
   const btn = event.target; btn.disabled=true; btn.innerHTML='<span class="loading"></span>';
   await set(push(ROOT), {
     type:'attitude_score', class_name: className, student_name: studentName, user_name: currentUser,
@@ -1481,7 +1481,7 @@ document.getElementById('uploadForm').addEventListener('submit', async function(
   const fileInput = document.getElementById('documentFile');
   const file = fileInput.files[0];
   if (!file){ showToast('⚠️ Pilih file terlebih dahulu','error'); return; }
-  if (allData.length >= 999){ showToast('⚠️ Maksimum 999 data tercapai','error'); return; }
+  if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return; }
   const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Mengupload...';
   const reader = new FileReader();
   reader.onload = async function(ev){
