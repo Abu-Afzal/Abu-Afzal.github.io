@@ -5,25 +5,17 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script>
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCvPL7PpRmcwdq2FK00med9jJQ8kOXF_lE",
   authDomain: "ujian-online-7561d.firebaseapp.com",
+  databaseURL: "https://ujian-online-7561d-default-rtdb.asia-southeast1.firebasedatabase.app/"
   projectId: "ujian-online-7561d",
   storageBucket: "ujian-online-7561d.firebasestorage.app",
   messagingSenderId: "121456715960",
   appId: "1:121456715960:web:6d7ca1b686cb2d6c746c4d",
-  measurementId: "G-Y3NGJ85R8G",
-  databaseURL: "https://ujian-online-7561d-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  measurementId: "G-Y3NGJ85R8G"
 };
-
-// INISIALISASI
-firebase.initializeApp(firebaseConfig);
-
-// PANGGIL SERVICE
-const auth = firebase.auth();
-const db = firebase.database();
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ExamShield — Sistem Ujian Online</title>
