@@ -5270,5 +5270,81 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<!-- FIREBASE FULL INTEGRATION (TEMPel SEKALI SAJA) -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+// ================= CONFIG =================
+const firebaseConfig = {
+  apiKey: "AIzaSyCvPL7PpRmcwdq2FK00med9jJQ8kOXF_lE",
+  authDomain: "ujian-online-7561d.firebaseapp.com",
+  databaseURL: "https://ujian-online-7561d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ujian-online-7561d",
+  storageBucket: "ujian-online-7561d.firebasestorage.app",
+  messagingSenderId: "121456715960",
+  appId: "1:121456715960:web:6d7ca1b686cb2d6c746c4d"
+};
+
+// ================= INIT =================
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+const auth = firebase.auth();
+const db = firebase.database();
+
+// ================= LOGIN FUNCTION =================
+// ⚠️ Tombol login kamu HARUS pakai onclick="doLogin()"
+function doLogin() {
+  const emailEl = document.getElementById("username");
+const passEl = document.getElementById("password");
+
+  if (!emailEl || !passEl) {
+    alert("Input email/password tidak ditemukan");
+    return;
+  }
+
+  const email = emailEl.value;
+  const password = passEl.value;
+
+  auth.signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+      const user = userCredential.user;
+
+      alert("Login berhasil");
+
+      // 🔥 SIMPAN KE DATABASE
+      db.ref("users/" + user.uid).update({
+        email: user.email,
+        lastLogin: new Date().toISOString()
+      });
+
+    })
+    .catch((error) => {
+      alert("Login gagal: " + error.message);
+    });
+}
+
+// ================= SESSION (ANTI LOGOUT) =================
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    console.log("User aktif:", user.email);
+  } else {
+    console.log("Belum login");
+  }
+});
+
+// ================= TES SIMPAN (OPTIONAL) =================
+function tesFirebase() {
+  db.ref("tes").push({
+    waktu: new Date().toISOString()
+  })
+  .then(() => alert("Data masuk ke Firebase"))
+  .catch((e) => alert("Error: " + e.message));
+}
+</script>
 </body>
 </html>
