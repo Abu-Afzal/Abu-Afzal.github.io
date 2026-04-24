@@ -5304,79 +5304,55 @@ const db = firebase.database();
 
 // ===== LOGIN FUNCTION =====
 function doLogin() {
-  const usernameEl = document.getElementById("username");
-  const passwordEl = document.getElementById("password");
+
+  const usernameEl = document.querySelector("#login-user");
+  const passwordEl = document.querySelector("#login-pass");
+
+  console.log("USERNAME ELEMENT:", usernameEl);
+  console.log("PASSWORD ELEMENT:", passwordEl);
 
   if (!usernameEl || !passwordEl) {
-    alert("Input username/password tidak ditemukan");
+    alert("❌ Elemen login tidak ditemukan (ID salah / belum muncul)");
     return;
   }
 
   const username = usernameEl.value.trim();
   const password = passwordEl.value.trim();
 
-  if (username === "" || password === "") {
-    alert("Username dan password harus diisi");
+  if (!username || !password) {
+    alert("Isi username & password dulu");
     return;
   }
 
-  // 🔥 LOGIN (username = email Firebase)
   auth.signInWithEmailAndPassword(username, password)
     .then((userCredential) => {
       const user = userCredential.user;
 
-      // 🔥 AMBIL ROLE
-      db.ref("users/" + user.uid).once("value")
-        .then((snapshot) => {
-          const data = snapshot.val();
+      return db.ref("users/" + user.uid).once("value");
+    })
+    .then((snapshot) => {
+      const data = snapshot.val();
 
-          if (!data || !data.role) {
-            alert("Role belum diatur di database");
-            return;
-          }
+      if (!data || !data.role) {
+        alert("Role tidak ditemukan");
+        return;
+      }
 
-          const role = data.role.toLowerCase();
+      const role = data.role.toLowerCase();
 
-          // 🔁 REDIRECT SESUAI ROLE
-          if (role === "admin") {
-            window.location.href = "admin.html";
-          } 
-          else if (role === "guru") {
-            window.location.href = "guru.html";
-          } 
-          else if (role === "siswa") {
-            window.location.href = "siswa.html";
-          } 
-          else {
-            alert("Role tidak dikenali: " + role);
-          }
-
-          // simpan login terakhir
-          db.ref("users/" + user.uid).update({
-            username: username,
-            lastLogin: new Date().toISOString()
-          });
-
-        })
-        .catch((err) => {
-          console.error(err);
-          alert("Gagal ambil data user");
-        });
-
+      if (role === "admin") {
+        window.location.href = "admin.html";
+      } else if (role === "guru") {
+        window.location.href = "guru.html";
+      } else {
+        window.location.href = "siswa.html";
+      }
     })
     .catch((error) => {
+      console.error(error);
       alert("Login gagal: " + error.message);
     });
 }
-
-// ===== SESSION CHECK =====
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    console.log("User aktif:", user.email);
-  } else {
-    console.log("Belum login");
-  }
-});
 </script>
 </body>
 </html>
