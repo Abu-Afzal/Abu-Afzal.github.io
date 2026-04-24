@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Firebase Setup</title>
+</head>
+<body>
+
+<h2>Setup Admin Firebase</h2>
+
+<input type="text" id="uid" placeholder="Yji9rFFoOuN5YGJGm87r2cvVTet1">
+<br><br>
+<button onclick="setupAdmin()">Jalankan Setup Admin</button>
+
+<p id="status"></p>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+// CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyCvPL7PpRmcwdq2FK00med9jJQ8kOXF_lE",
+  authDomain: "ujian-online-7561d.firebaseapp.com",
+  databaseURL: "https://ujian-online-7561d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ujian-online-7561d",
+  storageBucket: "ujian-online-7561d.firebasestorage.app",
+  messagingSenderId: "121456715960",
+  appId: "1:121456715960:web:6d7ca1b686cb2d6c746c4d"
+};
+
+// INIT
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// FUNCTION SETUP
+function setupAdmin() {
+  const uid = document.getElementById("uid").value;
+
+  if (!uid) {
+    alert("Yji9rFFoOuN5YGJGm87r2cvVTet1");
+    return;
+  }
+
+  db.ref("users/" + uid).set({
+    username: "admin@gmail.com",
+    role: "admin"
+  })
+  .then(() => {
+    document.getElementById("status").innerText = "✅ Admin berhasil dibuat!";
+  })
+  .catch((err) => {
+    document.getElementById("status").innerText = "❌ Error: " + err.message;
+  });
+}
+</script>
+
+</body>
+</html>
