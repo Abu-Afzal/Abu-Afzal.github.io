@@ -7,7 +7,7 @@
 
 <h2>Setup Admin Firebase</h2>
 
-<input type="text" id="uid" placeholder="Yji9rFFoOuN5YGJGm87r2cvVTet1">
+<input type="text" id="uid" placeholder="5il6e55O1HRRvlo91nhlCyLBZmi2">
 <br><br>
 <button onclick="setupAdmin()">Jalankan Setup Admin</button>
 
@@ -38,7 +38,7 @@ function setupAdmin() {
   const uid = document.getElementById("uid").value;
 
   if (!uid) {
-    alert("Yji9rFFoOuN5YGJGm87r2cvVTet1");
+    alert("Masukkan UID dulu!");
     return;
   }
 
