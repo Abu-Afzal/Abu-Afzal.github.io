@@ -5276,83 +5276,62 @@ if (e.target === overlay) overlay.classList.add('hidden');
 });
 });
 </script>
-<!-- ===== FIREBASE + LOGIN + ROLE REDIRECT (FINAL) ===== -->
+<div id="toast-container"></div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-<script>
-// ===== CONFIG =====
-const firebaseConfig = {
-  apiKey: "AIzaSyCvPL7PpRmcwdq2FK00med9jJQ8kOXF_lE",
-  authDomain: "ujian-online-7561d.firebaseapp.com",
-  databaseURL: "https://ujian-online-7561d-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "ujian-online-7561d",
-  storageBucket: "ujian-online-7561d.firebasestorage.app",
-  messagingSenderId: "121456715960",
-  appId: "1:121456715960:web:6d7ca1b686cb2d6c746c4d"
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvPL7PpRmcwdq2FK00med9jJQ8kOXF_lE",
+            authDomain: "ujian-online-7561d.firebaseapp.com",
+            databaseURL: "https://ujian-online-7561d-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ujian-online-7561d",
+            storageBucket: "ujian-online-7561d.firebasestorage.app",
+            messagingSenderId: "121456715960",
+            appId: "1:121456715960:web:6d7ca1b686cb2d6c746c4d",
+            measurementId: "G-Y3NGJ85R8G"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        function syncData() {
+            const dbRef = ref(db, '/');
+            onValue(dbRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    window.DB = data;
+                    console.log("Data tersinkronisasi dari Firebase");
+                }
+            });
+        }
+        syncData();
+
+        window.dbRef = ref;
+        window.dbSet = set;
+        window.dbPush = push;
+        window.dbUpdate = update;
+        window.database = db;
+    </script>
+
+    <script>
+        // Hapus variabel "let DB = {...}" yang lama karena sekarang data diambil dari Firebase
+        let currentUser = null;
+        let currentUjian = null;
+        // ... fungsi doLogin, showPage, dll ...
+        // Menimpa DB lokal agar selalu kosong di awal dan menunggu data dari Firebase
+window.DB = {
+    users: {},
+    bankSoal: {},
+    ujian: {},
+    hasil: {},
+    aktifLog: {}
 };
-
-// ===== INIT =====
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-
-const auth = firebase.auth();
-const db = firebase.database();
-
-// ===== LOGIN FUNCTION =====
-function doLogin() {
-
-  const usernameEl = document.querySelector("#login-user");
-  const passwordEl = document.querySelector("#login-pass");
-
-  console.log("USERNAME ELEMENT:", usernameEl);
-  console.log("PASSWORD ELEMENT:", passwordEl);
-
-  if (!usernameEl || !passwordEl) {
-    alert("❌ Elemen login tidak ditemukan (ID salah / belum muncul)");
-    return;
-  }
-
-  const username = usernameEl.value.trim();
-  const password = passwordEl.value.trim();
-
-  if (!username || !password) {
-    alert("Isi username & password dulu");
-    return;
-  }
-
-  auth.signInWithEmailAndPassword(username, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-
-      return db.ref("users/" + user.uid).once("value");
-    })
-    .then((snapshot) => {
-      const data = snapshot.val();
-
-      if (!data || !data.role) {
-        alert("Role tidak ditemukan");
-        return;
-      }
-
-      const role = data.role.toLowerCase();
-
-      if (role === "admin") {
-        window.location.href = "admin.html";
-      } else if (role === "guru") {
-        window.location.href = "guru.html";
-      } else {
-        window.location.href = "siswa.html";
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      alert("Login gagal: " + error.message);
-    });
-}
-</script>
+    </script>
 </body>
 </html>
+</body>
+</html>
+
+
