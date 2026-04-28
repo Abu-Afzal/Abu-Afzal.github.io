@@ -5276,12 +5276,33 @@ if (e.target === overlay) overlay.classList.add('hidden');
 });
 });
 </script>
+<!-- Halaman Admin -->
+<div id="page-admin" class="page">
+  <h2>Tambah User Baru</h2>
+  <label>Username:</label>
+  <input type="text" id="new-username" placeholder="Username"><br><br>
+
+  <label>Password:</label>
+  <input type="password" id="new-password" placeholder="Password"><br><br>
+
+  <label>Role:</label>
+  <select id="new-role">
+    <option value="guru">Guru</option>
+    <option value="siswa">Siswa</option>
+  </select><br><br>
+
+  <button onclick="tambahUser(
+    document.getElementById('new-username').value,
+    document.getElementById('new-password').value,
+    document.getElementById('new-role').value
+  )">Tambah User</button>
+</div>
+
+<!-- Script Firebase -->
 <script type="module">
-  // Import Firebase modular SDK
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  // Config Firebase (sudah diperbaiki storageBucket)
   const firebaseConfig = {
     apiKey: "AIzaSyCX_xfvgOjowYHq_pBkw4yy0KL0a1S-RX4",
     authDomain: "ruang-guru-f12f1.firebaseapp.com",
@@ -5293,46 +5314,40 @@ if (e.target === overlay) overlay.classList.add('hidden');
     measurementId: "G-HB1M4YZBVT"
   };
 
-  // Init Firebase
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Fungsi login manual dengan data dari Firebase
+  // Fungsi login manual
   async function doLogin() {
     const user = document.getElementById('login-user').value;
     const pass = document.getElementById('login-pass').value;
 
     const dbRef = ref(db);
-    try {
-      const snapshot = await get(child(dbRef, "users/" + user));
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        if (data.password === pass) {
-          alert("Login berhasil sebagai " + data.role);
+    const snapshot = await get(child(dbRef, "users/" + user));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      if (data.password === pass) {
+        alert("Login berhasil sebagai " + data.role);
 
-          if (data.role === "admin") {
-            document.getElementById('page-login').classList.remove('active');
-            document.getElementById('page-admin').classList.add('active');
-          } else if (data.role === "guru") {
-            document.getElementById('page-login').classList.remove('active');
-            document.getElementById('page-guru').classList.add('active');
-          } else if (data.role === "siswa") {
-            document.getElementById('page-login').classList.remove('active');
-            document.getElementById('page-siswa').classList.add('active');
-          }
-        } else {
-          alert("Password salah");
+        if (data.role === "admin") {
+          document.getElementById('page-login').classList.remove('active');
+          document.getElementById('page-admin').classList.add('active');
+        } else if (data.role === "guru") {
+          document.getElementById('page-login').classList.remove('active');
+          document.getElementById('page-guru').classList.add('active');
+        } else if (data.role === "siswa") {
+          document.getElementById('page-login').classList.remove('active');
+          document.getElementById('page-siswa').classList.add('active');
         }
       } else {
-        alert("User tidak ditemukan");
+        alert("Password salah");
       }
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi error saat login");
+    } else {
+      alert("User tidak ditemukan");
     }
   }
 
-  // Fungsi admin menambahkan user baru (guru/siswa)
+  // Fungsi admin menambahkan user baru
   function tambahUser(username, password, role) {
     set(ref(db, "users/" + username), {
       password: password,
@@ -5345,7 +5360,6 @@ if (e.target === overlay) overlay.classList.add('hidden');
     });
   }
 </script>
+
 </body>
 </html>
-
-
