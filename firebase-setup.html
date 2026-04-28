@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamShield — Firebase Setup</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#e8edf8;min-height:100vh;padding:32px 20px}
+  .wrap{max-width:660px;margin:0 auto}
+  h1{font-size:24px;font-weight:800;background:linear-gradient(135deg,#fff,#4f8ef7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+  .sub{color:#8b9bbf;font-size:13px;margin-bottom:28px}
+  .card{background:#1a2238;border:1px solid #2a3554;border-radius:12px;padding:24px;margin-bottom:18px}
+  .card-title{font-size:15px;font-weight:700;margin-bottom:5px}
+  .card-sub{color:#8b9bbf;font-size:12px;margin-bottom:14px;line-height:1.5}
+  label{display:block;font-size:11px;font-weight:700;color:#8b9bbf;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;margin-top:12px}
+  input,textarea,select{width:100%;background:#0f1526;border:1px solid #2a3554;border-radius:8px;padding:10px 14px;color:#e8edf8;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s}
+  input:focus,textarea:focus{border-color:#4f8ef7}
+  textarea{min-height:110px;resize:vertical;font-family:'Courier New',monospace;font-size:12px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;margin-top:14px;transition:all .2s}
+  .btn-primary{background:linear-gradient(135deg,#4f8ef7,#7c3aed);color:#fff;box-shadow:0 4px 16px rgba(79,142,247,.3)}
+  .btn-primary:hover:not(:disabled){transform:translateY(-1px)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .log{background:#0f1526;border:1px solid #2a3554;border-radius:8px;padding:12px;margin-top:14px;font-family:'Courier New',monospace;font-size:11px;max-height:240px;overflow-y:auto;display:none}
+  .ok{color:#6ee7b7}.err{color:#ef4444}.info{color:#4f8ef7}.warn{color:#f59e0b}
+  .step{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #2a3554;font-size:13px}
+  .step:last-child{border-bottom:none}
+  .si{width:26px;height:26px;border-radius:50%;background:#2a3554;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:background .3s}
+  .si.done{background:#10b981}.si.err{background:#ef4444}.si.run{background:#4f8ef7;animation:pulse 1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .alert{padding:12px 16px;border-radius:8px;font-size:13px;margin-top:12px;line-height:1.6}
+  .alert-ok{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:#6ee7b7}
+  .alert-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+  .alert-warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fcd34d}
+  code{background:#0f1526;padding:2px 7px;border-radius:4px;font-family:'Courier New',monospace}
+  .badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(79,142,247,.15);color:#4f8ef7;margin-left:6px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🛡️ ExamShield — Firebase Setup</h1>
+  <p class="sub">Isi form di bawah untuk menginisialisasi database Firebase secara otomatis.</p>
+
+  <div class="card">
+    <div class="card-title">🔑 UID Admin</div>
+    <div class="card-sub">
+      Firebase Console → <b>Authentication</b> → <b>Users</b> → klik baris
+      <code>admin@examshield.app</code> → copy kolom <b>User UID</b>
+    </div>
+    <label>User UID</label>
+    <input type="text" id="uid" placeholder="Paste UID admin di sini..." />
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏫 Info Sekolah & Kelas</div>
+    <label>Nama Sekolah</label>
+    <input type="text" id="sekolah" value="SMA Negeri 1" />
+    <label>Tahun Ajaran</label>
+    <input type="text" id="tahun" value="2024/2025" />
+    <label>Daftar Kelas (satu per baris)</label>
+    <textarea id="kelas">X IPA 1
+X IPA 2
+X IPS 1
+X IPS 2
+XI IPA 1
+XI IPA 2
+XI IPS 1
+XI IPS 2
+XII IPA 1
+XII IPA 2
+XII IPS 1
+XII IPS 2</textarea>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👨‍🏫 Guru Pertama <span class="badge">Opsional</span></div>
+    <div class="card-sub">Kosongkan jika belum mau tambah guru sekarang.</div>
+    <label>Nama Guru</label>
+    <input type="text" id="gnama" placeholder="cth: Budi Santoso" />
+    <label>NIP (= Username Login)</label>
+    <input type="text" id="gnip" placeholder="cth: 198501012010011001" />
+    <label>Mata Pelajaran</label>
+    <input type="text" id="gmapel" placeholder="cth: Matematika" />
+    <label>Password</label>
+    <input type="password" id="gpass" placeholder="Min. 6 karakter" />
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚀 Jalankan Setup</div>
+    <div class="alert alert-warn">⚠️ Pastikan UID Admin sudah diisi sebelum klik tombol di bawah.</div>
+    <div id="steps" class="hidden" style="margin-top:12px;">
+      <div class="step"><div class="si" id="si1">1</div><span id="st1">Menunggu...</span></div>
+      <div class="step"><div class="si" id="si2">2</div><span id="st2">Menunggu...</span></div>
+      <div class="step"><div class="si" id="si3">3</div><span id="st3">Menunggu...</span></div>
+      <div class="step"><div class="si" id="si4">4</div><span id="st4">Menunggu...</span></div>
+      <div class="step"><div class="si" id="si5">5</div><span id="st5">Menunggu...</span></div>
+    </div>
+    <button class="btn btn-primary" id="btnRun">⚡ Jalankan Setup Otomatis</button>
+    <div class="log" id="logBox"></div>
+    <div id="result"></div>
+  </div>
+</div>
+
+<script>
+// ── Firebase config (project baru) ──
+const firebaseConfig = {
+  apiKey: "AIzaSyBBaXg8TYrYQdKsRrmVqHi7tmRGLqqEjAk",
+  authDomain: "examshield-c8a0d.firebaseapp.com",
+  databaseURL: "https://examshield-c8a0d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "examshield-c8a0d",
+  storageBucket: "examshield-c8a0d.firebasestorage.app",
+  messagingSenderId: "667892171029",
+  appId: "1:667892171029:web:c8d7b91affb41623fb691c"
+};
+firebase.initializeApp(firebaseConfig);
+const AUTH = firebase.auth();
+const DB   = firebase.database();
+
+// ── UI helpers ──
+const log = (msg, type='info') => {
+  const box = document.getElementById('logBox');
+  box.style.display = 'block';
+  const d = document.createElement('div');
+  d.className = type;
+  d.textContent = '[' + new Date().toLocaleTimeString() + ']  ' + msg;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+};
+
+const si = (n, s, t) => {
+  const el = document.getElementById('si'+n);
+  const lb = document.getElementById('st'+n);
+  if(el) { el.className='si '+(s==='done'?'done':s==='err'?'err':'run'); el.textContent=s==='done'?'✓':s==='err'?'✕':'…'; }
+  if(lb&&t) lb.textContent = t;
+};
+
+// ── Main setup ──
+document.getElementById('btnRun').addEventListener('click', async function() {
+  const uid     = document.getElementById('uid').value.trim();
+  const sekolah = document.getElementById('sekolah').value.trim();
+  const tahun   = document.getElementById('tahun').value.trim();
+  const kelas   = document.getElementById('kelas').value.trim().split('\n').map(k=>k.trim()).filter(Boolean);
+  const gnama   = document.getElementById('gnama').value.trim();
+  const gnip    = document.getElementById('gnip').value.trim();
+  const gmapel  = document.getElementById('gmapel').value.trim();
+  const gpass   = document.getElementById('gpass').value.trim();
+
+  if (!uid) { alert('UID Admin wajib diisi!'); return; }
+
+  this.disabled = true;
+  this.textContent = '⏳ Proses...';
+  document.getElementById('steps').classList.remove('hidden');
+
+  try {
+    // Step 1: Data admin
+    si(1,'run','Menyimpan data admin...');
+    log('Menyimpan profil admin ke RTDB users/'+uid+'...');
+    await DB.ref('users/'+uid).set({
+      role:'admin', nama:'Administrator',
+      nip:'ADMIN001', username:'admin',
+      email:'admin@examshield.app',
+      createdAt: Date.now()
+    });
+    await DB.ref('usernames/admin').set({ uid });
+    si(1,'done','Data admin tersimpan ✓');
+    log('✅ users/'+uid+' berhasil', 'ok');
+
+    // Step 2: Kelas
+    si(2,'run','Menyimpan '+kelas.length+' kelas...');
+    const kelasObj = {};
+    kelas.forEach((k,i) => { kelasObj[i] = k; });
+    await DB.ref('kelas').set(kelasObj);
+    si(2,'done',kelas.length+' kelas tersimpan ✓');
+    log('✅ Kelas tersimpan', 'ok');
+
+    // Step 3: Info sekolah
+    si(3,'run','Menyimpan info sekolah...');
+    await DB.ref('sekolah/info').set({ nama:sekolah, tahunAjaran:tahun, semester:'Ganjil', updatedAt:Date.now() });
+    si(3,'done','Info sekolah tersimpan ✓');
+    log('✅ Info sekolah tersimpan', 'ok');
+
+    // Step 4: Rules check
+    si(4,'run','Verifikasi koneksi database...');
+    const testVal = await DB.ref('users/'+uid).once('value');
+    if (testVal.exists()) {
+      si(4,'done','Koneksi database OK ✓');
+      log('✅ Data admin berhasil dibaca kembali — database OK', 'ok');
+    } else {
+      si(4,'err','Data tidak terbaca — cek Rules database');
+      log('⚠️ Data tidak terbaca. Pastikan Rules RTDB sudah diset ke auth != null', 'warn');
+    }
+
+    // Step 5: Guru pertama (opsional)
+    if (gnama && gnip && gpass.length >= 6) {
+      si(5,'run','Membuat akun guru: '+gnama+'...');
+      try {
+        const email = gnip+'@examshield.app';
+        const cred  = await AUTH.createUserWithEmailAndPassword(email, gpass);
+        const uid2  = cred.user.uid;
+        await DB.ref('users/'+uid2).set({ role:'guru', nama:gnama, nip:gnip, mapel:gmapel, username:gnip, email, createdAt:Date.now() });
+        await DB.ref('usernames/'+gnip).set({ uid: uid2 });
+        si(5,'done','Akun guru '+gnama+' dibuat ✓');
+        log('✅ Guru '+gnama+' — Username: '+gnip+' | Password: '+gpass, 'ok');
+      } catch(e) {
+        si(5,'err','Gagal: '+e.message);
+        log('⚠️ '+e.message, 'warn');
+      }
+    } else {
+      si(5,'done','Lewati (data guru tidak diisi)');
+      log('ℹ️ Pembuatan guru dilewati', 'info');
+    }
+
+    // Selesai
+    log('🎉 SETUP SELESAI!', 'ok');
+    document.getElementById('result').innerHTML = `
+      <div class="alert alert-ok" style="margin-top:14px;">
+        <strong>🎉 Setup berhasil!</strong><br><br>
+        Sekarang buka <strong>ujian-firebase-final.html</strong> dan login:<br><br>
+        &nbsp;• Username : <code>admin</code><br>
+        &nbsp;• Password : <code>123456</code><br>
+        &nbsp;• Role &nbsp;&nbsp;&nbsp;&nbsp;: <strong>Admin</strong><br><br>
+        ⚠️ Pastikan Rules Realtime Database sudah diset:<br>
+        <code>{ "rules": { ".read": "auth != null", ".write": "auth != null" } }</code>
+      </div>`;
+
+  } catch(err) {
+    log('❌ ERROR: '+err.message, 'err');
+    console.error(err);
+    document.getElementById('result').innerHTML = `
+      <div class="alert alert-err" style="margin-top:14px;">
+        ❌ <strong>Error:</strong> ${err.message}<br>
+        <code>${err.code||''}</code><br><br>
+        Kemungkinan penyebab:<br>
+        • Rules database belum diset (tambahkan .read/.write = "auth != null")<br>
+        • UID Admin salah atau tidak ada di Authentication<br>
+        • Koneksi internet bermasalah
+      </div>`;
+    this.disabled = false;
+    this.textContent = '⚡ Coba Lagi';
+  }
+});
+</script>
+</body>
+</html>
