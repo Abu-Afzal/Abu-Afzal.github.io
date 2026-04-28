@@ -1501,36 +1501,22 @@ document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active')
 el.classList.add('active');
 }
 
-async function doLogin() {
-    const userVal = document.getElementById('login-user').value;
-    const passVal = document.getElementById('login-pass').value;
+function doLogin() {
+const user = document.getElementById('login-user').value.trim();
+const pass = document.getElementById('login-pass').value.trim();
+const errEl = document.getElementById('login-error');
+errEl.classList.add('hidden');
 
-    try {
-        // Ambil folder 'users' dari database
-        const snapshot = await window.dbGet(window.dbRef(window.database, 'users'));
-        const users = snapshot.val();
+if (!user || !pass) { showToast('Isi username dan password!', 'warn'); return; }
 
-        if (users) {
-            // Cari kecocokan username dan password
-            const userKey = Object.keys(users).find(key => 
-                users[key].username === userVal && users[key].password === passVal
-            );
-
-            if (userKey) {
-                currentUser = users[userKey];
-                showPage(currentUser.role === 'admin' ? 'page-admin' : (currentUser.role === 'guru' ? 'page-guru' : 'page-siswa'));
-                showToast(`Selamat datang, ${currentUser.nama}!`, 'success');
-            } else {
-                showToast('Username atau password salah', 'error');
-            }
-        } else {
-            showToast('Database kosong, silakan isi data user di Firebase Console', 'warn');
-        }
-    } catch (err) {
-        console.error(err);
-        showToast('Gagal terhubung ke database', 'error');
-    }
+const userData = DB.users[user];
+if (!userData || userData.password !== pass || userData.role !== selectedRole) {
+errEl.classList.remove('hidden');
+document.getElementById('login-form').classList.add('animate-shake');
+setTimeout(() => document.getElementById('login-form').classList.remove('animate-shake'), 400);
+return;
 }
+
 session.user = user;
 session.role = userData.role;
 session.userData = userData;
@@ -1544,6 +1530,7 @@ setTimeout(() => {
 requestNotificationPermission();
 jadwalkanNotifikasiUjian();
 }, 1500);
+}
 
 function doLogout() {
 session = { user: null, role: null };
