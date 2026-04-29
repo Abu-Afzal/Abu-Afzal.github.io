@@ -5371,6 +5371,279 @@ async function resetPasswordSiswa(uid) {
   showToast('Password baru untuk ' + (u?.nama||uid) + ': ' + newPw + '\n⚠️ Sampaikan ke siswa!', 'info');
 }
 
+// ================================================================
+// MULTI-SOAL INPUT SYSTEM
+// ================================================================
+let soalRows = [];
+
+function toggleEssayOption() {
+renderAllSoalRows();
+const jenis = document.getElementById('soal-jenis')?.value;
+const wrapOpsi = document.getElementById('wrap-jml-opsi');
+const labelOpsi = document.getElementById('label-jml-opsi');
+if (!wrapOpsi) return;
+
+if (jenis === 'pg' || jenis === 'pgk') {
+wrapOpsi.style.display = '';
+if (labelOpsi) labelOpsi.textContent = jenis === 'pgk' ? 'Jumlah Pernyataan' : 'Jumlah Opsi';
+} else {
+// bs dan essay tidak pakai dropdown jumlah opsi
+wrapOpsi.style.display = 'none';
+}
+}
+
+function updateOpsiRows() { renderAllSoalRows(); }
+
+function renderAllSoalRows() {
+const container = document.getElementById('soal-list-container');
+if (!container) return;
+const count = container.querySelectorAll('.soal-row').length || 1;
+container.innerHTML = '';
+for (let i = 0; i < count; i++) appendSoalRow(i);
+updateSoalCount();
+}
+
+function buildSoalRow(idx) {
+const jenis = document.getElementById('soal-jenis')?.value || 'pg';
+const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
+const letters = ['A','B','C','D','E'];
+
+// ── PILIHAN GANDA biasa ──
+let inputHtml = '';
+if (jenis === 'pg') {
+inputHtml = `
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+${letters.slice(0, jmlOpsi).map(l => `
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+<span style="width:22px;height:22px;border-radius:5px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${l}</span>
+<input type="text" id="soal-${idx}-opsi${l}" placeholder="Teks pilihan ${l}..." style="flex:1;" />
+</div>
+<!-- Upload gambar per opsi -->
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+<label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px dashed var(--border);border-radius:4px;background:var(--bg2);transition:all .2s;"
+onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)'"
+onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
+for="soal-${idx}-opsiimg${l}">
+🖼️ Gambar Opsi ${l}
+</label>
+<input type="file" id="soal-${idx}-opsiimg${l}" accept="image/*" style="display:none;"
+onchange="previewGambarOpsi(${idx},'${l}',this)" />
+<span id="soal-${idx}-opsiimg${l}-status" style="font-size:11px;color:var(--text3);">—</span>
+<button id="soal-${idx}-opsiimg${l}-hapus" onclick="hapusGambarOpsi(${idx},'${l}')"
+style="display:none;background:rgba(239,68,68,0.8);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">✕</button>
+</div>
+<!-- Preview gambar opsi -->
+<div id="soal-${idx}-opsiimg${l}-preview" style="display:none;margin-top:6px;">
+<img id="soal-${idx}-opsiimg${l}-el" src=""
+style="max-height:100px;max-width:200px;border-radius:4px;border:1px solid var(--border);object-fit:contain;background:var(--bg2);" />
+</div>
+<input type="hidden" id="soal-${idx}-opsiimgdata${l}" value="" />
+</div>
+`).join('')}
+</div>
+<div class="form-group mt-2" style="max-width:220px;">
+<label>🔑 Kunci Jawaban</label>
+<select id="soal-${idx}-kunci" style="font-weight:700;">
+${letters.slice(0, jmlOpsi).map(l => `<option value="${l}">${l}</option>`).join('')}
+</select>
+</div>`;
+
+// ── PILIHAN GANDA KOMPLEKS ──
+} else if (jenis === 'pgk') {
+inputHtml = `
+<div class="alert alert-info mt-2" style="font-size:12px;">
+<span>ℹ️</span>
+<span>Buat pernyataan-pernyataan, lalu tentukan mana yang <strong>BENAR</strong>. Siswa memilih <strong>kombinasi jawaban</strong> yang tepat.</span>
+</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="pgk-rows-${idx}">
+${letters.slice(0, jmlOpsi).map(l => `
+<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
+<span style="width:22px;height:22px;border-radius:5px;background:var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${l}</span>
+<input type="text" id="soal-${idx}-pgk${l}" placeholder="Pernyataan ${l}..." style="flex:1;" />
+<label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap;text-transform:none;cursor:pointer;">
+<input type="checkbox" id="soal-${idx}-pgkbenar${l}" style="width:15px;height:15px;accent-color:var(--accent2);" />
+Benar
+</label>
+</div>
+`).join('')}
+</div>
+<div class="mt-2" style="font-size:12px;color:var(--text3);">
+💡 Centang pernyataan yang <strong>benar</strong>. Sistem akan otomatis membuat kunci jawaban kombinasi.
+</div>`;
+
+// ── BENAR / SALAH ──
+} else if (jenis === 'bs') {
+inputHtml = `
+<div class="alert alert-info mt-2" style="font-size:12px;">
+<span>ℹ️</span>
+<span>Buat beberapa pernyataan. Siswa menilai tiap pernyataan: <strong>Benar</strong> atau <strong>Salah</strong>.</span>
+</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="bs-rows-${idx}">
+<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
+<input type="text" id="soal-${idx}-bs0" placeholder="Pernyataan 1..." />
+<div style="display:flex;gap:6px;flex-shrink:0;">
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
+<input type="radio" name="soal-${idx}-bskunci0" value="benar" checked style="accent-color:var(--accent2);"> Benar
+</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
+<input type="radio" name="soal-${idx}-bskunci0" value="salah" style="accent-color:var(--danger);"> Salah
+</label>
+</div>
+</div>
+<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
+<input type="text" id="soal-${idx}-bs1" placeholder="Pernyataan 2..." />
+<div style="display:flex;gap:6px;flex-shrink:0;">
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
+<input type="radio" name="soal-${idx}-bskunci1" value="benar" checked style="accent-color:var(--accent2);"> Benar
+</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
+<input type="radio" name="soal-${idx}-bskunci1" value="salah" style="accent-color:var(--danger);"> Salah
+</label>
+</div>
+</div>
+</div>
+<button class="btn btn-ghost btn-sm mt-2" onclick="tambahBsPernyataan(${idx})" style="border-style:dashed;font-size:12px;">
+➕ Tambah Pernyataan
+</button>`;
+
+// ── ESSAY ──
+} else {
+inputHtml = `
+<div class="form-group mt-2">
+<label style="color:var(--accent3);">📝 Pedoman Penilaian (opsional)</label>
+<textarea id="soal-${idx}-essay-pedoman" placeholder="Tulis poin-poin jawaban yang diharapkan..." rows="2" style="font-size:13px;"></textarea>
+</div>`;
+}
+
+// Badge warna per jenis
+const jenisBadge = {
+pg: { label: 'PG', color: '#4f8ef7' },
+pgk: { label: 'PG Kompleks', color: '#8b5cf6' },
+bs: { label: 'Benar/Salah', color: '#f59e0b' },
+essay: { label: 'Essay', color: '#10b981' },
+}[jenis] || { label: jenis, color: '#4f8ef7' };
+
+return `
+<div class="soal-row" id="soal-row-${idx}"
+style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;position:relative;">
+
+<!-- Header soal row -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+<div style="display:flex;align-items:center;gap:8px;">
+<span style="font-size:12px;font-weight:700;color:var(--accent);background:rgba(79,142,247,0.12);padding:3px 10px;border-radius:20px;">Soal #${idx + 1}</span>
+<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${jenisBadge.color}22;color:${jenisBadge.color};">${jenisBadge.label}</span>
+</div>
+${idx > 0 ? `<button class="btn btn-danger btn-sm" onclick="hapusSoalRow(${idx})" style="padding:4px 10px;">✕ Hapus</button>` : ''}
+</div>
+
+<!-- Pertanyaan -->
+<div class="form-group" style="margin-bottom:8px;">
+<label>${jenis === 'pgk' ? '📌 Stimulus / Teks Soal' : jenis === 'bs' ? '📌 Teks Soal / Konteks (opsional)' : 'Pertanyaan'}</label>
+<textarea id="soal-${idx}-pertanyaan"
+placeholder="${
+jenis === 'pgk' ? 'Tulis stimulus atau konteks soal, kemudian buat pernyataan di bawah...' :
+jenis === 'bs' ? 'Tulis konteks/teks soal (opsional). Pernyataan diisi di bawah...' :
+`Tulis pertanyaan soal #${idx+1} di sini...`
+}"
+rows="${jenis === 'pgk' || jenis === 'bs' ? 2 : 3}"
+style="font-size:14px;line-height:1.6;"></textarea>
+</div>
+
+<!-- ===== UPLOAD GAMBAR INLINE ===== -->
+<div style="margin-bottom:10px;">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+<label style="text-transform:none;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:var(--bg3);transition:all .2s;"
+onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
+for="soal-${idx}-img-input">
+🖼️ Lampirkan Gambar
+<span style="font-size:10px;opacity:.7;">(JPG/PNG/GIF ≤ 3MB)</span>
+</label>
+<input type="file" id="soal-${idx}-img-input" accept="image/*" style="display:none;"
+onchange="previewGambarSoalRow(${idx}, this)" />
+<span id="soal-${idx}-img-status" style="font-size:11px;color:var(--text3);">Belum ada gambar</span>
+</div>
+<!-- Preview gambar -->
+<div id="soal-${idx}-img-preview" style="display:none;margin-top:8px;position:relative;display:none;">
+<img id="soal-${idx}-img-el" src=""
+style="max-height:180px;max-width:100%;border-radius:6px;border:1px solid var(--border);object-fit:contain;background:var(--bg3);" />
+<button onclick="hapusGambarRow(${idx})"
+style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700;">✕</button>
+</div>
+<!-- Simpan base64 tersembunyi -->
+<input type="hidden" id="soal-${idx}-img-data" value="" />
+</div>
+
+${inputHtml}
+</div>`;
+}
+
+let bsCounter = {}; // track jumlah pernyataan BS per soal-idx
+
+function tambahBsPernyataan(idx) {
+const container = document.getElementById(`bs-rows-${idx}`);
+if (!container) return;
+const existing = container.querySelectorAll('.bs-pernyataan-row').length;
+if (existing >= 8) { showToast('Maksimal 8 pernyataan per soal.', 'warn'); return; }
+const n = existing;
+const row = document.createElement('div');
+row.className = 'bs-pernyataan-row';
+row.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;';
+row.innerHTML = `
+<input type="text" id="soal-${idx}-bs${n}" placeholder="Pernyataan ${n+1}..." />
+<div style="display:flex;gap:6px;flex-shrink:0;">
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
+<input type="radio" name="soal-${idx}-bskunci${n}" value="benar" checked style="accent-color:var(--accent2);"> Benar
+</label>
+<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
+<input type="radio" name="soal-${idx}-bskunci${n}" value="salah" style="accent-color:var(--danger);"> Salah
+</label>
+</div>`;
+container.appendChild(row);
+}
+
+function appendSoalRow(idx) {
+const container = document.getElementById('soal-list-container');
+if (!container) return;
+container.insertAdjacentHTML('beforeend', buildSoalRow(idx));
+}
+
+function tambahSoalRow() {
+const container = document.getElementById('soal-list-container');
+if (!container) return;
+const count = container.querySelectorAll('.soal-row').length;
+appendSoalRow(count);
+updateSoalCount();
+container.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function hapusSoalRow(idx) {
+const row = document.getElementById(`soal-row-${idx}`);
+if (row) row.remove();
+document.querySelectorAll('.soal-row').forEach((el, i) => {
+el.id = `soal-row-${i}`;
+const badge = el.querySelector('span[style*="rgba(79,142,247"]');
+if (badge) badge.textContent = `Soal #${i + 1}`;
+const btn = el.querySelector('button[onclick*="hapusSoalRow"]');
+if (btn) btn.setAttribute('onclick', `hapusSoalRow(${i})`);
+el.querySelectorAll('[id]').forEach(input => {
+input.id = input.id.replace(/soal-\d+-/, `soal-${i}-`);
+});
+el.querySelectorAll('[name]').forEach(input => {
+input.name = input.name.replace(/soal-\d+-/, `soal-${i}-`);
+});
+});
+updateSoalCount();
+}
+
+function updateSoalCount() {
+const container = document.getElementById('soal-list-container');
+const count = container ? container.querySelectorAll('.soal-row').length : 0;
+const el = document.getElementById('soal-count-info');
+if (el) el.textContent = `${count} soal siap disimpan`;
+}
+
 async function saveSoalBatch() {
   const mapel   = document.getElementById('soal-mapel')?.value.trim();
   const jenis   = document.getElementById('soal-jenis')?.value;
