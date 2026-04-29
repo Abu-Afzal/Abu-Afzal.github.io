@@ -280,8 +280,83 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    z-index: 200;
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), box-shadow 0.28s;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.35);
+  }
+
+  /* Sidebar tersembunyi — geser ke kiri */
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  /* Main content selalu full width */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Overlay gelap saat sidebar terbuka */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 199;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Tombol toggle hamburger — selalu tampil di pojok kiri atas */
+  .sidebar-toggle {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 300;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    transition: background 0.2s, border-color 0.2s;
+    padding: 0;
+  }
+  .sidebar-toggle:hover {
+    background: var(--surface2);
+    border-color: var(--accent);
+  }
+  .sidebar-toggle .bar {
+    width: 18px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: all 0.25s;
+  }
+  /* Animasi X saat sidebar terbuka */
+  .sidebar-toggle.open .bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .sidebar-toggle.open .bar:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .sidebar-toggle.open .bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* Padding kiri main-content agar tidak tertutup toggle */
+  .main-content {
+    padding-top: 16px;
+    padding-left: 66px;
   }
 
   .sidebar-header {
@@ -367,7 +442,7 @@
     flex: 1;
     height: 100vh;
     overflow-y: auto;
-    padding: 24px;
+    padding: 24px 24px 24px 66px;
   }
 
   .page-header {
@@ -848,10 +923,11 @@
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
-    .sidebar { width: 200px; min-width: 200px; }
+    .sidebar { width: 240px; min-width: 240px; }
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
     .grid-3 { grid-template-columns: 1fr 1fr; }
     .grid-2 { grid-template-columns: 1fr; }
+    .main-content { padding-left: 60px; }
   }
 
   /* ===== DIVIDER ===== */
@@ -1034,8 +1110,18 @@
      ============================================================ -->
 <div class="page" id="page-app">
 
+  <!-- Overlay gelap saat sidebar terbuka -->
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- Tombol Toggle Hamburger -->
+  <button class="sidebar-toggle" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Buka/tutup menu">
+    <div class="bar"></div>
+    <div class="bar"></div>
+    <div class="bar"></div>
+  </button>
+
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <div class="sidebar collapsed" id="sidebar-el">
     <div class="sidebar-header">
       <div class="sidebar-brand">🛡️ ExamShield</div>
       <div class="sidebar-user" style="margin-top:10px;">
@@ -1594,6 +1680,45 @@ async function refreshData(type) {
 
 
 
+
+// ================================================================
+// SIDEBAR TOGGLE
+// ================================================================
+let sidebarOpen = false;
+
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  const sidebar  = document.getElementById('sidebar-el');
+  const overlay  = document.getElementById('sidebar-overlay');
+  const toggleBtn = document.getElementById('sidebar-toggle-btn');
+
+  if (sidebarOpen) {
+    sidebar.classList.remove('collapsed');
+    overlay.classList.add('visible');
+    toggleBtn.classList.add('open');
+  } else {
+    sidebar.classList.add('collapsed');
+    overlay.classList.remove('visible');
+    toggleBtn.classList.remove('open');
+  }
+}
+
+// Tutup sidebar saat nav item diklik
+function closeSidebarOnNav() {
+  sidebarOpen = false;
+  const sidebar   = document.getElementById('sidebar-el');
+  const overlay   = document.getElementById('sidebar-overlay');
+  const toggleBtn = document.getElementById('sidebar-toggle-btn');
+  if (sidebar)   sidebar.classList.add('collapsed');
+  if (overlay)   overlay.classList.remove('visible');
+  if (toggleBtn) toggleBtn.classList.remove('open');
+}
+
+// Tutup sidebar dengan tombol Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && sidebarOpen) toggleSidebar();
+});
+
 // Session State
 let session = { user: null, role: null };
 
@@ -1783,7 +1908,7 @@ function buildNav(role) {
       el.className = 'nav-item';
       el.id = `nav-${item.id}`;
       el.innerHTML = `<span class="nav-icon">${item.icon}</span> ${item.label}`;
-      el.onclick = () => navigateTo(item.id);
+      el.onclick = () => { navigateTo(item.id); closeSidebarOnNav(); };
       nav.appendChild(el);
     }
   });
@@ -4680,6 +4805,16 @@ function hapusGambarRow(idx) {
 // ================================================================
 // NOTIFIKASI UJIAN (Browser Notification API)
 // ================================================================
+let notifTimers = [];
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') showToast('Notifikasi ujian diaktifkan! ✅', 'success');
+    });
+  }
+}
 
 function jadwalkanNotifikasiUjian() {
   // Bersihkan timer lama
@@ -4795,1059 +4930,6 @@ function gantiPasswordGuru() {
   document.getElementById('gpw-baru').value = '';
   document.getElementById('gpw-konfirm').value = '';
   showToast('✅ Password berhasil diubah!', 'success');
-}
-
-function hapusUser(username, role) {
-if (!confirm(`Hapus ${role} "${username}"?`)) return;
-delete DB.users[username];
-showToast(`${role} berhasil dihapus.`, 'success');
-if (role === 'guru') renderDataGuru();
-else renderDataSiswa();
-}
-
-function hapusUjian(id) {
-if (!confirm('Hapus ujian ini?')) return;
-const idx = DB.ujian.findIndex(u => u.id === id);
-if (idx !== -1) DB.ujian.splice(idx, 1);
-showToast('Ujian berhasil dihapus.', 'success');
-renderDataUjian();
-}
-
-function hapusSoal(id) {
-if (!confirm('Hapus soal ini dari bank soal?')) return;
-const idx = DB.bankSoal.findIndex(s => s.id === id);
-if (idx !== -1) DB.bankSoal.splice(idx, 1);
-showToast('Soal dihapus.', 'success');
-if (session.role === 'guru') renderBankSoalGuru();
-else renderBankSoalAdmin();
-}
-
-function toggleUjianStatus(id) {
-const u = DB.ujian.find(u => u.id === id);
-if (u) u.status = u.status === 'aktif' ? 'nonaktif' : 'aktif';
-showToast(`Status ujian diubah.`, 'info');
-renderDataUjian();
-}
-
-function resetPasswordGuru(username) {
-generatePassword('_tmp');
-const newPw = document.getElementById('_tmp')?.value || 'Reset@123';
-DB.users[username].password = newPw;
-showToast(`Password ${username} direset. Password baru: ${newPw}`, 'info');
-}
-
-function resetPasswordSiswa(username) {
-const newPw = Math.random().toString(36).slice(-6).toUpperCase();
-DB.users[username].password = newPw;
-showToast(`Password ${username} direset. Password baru: ${newPw}`, 'info');
-}
-
-// ================================================================
-// MULTI-SOAL INPUT SYSTEM
-// ================================================================
-
-function updateOpsiRows() { renderAllSoalRows(); }
-
-function renderAllSoalRows() {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-const count = container.querySelectorAll('.soal-row').length || 1;
-container.innerHTML = '';
-for (let i = 0; i < count; i++) appendSoalRow(i);
-updateSoalCount();
-}
-
-function buildSoalRow(idx) {
-const jenis = document.getElementById('soal-jenis')?.value || 'pg';
-const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
-const letters = ['A','B','C','D','E'];
-
-// ── PILIHAN GANDA biasa ──
-let inputHtml = '';
-if (jenis === 'pg') {
-inputHtml = `
-<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-${letters.slice(0, jmlOpsi).map(l => `
-<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-<span style="width:22px;height:22px;border-radius:5px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${l}</span>
-<input type="text" id="soal-${idx}-opsi${l}" placeholder="Teks pilihan ${l}..." style="flex:1;" />
-</div>
-<!-- Upload gambar per opsi -->
-<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-<label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px dashed var(--border);border-radius:4px;background:var(--bg2);transition:all .2s;"
-onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)'"
-onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
-for="soal-${idx}-opsiimg${l}">
-🖼️ Gambar Opsi ${l}
-</label>
-<input type="file" id="soal-${idx}-opsiimg${l}" accept="image/*" style="display:none;"
-onchange="previewGambarOpsi(${idx},'${l}',this)" />
-<span id="soal-${idx}-opsiimg${l}-status" style="font-size:11px;color:var(--text3);">—</span>
-<button id="soal-${idx}-opsiimg${l}-hapus" onclick="hapusGambarOpsi(${idx},'${l}')"
-style="display:none;background:rgba(239,68,68,0.8);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">✕</button>
-</div>
-<!-- Preview gambar opsi -->
-<div id="soal-${idx}-opsiimg${l}-preview" style="display:none;margin-top:6px;">
-<img id="soal-${idx}-opsiimg${l}-el" src=""
-style="max-height:100px;max-width:200px;border-radius:4px;border:1px solid var(--border);object-fit:contain;background:var(--bg2);" />
-</div>
-<input type="hidden" id="soal-${idx}-opsiimgdata${l}" value="" />
-</div>
-`).join('')}
-</div>
-<div class="form-group mt-2" style="max-width:220px;">
-<label>🔑 Kunci Jawaban</label>
-<select id="soal-${idx}-kunci" style="font-weight:700;">
-${letters.slice(0, jmlOpsi).map(l => `<option value="${l}">${l}</option>`).join('')}
-</select>
-</div>`;
-
-// ── PILIHAN GANDA KOMPLEKS ──
-} else if (jenis === 'pgk') {
-inputHtml = `
-<div class="alert alert-info mt-2" style="font-size:12px;">
-<span>ℹ️</span>
-<span>Buat pernyataan-pernyataan, lalu tentukan mana yang <strong>BENAR</strong>. Siswa memilih <strong>kombinasi jawaban</strong> yang tepat.</span>
-</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="pgk-rows-${idx}">
-${letters.slice(0, jmlOpsi).map(l => `
-<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<span style="width:22px;height:22px;border-radius:5px;background:var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${l}</span>
-<input type="text" id="soal-${idx}-pgk${l}" placeholder="Pernyataan ${l}..." style="flex:1;" />
-<label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap;text-transform:none;cursor:pointer;">
-<input type="checkbox" id="soal-${idx}-pgkbenar${l}" style="width:15px;height:15px;accent-color:var(--accent2);" />
-Benar
-</label>
-</div>
-`).join('')}
-</div>
-<div class="mt-2" style="font-size:12px;color:var(--text3);">
-💡 Centang pernyataan yang <strong>benar</strong>. Sistem akan otomatis membuat kunci jawaban kombinasi.
-</div>`;
-
-// ── BENAR / SALAH ──
-} else if (jenis === 'bs') {
-inputHtml = `
-<div class="alert alert-info mt-2" style="font-size:12px;">
-<span>ℹ️</span>
-<span>Buat beberapa pernyataan. Siswa menilai tiap pernyataan: <strong>Benar</strong> atau <strong>Salah</strong>.</span>
-</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="bs-rows-${idx}">
-<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<input type="text" id="soal-${idx}-bs0" placeholder="Pernyataan 1..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci0" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci0" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>
-</div>
-<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<input type="text" id="soal-${idx}-bs1" placeholder="Pernyataan 2..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci1" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci1" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>
-</div>
-</div>
-<button class="btn btn-ghost btn-sm mt-2" onclick="tambahBsPernyataan(${idx})" style="border-style:dashed;font-size:12px;">
-➕ Tambah Pernyataan
-</button>`;
-
-// ── ESSAY ──
-} else {
-inputHtml = `
-<div class="form-group mt-2">
-<label style="color:var(--accent3);">📝 Pedoman Penilaian (opsional)</label>
-<textarea id="soal-${idx}-essay-pedoman" placeholder="Tulis poin-poin jawaban yang diharapkan..." rows="2" style="font-size:13px;"></textarea>
-</div>`;
-}
-
-// Badge warna per jenis
-const jenisBadge = {
-pg: { label: 'PG', color: '#4f8ef7' },
-pgk: { label: 'PG Kompleks', color: '#8b5cf6' },
-bs: { label: 'Benar/Salah', color: '#f59e0b' },
-essay: { label: 'Essay', color: '#10b981' },
-}[jenis] || { label: jenis, color: '#4f8ef7' };
-
-return `
-<div class="soal-row" id="soal-row-${idx}"
-style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;position:relative;">
-
-<!-- Header soal row -->
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-<div style="display:flex;align-items:center;gap:8px;">
-<span style="font-size:12px;font-weight:700;color:var(--accent);background:rgba(79,142,247,0.12);padding:3px 10px;border-radius:20px;">Soal #${idx + 1}</span>
-<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${jenisBadge.color}22;color:${jenisBadge.color};">${jenisBadge.label}</span>
-</div>
-${idx > 0 ? `<button class="btn btn-danger btn-sm" onclick="hapusSoalRow(${idx})" style="padding:4px 10px;">✕ Hapus</button>` : ''}
-</div>
-
-<!-- Pertanyaan -->
-<div class="form-group" style="margin-bottom:8px;">
-<label>${jenis === 'pgk' ? '📌 Stimulus / Teks Soal' : jenis === 'bs' ? '📌 Teks Soal / Konteks (opsional)' : 'Pertanyaan'}</label>
-<textarea id="soal-${idx}-pertanyaan"
-placeholder="${
-jenis === 'pgk' ? 'Tulis stimulus atau konteks soal, kemudian buat pernyataan di bawah...' :
-jenis === 'bs' ? 'Tulis konteks/teks soal (opsional). Pernyataan diisi di bawah...' :
-`Tulis pertanyaan soal #${idx+1} di sini...`
-}"
-rows="${jenis === 'pgk' || jenis === 'bs' ? 2 : 3}"
-style="font-size:14px;line-height:1.6;"></textarea>
-</div>
-
-<!-- ===== UPLOAD GAMBAR INLINE ===== -->
-<div style="margin-bottom:10px;">
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-<label style="text-transform:none;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:var(--bg3);transition:all .2s;"
-onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
-for="soal-${idx}-img-input">
-🖼️ Lampirkan Gambar
-<span style="font-size:10px;opacity:.7;">(JPG/PNG/GIF ≤ 3MB)</span>
-</label>
-<input type="file" id="soal-${idx}-img-input" accept="image/*" style="display:none;"
-onchange="previewGambarSoalRow(${idx}, this)" />
-<span id="soal-${idx}-img-status" style="font-size:11px;color:var(--text3);">Belum ada gambar</span>
-</div>
-<!-- Preview gambar -->
-<div id="soal-${idx}-img-preview" style="display:none;margin-top:8px;position:relative;display:none;">
-<img id="soal-${idx}-img-el" src=""
-style="max-height:180px;max-width:100%;border-radius:6px;border:1px solid var(--border);object-fit:contain;background:var(--bg3);" />
-<button onclick="hapusGambarRow(${idx})"
-style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700;">✕</button>
-</div>
-<!-- Simpan base64 tersembunyi -->
-<input type="hidden" id="soal-${idx}-img-data" value="" />
-</div>
-
-${inputHtml}
-</div>`;
-}
-
-
-function appendSoalRow(idx) {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-container.insertAdjacentHTML('beforeend', buildSoalRow(idx));
-}
-
-function tambahSoalRow() {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-const count = container.querySelectorAll('.soal-row').length;
-appendSoalRow(count);
-updateSoalCount();
-container.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function hapusSoalRow(idx) {
-const row = document.getElementById(`soal-row-${idx}`);
-if (row) row.remove();
-document.querySelectorAll('.soal-row').forEach((el, i) => {
-el.id = `soal-row-${i}`;
-const badge = el.querySelector('span[style*="rgba(79,142,247"]');
-if (badge) badge.textContent = `Soal #${i + 1}`;
-const btn = el.querySelector('button[onclick*="hapusSoalRow"]');
-if (btn) btn.setAttribute('onclick', `hapusSoalRow(${i})`);
-el.querySelectorAll('[id]').forEach(input => {
-input.id = input.id.replace(/soal-\d+-/, `soal-${i}-`);
-});
-el.querySelectorAll('[name]').forEach(input => {
-input.name = input.name.replace(/soal-\d+-/, `soal-${i}-`);
-});
-});
-updateSoalCount();
-}
-
-function updateSoalCount() {
-const container = document.getElementById('soal-list-container');
-const count = container ? container.querySelectorAll('.soal-row').length : 0;
-const el = document.getElementById('soal-count-info');
-if (el) el.textContent = `${count} soal siap disimpan`;
-}
-
-function saveSoalBatch() {
-const mapel = document.getElementById('soal-mapel')?.value.trim();
-const jenis = document.getElementById('soal-jenis')?.value;
-const poin = parseInt(document.getElementById('soal-poin')?.value) || 5;
-const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
-const letters = ['A','B','C','D','E'];
-
-if (!mapel) { showToast('Isi mata pelajaran terlebih dahulu!', 'warn'); return; }
-
-const container = document.getElementById('soal-list-container');
-const rows = container.querySelectorAll('.soal-row');
-if (!rows.length) { showToast('Tidak ada soal untuk disimpan.', 'warn'); return; }
-
-let saved = 0, errors = 0;
-
-rows.forEach((row, i) => {
-const pertanyaan = document.getElementById(`soal-${i}-pertanyaan`)?.value.trim();
-if (!pertanyaan && jenis !== 'bs') { errors++; return; }
-
-const soalBaru = {
-id: DB.bankSoal.length + 1 + saved,
-guruId: session.user,
-mapel, jenis, pertanyaan: pertanyaan || '', poin,
-aktif: true,
-// Ambil gambar dari hidden field inline
-gambar: document.getElementById(`soal-${i}-img-data`)?.value || null
-};
-
-// ── PG biasa ──
-if (jenis === 'pg') {
-const opsi = letters.slice(0, jmlOpsi).map(l => document.getElementById(`soal-${i}-opsi${l}`)?.value.trim() || '');
-if (opsi.some(o => !o)) { errors++; return; }
-const kunciLetter = document.getElementById(`soal-${i}-kunci`)?.value || 'A';
-soalBaru.opsi = opsi;
-soalBaru.kunci = letters.indexOf(kunciLetter);
-// Simpan gambar per opsi (jika ada)
-const opsiGambar = {};
-letters.slice(0, jmlOpsi).forEach(l => {
-const val = document.getElementById(`soal-${i}-opsiimgdata${l}`)?.value || '';
-if (val) opsiGambar[l] = val;
-});
-if (Object.keys(opsiGambar).length) soalBaru.opsiGambar = opsiGambar;
-
-// ── PG Kompleks ──
-} else if (jenis === 'pgk') {
-const pernyataan = letters.slice(0, jmlOpsi).map(l => document.getElementById(`soal-${i}-pgk${l}`)?.value.trim() || '');
-if (pernyataan.every(p => !p)) { errors++; return; }
-const kunciBenar = letters.slice(0, jmlOpsi).filter(l => document.getElementById(`soal-${i}-pgkbenar${l}`)?.checked);
-soalBaru.pernyataan = pernyataan;
-soalBaru.kunciPGK = kunciBenar; // array huruf yang benar, misal ['A','C']
-
-// ── Benar / Salah ──
-} else if (jenis === 'bs') {
-const bsRows = document.getElementById(`bs-rows-${i}`)?.querySelectorAll('.bs-pernyataan-row') || [];
-const pernyataan = [];
-const kunci = [];
-bsRows.forEach((_, n) => {
-const teks = document.getElementById(`soal-${i}-bs${n}`)?.value.trim();
-const jawabanEl = document.querySelector(`input[name="soal-${i}-bskunci${n}"]:checked`);
-if (teks) {
-pernyataan.push(teks);
-kunci.push(jawabanEl?.value || 'benar');
-}
-});
-if (!pernyataan.length) { errors++; return; }
-soalBaru.pernyataan = pernyataan;
-soalBaru.kunciBS = kunci; // array 'benar'/'salah'
-}
-// essay: tidak ada data tambahan
-
-DB.bankSoal.push(soalBaru);
-saved++;
-});
-
-if (saved === 0) { showToast('Tidak ada soal valid. Cek kelengkapan isian!', 'error'); return; }
-
-closeModal('modal-soal');
-showToast(`✅ ${saved} soal berhasil disimpan${errors ? ` (${errors} dilewati)` : ''}!`, 'success');
-if (session.role === 'guru') renderBankSoalGuru();
-else renderBankSoalAdmin();
-}
-
-// Override saveSoal lama
-function saveSoal() { saveSoalBatch(); }
-
-// ================================================================
-// GAMBAR INLINE SAAT INPUT SOAL
-// ================================================================
-function previewGambarSoalRow(idx, input) {
-const file = input.files[0];
-if (!file) return;
-if (file.size > 3 * 1024 * 1024) {
-showToast('Ukuran gambar maksimal 3MB!', 'warn');
-input.value = '';
-return;
-}
-const reader = new FileReader();
-reader.onload = e => {
-const data = e.target.result;
-const imgEl = document.getElementById(`soal-${idx}-img-el`);
-const preEl = document.getElementById(`soal-${idx}-img-preview`);
-const statEl = document.getElementById(`soal-${idx}-img-status`);
-const hidEl = document.getElementById(`soal-${idx}-img-data`);
-
-if (imgEl) imgEl.src = data;
-if (preEl) preEl.style.display = 'block';
-if (statEl) { statEl.textContent = `✅ ${file.name} (${(file.size/1024).toFixed(0)} KB)`; statEl.style.color = 'var(--accent2)'; }
-if (hidEl) hidEl.value = data;
-};
-reader.readAsDataURL(file);
-}
-
-function hapusGambarRow(idx) {
-const imgEl = document.getElementById(`soal-${idx}-img-el`);
-const preEl = document.getElementById(`soal-${idx}-img-preview`);
-const statEl = document.getElementById(`soal-${idx}-img-status`);
-const hidEl = document.getElementById(`soal-${idx}-img-data`);
-const inpEl = document.getElementById(`soal-${idx}-img-input`);
-
-if (imgEl) imgEl.src = '';
-if (preEl) preEl.style.display = 'none';
-if (statEl) { statEl.textContent = 'Belum ada gambar'; statEl.style.color = ''; }
-if (hidEl) hidEl.value = '';
-if (inpEl) inpEl.value = '';
-}
-
-// ================================================================
-// NOTIFIKASI UJIAN (Browser Notification API)
-// ================================================================
-
-function jadwalkanNotifikasiUjian() {
-// Bersihkan timer lama
-notifTimers.forEach(t => clearTimeout(t));
-notifTimers = [];
-
-if (Notification.permission !== 'granted') return;
-
-DB.ujian.filter(u => u.status === 'aktif').forEach(ujian => {
-if (!ujian.mulai) return;
-const mulaiMs = new Date(ujian.mulai).getTime();
-const now = Date.now();
-
-// Notifikasi H-30 menit
-const tiga0menit = mulaiMs - 30 * 60000;
-if (tiga0menit > now) {
-notifTimers.push(setTimeout(() => {
-new Notification('⏰ Ujian akan segera dimulai!', {
-body: `${ujian.nama} dimulai 30 menit lagi. Siapkan diri Anda!`,
-icon: '🛡️'
-});
-}, tiga0menit - now));
-}
-
-// Notifikasi tepat mulai
-if (mulaiMs > now) {
-notifTimers.push(setTimeout(() => {
-new Notification('🚨 Ujian Dimulai Sekarang!', {
-body: `${ujian.nama} telah dimulai. Token: ${ujian.token}`,
-icon: '🛡️'
-});
-}, mulaiMs - now));
-}
-});
-}
-
-// ================================================================
-// GURU: PENGATURAN (GANTI PASSWORD)
-// ================================================================
-function renderGuruPengaturan() {
-document.getElementById('main-content').innerHTML = `
-<div class="page-header">
-<div class="page-title">⚙️ Pengaturan Akun</div>
-<div class="page-subtitle">Kelola keamanan akun Anda</div>
-</div>
-<div style="max-width:480px;">
-<div class="card">
-<div class="card-header">
-<div class="card-title">🔐 Ganti Password</div>
-</div>
-<p class="text-sm text-muted mb-4">Ganti password Anda secara berkala untuk menjaga keamanan akun. Gunakan kombinasi huruf, angka, dan simbol.</p>
-<div class="form-group">
-<label>Password Lama</label>
-<div class="pw-wrap">
-<input type="password" id="gpw-lama" placeholder="Masukkan password lama" />
-<button type="button" class="pw-toggle" onclick="togglePwField('gpw-lama',this)" tabindex="-1">👁️</button>
-</div>
-</div>
-<div class="form-group">
-<label>Password Baru</label>
-<div class="pw-wrap">
-<input type="password" id="gpw-baru" placeholder="Minimal 6 karakter" />
-<button type="button" class="pw-toggle" onclick="togglePwField('gpw-baru',this)" tabindex="-1">👁️</button>
-</div>
-</div>
-<div class="form-group">
-<label>Konfirmasi Password Baru</label>
-<div class="pw-wrap">
-<input type="password" id="gpw-konfirm" placeholder="Ulangi password baru" />
-<button type="button" class="pw-toggle" onclick="togglePwField('gpw-konfirm',this)" tabindex="-1">👁️</button>
-</div>
-</div>
-<button class="btn btn-primary btn-full" onclick="gantiPasswordGuru()">🔐 Simpan Password Baru</button>
-</div>
-
-<div class="card mt-4">
-<div class="card-header"><div class="card-title">🔔 Notifikasi Ujian</div></div>
-<p class="text-sm text-muted mb-3">Aktifkan notifikasi browser agar mendapat pengingat 30 menit sebelum ujian dimulai.</p>
-<div id="notif-status-guru" style="margin-bottom:12px;font-size:13px;">
-${typeof Notification !== 'undefined' && Notification.permission === 'granted'
-? '<span class="badge badge-green">✅ Notifikasi Aktif</span>'
-: '<span class="badge badge-gray">○ Notifikasi Belum Aktif</span>'}
-</div>
-<button class="btn btn-primary" onclick="requestNotificationPermission();setTimeout(()=>navigateTo('g-pengaturan'),500);">
-🔔 Aktifkan Notifikasi
-</button>
-</div>
-
-<div class="card mt-4">
-<div class="card-header"><div class="card-title">ℹ️ Info Akun</div></div>
-<div class="flex justify-between py-2 border-b text-sm">
-<span class="text-muted">Username / NIP</span>
-<span class="font-mono">${session.user}</span>
-</div>
-<div class="flex justify-between py-2 text-sm">
-<span class="text-muted">Mata Pelajaran</span>
-<span>${session.userData?.mapel || '-'}</span>
-</div>
-</div>
-</div>
-`;
-}
-
-function gantiPasswordGuru() {
-const lama = document.getElementById('gpw-lama')?.value;
-const baru = document.getElementById('gpw-baru')?.value;
-const konfirm = document.getElementById('gpw-konfirm')?.value;
-if (DB.users[session.user].password !== lama) { showToast('Password lama salah!', 'error'); return; }
-if (!baru || baru.length < 6) { showToast('Password baru minimal 6 karakter!', 'warn'); return; }
-if (baru !== konfirm) { showToast('Konfirmasi password tidak cocok!', 'error'); return; }
-DB.users[session.user].password = baru;
-document.getElementById('gpw-lama').value = '';
-document.getElementById('gpw-baru').value = '';
-document.getElementById('gpw-konfirm').value = '';
-showToast('✅ Password berhasil diubah!', 'success');
-}
-
-// ================================================================
-// MULTI-SOAL INPUT SYSTEM
-// ================================================================
-let soalRows = [];
-
-function toggleEssayOption() {
-renderAllSoalRows();
-const jenis = document.getElementById('soal-jenis')?.value;
-const wrapOpsi = document.getElementById('wrap-jml-opsi');
-const labelOpsi = document.getElementById('label-jml-opsi');
-if (!wrapOpsi) return;
-
-if (jenis === 'pg' || jenis === 'pgk') {
-wrapOpsi.style.display = '';
-if (labelOpsi) labelOpsi.textContent = jenis === 'pgk' ? 'Jumlah Pernyataan' : 'Jumlah Opsi';
-} else {
-// bs dan essay tidak pakai dropdown jumlah opsi
-wrapOpsi.style.display = 'none';
-}
-}
-
-function updateOpsiRows() { renderAllSoalRows(); }
-
-function renderAllSoalRows() {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-const count = container.querySelectorAll('.soal-row').length || 1;
-container.innerHTML = '';
-for (let i = 0; i < count; i++) appendSoalRow(i);
-updateSoalCount();
-}
-
-function buildSoalRow(idx) {
-const jenis = document.getElementById('soal-jenis')?.value || 'pg';
-const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
-const letters = ['A','B','C','D','E'];
-
-// ── PILIHAN GANDA biasa ──
-let inputHtml = '';
-if (jenis === 'pg') {
-inputHtml = `
-<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-${letters.slice(0, jmlOpsi).map(l => `
-<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-<span style="width:22px;height:22px;border-radius:5px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${l}</span>
-<input type="text" id="soal-${idx}-opsi${l}" placeholder="Teks pilihan ${l}..." style="flex:1;" />
-</div>
-<!-- Upload gambar per opsi -->
-<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-<label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px dashed var(--border);border-radius:4px;background:var(--bg2);transition:all .2s;"
-onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)'"
-onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
-for="soal-${idx}-opsiimg${l}">
-🖼️ Gambar Opsi ${l}
-</label>
-<input type="file" id="soal-${idx}-opsiimg${l}" accept="image/*" style="display:none;"
-onchange="previewGambarOpsi(${idx},'${l}',this)" />
-<span id="soal-${idx}-opsiimg${l}-status" style="font-size:11px;color:var(--text3);">—</span>
-<button id="soal-${idx}-opsiimg${l}-hapus" onclick="hapusGambarOpsi(${idx},'${l}')"
-style="display:none;background:rgba(239,68,68,0.8);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">✕</button>
-</div>
-<!-- Preview gambar opsi -->
-<div id="soal-${idx}-opsiimg${l}-preview" style="display:none;margin-top:6px;">
-<img id="soal-${idx}-opsiimg${l}-el" src=""
-style="max-height:100px;max-width:200px;border-radius:4px;border:1px solid var(--border);object-fit:contain;background:var(--bg2);" />
-</div>
-<input type="hidden" id="soal-${idx}-opsiimgdata${l}" value="" />
-</div>
-`).join('')}
-</div>
-<div class="form-group mt-2" style="max-width:220px;">
-<label>🔑 Kunci Jawaban</label>
-<select id="soal-${idx}-kunci" style="font-weight:700;">
-${letters.slice(0, jmlOpsi).map(l => `<option value="${l}">${l}</option>`).join('')}
-</select>
-</div>`;
-
-// ── PILIHAN GANDA KOMPLEKS ──
-} else if (jenis === 'pgk') {
-inputHtml = `
-<div class="alert alert-info mt-2" style="font-size:12px;">
-<span>ℹ️</span>
-<span>Buat pernyataan-pernyataan, lalu tentukan mana yang <strong>BENAR</strong>. Siswa memilih <strong>kombinasi jawaban</strong> yang tepat.</span>
-</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="pgk-rows-${idx}">
-${letters.slice(0, jmlOpsi).map(l => `
-<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<span style="width:22px;height:22px;border-radius:5px;background:var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${l}</span>
-<input type="text" id="soal-${idx}-pgk${l}" placeholder="Pernyataan ${l}..." style="flex:1;" />
-<label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap;text-transform:none;cursor:pointer;">
-<input type="checkbox" id="soal-${idx}-pgkbenar${l}" style="width:15px;height:15px;accent-color:var(--accent2);" />
-Benar
-</label>
-</div>
-`).join('')}
-</div>
-<div class="mt-2" style="font-size:12px;color:var(--text3);">
-💡 Centang pernyataan yang <strong>benar</strong>. Sistem akan otomatis membuat kunci jawaban kombinasi.
-</div>`;
-
-// ── BENAR / SALAH ──
-} else if (jenis === 'bs') {
-inputHtml = `
-<div class="alert alert-info mt-2" style="font-size:12px;">
-<span>ℹ️</span>
-<span>Buat beberapa pernyataan. Siswa menilai tiap pernyataan: <strong>Benar</strong> atau <strong>Salah</strong>.</span>
-</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="bs-rows-${idx}">
-<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<input type="text" id="soal-${idx}-bs0" placeholder="Pernyataan 1..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci0" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci0" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>
-</div>
-<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<input type="text" id="soal-${idx}-bs1" placeholder="Pernyataan 2..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci1" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci1" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>
-</div>
-</div>
-<button class="btn btn-ghost btn-sm mt-2" onclick="tambahBsPernyataan(${idx})" style="border-style:dashed;font-size:12px;">
-➕ Tambah Pernyataan
-</button>`;
-
-// ── ESSAY ──
-} else {
-inputHtml = `
-<div class="form-group mt-2">
-<label style="color:var(--accent3);">📝 Pedoman Penilaian (opsional)</label>
-<textarea id="soal-${idx}-essay-pedoman" placeholder="Tulis poin-poin jawaban yang diharapkan..." rows="2" style="font-size:13px;"></textarea>
-</div>`;
-}
-
-// Badge warna per jenis
-const jenisBadge = {
-pg: { label: 'PG', color: '#4f8ef7' },
-pgk: { label: 'PG Kompleks', color: '#8b5cf6' },
-bs: { label: 'Benar/Salah', color: '#f59e0b' },
-essay: { label: 'Essay', color: '#10b981' },
-}[jenis] || { label: jenis, color: '#4f8ef7' };
-
-return `
-<div class="soal-row" id="soal-row-${idx}"
-style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;position:relative;">
-
-<!-- Header soal row -->
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-<div style="display:flex;align-items:center;gap:8px;">
-<span style="font-size:12px;font-weight:700;color:var(--accent);background:rgba(79,142,247,0.12);padding:3px 10px;border-radius:20px;">Soal #${idx + 1}</span>
-<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${jenisBadge.color}22;color:${jenisBadge.color};">${jenisBadge.label}</span>
-</div>
-${idx > 0 ? `<button class="btn btn-danger btn-sm" onclick="hapusSoalRow(${idx})" style="padding:4px 10px;">✕ Hapus</button>` : ''}
-</div>
-
-<!-- Pertanyaan -->
-<div class="form-group" style="margin-bottom:8px;">
-<label>${jenis === 'pgk' ? '📌 Stimulus / Teks Soal' : jenis === 'bs' ? '📌 Teks Soal / Konteks (opsional)' : 'Pertanyaan'}</label>
-<textarea id="soal-${idx}-pertanyaan"
-placeholder="${
-jenis === 'pgk' ? 'Tulis stimulus atau konteks soal, kemudian buat pernyataan di bawah...' :
-jenis === 'bs' ? 'Tulis konteks/teks soal (opsional). Pernyataan diisi di bawah...' :
-`Tulis pertanyaan soal #${idx+1} di sini...`
-}"
-rows="${jenis === 'pgk' || jenis === 'bs' ? 2 : 3}"
-style="font-size:14px;line-height:1.6;"></textarea>
-</div>
-
-<!-- ===== UPLOAD GAMBAR INLINE ===== -->
-<div style="margin-bottom:10px;">
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-<label style="text-transform:none;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:var(--bg3);transition:all .2s;"
-onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
-for="soal-${idx}-img-input">
-🖼️ Lampirkan Gambar
-<span style="font-size:10px;opacity:.7;">(JPG/PNG/GIF ≤ 3MB)</span>
-</label>
-<input type="file" id="soal-${idx}-img-input" accept="image/*" style="display:none;"
-onchange="previewGambarSoalRow(${idx}, this)" />
-<span id="soal-${idx}-img-status" style="font-size:11px;color:var(--text3);">Belum ada gambar</span>
-</div>
-<!-- Preview gambar -->
-<div id="soal-${idx}-img-preview" style="display:none;margin-top:8px;position:relative;display:none;">
-<img id="soal-${idx}-img-el" src=""
-style="max-height:180px;max-width:100%;border-radius:6px;border:1px solid var(--border);object-fit:contain;background:var(--bg3);" />
-<button onclick="hapusGambarRow(${idx})"
-style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700;">✕</button>
-</div>
-<!-- Simpan base64 tersembunyi -->
-<input type="hidden" id="soal-${idx}-img-data" value="" />
-</div>
-
-${inputHtml}
-</div>`;
-}
-
-let bsCounter = {}; // track jumlah pernyataan BS per soal-idx
-
-function tambahBsPernyataan(idx) {
-const container = document.getElementById(`bs-rows-${idx}`);
-if (!container) return;
-const existing = container.querySelectorAll('.bs-pernyataan-row').length;
-if (existing >= 8) { showToast('Maksimal 8 pernyataan per soal.', 'warn'); return; }
-const n = existing;
-const row = document.createElement('div');
-row.className = 'bs-pernyataan-row';
-row.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;';
-row.innerHTML = `
-<input type="text" id="soal-${idx}-bs${n}" placeholder="Pernyataan ${n+1}..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci${n}" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci${n}" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>`;
-container.appendChild(row);
-}
-
-function appendSoalRow(idx) {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-container.insertAdjacentHTML('beforeend', buildSoalRow(idx));
-}
-
-function tambahSoalRow() {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-const count = container.querySelectorAll('.soal-row').length;
-appendSoalRow(count);
-updateSoalCount();
-container.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function hapusSoalRow(idx) {
-const row = document.getElementById(`soal-row-${idx}`);
-if (row) row.remove();
-document.querySelectorAll('.soal-row').forEach((el, i) => {
-el.id = `soal-row-${i}`;
-const badge = el.querySelector('span[style*="rgba(79,142,247"]');
-if (badge) badge.textContent = `Soal #${i + 1}`;
-const btn = el.querySelector('button[onclick*="hapusSoalRow"]');
-if (btn) btn.setAttribute('onclick', `hapusSoalRow(${i})`);
-el.querySelectorAll('[id]').forEach(input => {
-input.id = input.id.replace(/soal-\d+-/, `soal-${i}-`);
-});
-el.querySelectorAll('[name]').forEach(input => {
-input.name = input.name.replace(/soal-\d+-/, `soal-${i}-`);
-});
-});
-updateSoalCount();
-}
-
-function updateSoalCount() {
-const container = document.getElementById('soal-list-container');
-const count = container ? container.querySelectorAll('.soal-row').length : 0;
-const el = document.getElementById('soal-count-info');
-if (el) el.textContent = `${count} soal siap disimpan`;
-}
-
-function saveSoalBatch() {
-const mapel = document.getElementById('soal-mapel')?.value.trim();
-const jenis = document.getElementById('soal-jenis')?.value;
-const poin = parseInt(document.getElementById('soal-poin')?.value) || 5;
-const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
-const letters = ['A','B','C','D','E'];
-
-if (!mapel) { showToast('Isi mata pelajaran terlebih dahulu!', 'warn'); return; }
-
-const container = document.getElementById('soal-list-container');
-const rows = container.querySelectorAll('.soal-row');
-if (!rows.length) { showToast('Tidak ada soal untuk disimpan.', 'warn'); return; }
-
-let saved = 0, errors = 0;
-
-rows.forEach((row, i) => {
-const pertanyaan = document.getElementById(`soal-${i}-pertanyaan`)?.value.trim();
-if (!pertanyaan && jenis !== 'bs') { errors++; return; }
-
-const soalBaru = {
-id: DB.bankSoal.length + 1 + saved,
-guruId: session.user,
-mapel, jenis, pertanyaan: pertanyaan || '', poin,
-aktif: true,
-// Ambil gambar dari hidden field inline
-gambar: document.getElementById(`soal-${i}-img-data`)?.value || null
-};
-
-// ── PG biasa ──
-if (jenis === 'pg') {
-const opsi = letters.slice(0, jmlOpsi).map(l => document.getElementById(`soal-${i}-opsi${l}`)?.value.trim() || '');
-if (opsi.some(o => !o)) { errors++; return; }
-const kunciLetter = document.getElementById(`soal-${i}-kunci`)?.value || 'A';
-soalBaru.opsi = opsi;
-soalBaru.kunci = letters.indexOf(kunciLetter);
-// Simpan gambar per opsi (jika ada)
-const opsiGambar = {};
-letters.slice(0, jmlOpsi).forEach(l => {
-const val = document.getElementById(`soal-${i}-opsiimgdata${l}`)?.value || '';
-if (val) opsiGambar[l] = val;
-});
-if (Object.keys(opsiGambar).length) soalBaru.opsiGambar = opsiGambar;
-
-// ── PG Kompleks ──
-} else if (jenis === 'pgk') {
-const pernyataan = letters.slice(0, jmlOpsi).map(l => document.getElementById(`soal-${i}-pgk${l}`)?.value.trim() || '');
-if (pernyataan.every(p => !p)) { errors++; return; }
-const kunciBenar = letters.slice(0, jmlOpsi).filter(l => document.getElementById(`soal-${i}-pgkbenar${l}`)?.checked);
-soalBaru.pernyataan = pernyataan;
-soalBaru.kunciPGK = kunciBenar; // array huruf yang benar, misal ['A','C']
-
-// ── Benar / Salah ──
-} else if (jenis === 'bs') {
-const bsRows = document.getElementById(`bs-rows-${i}`)?.querySelectorAll('.bs-pernyataan-row') || [];
-const pernyataan = [];
-const kunci = [];
-bsRows.forEach((_, n) => {
-const teks = document.getElementById(`soal-${i}-bs${n}`)?.value.trim();
-const jawabanEl = document.querySelector(`input[name="soal-${i}-bskunci${n}"]:checked`);
-if (teks) {
-pernyataan.push(teks);
-kunci.push(jawabanEl?.value || 'benar');
-}
-});
-if (!pernyataan.length) { errors++; return; }
-soalBaru.pernyataan = pernyataan;
-soalBaru.kunciBS = kunci; // array 'benar'/'salah'
-}
-// essay: tidak ada data tambahan
-
-DB.bankSoal.push(soalBaru);
-saved++;
-});
-
-if (saved === 0) { showToast('Tidak ada soal valid. Cek kelengkapan isian!', 'error'); return; }
-
-closeModal('modal-soal');
-showToast(`✅ ${saved} soal berhasil disimpan${errors ? ` (${errors} dilewati)` : ''}!`, 'success');
-if (session.role === 'guru') renderBankSoalGuru();
-else renderBankSoalAdmin();
-}
-
-// Override saveSoal lama
-function saveSoal() { saveSoalBatch(); }
-
-// ================================================================
-// GAMBAR INLINE SAAT INPUT SOAL
-// ================================================================
-function previewGambarSoalRow(idx, input) {
-const file = input.files[0];
-if (!file) return;
-if (file.size > 3 * 1024 * 1024) {
-showToast('Ukuran gambar maksimal 3MB!', 'warn');
-input.value = '';
-return;
-}
-const reader = new FileReader();
-reader.onload = e => {
-const data = e.target.result;
-const imgEl = document.getElementById(`soal-${idx}-img-el`);
-const preEl = document.getElementById(`soal-${idx}-img-preview`);
-const statEl = document.getElementById(`soal-${idx}-img-status`);
-const hidEl = document.getElementById(`soal-${idx}-img-data`);
-
-if (imgEl) imgEl.src = data;
-if (preEl) preEl.style.display = 'block';
-if (statEl) { statEl.textContent = `✅ ${file.name} (${(file.size/1024).toFixed(0)} KB)`; statEl.style.color = 'var(--accent2)'; }
-if (hidEl) hidEl.value = data;
-};
-reader.readAsDataURL(file);
-}
-
-function hapusGambarRow(idx) {
-const imgEl = document.getElementById(`soal-${idx}-img-el`);
-const preEl = document.getElementById(`soal-${idx}-img-preview`);
-const statEl = document.getElementById(`soal-${idx}-img-status`);
-const hidEl = document.getElementById(`soal-${idx}-img-data`);
-const inpEl = document.getElementById(`soal-${idx}-img-input`);
-
-if (imgEl) imgEl.src = '';
-if (preEl) preEl.style.display = 'none';
-if (statEl) { statEl.textContent = 'Belum ada gambar'; statEl.style.color = ''; }
-if (hidEl) hidEl.value = '';
-if (inpEl) inpEl.value = '';
-}
-
-// ================================================================
-// NOTIFIKASI UJIAN (Browser Notification API)
-// ================================================================
-let notifTimers = [];
-
-function requestNotificationPermission() {
-if (!('Notification' in window)) return;
-if (Notification.permission === 'default') {
-Notification.requestPermission().then(perm => {
-if (perm === 'granted') showToast('Notifikasi ujian diaktifkan! ✅', 'success');
-});
-}
-}
-
-function jadwalkanNotifikasiUjian() {
-// Bersihkan timer lama
-notifTimers.forEach(t => clearTimeout(t));
-notifTimers = [];
-
-if (Notification.permission !== 'granted') return;
-
-DB.ujian.filter(u => u.status === 'aktif').forEach(ujian => {
-if (!ujian.mulai) return;
-const mulaiMs = new Date(ujian.mulai).getTime();
-const now = Date.now();
-
-// Notifikasi H-30 menit
-const tiga0menit = mulaiMs - 30 * 60000;
-if (tiga0menit > now) {
-notifTimers.push(setTimeout(() => {
-new Notification('⏰ Ujian akan segera dimulai!', {
-body: `${ujian.nama} dimulai 30 menit lagi. Siapkan diri Anda!`,
-icon: '🛡️'
-});
-}, tiga0menit - now));
-}
-
-// Notifikasi tepat mulai
-if (mulaiMs > now) {
-notifTimers.push(setTimeout(() => {
-new Notification('🚨 Ujian Dimulai Sekarang!', {
-body: `${ujian.nama} telah dimulai. Token: ${ujian.token}`,
-icon: '🛡️'
-});
-}, mulaiMs - now));
-}
-});
-}
-
-// ================================================================
-// GURU: PENGATURAN (GANTI PASSWORD)
-// ================================================================
-function renderGuruPengaturan() {
-document.getElementById('main-content').innerHTML = `
-<div class="page-header">
-<div class="page-title">⚙️ Pengaturan Akun</div>
-<div class="page-subtitle">Kelola keamanan akun Anda</div>
-</div>
-<div style="max-width:480px;">
-<div class="card">
-<div class="card-header">
-<div class="card-title">🔐 Ganti Password</div>
-</div>
-<p class="text-sm text-muted mb-4">Ganti password Anda secara berkala untuk menjaga keamanan akun. Gunakan kombinasi huruf, angka, dan simbol.</p>
-<div class="form-group">
-<label>Password Lama</label>
-<div class="pw-wrap">
-<input type="password" id="gpw-lama" placeholder="Masukkan password lama" />
-<button type="button" class="pw-toggle" onclick="togglePwField('gpw-lama',this)" tabindex="-1">👁️</button>
-</div>
-</div>
-<div class="form-group">
-<label>Password Baru</label>
-<div class="pw-wrap">
-<input type="password" id="gpw-baru" placeholder="Minimal 6 karakter" />
-<button type="button" class="pw-toggle" onclick="togglePwField('gpw-baru',this)" tabindex="-1">👁️</button>
-</div>
-</div>
-<div class="form-group">
-<label>Konfirmasi Password Baru</label>
-<div class="pw-wrap">
-<input type="password" id="gpw-konfirm" placeholder="Ulangi password baru" />
-<button type="button" class="pw-toggle" onclick="togglePwField('gpw-konfirm',this)" tabindex="-1">👁️</button>
-</div>
-</div>
-<button class="btn btn-primary btn-full" onclick="gantiPasswordGuru()">🔐 Simpan Password Baru</button>
-</div>
-
-<div class="card mt-4">
-<div class="card-header"><div class="card-title">🔔 Notifikasi Ujian</div></div>
-<p class="text-sm text-muted mb-3">Aktifkan notifikasi browser agar mendapat pengingat 30 menit sebelum ujian dimulai.</p>
-<div id="notif-status-guru" style="margin-bottom:12px;font-size:13px;">
-${typeof Notification !== 'undefined' && Notification.permission === 'granted'
-? '<span class="badge badge-green">✅ Notifikasi Aktif</span>'
-: '<span class="badge badge-gray">○ Notifikasi Belum Aktif</span>'}
-</div>
-<button class="btn btn-primary" onclick="requestNotificationPermission();setTimeout(()=>navigateTo('g-pengaturan'),500);">
-🔔 Aktifkan Notifikasi
-</button>
-</div>
-
-<div class="card mt-4">
-<div class="card-header"><div class="card-title">ℹ️ Info Akun</div></div>
-<div class="flex justify-between py-2 border-b text-sm">
-<span class="text-muted">Username / NIP</span>
-<span class="font-mono">${session.user}</span>
-</div>
-<div class="flex justify-between py-2 text-sm">
-<span class="text-muted">Mata Pelajaran</span>
-<span>${session.userData?.mapel || '-'}</span>
-</div>
-</div>
-</div>
-`;
-}
-
-function gantiPasswordGuru() {
-const lama = document.getElementById('gpw-lama')?.value;
-const baru = document.getElementById('gpw-baru')?.value;
-const konfirm = document.getElementById('gpw-konfirm')?.value;
-if (DB.users[session.user].password !== lama) { showToast('Password lama salah!', 'error'); return; }
-if (!baru || baru.length < 6) { showToast('Password baru minimal 6 karakter!', 'warn'); return; }
-if (baru !== konfirm) { showToast('Konfirmasi password tidak cocok!', 'error'); return; }
-DB.users[session.user].password = baru;
-document.getElementById('gpw-lama').value = '';
-document.getElementById('gpw-baru').value = '';
-document.getElementById('gpw-konfirm').value = '';
-showToast('✅ Password berhasil diubah!', 'success');
 }
 
 // ================================================================
@@ -6165,17 +5247,131 @@ document.addEventListener('keydown', e => {
 // INIT
 // ================================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Set default login
-  document.getElementById('login-user').value = 'admin';
-  document.getElementById('login-pass').value = '123456';
-
   // Click outside modal to close
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', e => {
       if (e.target === overlay) overlay.classList.add('hidden');
     });
   });
-});async function saveSoalBatch() {
+});
+
+// ================================================================
+// AUTO RESTORE SESSION SAAT REFRESH — onAuthStateChanged
+// ================================================================
+AUTH.onAuthStateChanged(async (firebaseUser) => {
+  // Jika sudah ada session aktif dan halaman login sedang tampil
+  if (firebaseUser && document.getElementById('page-login').classList.contains('active')) {
+    showLoading('Memulihkan sesi...');
+    try {
+      const userData = await rtdbGet('users/' + firebaseUser.uid);
+      if (userData) {
+        session.user     = firebaseUser.uid;
+        session.username = userData.username || userData.nip || userData.nisn || '';
+        session.role     = userData.role;
+        session.userData = { ...userData, uid: firebaseUser.uid };
+
+        await loadAllData();
+        hideLoading();
+        showPage('page-app');
+        buildApp();
+        showToast('Sesi dipulihkan — Selamat datang kembali, ' + userData.nama + '!', 'success');
+      } else {
+        hideLoading();
+      }
+    } catch(e) {
+      hideLoading();
+      console.warn('Gagal pulihkan sesi:', e);
+    }
+  } else if (!firebaseUser) {
+    // User logout atau session habis
+    if (!document.getElementById('page-login').classList.contains('active')) {
+      session = { user: null, role: null };
+      showPage('page-login');
+    }
+    hideLoading();
+  }
+});
+// ================================================================
+// HAPUS USER (guru / siswa) — Firebase RTDB
+// ================================================================
+async function hapusUser(uid, role) {
+  const u = DB.users[uid];
+  const displayName = u ? u.nama : uid;
+  if (!confirm('Hapus ' + role + ' "' + displayName + '"?\n\nTindakan ini tidak bisa dibatalkan.')) return;
+
+  showLoading('Menghapus ' + role + '...');
+  try {
+    // Hapus dari RTDB users
+    await RTDB.ref('users/' + uid).remove();
+
+    // Hapus mapping username
+    const uname = u ? (u.username || u.nip || u.nisn || '') : '';
+    if (uname) await RTDB.ref('usernames/' + uname).remove();
+
+    // Hapus dari cache lokal
+    delete DB.users[uid];
+
+    showToast(role + ' "' + displayName + '" berhasil dihapus.', 'success');
+    if (role === 'guru') renderDataGuru();
+    else renderDataSiswa();
+  } catch(e) {
+    showToast('Gagal menghapus: ' + e.message, 'error');
+    console.error(e);
+  } finally { hideLoading(); }
+}
+
+async function hapusSoal(id) {
+  if (!confirm('Hapus soal ini dari bank soal?')) return;
+  showLoading('Menghapus soal...');
+  try {
+    await RTDB.ref('bankSoal/' + id).remove();
+    DB.bankSoal = DB.bankSoal.filter(s => s.id !== id);
+    showToast('Soal dihapus.', 'success');
+    if (session.role === 'guru') renderBankSoalGuru();
+    else renderBankSoalAdmin();
+  } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function hapusSoalGuru(id) {
+  if (!confirm('Hapus soal ini dari bank soal Anda?')) return;
+  showLoading('Menghapus soal...');
+  try {
+    await RTDB.ref('bankSoal/' + id).remove();
+    DB.bankSoal = DB.bankSoal.filter(s => s.id !== id);
+    showToast('Soal dihapus.', 'success');
+    renderBankSoalGuru();
+  } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function hapusUjian(id) {
+  if (!confirm('Hapus ujian ini? Data hasil ujian tidak ikut terhapus.')) return;
+  showLoading('Menghapus ujian...');
+  try {
+    await RTDB.ref('ujian/' + id).remove();
+    DB.ujian = DB.ujian.filter(u => u.id !== id);
+    showToast('Ujian berhasil dihapus.', 'success');
+    renderDataUjian();
+  } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+async function resetPasswordGuru(uid) {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#!';
+  let newPw = '';
+  for (let i=0;i<8;i++) newPw += chars[Math.floor(Math.random()*chars.length)];
+  const u = DB.users[uid];
+  showToast('Password baru untuk ' + (u?.nama||uid) + ': ' + newPw + '\n⚠️ Sampaikan ke guru!', 'info');
+}
+
+async function resetPasswordSiswa(uid) {
+  const newPw = Math.random().toString(36).slice(-6).toUpperCase();
+  const u = DB.users[uid];
+  showToast('Password baru untuk ' + (u?.nama||uid) + ': ' + newPw + '\n⚠️ Sampaikan ke siswa!', 'info');
+}
+
+async function saveSoalBatch() {
   const mapel   = document.getElementById('soal-mapel')?.value.trim();
   const jenis   = document.getElementById('soal-jenis')?.value;
   const poin    = parseInt(document.getElementById('soal-poin')?.value) || 5;
