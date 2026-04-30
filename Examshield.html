@@ -11,7 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
-
+  
   :root {
     --bg: #0a0e1a;
     --bg2: #0f1526;
@@ -1594,10 +1594,11 @@ async function loadAllData() {
   const kelasData = await rtdbGet('kelas');
   DB.kelas = kelasData ? Object.values(kelasData) : [];
 
-  // Users (admin load semua, lainnya hanya profil sendiri)
-  if (role === 'admin') {
+  // Users (admin & guru load semua untuk sinkronisasi monitoring)
+  if (role === 'admin' || role === 'guru') {
     const usersData = await rtdbGet('users');
-    DB.users = usersData || {};
+    DB.users = {};
+    if (usersData) Object.entries(usersData).forEach(([uid,u]) => { DB.users[uid] = {...u, uid}; });
   }
 
   // Bank Soal
@@ -1769,8 +1770,15 @@ async function doLogin() {
   showLoading('Login...');
 
   try {
-    // Email format: username@examshield.app
-    const email = username + '@examshield.app';
+    // Ambil email Auth dari RTDB (karena email pakai timestamp unik)
+    let email;
+    if (username === 'admin') {
+      email = 'admin@examshield.app';
+    } else {
+      const mapping = await rtdbGet('usernames/' + username);
+      if (!mapping) throw new Error('Username "' + username + '" tidak ditemukan. Periksa username Anda.');
+      email = mapping.email || (username + '@examshield.app');
+    }
     const cred  = await AUTH.signInWithEmailAndPassword(email, pass);
     const uid   = cred.user.uid;
 
@@ -1968,11 +1976,24 @@ function renderView(id) {
 // ----------------------------------------------------------------
 // ADMIN: DASHBOARD
 // ----------------------------------------------------------------
-function renderAdminDashboard() {
-  const totalGuru = Object.values(DB.users).filter(u => u.role === 'guru').length;
+async function renderAdminDashboard() {
+  showLoading('Memuat dashboard...');
+  // Refresh semua data dari RTDB
+  try {
+    const [usersRaw, ujianRaw, soalRaw, hasilRaw] = await Promise.all([
+      rtdbGet('users'), rtdbGet('ujian'), rtdbGet('bankSoal'), rtdbGet('hasil')
+    ]);
+    if (usersRaw) DB.users = usersRaw;
+    if (ujianRaw) DB.ujian = Object.entries(ujianRaw).map(([id,v])=>({...v,id}));
+    if (soalRaw)  DB.bankSoal = Object.entries(soalRaw).map(([id,v])=>({...v,id}));
+    if (hasilRaw) DB.hasil = Object.entries(hasilRaw).map(([id,v])=>({...v,id}));
+  } catch(e) { console.warn('Dashboard refresh error:', e); }
+  hideLoading();
+
+  const totalGuru  = Object.values(DB.users).filter(u => u.role === 'guru').length;
   const totalSiswa = Object.values(DB.users).filter(u => u.role === 'siswa').length;
   const totalUjian = DB.ujian.length;
-  const totalSoal = DB.bankSoal.length;
+  const totalSoal  = DB.bankSoal.length;
 
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
@@ -1997,9 +2018,9 @@ function renderAdminDashboard() {
         <div class="stat-label">Total Ujian</div>
       </div>
       <div class="stat-card red">
-        <div class="stat-icon">📖</div>
-        <div class="stat-value">${totalSoal}</div>
-        <div class="stat-label">Bank Soal</div>
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">${totalHasil}</div>
+        <div class="stat-label">Hasil Ujian</div>
       </div>
     </div>
 
@@ -2065,7 +2086,11 @@ function renderAdminDashboard() {
 // ----------------------------------------------------------------
 // ADMIN: DATA GURU
 // ----------------------------------------------------------------
-function renderDataGuru() {
+async function renderDataGuru() {
+  showLoading('Memuat data guru...');
+  const usersRaw = await rtdbGet('users');
+  if (usersRaw) DB.users = usersRaw;
+  hideLoading();
   const gurus = Object.entries(DB.users).filter(([,u]) => u.role === 'guru');
   document.getElementById('main-content').innerHTML = `
     <div class="page-header flex justify-between items-center">
@@ -2104,8 +2129,8 @@ function renderDataGuru() {
                 <td>${u.mapel || '-'}</td>
                 <td>
                   <div class="flex items-center gap-2">
-                    <span class="font-mono text-sm" id="pw-guru-${username}" style="letter-spacing:2px;">••••••••</span>
-                    <button class="btn-eye" onclick="togglePw('pw-guru-${username}','${u.password}')" title="Tampilkan/sembunyikan password">👁️</button>
+                    <span class="font-mono text-sm" id="pw-guru-${username}" style="letter-spacing:2px;">${u.passwordPlain ? '••••••••' : '—'}</span>
+                    ${u.passwordPlain ? `<button class="btn-eye" onclick="togglePw('pw-guru-${username}','${u.passwordPlain}')" title="Tampilkan/sembunyikan password">👁️</button>` : '<span style="font-size:11px;color:var(--text3);">(reset utk lihat)</span>'}
                   </div>
                 </td>
                 <td><span class="badge badge-green">Aktif</span></td>
@@ -2128,7 +2153,11 @@ function renderDataGuru() {
 // ----------------------------------------------------------------
 // ADMIN: DATA SISWA
 // ----------------------------------------------------------------
-function renderDataSiswa() {
+async function renderDataSiswa() {
+  showLoading('Memuat data siswa...');
+  const usersRaw = await rtdbGet('users');
+  if (usersRaw) DB.users = usersRaw;
+  hideLoading();
   const siswas = Object.entries(DB.users).filter(([,u]) => u.role === 'siswa');
   document.getElementById('main-content').innerHTML = `
     <div class="page-header flex justify-between items-center">
@@ -2177,8 +2206,8 @@ function renderDataSiswa() {
                 <td class="font-mono text-sm">${username}</td>
                 <td>
                   <div class="flex items-center gap-2">
-                    <span class="font-mono text-sm" id="pw-siswa-${username}" style="letter-spacing:2px;">••••••••</span>
-                    <button class="btn-eye" onclick="togglePw('pw-siswa-${username}','${u.password}')" title="Tampilkan/sembunyikan password">👁️</button>
+                    <span class="font-mono text-sm" id="pw-siswa-${username}" style="letter-spacing:2px;">${u.passwordPlain ? '••••••••' : '—'}</span>
+                    ${u.passwordPlain ? `<button class="btn-eye" onclick="togglePw('pw-siswa-${username}','${u.passwordPlain}')" title="Tampilkan/sembunyikan password">👁️</button>` : '<span style="font-size:11px;color:var(--text3);">(lihat di Auth)</span>'}
                   </div>
                 </td>
                 <td>
@@ -2215,7 +2244,11 @@ function filterSiswaKombinasi() {
 // ----------------------------------------------------------------
 // ADMIN: KELOLA KELAS
 // ----------------------------------------------------------------
-function renderKelolaKelas() {
+async function renderKelolaKelas() {
+  showLoading('Memuat kelas...');
+  const kelasRaw = await rtdbGet('kelas');
+  if (kelasRaw) DB.kelas = Object.values(kelasRaw).filter(Boolean);
+  hideLoading();
   // Hitung statistik per kelas
   const siswaPerKelas = {};
   DB.kelas.forEach(k => { siswaPerKelas[k] = 0; });
@@ -2455,12 +2488,16 @@ function filterTabelKelas(val) {
 // ----------------------------------------------------------------
 // ADMIN: DATA UJIAN
 // ----------------------------------------------------------------
-function renderDataUjian() {
+async function renderDataUjian() {
   const isGuru = session.role === 'guru';
   // Guru hanya lihat ujian yang dia buat
-  const ujianList = isGuru
-    ? DB.ujian.filter(u => u.guruId === session.user)
-    : DB.ujian;
+  // Refresh dari RTDB dulu
+  const ujianRaw2 = await rtdbGet('ujian');
+  if (ujianRaw2) {
+    const all2 = Object.entries(ujianRaw2).map(([id,v])=>({...v,id}));
+    DB.ujian = isGuru ? all2.filter(u=>u.guruId===session.user) : all2;
+  }
+  const ujianList = DB.ujian;
 
   document.getElementById('main-content').innerHTML = `
     <div class="page-header flex justify-between items-center">
@@ -2530,7 +2567,15 @@ function renderDataUjian() {
 // ----------------------------------------------------------------
 // BANK SOAL ADMIN — format rekap folder per Mapel+Guru
 // ----------------------------------------------------------------
-function renderBankSoalAdmin() {
+async function renderBankSoalAdmin() {
+  showLoading('Memuat bank soal...');
+  try {
+    const [soalRaw, usersRaw] = await Promise.all([rtdbGet('bankSoal'), rtdbGet('users')]);
+    if (soalRaw) DB.bankSoal = Object.entries(soalRaw).map(([id,v])=>({...v,id}));
+    if (usersRaw) DB.users = usersRaw;
+  } catch(e) { console.warn(e); }
+  hideLoading();
+
   // Buat rekap: group by mapel + guruId
   const rekap = {};
   DB.bankSoal.forEach(s => {
@@ -2813,9 +2858,18 @@ function resetFilterAdmin() { renderBankSoalAdmin(); }
 // ----------------------------------------------------------------
 // BANK SOAL GURU (hanya soal milik guru yg login)
 // ----------------------------------------------------------------
-function renderBankSoalGuru() {
-  const myId = session.user;
-  const mySoal = DB.bankSoal.filter(s => s.guruId === myId);
+async function renderBankSoalGuru() {
+  showLoading('Memuat bank soal...');
+  try {
+    const soalRaw = await rtdbGet('bankSoal');
+    if (soalRaw) {
+      const all = Object.entries(soalRaw).map(([id,v])=>({...v,id}));
+      DB.bankSoal = all.filter(s => s.guruId === session.user);
+    } else { DB.bankSoal = []; }
+  } catch(e) { console.warn(e); }
+  hideLoading();
+  const myId   = session.user;
+  const mySoal = DB.bankSoal;
   const letters = ['A','B','C','D','E'];
 
   document.getElementById('main-content').innerHTML = `
@@ -3287,7 +3341,7 @@ async function prosesImportGuruFile(inputEl) {
           const email = nip+'@examshield.app';
           const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
           const uid   = cred.user.uid;
-          const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt:Date.now(), password };
+          const data  = { role:'guru', nama, nip, mapel, username:nip, email, createdAt:Date.now() };
           await rtdbSet('users/'+uid, data);
           await rtdbSet('usernames/'+nip, { uid });
           DB.users[uid] = { ...data, uid };
@@ -3324,12 +3378,13 @@ async function prosesImportSiswaFile(file) {
         const existing = await rtdbGet('usernames/'+username);
         if (existing) { skipped++; continue; }
         try {
-          const email = username+'@examshield.app';
+          const ts3   = Date.now() + Math.floor(Math.random()*1000);
+          const email = 's' + ts3 + '@examshield.app';
           const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
           const uid   = cred.user.uid;
-          const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt:Date.now(), password };
+          const data  = { role:'siswa', nama, nisn, kelas, username, email, createdAt:Date.now() };
           await rtdbSet('users/'+uid, data);
-          await rtdbSet('usernames/'+username, { uid });
+          await rtdbSet('usernames/'+username, { uid, email });
           DB.users[uid] = { ...data, uid };
           added++;
         } catch(e) { skipped++; console.warn(e.message); }
@@ -3474,7 +3529,19 @@ function renderAnalisisButir() {
 // ----------------------------------------------------------------
 // MONITORING
 // ----------------------------------------------------------------
-function renderMonitoring() {
+async function renderMonitoring() {
+  showLoading('Memuat data monitoring...');
+  // Refresh hasil dari RTDB
+  const hasilData = await rtdbGet('hasil');
+  if (hasilData) {
+    const allHasil = Object.entries(hasilData).map(([id,v])=>({...v,id}));
+    if (session.role === 'admin') DB.hasil = allHasil;
+    else if (session.role === 'guru') {
+      const ids = new Set(DB.ujian.map(u=>u.id));
+      DB.hasil = allHasil.filter(h=>ids.has(h.ujianId));
+    }
+  }
+  hideLoading();
   const isGuru = session.role === 'guru';
 
   // Ambil ujian yang relevan
@@ -3576,46 +3643,48 @@ function renderMonitoring() {
 
     <!-- Kartu peserta -->
     <div class="card-title mb-3" style="font-size:15px;font-weight:700;">👥 Status Peserta</div>
-    ${semuaPeserta.length === 0 ? `
+    <!-- Peserta dari hasil RTDB (sudah selesai) -->
+    ${DB.hasil.length === 0 ? `
       <div class="card"><div class="empty-state" style="padding:40px;">
         <div class="empty-state-icon">👤</div>
-        <div class="empty-state-text">Belum ada peserta yang aktif atau selesai.</div>
+        <div class="empty-state-text">Belum ada peserta yang tercatat.</div>
       </div></div>
     ` : `
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-        ${semuaPeserta.map(a => `
-          <div class="card" style="border-color:${
-            a.status==='peringatan' ? 'rgba(245,158,11,0.4)' :
-            a.status==='selesai'   ? 'rgba(110,231,183,0.25)' :
-                                     'rgba(79,142,247,0.3)'};">
+        ${DB.hasil.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(h => {
+          const uj = DB.ujian.find(u=>u.id===h.ujianId);
+          const siswaData = Object.values(DB.users).find(u=>u.uid===h.siswaId||u.id===h.siswaId);
+          const nama   = h.nama || siswaData?.nama || '—';
+          const kelas  = h.kelas || siswaData?.kelas || '—';
+          const ujNama = h.ujianNama || uj?.nama || h.ujianId;
+          const pelangg = h.pelanggaran || 0;
+          return `
+          <div class="card" style="border-color:${pelangg>0?'rgba(245,158,11,0.4)':'rgba(110,231,183,0.25)'};">
             <div class="flex justify-between items-center mb-2">
               <div class="flex items-center gap-2">
-                <div class="monitor-dot ${a.status==='peringatan'?'warning':a.status==='selesai'?'offline':''}"></div>
-                <span style="font-size:13px;font-weight:700;">${a.siswa}</span>
+                <div class="monitor-dot ${pelangg>0?'warning':'offline'}"></div>
+                <span style="font-size:13px;font-weight:700;">${nama}</span>
               </div>
-              <span class="badge ${
-                a.status==='peringatan' ? 'badge-yellow' :
-                a.status==='selesai'   ? 'badge-green'  : 'badge-blue'}">
-                ${a.status==='peringatan' ? '⚠️ Peringatan' :
-                  a.status==='selesai'   ? `✅ Nilai: ${a.nilai??'—'}` : '● Aktif'}
+              <span class="badge ${h.nilai>=75?'badge-green':'badge-red'}">
+                ${h.nilai>=75?'✅':'❌'} Nilai: ${h.nilai}
               </span>
             </div>
-            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">${a.kelas} · ${a.ujian}</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:8px;">${kelas} · ${ujNama}</div>
             <div class="flex justify-between text-sm mb-1">
-              <span class="text-muted">Progress Soal</span>
-              <span class="font-mono">${a.progress}/${a.total}</span>
+              <span class="text-muted">Benar/Salah</span>
+              <span class="font-mono">${h.benar}/${h.salah}</span>
             </div>
             <div class="progress mb-2">
-              <div class="progress-bar ${a.status==='selesai'?'progress-bar-green':'progress-bar-blue'}"
-                style="width:${Math.min(100,Math.round(a.progress/a.total*100))}%"></div>
+              <div class="progress-bar ${h.nilai>=75?'progress-bar-green':'progress-bar-red'}"
+                style="width:${h.nilai}%"></div>
             </div>
             <div class="flex justify-between text-xs text-muted">
-              <span>⏰ ${a.status==='selesai' ? 'Selesai' : 'Mulai'}: ${a.waktuMulai}</span>
-              ${a.pelanggaran > 0 ? `<span class="text-warn">⚠️ ${a.pelanggaran}x pelanggaran</span>` :
-                a.status==='peringatan' ? '<span class="text-warn">Pindah tab terdeteksi</span>' : ''}
+              <span>⏰ Durasi: ${h.durasi||'—'}</span>
+              ${pelangg>0?'<span class="text-warn">⚠️ '+pelangg+'x pelanggaran</span>':'<span class="text-success">✓ Bersih</span>'}
             </div>
-          </div>
-        `).join('')}
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">${h.waktu||''}</div>
+          </div>`;
+        }).join('')}
       </div>
     `}
   `;
@@ -3624,13 +3693,37 @@ function renderMonitoring() {
 // ----------------------------------------------------------------
 // REKAP NILAI
 // ----------------------------------------------------------------
-function renderRekapNilai() {
+async function renderRekapNilai() {
+  showLoading('Memuat data nilai...');
+  // Refresh hasil dari RTDB
+  const hasilRaw = await rtdbGet('hasil');
+  if (hasilRaw) {
+    const allHasil = Object.entries(hasilRaw).map(([id,v])=>({...v,id}));
+    if (session.role === 'admin') DB.hasil = allHasil;
+    else if (session.role === 'guru') {
+      const ids = new Set(DB.ujian.map(u=>u.id));
+      DB.hasil = allHasil.filter(h=>ids.has(h.ujianId));
+    } else {
+      DB.hasil = allHasil.filter(h=>h.siswaId===session.user);
+    }
+  }
+  hideLoading();
   const isGuru = session.role === 'guru';
   // Guru hanya lihat hasil ujian yang dia buat
   const ujianScope = isGuru
     ? DB.ujian.filter(u => u.guruId === session.user)
     : DB.ujian;
 
+  // Load hasil fresh dari RTDB
+  const rawHasil = await rtdbGet('hasil');
+  if (rawHasil) {
+    const allH = Object.entries(rawHasil).map(([id,v])=>({...v,id}));
+    if (session.role === 'admin') DB.hasil = allH;
+    else if (session.role === 'guru') {
+      const ids = new Set(DB.ujian.map(u=>u.id));
+      DB.hasil = allH.filter(h=>ids.has(h.ujianId));
+    } else DB.hasil = allH.filter(h=>h.siswaId===session.user);
+  }
   const firstId = ujianScope.length ? ujianScope[0].id : null;
 
   document.getElementById('main-content').innerHTML = `
@@ -3667,70 +3760,128 @@ function renderRekapNilai() {
 
 function renderTabelHasil(ujianId) {
   const hasil = DB.hasil.filter(h => h.ujianId === ujianId);
-  if (!hasil.length) return '<div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-text">Belum ada hasil untuk ujian ini</div></div>';
-  const avg = Math.round(hasil.reduce((s,h) => s+h.nilai, 0) / hasil.length);
+  if (!hasil.length) return `
+    <div class="empty-state" style="padding:40px;">
+      <div class="empty-state-icon">📊</div>
+      <div class="empty-state-text">Belum ada siswa yang mengumpulkan ujian ini.</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:8px;">Data akan muncul otomatis setelah siswa menyelesaikan ujian.</div>
+    </div>`;
+
+  const avg   = Math.round(hasil.reduce((s,h) => s + h.nilai, 0) / hasil.length);
+  const lulus = hasil.filter(h => h.nilai >= 75).length;
+  const maxN  = Math.max(...hasil.map(h => h.nilai));
+  const minN  = Math.min(...hasil.map(h => h.nilai));
+
   return `
-    <div class="grid-3 mb-4">
+    <div class="grid-4 mb-4">
       <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-value">${hasil.length}</div><div class="stat-label">Peserta</div></div>
-      <div class="stat-card green"><div class="stat-icon">📈</div><div class="stat-value">${avg}</div><div class="stat-label">Rata-rata</div></div>
-      <div class="stat-card yellow"><div class="stat-icon">🏅</div><div class="stat-value">${Math.max(...hasil.map(h=>h.nilai))}</div><div class="stat-label">Nilai Tertinggi</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value">${lulus}</div><div class="stat-label">Lulus</div></div>
+      <div class="stat-card yellow"><div class="stat-icon">📈</div><div class="stat-value">${avg}</div><div class="stat-label">Rata-rata</div></div>
+      <div class="stat-card red"><div class="stat-icon">🏅</div><div class="stat-value">${maxN}</div><div class="stat-label">Tertinggi</div></div>
     </div>
     <div class="table-wrapper">
       <table>
-        <thead><tr><th>Nama</th><th>Nilai</th><th>Benar</th><th>Salah</th><th>Durasi</th><th>Pelanggaran</th><th>Aksi</th></tr></thead>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nama Siswa</th>
+            <th>Kelas</th>
+            <th>Nilai</th>
+            <th>Benar</th>
+            <th>Salah</th>
+            <th>Durasi</th>
+            <th>Pelanggaran</th>
+            <th>Status</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
         <tbody>
-          ${hasil.sort((a,b)=>b.nilai-a.nilai).map((h,i) => `
+          ${hasil.sort((a,b) => b.nilai - a.nilai).map((h, i) => {
+            const siswaCache = Object.values(DB.users).find(u => u.uid === h.siswaId || u.id === h.siswaId);
+            const namaSiswa  = h.nama  || siswaCache?.nama  || '—';
+            const kelasSiswa = h.kelas || siswaCache?.kelas || '—';
+            return `
             <tr>
-              <td><div class="flex items-center gap-2">
-                ${i===0?'🥇':i===1?'🥈':i===2?'🥉':'  '}
-                <span style="font-weight:600;">${h.nama}</span>
-              </div></td>
-              <td><span class="font-mono bold" style="font-size:16px;color:${h.nilai>=75?'var(--accent2)':'var(--danger)'};">${h.nilai}</span></td>
-              <td class="text-success">${h.benar}</td>
-              <td class="text-danger">${h.salah}</td>
-              <td class="font-mono text-sm">${h.durasi}</td>
-              <td>${h.pelanggaran > 0 ? `<span class="badge badge-red">⚠️ ${h.pelanggaran}x</span>` : '<span class="badge badge-green">✓ Bersih</span>'}</td>
-              <td><button class="btn btn-ghost btn-sm" onclick="lihatDetailHasil('${h.id}')">🔍 Detail</button></td>
-            </tr>
-          `).join('')}
+              <td class="text-muted" style="font-size:13px;">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
+              <td><span style="font-weight:600;">${namaSiswa}</span></td>
+              <td><span class="badge badge-blue">${kelasSiswa}</span></td>
+              <td><span class="font-mono bold" style="font-size:17px;color:${h.nilai>=75?'var(--accent2)':'var(--danger)'};">${h.nilai}</span></td>
+              <td class="text-success font-mono">${h.benar}</td>
+              <td class="text-danger font-mono">${h.salah}</td>
+              <td class="font-mono text-sm">${h.durasi || '—'}</td>
+              <td>${h.pelanggaran > 0 ? '<span class="badge badge-red">⚠️ '+h.pelanggaran+'x</span>' : '<span class="badge badge-green">✓ Bersih</span>'}</td>
+              <td>${h.nilai>=75 ? '<span class="badge badge-green">Lulus</span>' : '<span class="badge badge-red">Belum Lulus</span>'}</td>
+              <td><button class="btn btn-ghost btn-sm" onclick="lihatDetailHasil('${h.id}')">🔍</button></td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text3);">
+      Peserta: ${hasil.length} | Lulus: ${lulus} | Tidak Lulus: ${hasil.length - lulus} | Terendah: ${minN}
     </div>
   `;
 }
 
-function filterHasil(ujianId, el) {
+async function filterHasil(ujianId, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  // Load fresh hasil untuk ujian yang dipilih
+  showLoading('Memuat nilai...');
+  try {
+    const raw = await rtdbGet('hasil');
+    if (raw) {
+      const allH = Object.entries(raw).map(([id,v])=>({...v,id}));
+      // Merge ke DB.hasil
+      allH.forEach(h => {
+        if (!DB.hasil.find(x => x.id === h.id)) DB.hasil.push(h);
+      });
+    }
+  } catch(e) { console.warn(e); }
+  hideLoading();
   document.getElementById('tabel-hasil').innerHTML = renderTabelHasil(ujianId);
 }
 
 // ----------------------------------------------------------------
 // LOG AKTIVITAS
 // ----------------------------------------------------------------
-function renderLogAktivitas() {
-  const logs = [
-    { time: '08:42:15', type: 'warn', icon: '⚠️', msg: 'Bella Putri berpindah tab saat UTS Fisika (pelanggaran #1)' },
-    { time: '08:35:00', type: 'info', icon: '▶️', msg: 'Ahmad Fauzi memulai UTS Fisika (token: FIS456)' },
-    { time: '08:35:22', type: 'info', icon: '▶️', msg: 'Bella Putri memulai UTS Fisika (token: FIS456)' },
-    { time: '08:36:01', type: 'info', icon: '▶️', msg: 'Candra Wijaya memulai UTS Fisika (token: FIS456)' },
-    { time: '08:00:00', type: 'success', icon: '📋', msg: 'Ujian UTS Fisika diaktifkan oleh guru.fisika' },
-    { time: '07:55:00', type: 'info', icon: '🔑', msg: 'Admin login ke sistem' },
-  ];
+async function renderLogAktivitas() {
+  showLoading('Memuat log...');
+  // Build log dari data hasil ujian di RTDB
+  const rawHasil = await rtdbGet('hasil') || {};
+  const rawUjian = await rtdbGet('ujian') || {};
+  hideLoading();
+
+  const logs = [];
+
+  // Log dari hasil ujian
+  Object.entries(rawHasil).forEach(([id, h]) => {
+    const uj = rawUjian[h.ujianId];
+    const waktu = h.waktu || new Date(h.createdAt||0).toLocaleString('id-ID');
+    logs.push({
+      time: waktu,
+      icon: h.pelanggaran > 0 ? '⚠️' : '✅',
+      type: h.pelanggaran > 0 ? 'warn' : 'success',
+      msg: `${h.nama||'Siswa'} menyelesaikan "${uj?.nama||h.ujianId}" — Nilai: ${h.nilai}${h.pelanggaran>0?' ('+h.pelanggaran+'x pelanggaran)':''}`
+    });
+  });
+
+  // Urutkan terbaru dulu
+  logs.sort((a,b) => b.time.localeCompare(a.time));
 
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
       <div class="page-title">📜 Log Aktivitas</div>
-      <div class="page-subtitle">Rekam jejak seluruh aktivitas sistem dan ujian</div>
+      <div class="page-subtitle">Rekam jejak hasil ujian siswa — ${logs.length} entri</div>
     </div>
     <div class="card">
-      ${logs.map(l => `
+      ${logs.length ? logs.map(l => `
         <div class="log-item">
-          <span class="log-time">${l.time}</span>
+          <span class="log-time" style="min-width:130px;font-size:10px;">${l.time}</span>
           <span>${l.icon}</span>
           <span style="font-size:13px;color:var(--text);">${l.msg}</span>
         </div>
-      `).join('')}
+      `).join('') : '<div class="empty-state" style="padding:32px;"><div class="empty-state-text">Belum ada aktivitas tercatat.</div></div>'}
     </div>
   `;
 }
@@ -3738,191 +3889,153 @@ function renderLogAktivitas() {
 // ----------------------------------------------------------------
 // PENGATURAN
 // ----------------------------------------------------------------
-function renderPengaturan() {
+async function renderPengaturan() {
+  // Load info sekolah dari RTDB
+  const infoSekolah = await rtdbGet('sekolah/info') || {};
+  const pengaturanAC = await rtdbGet('sekolah/antiCurang') || {
+    tabDetect: true, fullscreen: true, noCopy: true, maxPelanggaran: 3
+  };
+
   document.getElementById('main-content').innerHTML = `
-  <div class="page-header">
-    <div class="page-title">⚙️ Pengaturan Sistem</div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card mb-4">
-      <div class="card-header"><div class="card-title">🔐 Keamanan Akun</div></div>
-      <p class="text-sm text-muted mb-3">Ubah password akun administrator.</p>
-      <button class="btn btn-primary" onclick="openModal('modal-ganti-pw')">🔐 Ganti Password Admin</button>
+    <div class="page-header">
+      <div class="page-title">⚙️ Pengaturan Sistem</div>
     </div>
-
-    <div class="card mb-4">
-      <div class="card-header"><div class="card-title">🔔 Notifikasi Sistem</div></div>
-      <p class="text-sm text-muted mb-3">Aktifkan notifikasi browser untuk peringatan ujian dimulai dan pelanggaran siswa.</p>
-      <div style="margin-bottom:12px;">
-        ${typeof Notification !== 'undefined' && Notification.permission === 'granted'
-          ? '<span class="badge badge-green">🔔 Notifikasi Aktif</span>'
-          : '<span class="badge badge-gray">○ Belum Aktif</span>'}
+    <div class="grid-2">
+      <div class="card mb-4">
+        <div class="card-header"><div class="card-title">🔐 Keamanan Akun</div></div>
+        <p class="text-sm text-muted mb-3">Ubah password akun administrator.</p>
+        <button class="btn btn-primary" onclick="openModal('modal-ganti-pw')">🔐 Ganti Password Admin</button>
       </div>
-      <button class="btn btn-primary"
-        onclick="requestNotificationPermission();showToast('Pengaturan notifikasi diperbarui','info');">
-        🔔 Aktifkan Notifikasi
-      </button>
-    </div>
-
-    <!-- Pengaturan anti-curang -->
-    <div class="card">
-      <div class="card-header"><div class="card-title">🛡️ Pengaturan Anti Curang (Default)</div></div>
-
-      <div class="check-row">
-        <input type="checkbox" id="set-tab-detect" />
-        <label style="text-transform:none;font-size:13px;">Aktifkan deteksi pindah tab</label>
+      <div class="card mb-4">
+        <div class="card-header"><div class="card-title">🔔 Notifikasi Sistem</div></div>
+        <p class="text-sm text-muted mb-3">Aktifkan notifikasi browser untuk peringatan ujian dimulai dan pelanggaran siswa.</p>
+        <div style="margin-bottom:12px;">
+          ${typeof Notification !== 'undefined' && Notification.permission === 'granted'
+            ? '<span class="badge badge-green">✅ Notifikasi Aktif</span>'
+            : '<span class="badge badge-gray">○ Belum Aktif</span>'}
+        </div>
+        <button class="btn btn-primary" onclick="requestNotificationPermission();showToast('Pengaturan notifikasi diperbarui','info');">
+          🔔 Aktifkan Notifikasi
+        </button>
       </div>
-
-      <div class="check-row">
-        <input type="checkbox" id="set-fullscreen" />
-        <label style="text-transform:none;font-size:13px;">Wajib fullscreen saat ujian</label>
+        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Aktifkan deteksi pindah tab</label></div>
+        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Wajib fullscreen saat ujian</label></div>
+        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Blokir klik kanan & copy</label></div>
+        <div class="check-row"><input type="checkbox" /><label style="text-transform:none;font-size:13px;">Rekam layar peserta (opsional)</label></div>
+        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Maks pelanggaran: <input type="number" value="3" min="1" max="10" style="width:50px;padding:2px 6px;margin:0 4px;" /> kali</label></div>
+        <button class="btn btn-success mt-3" onclick="simpanPengaturanAC()">💾 Simpan Pengaturan</button>
       </div>
-
-      <div class="check-row">
-        <input type="checkbox" id="set-no-copy" />
-        <label style="text-transform:none;font-size:13px;">Blokir copy, cut, paste</label>
+      <div class="card">
+        <div class="card-header"><div class="card-title">🏫 Informasi Sekolah</div></div>
+        <div class="form-group">
+          <label>Nama Sekolah</label>
+          <input type="text" id="set-nama-sekolah" value="${infoSekolah.nama || 'SMA Negeri 1'}" />
+        </div>
+        <div class="form-group">
+          <label>Tahun Ajaran</label>
+          <input type="text" id="set-tahun-ajaran" value="${infoSekolah.tahunAjaran || '2024/2025'}" />
+        </div>
+        <div class="form-group">
+          <label>Semester</label>
+          <select id="set-semester">
+            <option ${(infoSekolah.semester||'Ganjil')==='Ganjil'?'selected':''}>Ganjil</option>
+            <option ${(infoSekolah.semester||'')==='Genap'?'selected':''}>Genap</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="simpanInfoSekolah()">💾 Simpan Info Sekolah</button>
       </div>
-
-      <div class="check-row">
-        <input type="checkbox" id="set-no-rightclick" />
-        <label style="text-transform:none;font-size:13px;">Blokir klik kanan</label>
-      </div>
-
-      <div class="check-row">
-        <label style="text-transform:none;font-size:13px;">
-          Maks pelanggaran:
-          <input type="number" id="set-max-violations" value="3" min="1" max="10"
-            style="width:60px;padding:2px 6px;margin:0 6px;" />
-          kali
-        </label>
-      </div>
-
-      <button class="btn btn-success mt-3" onclick="savePengaturan()">
-        💾 Simpan Pengaturan
-      </button>
-    </div>
-
-    <!-- Informasi sekolah -->
-    <div class="card">
-      <div class="card-header"><div class="card-title">🏫 Informasi Sekolah</div></div>
-
-      <div class="form-group">
-        <label>Nama Sekolah</label>
-        <input type="text" id="set-school-name" placeholder="Nama sekolah" />
-      </div>
-
-      <div class="form-group">
-        <label>Tahun Ajaran</label>
-        <input type="text" id="set-school-year" placeholder="cth: 2024/2025" />
-      </div>
-
-      <div class="form-group">
-        <label>Semester</label>
-        <select id="set-school-semester">
-          <option value="Ganjil">Ganjil</option>
-          <option value="Genap">Genap</option>
-        </select>
-      </div>
-
-      <button class="btn btn-primary" onclick="savePengaturan()">
-        💾 Simpan
-      </button>
-      <div class="text-xs text-muted mt-2">Catatan: tombol Simpan ini juga menyimpan pengaturan anti-curang.</div>
-    </div>
-
-    <!-- Statistik -->
-    <div class="card">
-      <div class="card-header"><div class="card-title">📊 Statistik Sistem</div></div>
-      <div class="flex justify-between py-2 border-b" style="font-size:13px;">
-        <span class="text-muted">Total ujian diselenggarakan</span>
-        <span class="font-mono bold">${DB.ujian.length}</span>
-      </div>
-      <div class="flex justify-between py-2 border-b" style="font-size:13px;">
-        <span class="text-muted">Total soal di bank soal</span>
-        <span class="font-mono bold">${DB.bankSoal.length}</span>
-      </div>
-      <div class="flex justify-between py-2 border-b" style="font-size:13px;">
-        <span class="text-muted">Total hasil ujian tersimpan</span>
-        <span class="font-mono bold">${DB.hasil.length}</span>
-      </div>
-      <div class="flex justify-between py-2" style="font-size:13px;">
-        <span class="text-muted">Total pelanggaran terdeteksi</span>
-        <span class="font-mono bold text-warn">${DB.hasil.reduce((s,h)=>s+(h.pelanggaran||0),0)}</span>
+      <div class="card">
+        <div class="card-header"><div class="card-title">📊 Statistik Sistem</div></div>
+        <div class="flex justify-between py-2 border-b" style="font-size:13px;">
+          <span class="text-muted">Total ujian diselenggarakan</span>
+          <span class="font-mono bold">${DB.ujian.length}</span>
+        </div>
+        <div class="flex justify-between py-2 border-b" style="font-size:13px;">
+          <span class="text-muted">Total soal di bank soal</span>
+          <span class="font-mono bold">${DB.bankSoal.length}</span>
+        </div>
+        <div class="flex justify-between py-2 border-b" style="font-size:13px;">
+          <span class="text-muted">Total hasil ujian tersimpan</span>
+          <span class="font-mono bold">${DB.hasil.length}</span>
+        </div>
+        <div class="flex justify-between py-2" style="font-size:13px;">
+          <span class="text-muted">Total pelanggaran terdeteksi</span>
+          <span class="font-mono bold text-warn">${DB.hasil.reduce((s,h)=>s+h.pelanggaran,0)}</span>
+        </div>
       </div>
     </div>
-  </div>
   `;
-
-  // Setelah render, load setting dari RTDB lalu isi ke form
-  loadPengaturan();
 }
 
 // ----------------------------------------------------------------
 // GURU: DASHBOARD
 // ----------------------------------------------------------------
-function renderGuruDashboard() {
-  // ISOLASI: hanya ambil data milik guru yang sedang login
-  const myId    = session.user;
-  const myUjian = DB.ujian.filter(u => u.guruId === myId);
-  const myHasil = DB.hasil.filter(h => DB.ujian.find(u => u.id === h.ujianId && u.guruId === myId));
-  const mySoal  = DB.bankSoal.filter(s => s.guruId === myId);
+async function renderGuruDashboard() {
+  showLoading('Memuat dashboard...');
+  try {
+    const [ujianRaw, hasilRaw, soalRaw] = await Promise.all([
+      rtdbGet('ujian'), rtdbGet('hasil'), rtdbGet('bankSoal')
+    ]);
+    if (ujianRaw) {
+      const all = Object.entries(ujianRaw).map(([id,v])=>({...v,id}));
+      DB.ujian = all.filter(u => u.guruId === session.user);
+    }
+    if (soalRaw) {
+      const all = Object.entries(soalRaw).map(([id,v])=>({...v,id}));
+      DB.bankSoal = all.filter(s => s.guruId === session.user);
+    }
+    if (hasilRaw) {
+      const allH  = Object.entries(hasilRaw).map(([id,v])=>({...v,id}));
+      const myIds = new Set(DB.ujian.map(u=>u.id));
+      DB.hasil = allH.filter(h => myIds.has(h.ujianId));
+    }
+  } catch(e) { console.warn('Guru dashboard error:', e); }
+  hideLoading();
+
+  const myUjian = DB.ujian;
+  const myHasil = DB.hasil;
+  const mySoal  = DB.bankSoal;
 
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
       <div class="page-title">📊 Dashboard Guru</div>
-      <div class="page-subtitle">Selamat datang, ${session.userData.nama}! · ${session.userData.mapel || ''}</div>
+      <div class="page-subtitle">Selamat datang, ${session.userData.nama}!</div>
     </div>
     <div class="grid-3 mb-4">
-      <div class="stat-card blue">
-        <div class="stat-icon">📋</div>
-        <div class="stat-value">${myUjian.length}</div>
-        <div class="stat-label">Ujian Saya</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-icon">✅</div>
-        <div class="stat-value">${myHasil.length}</div>
-        <div class="stat-label">Hasil Ujian Masuk</div>
-      </div>
-      <div class="stat-card yellow">
-        <div class="stat-icon">📖</div>
-        <div class="stat-value">${mySoal.length}</div>
-        <div class="stat-label">Soal Saya</div>
-      </div>
+      <div class="stat-card blue"><div class="stat-icon">📋</div><div class="stat-value">${myUjian.length}</div><div class="stat-label">Ujian Saya</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-value">${myHasil.length}</div><div class="stat-label">Hasil Masuk</div></div>
+      <div class="stat-card yellow"><div class="stat-icon">📖</div><div class="stat-value">${mySoal.length}</div><div class="stat-label">Soal Saya</div></div>
     </div>
     <div class="card mb-4">
       <div class="card-header">
         <div class="card-title">📋 Ujian Saya</div>
         <button class="btn btn-primary btn-sm" onclick="openModal('modal-ujian')">➕ Buat Ujian</button>
       </div>
-      ${myUjian.length === 0 ? `
-        <div class="empty-state" style="padding:32px;">
-          <div class="empty-state-icon">📋</div>
-          <div class="empty-state-text">Belum ada ujian. Klik "Buat Ujian" untuk memulai.</div>
-        </div>
-      ` : myUjian.slice(0, 5).map(u => `
-        <div style="padding:12px 0;border-bottom:1px solid var(--border);">
-          <div class="flex justify-between items-center">
-            <div>
-              <div style="font-size:14px;font-weight:600;">${u.nama}</div>
-              <div style="font-size:12px;color:var(--text3);">${u.kelas} · Token: <span class="font-mono">${u.token}</span> · ${DB.hasil.filter(h=>h.ujianId===u.id).length} peserta</div>
+      ${myUjian.length === 0 ? '<div class="empty-state" style="padding:32px;"><div class="empty-state-icon">📋</div><div class="empty-state-text">Belum ada ujian.</div></div>' :
+        myUjian.map(u => `
+          <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+            <div class="flex justify-between items-center">
+              <div>
+                <div style="font-size:14px;font-weight:600;">${u.nama}</div>
+                <div style="font-size:12px;color:var(--text3);">${u.kelas} · Token: <span class="font-mono">${u.token}</span> · ${DB.hasil.filter(h=>h.ujianId===u.id).length} hasil</div>
+              </div>
+              <span class="badge ${u.status==='aktif'?'badge-green':'badge-gray'}">${u.status==='aktif'?'Aktif':'Selesai'}</span>
             </div>
-            <span class="badge ${u.status==='aktif'?'badge-green':'badge-gray'}">${u.status==='aktif'?'● Aktif':'○ Selesai'}</span>
-          </div>
-        </div>
-      `).join('')}
+          </div>`).join('')}
     </div>
     <div class="card">
       <div class="card-header"><div class="card-title">🚀 Aksi Cepat</div></div>
       <div class="flex gap-3 flex-wrap">
         <button class="btn btn-primary" onclick="openModal('modal-ujian')">📝 Buat Ujian Baru</button>
-        <button class="btn btn-ghost" onclick="navigateTo('g-bank-soal')">📖 Bank Soal Saya</button>
+        <button class="btn btn-ghost" onclick="openModal('modal-soal')">📖 Tambah Soal</button>
         <button class="btn btn-ghost" onclick="navigateTo('g-monitoring')">👁️ Monitoring</button>
         <button class="btn btn-ghost" onclick="navigateTo('g-hasil')">🏆 Lihat Nilai</button>
       </div>
     </div>
   `;
 }
+
+
 
 // ----------------------------------------------------------------
 // PROFIL
@@ -3957,10 +4070,23 @@ function renderProfil() {
 // ----------------------------------------------------------------
 // SISWA: DASHBOARD
 // ----------------------------------------------------------------
-function renderSiswaDashboard() {
+async function renderSiswaDashboard() {
   const u = session.userData;
-  const myHasil = DB.hasil.filter(h => h.siswaId === session.user);
-  const ujianTersedia = DB.ujian.filter(u => u.status === 'aktif' && u.kelas === (session.userData.kelas || ''));
+  showLoading('Memuat beranda...');
+  // Load ujian aktif dari RTDB
+  const allUjianRaw = await rtdbGet('ujian');
+  const siswaKelas  = u?.kelas || '';
+  const ujianTersedia = allUjianRaw
+    ? Object.entries(allUjianRaw)
+        .map(([id,v])=>({...v,id}))
+        .filter(uj => uj.status==='aktif' && (!uj.kelas || !siswaKelas || uj.kelas===siswaKelas))
+    : [];
+  // Load hasil siswa dari RTDB
+  const allHasilRaw = await rtdbGet('hasil');
+  const myHasil = allHasilRaw
+    ? Object.entries(allHasilRaw).map(([id,v])=>({...v,id})).filter(h=>h.siswaId===session.user)
+    : [];
+  hideLoading();
 
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
@@ -4003,8 +4129,23 @@ function renderSiswaDashboard() {
 // ----------------------------------------------------------------
 // SISWA: UJIAN TERSEDIA
 // ----------------------------------------------------------------
-function renderUjianTersedia() {
-  const ujian = DB.ujian.filter(u => u.status === 'aktif');
+async function renderUjianTersedia() {
+  showLoading('Memuat daftar ujian...');
+  // Load SEMUA ujian aktif dari RTDB (bukan dari cache yang mungkin kosong untuk siswa)
+  const allUjianRaw = await rtdbGet('ujian');
+  hideLoading();
+  const siswaKelas = session.userData?.kelas || '';
+  let ujian = [];
+  if (allUjianRaw) {
+    ujian = Object.entries(allUjianRaw)
+      .map(([id, u]) => ({ ...u, id }))
+      .filter(u => {
+        if (u.status !== 'aktif') return false;
+        // Filter by kelas jika kelas tersedia
+        if (u.kelas && siswaKelas && u.kelas !== siswaKelas) return false;
+        return true;
+      });
+  }
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
       <div class="page-title">📋 Ujian Tersedia</div>
@@ -4034,8 +4175,14 @@ function renderUjianTersedia() {
 // ----------------------------------------------------------------
 // SISWA: HASIL
 // ----------------------------------------------------------------
-function renderHasilSiswa() {
-  const myHasil = DB.hasil.filter(h => h.siswaId === session.user);
+async function renderHasilSiswa() {
+  showLoading('Memuat nilai...');
+  const allHasilRaw = await rtdbGet('hasil');
+  const myHasil = allHasilRaw
+    ? Object.entries(allHasilRaw).map(([id,v])=>({...v,id})).filter(h=>h.siswaId===session.user)
+    : [];
+  DB.hasil = [...DB.hasil.filter(h=>h.siswaId!==session.user), ...myHasil];
+  hideLoading();
   document.getElementById('main-content').innerHTML = `
     <div class="page-header">
       <div class="page-title">📊 Nilai Saya</div>
@@ -4047,7 +4194,7 @@ function renderHasilSiswa() {
             <thead><tr><th>Ujian</th><th>Nilai</th><th>Benar/Salah</th><th>Durasi</th><th>Pelanggaran</th><th>Waktu</th></tr></thead>
             <tbody>
               ${myHasil.map(h => {
-                const uj = DB.ujian.find(u => u.id === h.ujianId);
+                const uj = DB.ujian.find(u => u.id === h.ujianId) || { nama: h.ujianNama || h.ujianId, mapel:'—', kelas:'—', durasi:'—' };
                 return `
                   <tr>
                     <td><div style="font-weight:600;font-size:13px;">${uj?.nama || h.ujianId}</div></td>
@@ -4077,30 +4224,317 @@ function bukaTokenModal(ujianId) {
   openModal('modal-token');
 }
 
-function validateToken() {
-  const token = document.getElementById('input-token').value.trim().toUpperCase();
-  const ujian = DB.ujian.find(u => u.id === currentUjianId);
-  if (!ujian) return;
-  if (token !== ujian.token.toUpperCase()) {
-    showToast('Token salah! Periksa kode dari guru Anda.', 'error');
-    return;
-  }
-  closeModal('modal-token');
-  startExam(ujian);
+
+// ================================================================
+// SIMPAN PENGATURAN KE RTDB
+// ================================================================
+async function simpanInfoSekolah() {
+  const nama     = document.getElementById('set-nama-sekolah')?.value.trim();
+  const tahun    = document.getElementById('set-tahun-ajaran')?.value.trim();
+  const semester = document.getElementById('set-semester')?.value;
+  if (!nama) { showToast('Isi nama sekolah!', 'warn'); return; }
+  showLoading('Menyimpan...');
+  try {
+    await rtdbSet('sekolah/info', { nama, tahunAjaran: tahun, semester, updatedAt: Date.now() });
+    showToast('✅ Info sekolah berhasil disimpan!', 'success');
+  } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
+  finally { hideLoading(); }
 }
 
-function startExam(ujian) {
+async function simpanPengaturanAC() {
+  showLoading('Menyimpan pengaturan...');
+  try {
+    const maxPelanggaran = parseInt(document.querySelector('#main-content input[type="number"]')?.value || '3');
+    await rtdbSet('sekolah/antiCurang', {
+      tabDetect:    document.querySelectorAll('#main-content input[type="checkbox"]')[0]?.checked ?? true,
+      fullscreen:   document.querySelectorAll('#main-content input[type="checkbox"]')[1]?.checked ?? true,
+      noCopy:       document.querySelectorAll('#main-content input[type="checkbox"]')[2]?.checked ?? true,
+      maxPelanggaran,
+      updatedAt: Date.now()
+    });
+    showToast('✅ Pengaturan anti-curang disimpan!', 'success');
+  } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
+  finally { hideLoading(); }
+}
+
+// ================================================================
+// MISSING: buildSoalRow, appendSoalRow, tambahSoalRow, 
+//          toggleEssayOption, updateSoalCount, hapusSoalRow
+// ================================================================
+function toggleEssayOption() {
+  renderAllSoalRows();
+  const jenis    = document.getElementById('soal-jenis')?.value;
+  const wrapOpsi = document.getElementById('wrap-jml-opsi');
+  const labelOpsi = document.getElementById('label-jml-opsi');
+  if (!wrapOpsi) return;
+  if (jenis === 'pg' || jenis === 'pgk') {
+    wrapOpsi.style.display = '';
+    if (labelOpsi) labelOpsi.textContent = jenis === 'pgk' ? 'Jumlah Pernyataan' : 'Jumlah Opsi';
+  } else {
+    wrapOpsi.style.display = 'none';
+  }
+}
+
+function updateOpsiRows() { renderAllSoalRows(); }
+
+function renderAllSoalRows() {
+  const container = document.getElementById('soal-list-container');
+  if (!container) return;
+  const count = container.querySelectorAll('.soal-row').length || 1;
+  container.innerHTML = '';
+  for (let i = 0; i < count; i++) appendSoalRow(i);
+  updateSoalCount();
+}
+
+function buildSoalRow(idx) {
+  const jenis   = document.getElementById('soal-jenis')?.value || 'pg';
+  const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
+  const letters = ['A','B','C','D','E'];
+
+  let inputHtml = '';
+
+  if (jenis === 'pg') {
+    inputHtml = `
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        ${letters.slice(0, jmlOpsi).map(l => `
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span style="width:22px;height:22px;border-radius:5px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${l}</span>
+              <input type="text" id="soal-${idx}-opsi${l}" placeholder="Teks pilihan ${l}..." style="flex:1;" />
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px dashed var(--border);border-radius:4px;background:var(--bg2);" for="soal-${idx}-opsiimg${l}">
+                🖼️ Gambar Opsi ${l}
+              </label>
+              <input type="file" id="soal-${idx}-opsiimg${l}" accept="image/*" style="display:none;" onchange="previewGambarOpsi(${idx},'${l}',this)" />
+              <span id="soal-${idx}-opsiimg${l}-status" style="font-size:11px;color:var(--text3);">—</span>
+              <button id="soal-${idx}-opsiimg${l}-hapus" onclick="hapusGambarOpsi(${idx},'${l}')" style="display:none;background:rgba(239,68,68,0.8);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">✕</button>
+            </div>
+            <div id="soal-${idx}-opsiimg${l}-preview" style="display:none;margin-top:6px;">
+              <img id="soal-${idx}-opsiimg${l}-el" src="" style="max-height:80px;max-width:180px;border-radius:4px;border:1px solid var(--border);object-fit:contain;" />
+            </div>
+            <input type="hidden" id="soal-${idx}-opsiimgdata${l}" value="" />
+          </div>
+        `).join('')}
+      </div>
+      <div class="form-group mt-2" style="max-width:220px;">
+        <label>🔑 Kunci Jawaban</label>
+        <select id="soal-${idx}-kunci" style="font-weight:700;">
+          ${letters.slice(0, jmlOpsi).map(l => `<option value="${l}">${l}</option>`).join('')}
+        </select>
+      </div>`;
+
+  } else if (jenis === 'pgk') {
+    inputHtml = `
+      <div class="alert alert-info mt-2" style="font-size:12px;"><span>ℹ️</span><span>Buat pernyataan, centang yang <strong>BENAR</strong>.</span></div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+        ${letters.slice(0, jmlOpsi).map(l => `
+          <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
+            <span style="width:22px;height:22px;border-radius:5px;background:var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${l}</span>
+            <input type="text" id="soal-${idx}-pgk${l}" placeholder="Pernyataan ${l}..." style="flex:1;" />
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap;text-transform:none;cursor:pointer;">
+              <input type="checkbox" id="soal-${idx}-pgkbenar${l}" style="width:15px;height:15px;accent-color:var(--accent2);" /> Benar
+            </label>
+          </div>
+        `).join('')}
+      </div>`;
+
+  } else if (jenis === 'bs') {
+    inputHtml = `
+      <div class="alert alert-info mt-2" style="font-size:12px;"><span>ℹ️</span><span>Tentukan tiap pernyataan <strong>Benar</strong> atau <strong>Salah</strong>.</span></div>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="bs-rows-${idx}">
+        ${[0,1].map(n => `
+          <div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
+            <input type="text" id="soal-${idx}-bs${n}" placeholder="Pernyataan ${n+1}..." />
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
+                <input type="radio" name="soal-${idx}-bskunci${n}" value="benar" checked style="accent-color:var(--accent2);"> Benar
+              </label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
+                <input type="radio" name="soal-${idx}-bskunci${n}" value="salah" style="accent-color:var(--danger);"> Salah
+              </label>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn btn-ghost btn-sm mt-2" onclick="tambahBsPernyataan(${idx})" style="border-style:dashed;font-size:12px;">➕ Tambah Pernyataan</button>`;
+
+  } else { // essay
+    inputHtml = `
+      <div class="form-group mt-2">
+        <label style="color:var(--accent3);">📝 Pedoman Penilaian (opsional)</label>
+        <textarea id="soal-${idx}-essay-pedoman" placeholder="Poin-poin jawaban yang diharapkan..." rows="2" style="font-size:13px;"></textarea>
+      </div>`;
+  }
+
+  const jenisBadge = { pg:'PG', pgk:'PG Kompleks', bs:'Benar/Salah', essay:'Essay' }[jenis] || jenis;
+  const badgeColor = { pg:'#4f8ef7', pgk:'#8b5cf6', bs:'#f59e0b', essay:'#10b981' }[jenis] || '#4f8ef7';
+
+  return `
+    <div class="soal-row" id="soal-row-${idx}" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;font-weight:700;color:var(--accent);background:rgba(79,142,247,0.12);padding:3px 10px;border-radius:20px;">Soal #${idx + 1}</span>
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${badgeColor}22;color:${badgeColor};">${jenisBadge}</span>
+        </div>
+        ${idx > 0 ? `<button class="btn btn-danger btn-sm" onclick="hapusSoalRow(${idx})" style="padding:4px 10px;">✕ Hapus</button>` : ''}
+      </div>
+      <div class="form-group" style="margin-bottom:8px;">
+        <label>${jenis==='pgk'?'📌 Stimulus / Teks Soal':jenis==='bs'?'📌 Teks Soal (opsional)':'Pertanyaan'}</label>
+        <textarea id="soal-${idx}-pertanyaan" placeholder="${jenis==='pgk'?'Tulis stimulus soal...':jenis==='bs'?'Tulis konteks soal (opsional)...':'Tulis pertanyaan soal #'+(idx+1)+'...'}" rows="${jenis==='pgk'||jenis==='bs'?2:3}" style="font-size:14px;line-height:1.6;"></textarea>
+      </div>
+      <!-- Gambar soal -->
+      <div style="margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:5px 12px;border:1px dashed var(--border);border-radius:6px;background:var(--bg3);margin:0;" for="soal-${idx}-img-input">
+          🖼️ Lampirkan Gambar Soal
+        </label>
+        <input type="file" id="soal-${idx}-img-input" accept="image/*" style="display:none;" onchange="previewGambarSoalRow(${idx},this)" />
+        <span id="soal-${idx}-img-status" style="font-size:11px;color:var(--text3);">Belum ada gambar</span>
+        <button id="soal-${idx}-img-hapus" onclick="hapusGambarRow(${idx})" style="display:none;background:rgba(239,68,68,0.8);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">✕ Hapus</button>
+      </div>
+      <div id="soal-${idx}-img-preview" style="display:none;margin-bottom:10px;">
+        <img id="soal-${idx}-img-el" src="" style="max-height:150px;max-width:100%;border-radius:8px;border:1px solid var(--border);object-fit:contain;" />
+      </div>
+      <input type="hidden" id="soal-${idx}-img-data" value="" />
+      ${inputHtml}
+    </div>`;
+}
+
+function appendSoalRow(idx) {
+  const container = document.getElementById('soal-list-container');
+  if (!container) return;
+  container.insertAdjacentHTML('beforeend', buildSoalRow(idx));
+}
+
+function tambahSoalRow() {
+  const container = document.getElementById('soal-list-container');
+  if (!container) return;
+  const count = container.querySelectorAll('.soal-row').length;
+  appendSoalRow(count);
+  updateSoalCount();
+  container.lastElementChild?.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+function hapusSoalRow(idx) {
+  const row = document.getElementById('soal-row-' + idx);
+  if (row) row.remove();
+  document.querySelectorAll('.soal-row').forEach((el, i) => {
+    el.id = 'soal-row-' + i;
+    const badge = el.querySelector('span[style*="rgba(79,142,247"]');
+    if (badge) badge.textContent = 'Soal #' + (i+1);
+    const btn = el.querySelector('button[onclick*="hapusSoalRow"]');
+    if (btn && i > 0) btn.setAttribute('onclick', 'hapusSoalRow(' + i + ')');
+    el.querySelectorAll('[id]').forEach(inp => {
+      inp.id = inp.id.replace(/soal-\d+-/, 'soal-' + i + '-');
+    });
+    el.querySelectorAll('[name]').forEach(inp => {
+      inp.name = inp.name.replace(/soal-\d+-/, 'soal-' + i + '-');
+    });
+  });
+  updateSoalCount();
+}
+
+function updateSoalCount() {
+  const container = document.getElementById('soal-list-container');
+  const count = container ? container.querySelectorAll('.soal-row').length : 0;
+  const el = document.getElementById('soal-count-info');
+  if (el) el.textContent = count + ' soal siap disimpan';
+}
+
+function tambahBsPernyataan(idx) {
+  const container = document.getElementById('bs-rows-' + idx);
+  if (!container) return;
+  const n = container.querySelectorAll('.bs-pernyataan-row').length;
+  if (n >= 8) { showToast('Maksimal 8 pernyataan.', 'warn'); return; }
+  const row = document.createElement('div');
+  row.className = 'bs-pernyataan-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;';
+  row.innerHTML = '<input type="text" id="soal-' + idx + '-bs' + n + '" placeholder="Pernyataan ' + (n+1) + '..." />' +
+    '<div style="display:flex;gap:6px;flex-shrink:0;">' +
+    '<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;"><input type="radio" name="soal-' + idx + '-bskunci' + n + '" value="benar" checked style="accent-color:var(--accent2);"> Benar</label>' +
+    '<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;"><input type="radio" name="soal-' + idx + '-bskunci' + n + '" value="salah" style="accent-color:var(--danger);"> Salah</label></div>';
+  container.appendChild(row);
+}
+
+async function validateToken() {
+  const token = document.getElementById('input-token').value.trim().toUpperCase();
+  if (!token) { showToast('Masukkan token ujian!', 'warn'); return; }
+
+  showLoading('Mencari ujian...');
+  try {
+    // Cari ujian berdasarkan token langsung dari RTDB
+    const allUjian = await rtdbGet('ujian');
+    if (!allUjian) { hideLoading(); showToast('Tidak ada ujian tersedia.', 'warn'); return; }
+
+    let ujianDitemukan = null;
+    Object.entries(allUjian).forEach(([id, u]) => {
+      if (u.token && u.token.toUpperCase() === token && u.status === 'aktif') {
+        ujianDitemukan = { ...u, id };
+      }
+    });
+
+    hideLoading();
+    if (!ujianDitemukan) {
+      showToast('Token salah atau ujian tidak aktif!', 'error');
+      return;
+    }
+
+    // Cek apakah kelas siswa sesuai
+    const siswaKelas = session.userData?.kelas || '';
+    if (ujianDitemukan.kelas && siswaKelas && ujianDitemukan.kelas !== siswaKelas) {
+      showToast('Ujian ini bukan untuk kelas Anda (' + siswaKelas + ').', 'warn');
+      return;
+    }
+
+    // Cek apakah siswa sudah pernah mengerjakan ujian ini
+    const hasilLama = await rtdbGet('hasil');
+    if (hasilLama) {
+      const sudahKerjakan = Object.values(hasilLama).some(
+        h => h.ujianId === ujianDitemukan.id && h.siswaId === session.user
+      );
+      if (sudahKerjakan) {
+        showToast('Anda sudah pernah mengerjakan ujian ini!', 'warn');
+        return;
+      }
+    }
+
+    closeModal('modal-token');
+    startExam(ujianDitemukan);
+  } catch(e) {
+    hideLoading();
+    showToast('Gagal: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+async function startExam(ujian) {
   examState.ujian = ujian;
-
-  // FIX: ambil soal berdasarkan ID, bukan index array
-  examState.soalList = (ujian.soal || [])
-    .map(soalId => DB.bankSoal.find(s => String(s.id) === String(soalId)))
-    .filter(Boolean);
-
+  showLoading('Memuat soal ujian...');
+  try {
+    // ujian.soal berisi array of Firebase keys (string IDs)
+    // Ambil soal langsung dari RTDB untuk memastikan data fresh
+    const soalIds = Array.isArray(ujian.soal) ? ujian.soal : Object.values(ujian.soal || {});
+    const soalList = [];
+    for (const soalId of soalIds) {
+      // Cari di cache dulu
+      let soal = DB.bankSoal.find(s => s.id === soalId);
+      if (!soal) {
+        // Kalau tidak ada di cache, ambil dari RTDB
+        const data = await rtdbGet('bankSoal/' + soalId);
+        if (data) soal = { ...data, id: soalId };
+      }
+      if (soal) soalList.push(soal);
+    }
+    examState.soalList = soalList;
+  } catch(e) {
+    hideLoading();
+    showToast('Gagal memuat soal: ' + e.message, 'error');
+    return;
+  }
+  hideLoading();
   if (ujian.opsiAntiCurang.acakSoal) {
     examState.soalList = [...examState.soalList].sort(() => Math.random() - 0.5);
   }
-
   examState.currentQ = 0;
   examState.answers = {};
   examState.flagged = new Set();
@@ -4108,6 +4542,7 @@ function startExam(ujian) {
   examState.violations = 0;
 
   showPage('page-exam');
+
   document.getElementById('exam-title').textContent = ujian.nama;
   document.getElementById('exam-info').textContent = `${session.userData.nama} · ${session.userData.kelas}`;
 
@@ -4391,8 +4826,10 @@ async function submitExam() {
   // Simpan hasil ke Firebase RTDB
   const hasilData = {
     ujianId: examState.ujian.id,
+    ujianNama: examState.ujian.nama || '',
     siswaId: session.user,
-    nama: session.userData.nama,
+    nama: session.userData.nama || '',
+    kelas: session.userData.kelas || '',
     nilai, benar, salah: salah,
     kosong: total - benar - salah,
     durasi: `${dm}:${ds}`,
@@ -4530,19 +4967,17 @@ document.getElementById('btn-return-exam')?.addEventListener('click', () => {
 function openModal(id) {
   document.getElementById(id).classList.remove('hidden');
 
-  // Isi select kelas dari DB.kelas (selalu fresh)
   if (id === 'modal-siswa') {
     const el = document.getElementById('siswa-kelas');
     if (el) el.innerHTML = getKelasOptions();
-    // Reset field agar bersih saat buka ulang
     ['siswa-nama','siswa-nisn','siswa-username','siswa-password'].forEach(fid => {
       const f = document.getElementById(fid);
       if (f) f.value = '';
     });
-    // Pastikan password field kembali ke type=password (sembunyikan)
     const pwField = document.getElementById('siswa-password');
     if (pwField) pwField.type = 'password';
   }
+
   if (id === 'modal-ujian') {
     generateToken();
     const now = new Date();
@@ -4554,17 +4989,32 @@ function openModal(id) {
     const elKelas = document.getElementById('ujian-kelas');
     if (elKelas) elKelas.innerHTML = getKelasOptions();
   }
+
   if (id === 'modal-guru') generatePassword('guru-password');
 
-  // Init multi-soal form setelah modal terlihat
   if (id === 'modal-soal') {
+    // Reset dan inisialisasi form soal
     setTimeout(() => {
       const container = document.getElementById('soal-list-container');
-      if (container && container.children.length === 0) {
+      if (container) {
+        container.innerHTML = '';
         appendSoalRow(0);
         updateSoalCount();
+        // Set default jenis dropdown ke PG dan tampilkan jumlah opsi
+        const jenisEl = document.getElementById('soal-jenis');
+        const wrapOpsi = document.getElementById('wrap-jml-opsi');
+        if (jenisEl) jenisEl.value = 'pg';
+        if (wrapOpsi) wrapOpsi.style.display = '';
       }
-    }, 50);
+    }, 80);
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+  if (id === 'modal-soal') {
+    const container = document.getElementById('soal-list-container');
+    if (container) container.innerHTML = '';
   }
 }
 
@@ -4644,20 +5094,29 @@ async function saveGuru() {
   const mapel    = document.getElementById('guru-mapel').value.trim();
   const password = document.getElementById('guru-password').value.trim();
   if (!nama || !nip || !password) { showToast('Lengkapi semua field!', 'warn'); return; }
+
+  // Cek apakah NIP sudah ada di RTDB (bukan dari Auth)
+  const existing = await rtdbGet('usernames/' + nip);
+  if (existing) { showToast('NIP "' + nip + '" sudah terdaftar di database!', 'error'); return; }
+
   showLoading('Membuat akun guru...');
   try {
-    const email = nip + '@examshield.app';
+    // Gunakan timestamp agar email Auth selalu unik meski NIP sama dipakai ulang
+    const ts    = Date.now();
+    const email = 'g' + ts + '@examshield.app';
     const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
     const uid   = cred.user.uid;
-    const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt: Date.now(), password };
+    // Simpan email Auth di profil agar bisa login
+    const data  = { role:'guru', nama, nip, mapel, username:nip, email, passwordPlain: password, createdAt: ts };
     await rtdbSet('users/' + uid, data);
-    await rtdbSet('usernames/' + nip, { uid });
+    await rtdbSet('usernames/' + nip, { uid, email });
     DB.users[uid] = { ...data, uid };
     closeModal('modal-guru');
-    showToast(`Guru ${nama} berhasil! Username: ${nip} | Password: ${password}`, 'success');
+    showToast('Guru ' + nama + ' berhasil! Username: ' + nip + ' | Password: ' + password, 'success');
     renderDataGuru();
   } catch(e) {
-    showToast('Gagal: ' + (e.code==='auth/email-already-in-use' ? 'NIP sudah terdaftar!' : e.message), 'error');
+    showToast('Gagal: ' + e.message, 'error');
+    console.error(e);
   } finally { hideLoading(); }
 }
 
@@ -4668,20 +5127,27 @@ async function saveSiswa() {
   const username = document.getElementById('siswa-username').value.trim();
   const password = document.getElementById('siswa-password').value.trim();
   if (!nama || !username || !password) { showToast('Lengkapi semua field!', 'warn'); return; }
+
+  // Cek duplikat dari RTDB saja, bukan Auth
+  const existing = await rtdbGet('usernames/' + username);
+  if (existing) { showToast('Username "' + username + '" sudah digunakan!', 'error'); return; }
+
   showLoading('Membuat akun siswa...');
   try {
-    const email = username + '@examshield.app';
+    const ts    = Date.now();
+    const email = 's' + ts + '@examshield.app';
     const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
     const uid   = cred.user.uid;
-    const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt: Date.now(), password };
+    const data  = { role:'siswa', nama, nisn, kelas, username, email, passwordPlain: password, createdAt: ts };
     await rtdbSet('users/' + uid, data);
-    await rtdbSet('usernames/' + username, { uid });
+    await rtdbSet('usernames/' + username, { uid, email });
     DB.users[uid] = { ...data, uid };
     closeModal('modal-siswa');
-    showToast(`Siswa ${nama} berhasil ditambahkan!`, 'success');
+    showToast('Siswa ' + nama + ' berhasil ditambahkan!', 'success');
     renderDataSiswa();
   } catch(e) {
-    showToast('Gagal: ' + (e.code==='auth/email-already-in-use' ? 'Username sudah digunakan!' : e.message), 'error');
+    showToast('Gagal: ' + e.message, 'error');
+    console.error(e);
   } finally { hideLoading(); }
 }
 
@@ -4732,89 +5198,7 @@ async function saveUjian() {
 }
 
 
-function saveSoalBatch() {
-  const mapel  = document.getElementById('soal-mapel')?.value.trim();
-  const jenis  = document.getElementById('soal-jenis')?.value;
-  const poin   = parseInt(document.getElementById('soal-poin')?.value) || 5;
-  const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
-  const letters = ['A','B','C','D','E'];
 
-  if (!mapel) { showToast('Isi mata pelajaran terlebih dahulu!', 'warn'); return; }
-
-  const container = document.getElementById('soal-list-container');
-  const rows = container.querySelectorAll('.soal-row');
-  if (!rows.length) { showToast('Tidak ada soal untuk disimpan.', 'warn'); return; }
-
-  let saved = 0, errors = 0;
-
-  rows.forEach((row, i) => {
-    const pertanyaan = document.getElementById(`soal-${i}-pertanyaan`)?.value.trim();
-    if (!pertanyaan && jenis !== 'bs') { errors++; return; }
-
-    const soalBaru = {
-      id: DB.bankSoal.length + 1 + saved,
-      guruId: session.user,
-      mapel, jenis, pertanyaan: pertanyaan || '', poin,
-      aktif: true,
-      // Ambil gambar dari hidden field inline
-      gambar: document.getElementById(`soal-${i}-img-data`)?.value || null
-    };
-
-    // ── PG biasa ──
-    if (jenis === 'pg') {
-      const opsi = letters.slice(0, jmlOpsi).map(l => document.getElementById(`soal-${i}-opsi${l}`)?.value.trim() || '');
-      if (opsi.some(o => !o)) { errors++; return; }
-      const kunciLetter = document.getElementById(`soal-${i}-kunci`)?.value || 'A';
-      soalBaru.opsi  = opsi;
-      soalBaru.kunci = letters.indexOf(kunciLetter);
-      // Simpan gambar per opsi (jika ada)
-      const opsiGambar = {};
-      letters.slice(0, jmlOpsi).forEach(l => {
-        const val = document.getElementById(`soal-${i}-opsiimgdata${l}`)?.value || '';
-        if (val) opsiGambar[l] = val;
-      });
-      if (Object.keys(opsiGambar).length) soalBaru.opsiGambar = opsiGambar;
-
-    // ── PG Kompleks ──
-    } else if (jenis === 'pgk') {
-      const pernyataan = letters.slice(0, jmlOpsi).map(l => document.getElementById(`soal-${i}-pgk${l}`)?.value.trim() || '');
-      if (pernyataan.every(p => !p)) { errors++; return; }
-      const kunciBenar = letters.slice(0, jmlOpsi).filter(l => document.getElementById(`soal-${i}-pgkbenar${l}`)?.checked);
-      soalBaru.pernyataan = pernyataan;
-      soalBaru.kunciPGK   = kunciBenar;   // array huruf yang benar, misal ['A','C']
-
-    // ── Benar / Salah ──
-    } else if (jenis === 'bs') {
-      const bsRows = document.getElementById(`bs-rows-${i}`)?.querySelectorAll('.bs-pernyataan-row') || [];
-      const pernyataan = [];
-      const kunci = [];
-      bsRows.forEach((_, n) => {
-        const teks = document.getElementById(`soal-${i}-bs${n}`)?.value.trim();
-        const jawabanEl = document.querySelector(`input[name="soal-${i}-bskunci${n}"]:checked`);
-        if (teks) {
-          pernyataan.push(teks);
-          kunci.push(jawabanEl?.value || 'benar');
-        }
-      });
-      if (!pernyataan.length) { errors++; return; }
-      soalBaru.pernyataan = pernyataan;
-      soalBaru.kunciBS    = kunci;         // array 'benar'/'salah'
-    }
-    // essay: tidak ada data tambahan
-
-    DB.bankSoal.push(soalBaru);
-    saved++;
-  });
-
-  if (saved === 0) { showToast('Tidak ada soal valid. Cek kelengkapan isian!', 'error'); return; }
-
-  closeModal('modal-soal');
-  showToast(`✅ ${saved} soal berhasil disimpan${errors ? ` (${errors} dilewati)` : ''}!`, 'success');
-  if (session.role === 'guru') renderBankSoalGuru();
-  else renderBankSoalAdmin();
-}
-
-// Override saveSoal lama
 function saveSoal() { saveSoalBatch(); }
 
 // ================================================================
@@ -5219,7 +5603,7 @@ function downloadExcelGuru() {
     'NIP': u.nip,
     'Mata Pelajaran': u.mapel || '-',
     'Username Login': u.nip,
-    'Password': u.password,
+    'Password': u.passwordPlain || '(lihat Firebase Auth)',
     'Status': 'Aktif',
     'Keterangan': 'Username login menggunakan NIP',
   }));
@@ -5235,7 +5619,7 @@ function downloadExcelSiswa() {
     'NISN': u.nisn,
     'Kelas': u.kelas,
     'Username Login': username,
-    'Password': u.password,
+    'Password': u.passwordPlain || '(lihat Firebase Auth)',
     'Status': 'Aktif',
   }));
   exportToExcel([{ name: 'Data Siswa', data }], 'Data_Siswa_ExamShield');
@@ -5282,18 +5666,12 @@ function printHasil() {
 // ================================================================
 // TOAST NOTIFICATIONS
 // ================================================================
-
 function showToast(msg, type = 'info') {
   const icons = { success: '✅', error: '❌', warn: '⚠️', info: 'ℹ️' };
   const container = document.getElementById('toast-container');
-  if (!container) return;
-
   const toast = document.createElement('div');
   toast.className = `toast toast-${type === 'warn' ? 'warn' : type}`;
-
-  const icon = icons[type] || icons.info;
-  toast.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
-
+  toast.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
@@ -5431,279 +5809,6 @@ async function resetPasswordSiswa(uid) {
   const newPw = Math.random().toString(36).slice(-6).toUpperCase();
   const u = DB.users[uid];
   showToast('Password baru untuk ' + (u?.nama||uid) + ': ' + newPw + '\n⚠️ Sampaikan ke siswa!', 'info');
-}
-
-// ================================================================
-// MULTI-SOAL INPUT SYSTEM
-// ================================================================
-let soalRows = [];
-
-function toggleEssayOption() {
-renderAllSoalRows();
-const jenis = document.getElementById('soal-jenis')?.value;
-const wrapOpsi = document.getElementById('wrap-jml-opsi');
-const labelOpsi = document.getElementById('label-jml-opsi');
-if (!wrapOpsi) return;
-
-if (jenis === 'pg' || jenis === 'pgk') {
-wrapOpsi.style.display = '';
-if (labelOpsi) labelOpsi.textContent = jenis === 'pgk' ? 'Jumlah Pernyataan' : 'Jumlah Opsi';
-} else {
-// bs dan essay tidak pakai dropdown jumlah opsi
-wrapOpsi.style.display = 'none';
-}
-}
-
-function updateOpsiRows() { renderAllSoalRows(); }
-
-function renderAllSoalRows() {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-const count = container.querySelectorAll('.soal-row').length || 1;
-container.innerHTML = '';
-for (let i = 0; i < count; i++) appendSoalRow(i);
-updateSoalCount();
-}
-
-function buildSoalRow(idx) {
-const jenis = document.getElementById('soal-jenis')?.value || 'pg';
-const jmlOpsi = parseInt(document.getElementById('soal-jml-opsi')?.value || '4');
-const letters = ['A','B','C','D','E'];
-
-// ── PILIHAN GANDA biasa ──
-let inputHtml = '';
-if (jenis === 'pg') {
-inputHtml = `
-<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
-${letters.slice(0, jmlOpsi).map(l => `
-<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-<span style="width:22px;height:22px;border-radius:5px;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">${l}</span>
-<input type="text" id="soal-${idx}-opsi${l}" placeholder="Teks pilihan ${l}..." style="flex:1;" />
-</div>
-<!-- Upload gambar per opsi -->
-<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-<label style="font-size:11px;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:4px;padding:4px 10px;border:1px dashed var(--border);border-radius:4px;background:var(--bg2);transition:all .2s;"
-onmouseover="this.style.borderColor='var(--accent2)';this.style.color='var(--accent2)'"
-onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
-for="soal-${idx}-opsiimg${l}">
-🖼️ Gambar Opsi ${l}
-</label>
-<input type="file" id="soal-${idx}-opsiimg${l}" accept="image/*" style="display:none;"
-onchange="previewGambarOpsi(${idx},'${l}',this)" />
-<span id="soal-${idx}-opsiimg${l}-status" style="font-size:11px;color:var(--text3);">—</span>
-<button id="soal-${idx}-opsiimg${l}-hapus" onclick="hapusGambarOpsi(${idx},'${l}')"
-style="display:none;background:rgba(239,68,68,0.8);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">✕</button>
-</div>
-<!-- Preview gambar opsi -->
-<div id="soal-${idx}-opsiimg${l}-preview" style="display:none;margin-top:6px;">
-<img id="soal-${idx}-opsiimg${l}-el" src=""
-style="max-height:100px;max-width:200px;border-radius:4px;border:1px solid var(--border);object-fit:contain;background:var(--bg2);" />
-</div>
-<input type="hidden" id="soal-${idx}-opsiimgdata${l}" value="" />
-</div>
-`).join('')}
-</div>
-<div class="form-group mt-2" style="max-width:220px;">
-<label>🔑 Kunci Jawaban</label>
-<select id="soal-${idx}-kunci" style="font-weight:700;">
-${letters.slice(0, jmlOpsi).map(l => `<option value="${l}">${l}</option>`).join('')}
-</select>
-</div>`;
-
-// ── PILIHAN GANDA KOMPLEKS ──
-} else if (jenis === 'pgk') {
-inputHtml = `
-<div class="alert alert-info mt-2" style="font-size:12px;">
-<span>ℹ️</span>
-<span>Buat pernyataan-pernyataan, lalu tentukan mana yang <strong>BENAR</strong>. Siswa memilih <strong>kombinasi jawaban</strong> yang tepat.</span>
-</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="pgk-rows-${idx}">
-${letters.slice(0, jmlOpsi).map(l => `
-<div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<span style="width:22px;height:22px;border-radius:5px;background:var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${l}</span>
-<input type="text" id="soal-${idx}-pgk${l}" placeholder="Pernyataan ${l}..." style="flex:1;" />
-<label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--accent2);white-space:nowrap;text-transform:none;cursor:pointer;">
-<input type="checkbox" id="soal-${idx}-pgkbenar${l}" style="width:15px;height:15px;accent-color:var(--accent2);" />
-Benar
-</label>
-</div>
-`).join('')}
-</div>
-<div class="mt-2" style="font-size:12px;color:var(--text3);">
-💡 Centang pernyataan yang <strong>benar</strong>. Sistem akan otomatis membuat kunci jawaban kombinasi.
-</div>`;
-
-// ── BENAR / SALAH ──
-} else if (jenis === 'bs') {
-inputHtml = `
-<div class="alert alert-info mt-2" style="font-size:12px;">
-<span>ℹ️</span>
-<span>Buat beberapa pernyataan. Siswa menilai tiap pernyataan: <strong>Benar</strong> atau <strong>Salah</strong>.</span>
-</div>
-<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;" id="bs-rows-${idx}">
-<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<input type="text" id="soal-${idx}-bs0" placeholder="Pernyataan 1..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci0" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci0" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>
-</div>
-<div class="bs-pernyataan-row" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;">
-<input type="text" id="soal-${idx}-bs1" placeholder="Pernyataan 2..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci1" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci1" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>
-</div>
-</div>
-<button class="btn btn-ghost btn-sm mt-2" onclick="tambahBsPernyataan(${idx})" style="border-style:dashed;font-size:12px;">
-➕ Tambah Pernyataan
-</button>`;
-
-// ── ESSAY ──
-} else {
-inputHtml = `
-<div class="form-group mt-2">
-<label style="color:var(--accent3);">📝 Pedoman Penilaian (opsional)</label>
-<textarea id="soal-${idx}-essay-pedoman" placeholder="Tulis poin-poin jawaban yang diharapkan..." rows="2" style="font-size:13px;"></textarea>
-</div>`;
-}
-
-// Badge warna per jenis
-const jenisBadge = {
-pg: { label: 'PG', color: '#4f8ef7' },
-pgk: { label: 'PG Kompleks', color: '#8b5cf6' },
-bs: { label: 'Benar/Salah', color: '#f59e0b' },
-essay: { label: 'Essay', color: '#10b981' },
-}[jenis] || { label: jenis, color: '#4f8ef7' };
-
-return `
-<div class="soal-row" id="soal-row-${idx}"
-style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;position:relative;">
-
-<!-- Header soal row -->
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-<div style="display:flex;align-items:center;gap:8px;">
-<span style="font-size:12px;font-weight:700;color:var(--accent);background:rgba(79,142,247,0.12);padding:3px 10px;border-radius:20px;">Soal #${idx + 1}</span>
-<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:${jenisBadge.color}22;color:${jenisBadge.color};">${jenisBadge.label}</span>
-</div>
-${idx > 0 ? `<button class="btn btn-danger btn-sm" onclick="hapusSoalRow(${idx})" style="padding:4px 10px;">✕ Hapus</button>` : ''}
-</div>
-
-<!-- Pertanyaan -->
-<div class="form-group" style="margin-bottom:8px;">
-<label>${jenis === 'pgk' ? '📌 Stimulus / Teks Soal' : jenis === 'bs' ? '📌 Teks Soal / Konteks (opsional)' : 'Pertanyaan'}</label>
-<textarea id="soal-${idx}-pertanyaan"
-placeholder="${
-jenis === 'pgk' ? 'Tulis stimulus atau konteks soal, kemudian buat pernyataan di bawah...' :
-jenis === 'bs' ? 'Tulis konteks/teks soal (opsional). Pernyataan diisi di bawah...' :
-`Tulis pertanyaan soal #${idx+1} di sini...`
-}"
-rows="${jenis === 'pgk' || jenis === 'bs' ? 2 : 3}"
-style="font-size:14px;line-height:1.6;"></textarea>
-</div>
-
-<!-- ===== UPLOAD GAMBAR INLINE ===== -->
-<div style="margin-bottom:10px;">
-<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-<label style="text-transform:none;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 12px;border:1px dashed var(--border);border-radius:6px;background:var(--bg3);transition:all .2s;"
-onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
-onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'"
-for="soal-${idx}-img-input">
-🖼️ Lampirkan Gambar
-<span style="font-size:10px;opacity:.7;">(JPG/PNG/GIF ≤ 3MB)</span>
-</label>
-<input type="file" id="soal-${idx}-img-input" accept="image/*" style="display:none;"
-onchange="previewGambarSoalRow(${idx}, this)" />
-<span id="soal-${idx}-img-status" style="font-size:11px;color:var(--text3);">Belum ada gambar</span>
-</div>
-<!-- Preview gambar -->
-<div id="soal-${idx}-img-preview" style="display:none;margin-top:8px;position:relative;display:none;">
-<img id="soal-${idx}-img-el" src=""
-style="max-height:180px;max-width:100%;border-radius:6px;border:1px solid var(--border);object-fit:contain;background:var(--bg3);" />
-<button onclick="hapusGambarRow(${idx})"
-style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.9);color:#fff;border:none;border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700;">✕</button>
-</div>
-<!-- Simpan base64 tersembunyi -->
-<input type="hidden" id="soal-${idx}-img-data" value="" />
-</div>
-
-${inputHtml}
-</div>`;
-}
-
-let bsCounter = {}; // track jumlah pernyataan BS per soal-idx
-
-function tambahBsPernyataan(idx) {
-const container = document.getElementById(`bs-rows-${idx}`);
-if (!container) return;
-const existing = container.querySelectorAll('.bs-pernyataan-row').length;
-if (existing >= 8) { showToast('Maksimal 8 pernyataan per soal.', 'warn'); return; }
-const n = existing;
-const row = document.createElement('div');
-row.className = 'bs-pernyataan-row';
-row.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;';
-row.innerHTML = `
-<input type="text" id="soal-${idx}-bs${n}" placeholder="Pernyataan ${n+1}..." />
-<div style="display:flex;gap:6px;flex-shrink:0;">
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--accent2);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci${n}" value="benar" checked style="accent-color:var(--accent2);"> Benar
-</label>
-<label style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--danger);cursor:pointer;text-transform:none;">
-<input type="radio" name="soal-${idx}-bskunci${n}" value="salah" style="accent-color:var(--danger);"> Salah
-</label>
-</div>`;
-container.appendChild(row);
-}
-
-function appendSoalRow(idx) {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-container.insertAdjacentHTML('beforeend', buildSoalRow(idx));
-}
-
-function tambahSoalRow() {
-const container = document.getElementById('soal-list-container');
-if (!container) return;
-const count = container.querySelectorAll('.soal-row').length;
-appendSoalRow(count);
-updateSoalCount();
-container.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function hapusSoalRow(idx) {
-const row = document.getElementById(`soal-row-${idx}`);
-if (row) row.remove();
-document.querySelectorAll('.soal-row').forEach((el, i) => {
-el.id = `soal-row-${i}`;
-const badge = el.querySelector('span[style*="rgba(79,142,247"]');
-if (badge) badge.textContent = `Soal #${i + 1}`;
-const btn = el.querySelector('button[onclick*="hapusSoalRow"]');
-if (btn) btn.setAttribute('onclick', `hapusSoalRow(${i})`);
-el.querySelectorAll('[id]').forEach(input => {
-input.id = input.id.replace(/soal-\d+-/, `soal-${i}-`);
-});
-el.querySelectorAll('[name]').forEach(input => {
-input.name = input.name.replace(/soal-\d+-/, `soal-${i}-`);
-});
-});
-updateSoalCount();
-}
-
-function updateSoalCount() {
-const container = document.getElementById('soal-list-container');
-const count = container ? container.querySelectorAll('.soal-row').length : 0;
-const el = document.getElementById('soal-count-info');
-if (el) el.textContent = `${count} soal siap disimpan`;
 }
 
 async function saveSoalBatch() {
