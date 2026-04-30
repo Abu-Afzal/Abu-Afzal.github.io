@@ -3287,7 +3287,7 @@ async function prosesImportGuruFile(inputEl) {
           const email = nip+'@examshield.app';
           const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
           const uid   = cred.user.uid;
-          const data  = { role:'guru', nama, nip, mapel, username:nip, email, createdAt:Date.now() };
+          const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt:Date.now(), password };
           await rtdbSet('users/'+uid, data);
           await rtdbSet('usernames/'+nip, { uid });
           DB.users[uid] = { ...data, uid };
@@ -3327,7 +3327,7 @@ async function prosesImportSiswaFile(file) {
           const email = username+'@examshield.app';
           const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
           const uid   = cred.user.uid;
-          const data  = { role:'siswa', nama, nisn, kelas, username, email, createdAt:Date.now() };
+          const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt:Date.now(), password };
           await rtdbSet('users/'+uid, data);
           await rtdbSet('usernames/'+username, { uid });
           DB.users[uid] = { ...data, uid };
@@ -3740,71 +3740,122 @@ function renderLogAktivitas() {
 // ----------------------------------------------------------------
 function renderPengaturan() {
   document.getElementById('main-content').innerHTML = `
-    <div class="page-header">
-      <div class="page-title">⚙️ Pengaturan Sistem</div>
+  <div class="page-header">
+    <div class="page-title">⚙️ Pengaturan Sistem</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card mb-4">
+      <div class="card-header"><div class="card-title">🔐 Keamanan Akun</div></div>
+      <p class="text-sm text-muted mb-3">Ubah password akun administrator.</p>
+      <button class="btn btn-primary" onclick="openModal('modal-ganti-pw')">🔐 Ganti Password Admin</button>
     </div>
-    <div class="grid-2">
-      <div class="card mb-4">
-        <div class="card-header"><div class="card-title">🔐 Keamanan Akun</div></div>
-        <p class="text-sm text-muted mb-3">Ubah password akun administrator.</p>
-        <button class="btn btn-primary" onclick="openModal('modal-ganti-pw')">🔐 Ganti Password Admin</button>
+
+    <div class="card mb-4">
+      <div class="card-header"><div class="card-title">🔔 Notifikasi Sistem</div></div>
+      <p class="text-sm text-muted mb-3">Aktifkan notifikasi browser untuk peringatan ujian dimulai dan pelanggaran siswa.</p>
+      <div style="margin-bottom:12px;">
+        ${typeof Notification !== 'undefined' && Notification.permission === 'granted'
+          ? '<span class="badge badge-green">🔔 Notifikasi Aktif</span>'
+          : '<span class="badge badge-gray">○ Belum Aktif</span>'}
       </div>
-      <div class="card mb-4">
-        <div class="card-header"><div class="card-title">🔔 Notifikasi Sistem</div></div>
-        <p class="text-sm text-muted mb-3">Aktifkan notifikasi browser untuk peringatan ujian dimulai dan pelanggaran siswa.</p>
-        <div style="margin-bottom:12px;">
-          ${typeof Notification !== 'undefined' && Notification.permission === 'granted'
-            ? '<span class="badge badge-green">✅ Notifikasi Aktif</span>'
-            : '<span class="badge badge-gray">○ Belum Aktif</span>'}
-        </div>
-        <button class="btn btn-primary" onclick="requestNotificationPermission();showToast('Pengaturan notifikasi diperbarui','info');">
-          🔔 Aktifkan Notifikasi
-        </button>
+      <button class="btn btn-primary"
+        onclick="requestNotificationPermission();showToast('Pengaturan notifikasi diperbarui','info');">
+        🔔 Aktifkan Notifikasi
+      </button>
+    </div>
+
+    <!-- Pengaturan anti-curang -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🛡️ Pengaturan Anti Curang (Default)</div></div>
+
+      <div class="check-row">
+        <input type="checkbox" id="set-tab-detect" />
+        <label style="text-transform:none;font-size:13px;">Aktifkan deteksi pindah tab</label>
       </div>
-        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Aktifkan deteksi pindah tab</label></div>
-        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Wajib fullscreen saat ujian</label></div>
-        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Blokir klik kanan & copy</label></div>
-        <div class="check-row"><input type="checkbox" /><label style="text-transform:none;font-size:13px;">Rekam layar peserta (opsional)</label></div>
-        <div class="check-row"><input type="checkbox" checked /><label style="text-transform:none;font-size:13px;">Maks pelanggaran: <input type="number" value="3" min="1" max="10" style="width:50px;padding:2px 6px;margin:0 4px;" /> kali</label></div>
-        <button class="btn btn-success mt-3">💾 Simpan Pengaturan</button>
+
+      <div class="check-row">
+        <input type="checkbox" id="set-fullscreen" />
+        <label style="text-transform:none;font-size:13px;">Wajib fullscreen saat ujian</label>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">🏫 Informasi Sekolah</div></div>
-        <div class="form-group">
-          <label>Nama Sekolah</label>
-          <input type="text" value="SMA Negeri 1 Contoh" />
-        </div>
-        <div class="form-group">
-          <label>Tahun Ajaran</label>
-          <input type="text" value="2024/2025" />
-        </div>
-        <div class="form-group">
-          <label>Semester</label>
-          <select><option>Ganjil</option><option>Genap</option></select>
-        </div>
-        <button class="btn btn-primary">💾 Simpan</button>
+
+      <div class="check-row">
+        <input type="checkbox" id="set-no-copy" />
+        <label style="text-transform:none;font-size:13px;">Blokir copy, cut, paste</label>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">📊 Statistik Sistem</div></div>
-        <div class="flex justify-between py-2 border-b" style="font-size:13px;">
-          <span class="text-muted">Total ujian diselenggarakan</span>
-          <span class="font-mono bold">${DB.ujian.length}</span>
-        </div>
-        <div class="flex justify-between py-2 border-b" style="font-size:13px;">
-          <span class="text-muted">Total soal di bank soal</span>
-          <span class="font-mono bold">${DB.bankSoal.length}</span>
-        </div>
-        <div class="flex justify-between py-2 border-b" style="font-size:13px;">
-          <span class="text-muted">Total hasil ujian tersimpan</span>
-          <span class="font-mono bold">${DB.hasil.length}</span>
-        </div>
-        <div class="flex justify-between py-2" style="font-size:13px;">
-          <span class="text-muted">Total pelanggaran terdeteksi</span>
-          <span class="font-mono bold text-warn">${DB.hasil.reduce((s,h)=>s+h.pelanggaran,0)}</span>
-        </div>
+
+      <div class="check-row">
+        <input type="checkbox" id="set-no-rightclick" />
+        <label style="text-transform:none;font-size:13px;">Blokir klik kanan</label>
+      </div>
+
+      <div class="check-row">
+        <label style="text-transform:none;font-size:13px;">
+          Maks pelanggaran:
+          <input type="number" id="set-max-violations" value="3" min="1" max="10"
+            style="width:60px;padding:2px 6px;margin:0 6px;" />
+          kali
+        </label>
+      </div>
+
+      <button class="btn btn-success mt-3" onclick="savePengaturan()">
+        💾 Simpan Pengaturan
+      </button>
+    </div>
+
+    <!-- Informasi sekolah -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🏫 Informasi Sekolah</div></div>
+
+      <div class="form-group">
+        <label>Nama Sekolah</label>
+        <input type="text" id="set-school-name" placeholder="Nama sekolah" />
+      </div>
+
+      <div class="form-group">
+        <label>Tahun Ajaran</label>
+        <input type="text" id="set-school-year" placeholder="cth: 2024/2025" />
+      </div>
+
+      <div class="form-group">
+        <label>Semester</label>
+        <select id="set-school-semester">
+          <option value="Ganjil">Ganjil</option>
+          <option value="Genap">Genap</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" onclick="savePengaturan()">
+        💾 Simpan
+      </button>
+      <div class="text-xs text-muted mt-2">Catatan: tombol Simpan ini juga menyimpan pengaturan anti-curang.</div>
+    </div>
+
+    <!-- Statistik -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Statistik Sistem</div></div>
+      <div class="flex justify-between py-2 border-b" style="font-size:13px;">
+        <span class="text-muted">Total ujian diselenggarakan</span>
+        <span class="font-mono bold">${DB.ujian.length}</span>
+      </div>
+      <div class="flex justify-between py-2 border-b" style="font-size:13px;">
+        <span class="text-muted">Total soal di bank soal</span>
+        <span class="font-mono bold">${DB.bankSoal.length}</span>
+      </div>
+      <div class="flex justify-between py-2 border-b" style="font-size:13px;">
+        <span class="text-muted">Total hasil ujian tersimpan</span>
+        <span class="font-mono bold">${DB.hasil.length}</span>
+      </div>
+      <div class="flex justify-between py-2" style="font-size:13px;">
+        <span class="text-muted">Total pelanggaran terdeteksi</span>
+        <span class="font-mono bold text-warn">${DB.hasil.reduce((s,h)=>s+(h.pelanggaran||0),0)}</span>
       </div>
     </div>
+  </div>
   `;
+
+  // Setelah render, load setting dari RTDB lalu isi ke form
+  loadPengaturan();
 }
 
 // ----------------------------------------------------------------
@@ -4040,12 +4091,16 @@ function validateToken() {
 
 function startExam(ujian) {
   examState.ujian = ujian;
-  examState.soalList = ujian.soal
-  .map(id => DB.bankSoal.find(s => s.id === id))
-  .filter(Boolean);
+
+  // FIX: ambil soal berdasarkan ID, bukan index array
+  examState.soalList = (ujian.soal || [])
+    .map(soalId => DB.bankSoal.find(s => String(s.id) === String(soalId)))
+    .filter(Boolean);
+
   if (ujian.opsiAntiCurang.acakSoal) {
     examState.soalList = [...examState.soalList].sort(() => Math.random() - 0.5);
   }
+
   examState.currentQ = 0;
   examState.answers = {};
   examState.flagged = new Set();
@@ -4053,7 +4108,6 @@ function startExam(ujian) {
   examState.violations = 0;
 
   showPage('page-exam');
-
   document.getElementById('exam-title').textContent = ujian.nama;
   document.getElementById('exam-info').textContent = `${session.userData.nama} · ${session.userData.kelas}`;
 
@@ -4595,7 +4649,7 @@ async function saveGuru() {
     const email = nip + '@examshield.app';
     const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
     const uid   = cred.user.uid;
-    const data  = { role:'guru', nama, nip, mapel, username:nip, email, createdAt: Date.now() };
+    const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt: Date.now(), password };
     await rtdbSet('users/' + uid, data);
     await rtdbSet('usernames/' + nip, { uid });
     DB.users[uid] = { ...data, uid };
@@ -4619,7 +4673,7 @@ async function saveSiswa() {
     const email = username + '@examshield.app';
     const cred  = await AUTH.createUserWithEmailAndPassword(email, password);
     const uid   = cred.user.uid;
-    const data  = { role:'siswa', nama, nisn, kelas, username, email, createdAt: Date.now() };
+    const data = { role:'guru', nama, nip, mapel, username:nip, email, createdAt: Date.now(), password };
     await rtdbSet('users/' + uid, data);
     await rtdbSet('usernames/' + username, { uid });
     DB.users[uid] = { ...data, uid };
@@ -5228,12 +5282,18 @@ function printHasil() {
 // ================================================================
 // TOAST NOTIFICATIONS
 // ================================================================
+
 function showToast(msg, type = 'info') {
   const icons = { success: '✅', error: '❌', warn: '⚠️', info: 'ℹ️' };
   const container = document.getElementById('toast-container');
+  if (!container) return;
+
   const toast = document.createElement('div');
   toast.className = `toast toast-${type === 'warn' ? 'warn' : type}`;
-  toast.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+
+  const icon = icons[type] || icons.info;
+  toast.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+
   container.appendChild(toast);
   setTimeout(() => toast.remove(), 4000);
 }
