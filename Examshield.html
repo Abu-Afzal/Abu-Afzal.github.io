@@ -1959,6 +1959,42 @@ ${siswas.map(([username, u]) => `
 `;
 }
 
+async function renderUjianSiswa() {
+  const container = document.getElementById('daftar-ujian-siswa');
+  container.innerHTML = '<p>Mencari ujian aktif...</p>';
+
+  try {
+    // Ambil data ujian yang sedang diaktifkan admin/guru
+    const ujianAktif = await rtdbGet('ujianAktif'); 
+    
+    if (!ujianAktif || Object.keys(ujianAktif).length === 0) {
+      container.innerHTML = '<div class="alert-info">Belum ada ujian aktif saat ini.</div>';
+      return;
+    }
+
+    container.innerHTML = ''; // Bersihkan loading
+    
+    Object.keys(ujianAktif).forEach(key => {
+      const ujian = ujianAktif[key];
+      
+      // Filter: Hanya tampilkan jika statusnya 'aktif'
+      if (ujian.status === 'aktif') {
+        const div = document.createElement('div');
+        div.className = 'card-ujian';
+        div.innerHTML = `
+          <h3>${ujian.judul}</h3>
+          <p>Mata Pelajaran: ${ujian.mapel}</p>
+          <p>Durasi: ${ujian.durasi} Menit</p>
+          <button onclick="persiapanUjian('${key}')" class="btn-start">Ikuti Ujian</button>
+        `;
+        container.appendChild(div);
+      }
+    });
+  } catch (err) {
+    container.innerHTML = '<p>Gagal memuat data ujian.</p>';
+  }
+}
+
 function filterSiswa(val) {
 document.querySelectorAll('#tbody-siswa tr').forEach(tr => {
 tr.style.display = (tr.dataset.search || '').includes(val.toLowerCase()) ? '' : 'none';
@@ -3017,70 +3053,64 @@ tmp.onchange = e => prosesImportGuruFile(e.target);
 tmp.click();
 }
 
-function prosesImportGuruFile(inputEl) {
-const file = inputEl.files[0];
-if (!file) return;
-const reader = new FileReader();
-reader.onload = e => {
-try {
-const wb = XLSX.read(e.target.result, { type: 'binary' });
-const ws = wb.Sheets[wb.SheetNames[0]];
-const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-let added = 0, skipped = 0, duplikat = 0;
-rows.forEach(row => {
-const nama = String(row['Nama'] || row['nama'] || '').trim();
-const nip = String(row['NIP'] || row['nip'] || '').trim();
-const mapel = String(row['Mata Pelajaran'] || row['mata_pelajaran'] || row['Mapel'] || '').trim();
-const password = String(row['Password'] || row['password'] || '').trim() || 'Guru@' + nip.slice(-4);
+async function importGuru(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-if (!nama || !nip) { skipped++; return; }
-if (DB.users[nip]) { duplikat++; return; }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const json = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-DB.users[nip] = { password, role: 'guru', nama, nip, mapel };
-added++;
-});
+      if (json.length === 0) {
+        showToast("File Excel kosong!", "error");
+        return;
+      }
 
-let pesanTambahan = '';
-if (duplikat) pesanTambahan += `, ${duplikat} NIP sudah terdaftar (dilewati)`;
-if (skipped) pesanTambahan += `, ${skipped} baris tidak lengkap (dilewati)`;
+      showLoading(`Mengimpor ${json.length} Guru...`);
+      
+      for (const row of json) {
+        // Normalisasi nama kolom (mengantisipasi huruf besar/kecil di Excel)
+        const nama = row.Nama || row.nama || row.NAMA;
+        const username = (row.Username || row.username || row.USERNAME || "").toString().trim();
+        const password = (row.Password || row.password || row.PASSWORD || "").toString().trim();
 
-showToast(`✅ ${added} guru berhasil diimport${pesanTambahan}!`, added > 0 ? 'success' : 'warn');
-renderDataGuru();
-} catch (err) {
-showToast('Gagal membaca file. Pastikan format Excel sesuai template.', 'error');
-}
-};
-reader.readAsBinaryString(file);
-inputEl.value = '';
-}
+        if (username && nama && password) {
+          // PROSES SIMPAN KE DATABASE (Agar data permanen)
+          await RTDB.ref('users/' + username).set({
+            nama: nama,
+            username: username,
+            password: password,
+            role: 'guru',
+            createdAt: new Date().toISOString()
+          });
 
-function prosesImportSiswaFile(file) {
-if (!file) return;
-const reader = new FileReader();
-reader.onload = e => {
-try {
-const wb = XLSX.read(e.target.result, { type: 'binary' });
-const ws = wb.Sheets[wb.SheetNames[0]];
-const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
-let added = 0, skipped = 0;
-rows.forEach(row => {
-const nama = String(row['Nama'] || row['nama'] || '').trim();
-const nisn = String(row['NISN'] || row['nisn'] || '').trim();
-const kelas = String(row['Kelas'] || row['kelas'] || '').trim();
-const username = String(row['Username'] || row['username'] || nisn).trim();
-const password = String(row['Password'] || row['password'] || nisn.slice(-6) || 'Siswa123').trim();
-if (!nama || !username) { skipped++; return; }
-if (DB.users[username]) { skipped++; return; }
-DB.users[username] = { password, role: 'siswa', nama, nisn, kelas };
-added++;
-});
-showToast(`✅ ${added} siswa berhasil diimport${skipped ? `, ${skipped} baris dilewati` : ''}!`, 'success');
-renderDataSiswa();
-} catch (err) {
-showToast('Gagal membaca file. Pastikan format Excel sesuai template.', 'error');
-}
-};
-reader.readAsBinaryString(file);
+          // OPSIONAL: Daftarkan ke Auth agar bisa login
+          const email = username + '@examshield.app';
+          try {
+            await AUTH.createUserWithEmailAndPassword(email, password);
+          } catch (authErr) {
+            console.warn("User Auth sudah ada, lanjut simpan data profil.");
+          }
+        }
+      }
+
+      showToast("Impor Guru Berhasil!", "success");
+      await loadAllData(); // Ambil data terbaru dari Firebase
+      renderDataGuru();    // Tampilkan di tabel
+
+    } catch (error) {
+      console.error("Detail Error:", error);
+      showToast("Gagal impor: " + error.message, "error");
+    } finally {
+      hideLoading();
+      event.target.value = ''; // Reset input file
+    }
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function downloadTemplateSiswa() {
