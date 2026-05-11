@@ -9,7 +9,7 @@
     <style>
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #f8fafc; 
+            background: #fcf8f9; 
             color: #1e293b; 
             overflow: hidden; 
         }
@@ -123,23 +123,40 @@
             </section>
 
             <section id="section-manajemen" class="content-section">
-                <h2 class="text-xl font-bold mb-6">Kelola Pemilik</h2>
-                <div class="grid grid-cols-1 gap-6">
-                    <div class="glass-card p-6 rounded-2xl">
-                        <h4 class="font-bold mb-4 text-sm">Tambah Pemilik</h4>
-                        <div class="flex gap-2">
-                            <input type="text" id="new-owner-name" placeholder="Nama..." class="flex-1 bg-white border rounded-xl px-4 py-2 outline-none">
-                            <button id="add-owner-btn" class="bg-blue-600 text-white px-6 rounded-xl font-bold">Simpan</button>
-                        </div>
-                    </div>
-                    <div class="glass-card rounded-2xl overflow-hidden">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50"><tr><th class="px-4 py-3">Nama</th><th class="px-4 py-3">Saldo</th><th class="px-4 py-3 text-center">Aksi</th></tr></thead>
-                            <tbody id="owner-list-table" class="divide-y divide-slate-100"></tbody>
-                        </table>
-                    </div>
+    <h2 class="text-xl font-bold mb-6">Kelola Pemilik</h2>
+    <div class="grid grid-cols-1 gap-6">
+        
+        <div class="glass-card p-5 rounded-2xl">
+            <h4 class="font-bold mb-4 text-xs uppercase tracking-wider text-slate-400">Tambah Pemilik Baru</h4>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="flex-1">
+                    <input type="text" id="new-owner-name" placeholder="Ketik nama..." 
+                           class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-all">
                 </div>
-            </section>
+                <button id="add-owner-btn" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95">
+                    Simpan
+                </button>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-100">
+                        <tr>
+                            <th class="px-4 py-3 font-bold text-slate-500">Nama</th>
+                            <th class="px-4 py-3 font-bold text-slate-500">Saldo</th>
+                            <th class="px-4 py-3 text-center font-bold text-slate-500">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="owner-list-table" class="divide-y divide-slate-100">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
         </div>
     </main>
 
