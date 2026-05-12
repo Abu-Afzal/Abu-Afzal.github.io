@@ -327,6 +327,9 @@
             remove(ref(db, `finSync/transactions/${tId}`));
             showSection('transaksi');
         };
+        
+        // Daftarkan fungsi render ke window agar bisa dipanggil oleh onchange di HTML
+window.render = render;
     </script>
 </body>
 </html>
