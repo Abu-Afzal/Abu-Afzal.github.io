@@ -103,24 +103,35 @@
             </section>
 
             <section id="section-rekap" class="content-section">
-                <h2 class="text-xl font-bold mb-6">Histori Transaksi</h2>
-                <div class="glass-card rounded-2xl overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-[10px] uppercase text-slate-400">
-                                <tr>
-                                    <th class="px-4 py-3">Waktu</th>
-                                    <th class="px-4 py-3">Pemilik</th>
-                                    <th class="px-4 py-3">Deskripsi</th>
-                                    <th class="px-4 py-3">Nominal</th>
-                                    <th class="px-4 py-3 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="full-history-logs" class="divide-y divide-slate-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 class="text-xl font-bold">Histori Transaksi</h2>
+        
+        <div class="w-full sm:w-auto">
+            <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Filter Pemilik:</label>
+            <select id="filter-owner" onchange="render()" class="w-full sm:w-48 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-500">
+                <option value="all">Semua Pemilik</option>
+                </select>
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-[10px] uppercase text-slate-400">
+                    <tr>
+                        <th class="px-4 py-3">Waktu</th>
+                        <th class="px-4 py-3">Pemilik</th>
+                        <th class="px-4 py-3">Deskripsi</th>
+                        <th class="px-4 py-3">Nominal</th>
+                        <th class="px-4 py-3 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="full-history-logs" class="divide-y divide-slate-100">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
             <section id="section-manajemen" class="content-section">
     <h2 class="text-xl font-bold mb-6">Kelola Pemilik</h2>
@@ -211,40 +222,58 @@
         };
 
         const render = () => {
-            document.getElementById('balance-cards').innerHTML = owners.map(o => `
-                <div class="glass-card p-5 rounded-2xl border-l-4 border-blue-500">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">${o.name}</p>
-                    <h3 class="text-lg font-bold mt-1 text-slate-700">${formatIDR(o.balance)}</h3>
-                </div>`).join('');
+    // 1. Render Kartu Saldo (Dashboard)
+    document.getElementById('balance-cards').innerHTML = owners.map(o => `
+        <div class="glass-card p-5 rounded-2xl border-l-4 border-blue-500">
+            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">${o.name}</p>
+            <h3 class="text-lg font-bold mt-1 text-slate-700">${formatIDR(o.balance)}</h3>
+        </div>`).join('');
 
-            document.getElementById('owner-select').innerHTML = owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
-            
-            document.getElementById('owner-list-table').innerHTML = owners.map(o => `
-                <tr class="bg-white">
-                    <td class="px-4 py-3 font-bold text-slate-600">${o.name}</td>
-                    <td class="px-4 py-3 text-blue-600 font-bold">${formatIDR(o.balance)}</td>
-                    <td class="px-4 py-3 text-center">
-                        <button onclick="editOwner('${o.id}', '${o.name}')" class="text-blue-500 mr-3 text-xs font-bold">Edit</button>
-                        <button onclick="deleteOwner('${o.id}')" class="text-red-400 text-xs font-bold">Hapus</button>
-                    </td>
-                </tr>`).join('');
+    // 2. Render Dropdown Pilihan di Form Transaksi & Filter Rekap
+    const ownerOptions = owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+    document.getElementById('owner-select').innerHTML = ownerOptions;
+    
+    // Update Dropdown Filter di Rekap (pertahankan opsi "Semua")
+    const filterSelect = document.getElementById('filter-owner');
+    const currentFilter = filterSelect.value;
+    filterSelect.innerHTML = `<option value="all">Semua Pemilik</option>` + ownerOptions;
+    filterSelect.value = currentFilter;
 
-            document.getElementById('full-history-logs').innerHTML = transactions.map((t) => `
-                <tr class="bg-white">
-                    <td class="px-4 py-3 text-slate-400 text-[10px]">${t.date}<br>${t.time}</td>
-                    <td class="px-4 py-3 font-bold text-slate-600 text-xs">${t.ownerName}</td>
-                    <td class="px-4 py-3 text-slate-500 text-xs">${t.desc}</td>
-                    <td class="px-4 py-3 font-bold text-xs ${t.type === 'in' ? 'text-emerald-500' : 'text-red-500'}">
-                        ${t.type === 'in' ? '+' : '-'} ${formatIDR(t.amount)}
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        <button onclick="editTransaction('${t.id}')" class="text-blue-400 font-bold text-[10px] border border-blue-100 px-2 py-1 rounded">EDIT</button>
-                    </td>
-                </tr>`).join('');
+    // 3. Logika Filter Tabel Histori
+    const selectedFilter = filterSelect.value;
+    const filteredTransactions = selectedFilter === 'all' 
+        ? transactions 
+        : transactions.filter(t => t.ownerId === selectedFilter);
 
-            const total = owners.reduce((a, b) => a + (b.balance || 0), 0);
-            document.getElementById('total-rekening-sidebar').innerText = formatIDR(total);
-        };
+    // 4. Render Tabel Rekap
+    document.getElementById('full-history-logs').innerHTML = filteredTransactions.map((t) => `
+        <tr class="bg-white">
+            <td class="px-4 py-3 text-slate-400 text-[10px]">${t.date}<br>${t.time}</td>
+            <td class="px-4 py-3 font-bold text-slate-600 text-xs">${t.ownerName}</td>
+            <td class="px-4 py-3 text-slate-500 text-xs">${t.desc}</td>
+            <td class="px-4 py-3 font-bold text-xs ${t.type === 'in' ? 'text-emerald-500' : 'text-red-500'}">
+                ${t.type === 'in' ? '+' : '-'} ${formatIDR(t.amount)}
+            </td>
+            <td class="px-4 py-3 text-center">
+                <button onclick="editTransaction('${t.id}')" class="text-blue-400 font-bold text-[10px] border border-blue-100 px-2 py-1 rounded">EDIT</button>
+            </td>
+        </tr>`).join('');
+
+    // 5. Render Tabel Manajemen Pemilik
+    document.getElementById('owner-list-table').innerHTML = owners.map(o => `
+        <tr class="bg-white">
+            <td class="px-4 py-3 font-bold text-slate-600">${o.name}</td>
+            <td class="px-4 py-3 text-blue-600 font-bold">${formatIDR(o.balance)}</td>
+            <td class="px-4 py-3 text-center">
+                <button onclick="editOwner('${o.id}', '${o.name}')" class="text-blue-500 mr-3 text-xs font-bold">Edit</button>
+                <button onclick="deleteOwner('${o.id}')" class="text-red-400 text-xs font-bold">Hapus</button>
+            </td>
+        </tr>`).join('');
+
+    // 6. Update Total Saldo Gabungan
+    const total = owners.reduce((a, b) => a + (b.balance || 0), 0);
+    document.getElementById('total-rekening-sidebar').innerText = formatIDR(total);
+};
 
         // SYNC DATA
         onValue(ref(db, 'finSync/owners'), (s) => {
