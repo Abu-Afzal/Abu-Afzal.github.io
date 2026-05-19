@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ExamShield Pro</title>
+    <!-- Memanggil Library QR Code Scanner via CDN -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        /* Desain Modern Modern Glassmorphism */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            padding: 20px;
+            position: absolute;
+            top: 0; left: 0;
+        }
+        #exam-screen {
+            display: none;
+            background: #fff;
+            z-index: 5;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        h2 { color: #1e3a8a; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        button:active { transform: scale(0.98); }
+        #reader {
+            width: 100%;
+            max-width: 320px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: none !important;
+            margin: 15px auto;
+            display: none;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .warning-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(220, 38, 38, 0.98);
+            color: white;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 25px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HALAMAN 1: SCANNER & LOGIN -->
+    <div id="setup-screen" class="container">
+        <div class="card">
+            <h2>ExamShield Pro</h2>
+            <p>Silakan scan QR Code Ujian yang disediakan oleh pengawas untuk memulai.</p>
+            
+            <!-- Tempat Kamera Muncul -->
+            <div id="reader"></div>
+            
+            <button id="btn-action" onclick="startScanner()">Buka Kamera Scan</button>
+        </div>
+    </div>
+
+    <!-- HALAMAN 2: LAYAR UJIAN (WEBVIEW) -->
+    <div id="exam-screen" class="container">
+        <iframe id="exam-frame" src="about:blank"></iframe>
+    </div>
+
+    <!-- HALAMAN 3: OVERLAY BLOKIR PELANGGARAN -->
+    <div id="warning-overlay" class="warning-overlay">
+        <h1 style="font-size: 28px;">⚠️ DETEKSI PELANGGARAN ⚠️</h1>
+        <p id="warning-msg" style="margin-top: 20px; font-size: 18px; color: #fee2e2;"></p>
+        <button id="btn-reset" style="background: white; color: #dc2626; margin-top: 30px;" onclick="resetWarning()">Saya Mengerti, Kembali</button>
+    </div>
+
+    <script>
+        let html5QrcodeScanner;
+        let violationCount = 0;
+        const maxViolations = 3; 
+
+        // Fungsi Menjalankan Kamera Scanner
+        function startScanner() {
+            document.getElementById('reader').style.display = 'block';
+            document.getElementById('btn-action').style.display = 'none';
+
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+                fps: 15, 
+                qrbox: { width: 200, height: 200 },
+                aspectRatio: 1.0
+            });
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        // Jika QR Code Berhasil Terbaca
+        function onScanSuccess(decodedText) {
+            // Validasi apakah yang di-scan adalah URL valid (misal link Google Form/CBT)
+            if (decodedText.startsWith("http://") || decodedText.startsWith("https://")) {
+                html5QrcodeScanner.clear(); // Matikan kamera
+                
+                // Pindahkan URL ke iframe dan buka layar ujian
+                document.getElementById('exam-frame').src = decodedText;
+                
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('exam-screen').style.display = 'block';
+                
+                // Minta mode Fullscreen (diaktifkan saat menyentuh layar pertama kali)
+                forceFullscreen();
+            } else {
+                alert("QR Code tidak valid! Pastikan berupa link URL Ujian.");
+            }
+        }
+
+        function onScanFailure(error) {
+            // Abaikan error pencarian fokus kamera biasa
+        }
+
+        function forceFullscreen() {
+            let elem = document.documentElement;
+            if (elem.requestFullscreen) { elem.requestFullscreen(); }
+            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+        }
+
+        // ================= DETEKSI KECURANGAN =================
+        
+        // 1. Deteksi Ganti Aplikasi / Minimalkan Browser / Buka Notifikasi
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden && document.getElementById('exam-screen').style.display === 'block') {
+                triggerViolation("Anda terdeteksi keluar dari aplikasi ujian!");
+            }
+        });
+
+        // 2. Deteksi Kehilangan Fokus (Menekan tombol Recent Apps / Muncul Pop-up)
+        window.addEventListener("blur", function() {
+            if (document.getElementById('exam-screen').style.display === 'block') {
+                triggerViolation("Aplikasi kehilangan fokus. Dilarang membuka aplikasi mengambang (floating apps) atau membagi layar!");
+            }
+        });
+
+        // 3. Eksekusi Pelanggaran
+        function triggerViolation(reason) {
+            violationCount++;
+            const msg = document.getElementById('warning-msg');
+            
+            if (violationCount >= maxViolations) {
+                msg.innerHTML = `Anda telah melanggar batas maksimal keluar aplikasi (${maxViolations}x).<br><br><strong style="color: #fef08a; font-size: 22px;">AKSES UJIAN DIKUNCI.<br>Silakan lapor ke pengawas ruangan.</strong>`;
+                document.getElementById('btn-reset').style.display = 'none';
+                document.getElementById('exam-frame').src = "about:blank"; // Hapus soal
+            } else {
+                msg.innerHTML = `${reason}<br><br>Peringatan: <strong style="font-size: 24px;">${violationCount} / ${maxViolations}</strong>`;
+            }
+            
+            document.getElementById('warning-overlay').style.display = 'flex';
+        }
+
+        function resetWarning() {
+            document.getElementById('warning-overlay').style.display = 'none';
+            forceFullscreen();
+        }
+
+        // Proteksi Tambahan: Blokir Klik Kanan / Tahan Layar
+        document.addEventListener('contextmenu', event => event.preventDefault());
+    </script>
+</body>
+</html>
