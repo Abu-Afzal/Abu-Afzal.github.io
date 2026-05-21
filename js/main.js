@@ -21,22 +21,27 @@ function renderCards() {
         }).join('');
     }
 
-    // Layanan Madrasah: Support link jika item memiliki properti 'url'
-madrasahContainer.innerHTML = layananMadrasah.map(item => {
-    const cardContent = `
-        <div class="card" style="background: ${item.color}; color: white;">
-            <div class="card-icon">${item.icon}</div>
-            <div class="card-title">${item.title}</div>
-            <div class="card-desc">${item.desc || ''}</div>
-        </div>
-    `;
-    
-    // Jika item memiliki 'url', bungkus dengan tag <a>; jika tidak, tampilkan biasa
-    return item.url 
-        ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" class="card-link">${cardContent}</a>`
-        : cardContent;
-}).join('');
-        }
+    // Render Layanan Madrasah
+    if (madrasahContainer && CONFIG.layananMadrasah) {
+        madrasahContainer.innerHTML = CONFIG.layananMadrasah.map(item => {
+            const cardContent = `
+                <div class="card" style="background: ${item.color}; color: white;">
+                    <div class="card-icon">${item.icon}</div>
+                    <div class="card-title">${item.title}</div>
+                    <div class="card-desc">${item.desc || ''}</div>
+                </div>
+            `;
+            
+            // Cek apakah item memiliki 'url' ATAU 'page'
+            const link = item.url || item.page;
+            
+            return link 
+                ? `<a href="${link}" class="card-link">${cardContent}</a>`
+                : cardContent;
+        }).join('');
+    }
+}
+
 function closeModal() {
     document.getElementById('integrationModal').classList.remove('active');
 }
@@ -45,4 +50,5 @@ document.getElementById('integrationModal').addEventListener('click', function(e
     if (e.target === this) closeModal();
 });
 
+// Jalankan saat DOM loaded
 document.addEventListener('DOMContentLoaded', renderCards);
