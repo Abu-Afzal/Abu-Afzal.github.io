@@ -58,12 +58,12 @@ const CONFIG = {
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
         { icon: '📊', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pages/pkkm.html' },
         { 
-            id: 'rdm', 
+            icon: '📗',  // ← Tetap tambahkan icon sebagai fallback
             title: 'RDM', 
             desc: '', 
             color: '#283593', 
             url: 'https://manbantaeng.rdmnet.my.id/',
-            logo: 'assets/images/rapor-app.png'
+            logo: 'assets/images/rapor-app.png'  // ← Path ke logo
         },
         { icon: '📈', title: 'ScoreUp!', desc: '', color: '#c62828', page: 'pages/scoreup.html' }
     ]
