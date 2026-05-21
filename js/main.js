@@ -37,7 +37,6 @@ madrasahContainer.innerHTML = layananMadrasah.map(item => {
         : cardContent;
 }).join('');
     }
-}
 
 function closeModal() {
     document.getElementById('integrationModal').classList.remove('active');
