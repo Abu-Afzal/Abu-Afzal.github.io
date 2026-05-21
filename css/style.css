@@ -258,7 +258,7 @@ footer {
     }
     /* Ukuran Logo di Header */
 .header-logo {
-    height: 36px;      /* Atur tinggi logo sesuai keinginan */
+    height: 18px;      /* Atur tinggi logo sesuai keinginan */
     width: auto;       /* Lebar menyesuaikan otomatis */
     object-fit: contain;
 }
