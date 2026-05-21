@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIPELITA - MTs Negeri 1 Luwu</title>
+    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <img src="assets/images/logo-sipelita.png" alt="SIPELITA">
+                <span>SIPELITA</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="home.html" class="active">Beranda</a></li>
+                <li><a href="#berita">Berita</a></li>
+                <li><a href="#profil">Profil</a></li>
+                <li><a href="login.html" class="btn-login">Login</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Selamat Datang di SIPELITA</h1>
+            <p>Sistem Pengelolaan Edukasi & Layanan Terpadu<br>MTs Negeri 1 Luwu</p>
+            <div class="hero-buttons">
+                <a href="login.html" class="btn-primary">Portal Guru & Staf</a>
+                <a href="#berita" class="btn-secondary">Baca Berita</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Berita Section -->
+    <section id="berita" class="berita-section">
+        <div class="container">
+            <h2 class="section-title">Berita Terbaru</h2>
+            <div class="berita-grid" id="beritaContainer">
+                <!-- Berita akan dimuat dari JavaScript -->
+            </div>
+            <a href="berita.html" class="btn-more">Lihat Semua Berita →</a>
+        </div>
+    </section>
+
+    <!-- Sosial Media Section -->
+    <section class="social-section">
+        <div class="container">
+            <h2>Ikuti Kami</h2>
+            <div class="social-grid">
+                <a href="https://facebook.com/mtsn1luwu" target="_blank" class="social-card facebook">
+                    <i class="fab fa-facebook"></i>
+                    <span>Facebook</span>
+                </a>
+                <a href="https://instagram.com/mtsn1luwu" target="_blank" class="social-card instagram">
+                    <i class="fab fa-instagram"></i>
+                    <span>Instagram</span>
+                </a>
+                <a href="https://youtube.com/mtsn1luwu" target="_blank" class="social-card youtube">
+                    <i class="fab fa-youtube"></i>
+                    <span>YouTube</span>
+                </a>
+                <a href="https://wa.me/6281234567890" target="_blank" class="social-card whatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>SIPELITA</h3>
+                    <p>Sistem Pengelolaan Edukasi & Layanan Terpadu<br>MTs Negeri 1 Luwu</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Kontak</h3>
+                    <p>📍 Jl. Pendidikan No. 1, Luwu</p>
+                    <p>📞 (0411) 123456</p>
+                    <p>✉️ info@mtsn1luwu.sch.id</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Link Cepat</h3>
+                    <ul>
+                        <li><a href="login.html">Portal Guru</a></li>
+                        <li><a href="#berita">Berita</a></li>
+                        <li><a href="#">Website Madrasah</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 SIPELITA - MTs Negeri 1 Luwu. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/berita.js"></script>
+</body>
+</html>
