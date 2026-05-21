@@ -30,7 +30,7 @@ const CONFIG = {
             title: 'EMIS GTK', 
             desc: '', 
             color: '#7e57c2', 
-            url: 'https://emis.kemenag.go.id/' 
+            url: 'https://emisgtk.kemenag.go.id/' 
         },
         { 
             id: 'simpeg', 
