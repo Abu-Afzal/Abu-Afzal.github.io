@@ -7,7 +7,7 @@ const CONFIG = {
                 color: '#9c27b0', 
                 url: 'https://pusaka-v3.kemenag.go.id/',
                 logo: 'icon-app.png'
-            },
+        },
         { 
                 id: 'pusaka', 
                 title: 'Pelaporan Pusaka', 
@@ -15,7 +15,6 @@ const CONFIG = {
                 color: '#9c27b0', 
                 url: 'https://absensi.kemenag.go.id',
                 icon: '📜',  
-            },
         },
         { 
             id: 'myasn', 
