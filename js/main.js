@@ -21,21 +21,21 @@ function renderCards() {
         }).join('');
     }
 
-    // Render Layanan Madrasah
-    if (madrasahContainer) {
-        madrasahContainer.innerHTML = CONFIG.layananMadrasah.map(item => {
-            const cardContent = `
-                <div class="card" style="background: ${item.color}; color: white;">
-                    <div class="card-icon">${item.icon}</div>
-                    <div class="card-title">${item.title}</div>
-                    <div class="card-desc">${item.desc || ''}</div>
-                </div>
-            `;
-            
-            return item.page 
-                ? `<a href="${item.page}" class="card-link">${cardContent}</a>`
-                : cardContent;
-        }).join('');
+    // Layanan Madrasah: Support link jika item memiliki properti 'url'
+madrasahContainer.innerHTML = layananMadrasah.map(item => {
+    const cardContent = `
+        <div class="card" style="background: ${item.color}; color: white;">
+            <div class="card-icon">${item.icon}</div>
+            <div class="card-title">${item.title}</div>
+            <div class="card-desc">${item.desc || ''}</div>
+        </div>
+    `;
+    
+    // Jika item memiliki 'url', bungkus dengan tag <a>; jika tidak, tampilkan biasa
+    return item.url 
+        ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" class="card-link">${cardContent}</a>`
+        : cardContent;
+}).join('');
     }
 }
 
