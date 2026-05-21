@@ -24,6 +24,11 @@ function renderCards() {
     // Render Layanan Madrasah
     if (madrasahContainer && CONFIG.layananMadrasah) {
         madrasahContainer.innerHTML = CONFIG.layananMadrasah.map(item => {
+            // ✅ TAMBAHAN: Cek logo juga untuk layanan madrasah
+            const displayContent = item.logo 
+                ? `<img src="${item.logo}" alt="${item.title}" class="card-logo" onerror="this.style.display='none'; this.parentElement.querySelector('.card-icon-fallback').style.display='flex';">
+                   <div class="card-icon card-icon-fallback" style="display:none;">${item.icon || '📌'}</div>`
+                : `<div class="card-icon">${item.icon || '📌'}</div>`;
             const cardContent = `
                 <div class="card" style="background: ${item.color}; color: white;">
                     <div class="card-icon">${item.icon}</div>
