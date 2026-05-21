@@ -14,8 +14,7 @@ const CONFIG = {
             title: 'Pelaporan Pusaka', 
             desc: '', 
             color: '#9c27b0', 
-            url: 'https://absensi.kemenag.go.id',
-            logo: 'assets/images/emis-app.png'
+            url: 'https://absensi.kemenag.go.id'
         },
         { 
             id: 'myasn', 
@@ -31,7 +30,8 @@ const CONFIG = {
             title: 'EMIS GTK', 
             desc: '', 
             color: '#7e57c2', 
-            url: 'https://emisgtk.kemenag.go.id/' 
+            url: 'https://emisgtk.kemenag.go.id/',
+            logo: 'assets/images/emis-app.png'
         },
         { 
             id: 'simpeg', 
