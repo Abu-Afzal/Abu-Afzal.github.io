@@ -36,8 +36,7 @@ madrasahContainer.innerHTML = layananMadrasah.map(item => {
         ? `<a href="${item.url}" target="_blank" rel="noopener noreferrer" class="card-link">${cardContent}</a>`
         : cardContent;
 }).join('');
-    }
-
+        }
 function closeModal() {
     document.getElementById('integrationModal').classList.remove('active');
 }
