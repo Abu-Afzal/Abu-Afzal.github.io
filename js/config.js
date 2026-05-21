@@ -61,11 +61,10 @@ const CONFIG = {
             id: 'rdm', 
             title: 'RDM', 
             desc: '', 
-            color: '#9c27b0', 
+            color: '#283593', 
             url: 'https://manbantaeng.rdmnet.my.id/',
             logo: 'assets/images/rapor-app.png'
         },
-        { icon: '📗', title: 'RDM', desc: '', color: '#283593', page: 'pages/rdm.html' },
         { icon: '📈', title: 'ScoreUp!', desc: '', color: '#c62828', page: 'pages/scoreup.html' }
     ]
 };
