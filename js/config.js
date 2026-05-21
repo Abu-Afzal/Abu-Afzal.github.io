@@ -57,6 +57,14 @@ const CONFIG = {
         { icon: '👁️', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
         { icon: '📊', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pages/pkkm.html' },
+        { 
+                id: 'rdm', 
+                title: 'RDM', 
+                desc: 'Akses Rapor Digital', 
+                color: '#7e57c2', 
+                url: 'https://manbantaeng.rdmnet.my.id/'  // ← Link eksternal
+                logo: 'assets/images/rapor-app.png'
+        },
         { icon: '📗', title: 'RDM', desc: '', color: '#283593', page: 'pages/rdm.html' },
         { icon: '📈', title: 'ScoreUp!', desc: '', color: '#c62828', page: 'pages/scoreup.html' }
     ]
