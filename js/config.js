@@ -1,12 +1,21 @@
 const CONFIG = {
     layananUmum: [
         { 
-            id: 'pusaka', 
-            title: 'Pelaporan Pusaka', 
-            desc: '', 
-            color: '#9c27b0', 
-            url: 'https://absensi.kemenag.go.id',
-            logo: 'assets/images/icon-app.png'
+                id: 'pusaka', 
+                title: 'Absensi Pusaka', 
+                desc: '',  //
+                color: '#9c27b0', 
+                url: 'https://pusaka-v3.kemenag.go.id/',
+                logo: 'icon-app.png'
+            },
+        { 
+                id: 'pusaka', 
+                title: 'Pelaporan Pusaka', 
+                desc: '',  //
+                color: '#9c27b0', 
+                url: 'https://absensi.kemenag.go.id',
+                icon: '📜',  
+            },
         },
         { 
             id: 'myasn', 
