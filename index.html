@@ -1,47 +1,49 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Administrasi Sekolah Terintegrasi</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Administrasi Sekolah Terintegrasi</title>
+    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>[] Portal Administrasi Sekolah</h1>
-        <p>Integrasi data kepegawaian & layanan madrasah dalam satu pintu</p>
-      </div>
-      <div class="badge">[] Sistem Online</div>
-    </header>
+    <div class="container">
+        <header>
+            <div>
+                <h1>🏫 Portal Administrasi Sekolah</h1>
+                <p>Integrasi data kepegawaian & layanan madrasah dalam satu pintu</p>
+            </div>
+            <div class="badge">✅ Sistem Online</div>
+        </header>
 
-    <h2 class="section-title">Layanan Umum</h2>
-    <div class="grid" id="layanan-umum"></div>
+        <h2 class="section-title">Layanan Umum (Link Eksternal)</h2>
+        <div class="grid" id="layanan-umum"></div>
 
-    <h2 class="section-title">Layanan Madrasah</h2>
-    <div class="grid" id="layanan-madrasah"></div>
-  </div>
-
-  <!-- Modal -->
-  <div class="modal" id="integrationModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="modalTitle">Konfigurasi Internal</h3>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="form-group">
-        <label>Catatan Administrator</label>
-        <input type="text" placeholder="Fitur ini untuk pengembangan internal...">
-      </div>
-      <button class="btn" onclick="closeModal()">Tutup</button>
+        <h2 class="section-title">Layanan Madrasah</h2>
+        <div class="grid" id="layanan-madrasah"></div>
     </div>
-  </div>
 
-  <footer>
-    &copy; 2026 Portal Administrasi Sekolah Terintegrasi. Dibuat untuk efisiensi manajemen madrasah modern.
-  </footer>
+    <!-- Modal -->
+    <div class="modal" id="integrationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Konfigurasi Internal</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Catatan Administrator</label>
+                <input type="text" placeholder="Fitur ini untuk pengembangan internal...">
+            </div>
+            <button class="btn" onclick="closeModal()">Tutup</button>
+        </div>
+    </div>
 
-  <script src="script.js"></script>
+    <footer>
+        &copy; 2026 Portal Administrasi Sekolah Terintegrasi. Dibuat untuk efisiensi manajemen madrasah modern.
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
