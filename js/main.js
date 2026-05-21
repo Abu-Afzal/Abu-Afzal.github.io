@@ -15,7 +15,6 @@ function renderCards() {
                         ${displayContent}
                         <div class="card-title">${item.title}</div>
                         <div class="card-desc">${item.desc || ''}</div>
-                        <div class="status-tag">🌐 Akses Langsung</div>
                     </div>
                 </a>
             `;
