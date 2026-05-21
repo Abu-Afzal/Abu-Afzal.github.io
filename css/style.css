@@ -256,7 +256,12 @@ footer {
     .grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+    /* Ukuran Logo di Header */
+.header-logo {
+    height: 50px;      /* Atur tinggi logo sesuai keinginan */
+    width: auto;       /* Lebar menyesuaikan otomatis */
+    object-fit: contain;
+}
     header {
         flex-direction: column;
         align-items: flex-start;
