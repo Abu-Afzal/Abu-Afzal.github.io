@@ -1,40 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Administrasi Sekolah Terintegrasi</title>
+    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
 <body>
-    <!-- 🔐 Script Proteksi Auth - Harus di paling atas -->
-    <script src="js/auth.js"></script>
-    <script>
-        // Cek auth sebelum render halaman
-        if (!Auth.checkAuth()) {
-            window.location.href = 'login.html';
-        }
-    </script>
-    
-    <!-- ... sisa konten index.html ... -->
-    
-    <!-- Tambah tombol logout di header -->
-    <header>
-        <div>
-            <h1>🏫 Portal Administrasi Sekolah</h1>
-            <p>Integrasi data kepegawaian & layanan madrasah dalam satu pintu</p>
-            <!-- Tampilkan info user -->
-            <p id="userInfo" style="font-size: 0.85rem; color: #667eea; margin-top: 5px;"></p>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <button onclick="Auth.logout()" class="btn" style="padding: 8px 16px; font-size: 0.9rem;">
-                🔐 Keluar
-            </button>
+    <div class="container">
+        <header>
+            <div>
+                <h1>🏫 SIPELITA</h1>
+                <p>Sistem Pelayanan Edukasi dan Layanan Terpadu</p>
+            </div>
             <div class="badge">✅ Sistem Online</div>
+        </header>
+
+        <h2 class="section-title">Layanan Umum (Link Eksternal)</h2>
+        <div class="grid" id="layanan-umum"></div>
+
+        <h2 class="section-title">Layanan Madrasah</h2>
+        <div class="grid" id="layanan-madrasah"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="integrationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Konfigurasi Internal</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Catatan Administrator</label>
+                <input type="text" placeholder="Fitur ini untuk pengembangan internal...">
+            </div>
+            <button class="btn" onclick="closeModal()">Tutup</button>
         </div>
-    </header>
-    
-    <!-- ... sisa konten ... -->
-    
-    <!-- Script untuk tampilkan nama user -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const user = Auth.checkAuth();
-            if (user && document.getElementById('userInfo')) {
-                document.getElementById('userInfo').textContent = 
-                    `Halo, ${user.name} (${user.role === 'admin' ? 'Admin' : 'Guru'})`;
-            }
-        });
-    </script>
+    </div>
+
+    <footer>
+        &copy; 2026 Portal Administrasi Sekolah Terintegrasi. Dibuat untuk efisiensi manajemen madrasah modern.
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
