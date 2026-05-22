@@ -253,7 +253,7 @@ footer {
 }
 /* ✅ TARUH DI LUAR @media - untuk semua layar */
 .header-logo {
-    height: 45px !important;
+    height: 62px !important;
     width: auto;
     object-fit: contain;
 }
