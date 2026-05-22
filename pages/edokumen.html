@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Dokumen - SIPELITA</title>
+    <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #1e88e5 0%, #42a5f5 100%);
+            color: white;
+            padding: 40px 24px;
+            border-radius: 14px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .page-header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .content {
+            background: white;
+            padding: 40px;
+            border-radius: 14px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+        .dokumen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .dokumen-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .dokumen-card:hover {
+            border-color: #1e88e5;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(30, 136, 229, 0.2);
+        }
+        .dokumen-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .dokumen-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        .dokumen-desc {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+        .upload-section {
+            background: #e3f2fd;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-btn {
+            background: #1e88e5;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .upload-btn:hover {
+            background: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <div style="font-size: 4rem; margin-bottom: 10px;">📁</div>
+            <h1>E-Dokumen Madrasah</h1>
+            <p>Arsip digital dan dokumen administratif sekolah</p>
+            <a href="../index.html" class="back-btn">← Kembali ke Dashboard</a>
+        </div>
+        
+        <div class="content">
+            <div class="upload-section">
+                <h2>Upload Dokumen Baru</h2>
+                <p>Unggah dokumen dalam format PDF, DOC, atau JPG</p>
+                <button class="upload-btn" onclick="alert('Fitur upload akan segera tersedia!')">
+                    📤 Upload Dokumen
+                </button>
+            </div>
+
+            <h2 style="margin-bottom: 20px; color: #1e88e5;">📚 Kategori Dokumen</h2>
+            
+            <div class="dokumen-grid">
+                <div class="dokumen-card" onclick="alert('Membuka dokumen...')">
+                    <div class="dokumen-icon">📋</div>
+                    <div class="dokumen-title">SK Guru & Tendik</div>
+                    <div class="dokumen-desc">Surat Keputusan kepegawaian</div>
+                </div>
+                
+                <div class="dokumen-card" onclick="alert('Membuka dokumen...')">
+                    <div class="dokumen-icon">📊</div>
+                    <div class="dokumen-title">Laporan Tahunan</div>
+                    <div class="dokumen-desc">Laporan kinerja madrasah</div>
+                </div>
+                
+                <div class="dokumen-card" onclick="alert('Membuka dokumen...')">
+                    <div class="dokumen-icon">📝</div>
+                    <div class="dokumen-title">Kurikulum</div>
+                    <div class="dokumen-desc">Dokumen kurikulum & RPP</div>
+                </div>
+                
+                <div class="dokumen-card" onclick="alert('Membuka dokumen...')">
+                    <div class="dokumen-icon">🎓</div>
+                    <div class="dokumen-title">Akreditasi</div>
+                    <div class="dokumen-desc">Sertifikat & borang akreditasi</div>
+                </div>
+                
+                <div class="dokumen-card" onclick="alert('Membuka dokumen...')">
+                    <div class="dokumen-icon">💰</div>
+                    <div class="dokumen-title">Keuangan</div>
+                    <div class="dokumen-desc">Laporan & pertanggungjawaban</div>
+                </div>
+                
+                <div class="dokumen-card" onclick="alert('Membuka dokumen...')">
+                    <div class="dokumen-icon">📜</div>
+                    <div class="dokumen-title">Peraturan</div>
+                    <div class="dokumen-desc">Peraturan madrasah & tata tertib</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Proteksi halaman (jika ada sistem login)
+        if (typeof Auth !== 'undefined' && !Auth.checkAuth()) {
+            window.location.href = '../login.html';
+        }
+    </script>
+</body>
+</html>
