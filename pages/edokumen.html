@@ -1,159 +1,128 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>E-Dokumen - SIPELITA</title>
-  <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
-  <link rel="stylesheet" href="../css/style.css">
-  <style>
-    .page-header { background: linear-gradient(135deg, #1e88e5 0%, #42a5f5 100%); color: white; padding: 40px 24px; border-radius: 14px; text-align: center; margin-bottom: 30px; }
-    .page-header h1 { font-size: 2rem; margin-bottom: 10px; }
-    .back-btn { display: inline-block; margin-top: 20px; padding: 10px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; transition: background 0.3s; }
-    .back-btn:hover { background: rgba(255,255,255,0.3); }
-    .content { background: white; padding: 30px; border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
-    .upload-box { background: #e3f2fd; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
-    .upload-box h3 { margin-top: 0; color: #1565c0; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-    input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
-    .btn-upload { background: #1e88e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
-    .btn-upload:hover { background: #1565c0; }
-    .btn-upload:disabled { background: #90caf9; cursor: not-allowed; }
-    .dokumen-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-    .dokumen-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #1e88e5; transition: transform 0.2s; }
-    .dokumen-item:hover { transform: translateX(4px); }
-    .dokumen-item h4 { margin: 0 0 5px; font-size: 1rem; }
-    .dokumen-item .meta { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
-    .dokumen-item .actions { display: flex; gap: 10px; }
-    .dokumen-item a, .dokumen-item button { text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; border: none; cursor: pointer; }
-    .btn-download { background: #e3f2fd; color: #1565c0; }
-    .btn-delete { background: #ffebee; color: #c62828; display: none; } /* Nanti ditampilkan jika role=admin */
-    .loading { text-align: center; padding: 40px; color: #666; }
-    .error { background: #ffebee; color: #c62828; padding: 10px; border-radius: 8px; margin-top: 10px; display: none; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="page-header">
-      <div style="font-size: 3rem; margin-bottom: 10px;"></div>
-      <h1>E-Dokumen Madrasah</h1>
-      <p>Arsip digital & berkas administratif terpusat</p>
-      <a href="../index.html" class="back-btn">← Kembali ke Dashboard</a>
-    </div>
+<script type="module">
+  import { DokumenService } from '../js/dokumen-service.js';
+
+  const btnUpload = document.getElementById('btnUpload');
+  const fileInput = document.getElementById('fileInput');
+  const kategori = document.getElementById('kategori');
+  const namaDokumen = document.getElementById('namaDokumen');
+  const errorMsg = document.getElementById('errorMsg');
+  const container = document.getElementById('dokumenContainer');
+  const loadingState = document.getElementById('loadingState');
+
+  // Tampilkan daftar dokumen
+  async function loadDokumen() {
+    loadingState.style.display = 'block';
+    container.innerHTML = '';
     
-    <div class="content">
-      <!-- Form Upload (Nanti diproteksi role=admin) -->
-      <div class="upload-box">
-        <h3>📤 Upload Dokumen Baru</h3>
-        <div class="form-row">
-          <select id="kategori" required>
-            <option value="">Pilih Kategori</option>
-            <option value="SK & Kepegawaian">SK & Kepegawaian</option>
-            <option value="Kurikulum & RPP">Kurikulum & RPP</option>
-            <option value="Akreditasi">Akreditasi</option>
-            <option value="Keuangan">Keuangan</option>
-            <option value="Peraturan & Tata Tertib">Peraturan & Tata Tertib</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-          <input type="text" id="namaDokumen" placeholder="Nama Dokumen (contoh: SK Kepala Sekolah 2026)" required>
-        </div>
-        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.png,.xls,.xlsx" required>
-        <div id="errorMsg" class="error"></div>
-        <button id="btnUpload" class="btn-upload">Upload Dokumen</button>
-      </div>
-
-      <!-- Daftar Dokumen -->
-      <h3 style="margin-bottom: 15px; color: #1e88e5;">📚 Dokumen Tersimpan</h3>
-      <div id="loadingState" class="loading">⏳ Memuat dokumen...</div>
-      <div id="dokumenContainer" class="dokumen-list"></div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { DokumenService } from '../js/dokumen-service.js';
-
-    const btnUpload = document.getElementById('btnUpload');
-    const fileInput = document.getElementById('fileInput');
-    const kategori = document.getElementById('kategori');
-    const namaDokumen = document.getElementById('namaDokumen');
-    const errorMsg = document.getElementById('errorMsg');
-    const container = document.getElementById('dokumenContainer');
-    const loadingState = document.getElementById('loadingState');
-
-    // Tampilkan daftar dokumen
-    async function loadDokumen() {
-      loadingState.style.display = 'block';
-      container.innerHTML = '';
-      try {
-        const docs = await DokumenService.getDokumen();
-        loadingState.style.display = 'none';
-        if (docs.length === 0) {
-          container.innerHTML = '<p style="text-align:center; color:#666;">Belum ada dokumen. Silakan upload terlebih dahulu.</p>';
-          return;
-        }
-        docs.forEach(d => {
-          const sizeMB = (d.size / (1024*1024)).toFixed(2);
-          const date = new Date(d.uploadedAt).toLocaleDateString('id-ID');
-          container.innerHTML += `
-            <div class="dokumen-item">
-              <h4>${d.nama}</h4>
-              <div class="meta">📂 ${d.kategori} • 📅 ${date} •  ${sizeMB} MB</div>
-              <div class="actions">
-                <a href="${d.url}" target="_blank" class="btn-download">️ Download</a>
-                <button class="btn-delete" onclick="hapusDokumen('${d.id}', 'dokumen/${d.fileName}')">️ Hapus</button>
-              </div>
-            </div>
-          `;
-        });
-      } catch (err) {
-        loadingState.style.display = 'none';
-        errorMsg.textContent = 'Gagal memuat dokumen: ' + err.message;
-        errorMsg.style.display = 'block';
-      }
-    }
-
-    // Handle Upload
-    btnUpload.addEventListener('click', async () => {
-      errorMsg.style.display = 'none';
-      if (!kategori.value || !namaDokumen.value || !fileInput.files[0]) {
-        errorMsg.textContent = 'Lengkapi semua field dan pilih file!';
-        errorMsg.style.display = 'block';
+    try {
+      const docs = await DokumenService.getDokumen();
+      loadingState.style.display = 'none';
+      
+      if (docs.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#666; padding:40px;">📭 Belum ada dokumen. Silakan upload terlebih dahulu.</p>';
         return;
       }
       
-      btnUpload.disabled = true;
-      btnUpload.textContent = '⏳ Mengupload...';
+      docs.forEach(d => {
+        const sizeMB = (d.size / (1024*1024)).toFixed(2);
+        const date = new Date(d.uploadedAt).toLocaleDateString('id-ID', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        });
+        
+        container.innerHTML += `
+          <div class="dokumen-item">
+            <h4>${d.nama}</h4>
+            <div class="meta">📂 ${d.kategori} • 📅 ${date} • ${sizeMB} MB</div>
+            <div class="actions">
+              <a href="${d.url}" target="_blank" class="btn-download">⬇️ Download</a>
+              <button class="btn-delete" onclick="hapusDokumen('${d.id}', '${d.storagePath || ''}')">🗑️ Hapus</button>
+            </div>
+          </div>
+        `;
+      });
+    } catch (err) {
+      loadingState.style.display = 'none';
+      errorMsg.textContent = '❌ Gagal memuat: ' + err.message;
+      errorMsg.style.display = 'block';
+      console.error('Load error:', err);
+    }
+  }
+
+  // Handle Upload
+  btnUpload.addEventListener('click', async () => {
+    errorMsg.style.display = 'none';
+    
+    if (!kategori.value || !namaDokumen.value || !fileInput.files[0]) {
+      errorMsg.textContent = '⚠️ Lengkapi semua field dan pilih file!';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    
+    const file = fileInput.files[0];
+    const allowedTypes = ['application/pdf', 'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg', 'image/png', 'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      errorMsg.textContent = '⚠️ Format file tidak didukung. Gunakan PDF, DOC, DOCX, JPG, PNG, atau XLS.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      errorMsg.textContent = '⚠️ Ukuran file maksimal 10MB.';
+      errorMsg.style.display = 'block';
+      return;
+    }
+    
+    btnUpload.disabled = true;
+    btnUpload.textContent = '⏳ Mengupload...';
+    
+    try {
+      await DokumenService.uploadDokumen(file, kategori.value, namaDokumen.value);
+      alert('✅ Dokumen berhasil diupload!');
       
-      try {
-        await DokumenService.uploadDokumen(fileInput.files[0], kategori.value, namaDokumen.value);
-        alert('✅ Dokumen berhasil diupload!');
-        fileInput.value = '';
-        namaDokumen.value = '';
-        kategori.value = '';
-        loadDokumen();
-      } catch (err) {
-        errorMsg.textContent = 'Upload gagal: ' + err.message;
-        errorMsg.style.display = 'block';
-      } finally {
-        btnUpload.disabled = false;
-        btnUpload.textContent = 'Upload Dokumen';
+      // Reset form
+      fileInput.value = '';
+      namaDokumen.value = '';
+      kategori.value = '';
+      
+      // Reload daftar
+      loadDokumen();
+    } catch (err) {
+      // Handle error spesifik
+      if (err.message.includes('permission-denied') || err.message.includes('403')) {
+        errorMsg.textContent = '❌ Tidak diizinkan. Cek Firebase Database & Storage Rules.';
+      } else if (err.message.includes('CORS')) {
+        errorMsg.textContent = '❌ CORS error. Hubungi admin untuk setup CORS policy.';
+      } else {
+        errorMsg.textContent = '❌ Upload gagal: ' + err.message;
       }
-    });
+      errorMsg.style.display = 'block';
+      console.error('Upload error:', err);
+    } finally {
+      btnUpload.disabled = false;
+      btnUpload.textContent = 'Upload Dokumen';
+    }
+  });
 
-    // Fungsi hapus (nanti diproteksi admin)
-    window.hapusDokumen = async (id, path) => {
-      if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
-      try {
-        await DokumenService.hapusDokumen(id, path);
-        loadDokumen();
-      } catch (err) {
-        alert('Gagal menghapus: ' + err.message);
-      }
-    };
+  // Fungsi hapus (untuk admin)
+  window.hapusDokumen = async (id, storagePath) => {
+    if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
+    
+    try {
+      await DokumenService.hapusDokumen(id, storagePath);
+      alert('✅ Dokumen berhasil dihapus');
+      loadDokumen();
+    } catch (err) {
+      alert('❌ Gagal menghapus: ' + err.message);
+      console.error('Delete error:', err);
+    }
+  };
 
-    // Load awal
-    loadDokumen();
-  </script>
-</body>
-</html>
+  // Load dokumen saat halaman dibuka
+  loadDokumen();
+</script>
