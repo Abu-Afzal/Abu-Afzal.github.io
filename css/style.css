@@ -251,17 +251,16 @@ footer {
     color: var(--text-light);
     font-size: 0.85rem;
 }
-
+/* ✅ TARUH DI LUAR @media - untuk semua layar */
+.header-logo {
+    height: 18px !important;
+    width: auto;
+    object-fit: contain;
+}
 @media (max-width: 640px) {
     .grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    /* Ukuran Logo di Header */
-.header-logo {
-    height: 18px;      /* Atur tinggi logo sesuai keinginan */
-    width: auto;       /* Lebar menyesuaikan otomatis */
-    object-fit: contain;
-}
     header {
         flex-direction: column;
         align-items: flex-start;
