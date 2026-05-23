@@ -75,11 +75,11 @@
   </div>
   
   <script type="module">
-    // ✅ IMPORT hanya db dari file config terpisah
+    // ✅ IMPORT 'db' yang sekarang sudah menjadi Firestore dari config terpisah
     import { db } from '../js/firebase-config.js';
     
-    // Import fungsi Firebase Database yang dibutuhkan (Tanpa fungsi Storage)
-    import { ref as dbRef, push, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    // Import fungsi resmi yang dibutuhkan khusus oleh Cloud Firestore
+    import { collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // DOM Elements
     const btnUpload = document.getElementById('btnUpload');
@@ -90,32 +90,37 @@
     const container = document.getElementById('dokumenContainer');
     const loadingState = document.getElementById('loadingState');
 
-    // Tampilkan daftar dokumen
+    // Tampilkan daftar dokumen dari Firestore
     async function loadDokumen() {
       loadingState.style.display = 'block';
       container.innerHTML = '';
       
       try {
-        const snapshot = await get(dbRef(db, 'dokumen'));
+        // Mengambil snapshot dari koleksi bernama 'dokumen' di Firestore
+        const querySnapshot = await getDocs(collection(db, "dokumen"));
         loadingState.style.display = 'none';
         
-        if (!snapshot.exists()) {
+        if (querySnapshot.empty) {
           container.innerHTML = '<p style="text-align:center; color:#666; padding:40px;">📭 Belum ada dokumen. Silakan upload terlebih dahulu.</p>';
           return;
         }
         
-        const data = snapshot.val();
-        const docs = Object.entries(data)
-          .map(([id, doc]) => ({ id, ...doc }))
-          .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+        // Memetakan data dokumen Firestore ke dalam Array
+        const docs = [];
+        querySnapshot.forEach((doc) => {
+          docs.push({ id: doc.id, ...doc.data() });
+        });
         
+        // Urutkan berdasarkan tanggal unggah terbaru
+        docs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+        
+        // Render data ke HTML
         docs.forEach(d => {
           const sizeMB = (d.size / (1024*1024)).toFixed(2);
           const date = new Date(d.uploadedAt).toLocaleDateString('id-ID', {
             day: 'numeric', month: 'long', year: 'numeric'
           });
           
-          // Menggunakan d.url (yang berisi data Base64) langsung sebagai link download
           container.innerHTML += `
             <div class="dokumen-item">
               <h4>${d.nama}</h4>
@@ -143,7 +148,7 @@
       reader.onerror = (error) => reject(error);
     });
 
-    // Handle Upload
+    // Handle Proses Upload ke Firestore
     btnUpload.addEventListener('click', async () => {
       errorMsg.classList.remove('show');
       
@@ -155,9 +160,9 @@
       
       const file = fileInput.files[0];
       
-      // Catatan: Karena disimpan di database gratis, batasi file maksimal 2MB agar loading database tetap cepat
-      if (file.size > 2 * 1024 * 1024) { 
-        errorMsg.textContent = '⚠️ Batasan metode tanpa Storage: Ukuran file maksimal 2MB.';
+      // PENTING: Firestore membatasi ukuran teks dokumen maksimal 1MB
+      if (file.size > 1 * 1024 * 1024) { 
+        errorMsg.textContent = '⚠️ Batasan Metode Firestore Base64: Ukuran file maksimal adalah 1MB agar tidak ditolak Firestore.';
         errorMsg.classList.add('show');
         return;
       }
@@ -166,28 +171,27 @@
       btnUpload.textContent = '⏳ Mengupload...';
       
       try {
-        // 1. Konversi file fisik menjadi teks string Base64
+        // 1. Konversi file fisik menjadi string teks Base64
         const base64String = await convertToBase64(file);
         
-        // 2. Simpan teks Base64 tersebut langsung ke Realtime Database
-        const newDocRef = push(dbRef(db, 'dokumen'));
-        await set(newDocRef, {
+        // 2. Simpan sebagai data dokumen baru di koleksi 'dokumen' Firestore
+        await addDoc(collection(db, "dokumen"), {
           nama: namaDokumen.value.trim(),
           kategori: kategori.value,
-          url: base64String, // Teks file disimpan di sini
+          url: base64String, // String file disimpan di sini
           fileName: file.name,
           size: file.size,
           uploadedAt: new Date().toISOString()
         });
         
-        alert('✅ Dokumen berhasil diupload ke Database!');
+        alert('✅ Dokumen berhasil diupload ke Cloud Firestore!');
         
-        // Reset form
+        // Reset formulir input
         fileInput.value = '';
         namaDokumen.value = '';
         kategori.value = '';
         
-        // Reload daftar
+        // Memuat ulang daftar dokumen
         loadDokumen();
       } catch (err) {
         errorMsg.textContent = '❌ Upload gagal: ' + err.message;
@@ -199,14 +203,14 @@
       }
     });
 
-    // Fungsi Hapus (Global)
+    // Fungsi Hapus Dokumen Firestore (Global)
     window.hapusDokumen = async (id) => {
       if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
       
       try {
-        // Cukup hapus di Realtime Database saja
-        await remove(dbRef(db, `dokumen/${id}`));
-        alert('✅ Dokumen berhasil dihapus');
+        // Eksekusi penghapusan berdasarkan ID Dokumen unik milik Firestore
+        await deleteDoc(doc(db, "dokumen", id));
+        alert('✅ Dokumen berhasil dihapus dari Firestore');
         loadDokumen();
       } catch (err) {
         alert('❌ Gagal menghapus: ' + err.message);
@@ -214,7 +218,7 @@
       }
     };
 
-    // Load awal saat halaman dibuka
+    // Eksekusi fungsi load data saat halaman pertama kali dibuka
     loadDokumen();
   </script>
 </body>
