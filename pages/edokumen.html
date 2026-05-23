@@ -62,11 +62,13 @@
           </select>
           <input type="text" id="namaDokumen" placeholder="Nama Dokumen (contoh: SK Kepala Sekolah 2026)" required>
         </div>
+        
+        <p style="margin-bottom: 8px; font-size: 0.85rem; color: #c62828; font-weight: 600;">⚠️ Maksimal Ukuran File: 1 MB</p>
+        
         <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.png,.xls,.xlsx" required>
         <div id="errorMsg" class="error"></div>
         <button id="btnUpload" class="btn-upload">Upload Dokumen</button>
       </div>
-
       <!-- Daftar Dokumen -->
       <h3 style="margin-bottom: 15px; color: #1e88e5;">📚 Dokumen Tersimpan</h3>
       <div id="loadingState" class="loading">⏳ Memuat dokumen...</div>
