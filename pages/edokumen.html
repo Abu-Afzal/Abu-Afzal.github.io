@@ -75,13 +75,11 @@
   </div>
   
   <script type="module">
-    // ✅ IMPORT dari file config terpisah (Mencegah error Duplicate App)
-    import { db, storage } from '../js/firebase-config.js';
+    // ✅ IMPORT hanya db dari file config terpisah
+    import { db } from '../js/firebase-config.js';
     
-    // PERBAIKAN: Mengubah nama 'ref' database menjadi 'dbRef' agar tidak bentrok
+    // Import fungsi Firebase Database yang dibutuhkan (Tanpa fungsi Storage)
     import { ref as dbRef, push, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    // PERBAIKAN: Mengubah nama 'ref' storage menjadi 'stRef' agar aman dan konsisten
-    import { ref as stRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     // DOM Elements
     const btnUpload = document.getElementById('btnUpload');
@@ -98,7 +96,6 @@
       container.innerHTML = '';
       
       try {
-        // Menggunakan dbRef yang baru dipisahkan namanya
         const snapshot = await get(dbRef(db, 'dokumen'));
         loadingState.style.display = 'none';
         
@@ -118,13 +115,14 @@
             day: 'numeric', month: 'long', year: 'numeric'
           });
           
+          // Menggunakan d.url (yang berisi data Base64) langsung sebagai link download
           container.innerHTML += `
             <div class="dokumen-item">
               <h4>${d.nama}</h4>
               <div class="meta">📂 ${d.kategori} •  ${date} • ${sizeMB} MB</div>
               <div class="actions">
-                <a href="${d.url}" target="_blank" class="btn-download">⬇️ Download</a>
-                <button class="btn-delete" onclick="hapusDokumen('${d.id}', '${d.storagePath || ''}')">🗑️ Hapus</button>
+                <a href="${d.url}" download="${d.fileName}" class="btn-download">⬇️ Download</a>
+                <button class="btn-delete" onclick="hapusDokumen('${d.id}')">🗑️ Hapus</button>
               </div>
             </div>
           `;
@@ -136,6 +134,14 @@
         console.error('Load error:', err);
       }
     }
+
+    // Helper untuk mengubah file menjadi Base64 string
+    const convertToBase64 = (file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
 
     // Handle Upload
     btnUpload.addEventListener('click', async () => {
@@ -149,8 +155,9 @@
       
       const file = fileInput.files[0];
       
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        errorMsg.textContent = '⚠️ Ukuran file maksimal 10MB.';
+      // Catatan: Karena disimpan di database gratis, batasi file maksimal 2MB agar loading database tetap cepat
+      if (file.size > 2 * 1024 * 1024) { 
+        errorMsg.textContent = '⚠️ Batasan metode tanpa Storage: Ukuran file maksimal 2MB.';
         errorMsg.classList.add('show');
         return;
       }
@@ -159,30 +166,21 @@
       btnUpload.textContent = '⏳ Mengupload...';
       
       try {
-        // 1. Upload file ke Storage
-        const timestamp = Date.now();
-        const cleanName = file.name.replace(/\s/g, '_');
-        const filePath = `dokumen/${timestamp}_${cleanName}`;
-        const fileRef = stRef(storage, filePath); // Menggunakan stRef
+        // 1. Konversi file fisik menjadi teks string Base64
+        const base64String = await convertToBase64(file);
         
-        await uploadBytes(fileRef, file);
-        
-        // 2. Get URL download
-        const downloadURL = await getDownloadURL(fileRef);
-        
-        // 3. Simpan metadata ke Realtime Database
-        const newDocRef = push(dbRef(db, 'dokumen')); // Menggunakan dbRef
+        // 2. Simpan teks Base64 tersebut langsung ke Realtime Database
+        const newDocRef = push(dbRef(db, 'dokumen'));
         await set(newDocRef, {
           nama: namaDokumen.value.trim(),
           kategori: kategori.value,
-          url: downloadURL,
+          url: base64String, // Teks file disimpan di sini
           fileName: file.name,
           size: file.size,
-          uploadedAt: new Date().toISOString(),
-          storagePath: filePath
+          uploadedAt: new Date().toISOString()
         });
         
-        alert('✅ Dokumen berhasil diupload!');
+        alert('✅ Dokumen berhasil diupload ke Database!');
         
         // Reset form
         fileInput.value = '';
@@ -192,13 +190,7 @@
         // Reload daftar
         loadDokumen();
       } catch (err) {
-        let errMsg = '❌ Upload gagal: ' + err.message;
-        if (err.message.includes('permission-denied')) {
-          errMsg = '❌ Tidak diizinkan. Cek Firebase Storage Rules (harus allow read/write: if true).';
-        } else if (err.message.includes('CORS')) {
-          errMsg = '❌ CORS error. Hubungi admin untuk setup CORS policy di Storage.';
-        }
-        errorMsg.textContent = errMsg;
+        errorMsg.textContent = '❌ Upload gagal: ' + err.message;
         errorMsg.classList.add('show');
         console.error('Upload error:', err);
       } finally {
@@ -208,18 +200,12 @@
     });
 
     // Fungsi Hapus (Global)
-    window.hapusDokumen = async (id, storagePath) => {
+    window.hapusDokumen = async (id) => {
       if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
       
       try {
-        // 1. Hapus data di Realtime Database terlebih dahulu
-        await remove(dbRef(db, `dokumen/${id}`)); // Menggunakan dbRef
-        
-        // 2. Hapus berkas fisik di Firebase Storage jika path tersedia
-        if (storagePath) {
-          const fileRef = stRef(storage, storagePath); // Menggunakan stRef
-          await deleteObject(fileRef);
-        }
+        // Cukup hapus di Realtime Database saja
+        await remove(dbRef(db, `dokumen/${id}`));
         alert('✅ Dokumen berhasil dihapus');
         loadDokumen();
       } catch (err) {
