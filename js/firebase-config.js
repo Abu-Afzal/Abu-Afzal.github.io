@@ -1,8 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+// 1. TAMBAHKAN IMPORT FIRESTORE DI SINI
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
   authDomain: "sipelita-digital.firebaseapp.com",
@@ -15,5 +16,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-export const db = getDatabase(app);
+
+// 2. KITA EKSPOR DUA-DUANYA AGAR AMAN
+export const rtdb = getDatabase(app);      // RTDB lama tetap bisa diakses dengan nama rtdb jika dibutuhkan
+export const db = getFirestore(app);        // Variabel db SEKARANG MENJADI FIRESTORE
 export const storage = getStorage(app);
