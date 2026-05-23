@@ -78,10 +78,10 @@
     // ✅ IMPORT dari file config terpisah (Mencegah error Duplicate App)
     import { db, storage } from '../js/firebase-config.js';
     
-    // Import fungsi Firebase yang dibutuhkan
-    import { ref, push, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    // PERBAIKAN: Menambahkan deleteObject ke dalam impor dari firebase-storage.js
-    import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    // PERBAIKAN: Mengubah nama 'ref' database menjadi 'dbRef' agar tidak bentrok
+    import { ref as dbRef, push, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    // PERBAIKAN: Mengubah nama 'ref' storage menjadi 'stRef' agar aman dan konsisten
+    import { ref as stRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     // DOM Elements
     const btnUpload = document.getElementById('btnUpload');
@@ -98,7 +98,8 @@
       container.innerHTML = '';
       
       try {
-        const snapshot = await get(ref(db, 'dokumen'));
+        // Menggunakan dbRef yang baru dipisahkan namanya
+        const snapshot = await get(dbRef(db, 'dokumen'));
         loadingState.style.display = 'none';
         
         if (!snapshot.exists()) {
@@ -158,11 +159,11 @@
       btnUpload.textContent = '⏳ Mengupload...';
       
       try {
-        // 1. Upload file ke Storage (Menggunakan uploadBytes yang lebih stabil)
+        // 1. Upload file ke Storage
         const timestamp = Date.now();
         const cleanName = file.name.replace(/\s/g, '_');
         const filePath = `dokumen/${timestamp}_${cleanName}`;
-        const fileRef = storageRef(storage, filePath);
+        const fileRef = stRef(storage, filePath); // Menggunakan stRef
         
         await uploadBytes(fileRef, file);
         
@@ -170,7 +171,7 @@
         const downloadURL = await getDownloadURL(fileRef);
         
         // 3. Simpan metadata ke Realtime Database
-        const newDocRef = push(ref(db, 'dokumen'));
+        const newDocRef = push(dbRef(db, 'dokumen')); // Menggunakan dbRef
         await set(newDocRef, {
           nama: namaDokumen.value.trim(),
           kategori: kategori.value,
@@ -211,12 +212,12 @@
       if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
       
       try {
-        // Hapus data di Realtime Database terlebih dahulu
-        await remove(ref(db, `dokumen/${id}`));
+        // 1. Hapus data di Realtime Database terlebih dahulu
+        await remove(dbRef(db, `dokumen/${id}`)); // Menggunakan dbRef
         
-        // Hapus berkas fisik di Firebase Storage jika path tersedia
+        // 2. Hapus berkas fisik di Firebase Storage jika path tersedia
         if (storagePath) {
-          const fileRef = storageRef(storage, storagePath);
+          const fileRef = stRef(storage, storagePath); // Menggunakan stRef
           await deleteObject(fileRef);
         }
         alert('✅ Dokumen berhasil dihapus');
