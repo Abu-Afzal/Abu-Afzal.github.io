@@ -17,6 +17,12 @@
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
     @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
     input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    
+    /* Style Tambahan untuk Pilihan Metode */
+    .radio-group { display: flex; gap: 20px; margin-bottom: 15px; font-weight: 600; color: #333; }
+    .radio-option { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .radio-option input { width: auto; cursor: pointer; }
+    
     .btn-upload { background: #1e88e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
     .btn-upload:hover { background: #1565c0; }
     .btn-upload:disabled { background: #90caf9; cursor: not-allowed; }
@@ -26,7 +32,7 @@
     .dokumen-item h4 { margin: 0 0 5px; font-size: 1rem; }
     .dokumen-item .meta { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
     .dokumen-item .actions { display: flex; gap: 10px; }
-    .dokumen-item a, .dokumen-item button { text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; border: none; cursor: pointer; }
+    .dokumen-item a, .dokumen-item button { text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
     .btn-download { background: #e3f2fd; color: #1565c0; }
     .btn-delete { background: #ffebee; color: #c62828; }
     .loading { text-align: center; padding: 40px; color: #666; }
@@ -61,11 +67,26 @@
           <input type="text" id="namaDokumen" placeholder="Nama Dokumen (contoh: SK Kepala Sekolah 2026)" required>
         </div>
         
-        <p style="margin-bottom: 8px; font-size: 0.85rem; color: #c62828; font-weight: 600;">⚠️ Maksimal Ukuran File: 1 MB</p>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="sumberDokumen" value="lokal" checked> 📱 Berkas Perangkat (Max 1MB)
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="sumberDokumen" value="link"> 🔗 Tautan Google Drive
+          </label>
+        </div>
         
-        <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.png,.xls,.xlsx" required>
+        <div id="inputLokalContainer">
+          <p style="margin-bottom: 8px; font-size: 0.85rem; color: #c62828; font-weight: 600;">⚠️ Maksimal Ukuran File: 1 MB</p>
+          <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.jpg,.png,.xls,.xlsx">
+        </div>
+
+        <div id="inputLinkContainer" style="display: none; margin-bottom: 15px;">
+          <input type="url" id="linkInput" placeholder="Tempel/Paste Link Google Drive di sini (Pastikan aksesnya 'Siapa saja yang memiliki link')">
+        </div>
+
         <div id="errorMsg" class="error"></div>
-        <button id="btnUpload" class="btn-upload">Upload Dokumen</button>
+        <button id="btnUpload" class="btn-upload">Simpan Dokumen</button>
       </div>
 
       <h3 style="margin-bottom: 15px; color: #1e88e5;">📚 Dokumen Tersimpan</h3>
@@ -75,18 +96,36 @@
   </div>
   
   <script type="module">
-    // ✅ IMPORT 'db' dari config terpisah
     import { db } from '../js/firebase-config.js';
     import { collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // DOM Elements
     const btnUpload = document.getElementById('btnUpload');
     const fileInput = document.getElementById('fileInput');
+    const linkInput = document.getElementById('linkInput');
     const kategori = document.getElementById('kategori');
     const namaDokumen = document.getElementById('namaDokumen');
     const errorMsg = document.getElementById('errorMsg');
     const container = document.getElementById('dokumenContainer');
     const loadingState = document.getElementById('loadingState');
+    
+    const radioLokal = document.querySelector('input[value="lokal"]');
+    const radioLink = document.querySelector('input[value="link"]');
+    const inputLokalContainer = document.getElementById('inputLokalContainer');
+    const inputLinkContainer = document.getElementById('inputLinkContainer');
+
+    // Toggle Tampilan Form Berdasarkan Pilihan Radio Button
+    radioLokal.addEventListener('change', () => {
+      inputLokalContainer.style.display = 'block';
+      inputLinkContainer.style.display = 'none';
+      errorMsg.classList.remove('show');
+    });
+    
+    radioLink.addEventListener('change', () => {
+      inputLokalContainer.style.display = 'none';
+      inputLinkContainer.style.display = 'block';
+      errorMsg.classList.remove('show');
+    });
 
     // Tampilkan daftar dokumen dari Firestore
     async function loadDokumen() {
@@ -110,19 +149,21 @@
         docs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
         
         docs.forEach(d => {
-          const sizeMB = (d.size / (1024*1024)).toFixed(2);
+          const sizeText = d.size === 0 ? "🔗 Tautan Cloud" : `${(d.size / (1024*1024)).toFixed(2)} MB`;
           const date = new Date(d.uploadedAt).toLocaleDateString('id-ID', {
             day: 'numeric', month: 'long', year: 'numeric'
           });
           
-          // ID dokumen dilemparkan ke fungsi global lihatDokumen() menggunakan quotes
+          // Deteksi apakah data berupa Link Google Drive atau Base64 Lokal
+          const isLink = d.url.startsWith('http');
+          
           container.innerHTML += `
             <div class="dokumen-item">
               <h4>${d.nama}</h4>
-              <div class="meta">📂 ${d.kategori} •  ${date} • ${sizeMB} MB</div>
+              <div class="meta">📂 ${d.kategori} •  ${date} • ${sizeText}</div>
               <div class="actions">
-                <button onclick="lihatDokumen('${d.url}')" class="btn-view">💻 Lihat</button>
-                <a href="${d.url}" download="${d.fileName}" class="btn-download">⬇️ Download</a>
+                <button onclick="lihatDokumen('${d.url}')" class="btn-view">🖥️ Lihat</button>
+                <a href="${d.url}" ${isLink ? 'target="_blank"' : `download="${d.fileName}"`} class="btn-download">${isLink ? '🔗 Buka Link' : '⬇️ Download'}</a>
                 <button class="btn-delete" onclick="hapusDokumen('${d.id}')">🗑️ Hapus</button>
               </div>
             </div>
@@ -132,11 +173,10 @@
         loadingState.style.display = 'none';
         errorMsg.textContent = '❌ Gagal memuat: ' + err.message;
         errorMsg.classList.add('show');
-        console.error('Load error:', err);
       }
     }
 
-    // Helper untuk mengubah file menjadi Base64 string
+    // Helper Base64
     const convertToBase64 = (file) => new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -144,94 +184,116 @@
       reader.onerror = (error) => reject(error);
     });
 
-    // Handle Proses Upload ke Firestore
+    // Handle Proses Simpan/Upload ke Firestore
     btnUpload.addEventListener('click', async () => {
       errorMsg.classList.remove('show');
       
-      if (!kategori.value || !namaDokumen.value || !fileInput.files[0]) {
-        errorMsg.textContent = '⚠️ Lengkapi semua field dan pilih file!';
+      if (!kategori.value || !namaDokumen.value) {
+        errorMsg.textContent = '⚠️ Lengkapi Kategori dan Nama Dokumen!';
         errorMsg.classList.add('show');
         return;
       }
       
-      const file = fileInput.files[0];
-      if (file.size > 1 * 1024 * 1024) { 
-        errorMsg.textContent = '⚠️ Batasan Metode Firestore Base64: Ukuran file maksimal adalah 1MB agar tidak ditolak Firestore.';
-        errorMsg.classList.add('show');
-        return;
+      let finalUrl = '';
+      let finalFileName = '';
+      let finalSize = 0;
+      
+      const mode = document.querySelector('input[name="sumberDokumen"]:checked').value;
+      
+      if (mode === 'lokal') {
+        // JIKA MENGGUNAKAN FILE LOKAL
+        if (!fileInput.files[0]) {
+          errorMsg.textContent = '⚠️ Silakan pilih file perangkat Anda terlebih dahulu!';
+          errorMsg.classList.add('show');
+          return;
+        }
+        const file = fileInput.files[0];
+        if (file.size > 1 * 1024 * 1024) { 
+          errorMsg.textContent = '⚠️ Ukuran file perangkat maksimal 1MB.';
+          errorMsg.classList.add('show');
+          return;
+        }
+        finalUrl = await convertToBase64(file);
+        finalFileName = file.name;
+        finalFileSize = file.size;
+        
+      } else {
+        // JIKA MENGGUNAKAN LINK GOOGLE DRIVE
+        if (!linkInput.value.trim().startsWith('http')) {
+          errorMsg.textContent = '⚠️ Silakan masukkan tautan URL Google Drive yang valid (Diawali http/https)!';
+          errorMsg.classList.add('show');
+          return;
+        }
+        finalUrl = linkInput.value.trim();
+        finalFileName = 'Google Drive Link';
+        finalSize = 0; // Tanda jika ini data link teks
       }
       
       btnUpload.disabled = true;
-      btnUpload.textContent = '⏳ Mengupload...';
+      btnUpload.textContent = '⏳ Menyimpan...';
       
       try {
-        const base64String = await convertToBase64(file);
-        
         await addDoc(collection(db, "dokumen"), {
           nama: namaDokumen.value.trim(),
           kategori: kategori.value,
-          url: base64String, 
-          fileName: file.name,
-          size: file.size,
+          url: finalUrl, 
+          fileName: finalFileName,
+          size: finalSize,
           uploadedAt: new Date().toISOString()
         });
         
         alert('✅ Dokumen Berhasil Tersimpan');
         fileInput.value = '';
+        linkInput.value = '';
         namaDokumen.value = '';
         kategori.value = '';
         loadDokumen();
       } catch (err) {
-        errorMsg.textContent = '❌ Upload gagal: ' + err.message;
+        errorMsg.textContent = '❌ Gagal menyimpan: ' + err.message;
         errorMsg.classList.add('show');
-        console.error('Upload error:', err);
       } finally {
         btnUpload.disabled = false;
-        btnUpload.textContent = 'Upload Dokumen';
+        btnUpload.textContent = 'Simpan Dokumen';
       }
     });
 
-    // Fungsi Hapus Dokumen Firestore (Global)
+    // Fungsi Hapus
     window.hapusDokumen = async (id) => {
       if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
-      
       try {
         await deleteDoc(doc(db, "dokumen", id));
-        alert('✅ Dokumen berhasil dihapus dari Firestore');
+        alert('✅ Dokumen berhasil dihapus');
         loadDokumen();
       } catch (err) {
         alert('❌ Gagal menghapus: ' + err.message);
-        console.error('Delete error:', err);
       }
     };
 
-    //  Fungsi Lihat/Preview Dokumen (Diperbaiki & Didaftarkan ke Window Global)
-    window.lihatDokumen = (base64Url) => {
+    // Fungsi Lihat/Preview (Mendukung Tautan maupun Blob Lokal)
+    window.lihatDokumen = (urlOrBase64) => {
       try {
-        // Memisahkan header metadata base64 dengan data aslinya
-        const parts = base64Url.split(';base64,');
-        const contentType = parts[0].split(':')[1];
-        const raw = window.atob(parts[1]);
-        const rawLength = raw.length;
-        const uInt8Array = new Uint8Array(rawLength);
-
-        for (let i = 0; i < rawLength; ++i) {
-          uInt8Array[i] = raw.charCodeAt(i);
+        if (urlOrBase64.startsWith('http')) {
+          // Jika data berupa Link, langsung buka tab baru ke Google Drive
+          window.open(urlOrBase64, '_blank');
+        } else {
+          // Jika data berupa Base64 lokal, ubah ke Blob dulu baru buka
+          const parts = urlOrBase64.split(';base64,');
+          const contentType = parts[0].split(':')[1];
+          const raw = window.atob(parts[1]);
+          const rawLength = raw.length;
+          const uInt8Array = new Uint8Array(rawLength);
+          for (let i = 0; i < rawLength; ++i) {
+            uInt8Array[i] = raw.charCodeAt(i);
+          }
+          const blob = new Blob([uInt8Array], { type: contentType });
+          const blobUrl = URL.createObjectURL(blob);
+          window.open(blobUrl, '_blank');
         }
-
-        // Mengubah Array teks menjadi Blob objek asli sesuai tipe file (.pdf / .png / .jpg)
-        const blob = new Blob([uInt8Array], { type: contentType });
-        const blobUrl = URL.createObjectURL(blob);
-
-        // Membuka file di tab baru dengan aman
-        window.open(blobUrl, '_blank');
       } catch (e) {
-        alert('⚠️ Gagal memuat pratinjau dokumen: ' + e.message);
-        console.error('Preview error:', e);
+        alert('⚠️ Gagal memuat pratinjau: ' + e.message);
       }
     };
 
-    // Jalankan load data awal
     loadDokumen();
   </script>
 </body>
