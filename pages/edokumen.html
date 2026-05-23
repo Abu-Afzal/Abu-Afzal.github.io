@@ -155,7 +155,7 @@
           });
           
           // Deteksi apakah data berupa Link Google Drive atau Base64 Lokal
-          const isLink = d.url.startsWith('http');
+          const isLink = d.url && d.url.startsWith('http');
           
           container.innerHTML += `
             <div class="dokumen-item">
@@ -215,7 +215,7 @@
         }
         finalUrl = await convertToBase64(file);
         finalFileName = file.name;
-        finalFileSize = file.size;
+        finalSize = file.size; // Fixed: Disamakan variabelnya menjadi finalSize
         
       } else {
         // JIKA MENGGUNAKAN LINK GOOGLE DRIVE
