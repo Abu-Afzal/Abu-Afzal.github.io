@@ -73,14 +73,15 @@
       <div id="dokumenContainer" class="dokumen-list"></div>
     </div>
   </div>
-
+  
   <script type="module">
     // ✅ IMPORT dari file config terpisah (Mencegah error Duplicate App)
     import { db, storage } from '../js/firebase-config.js';
     
     // Import fungsi Firebase yang dibutuhkan
     import { ref, push, set, get, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-    import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+    // PERBAIKAN: Menambahkan deleteObject ke dalam impor dari firebase-storage.js
+    import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
     // DOM Elements
     const btnUpload = document.getElementById('btnUpload');
@@ -140,7 +141,7 @@
       errorMsg.classList.remove('show');
       
       if (!kategori.value || !namaDokumen.value || !fileInput.files[0]) {
-        errorMsg.textContent = '️ Lengkapi semua field dan pilih file!';
+        errorMsg.textContent = '⚠️ Lengkapi semua field dan pilih file!';
         errorMsg.classList.add('show');
         return;
       }
@@ -154,7 +155,7 @@
       }
       
       btnUpload.disabled = true;
-      btnUpload.textContent = ' Mengupload...';
+      btnUpload.textContent = '⏳ Mengupload...';
       
       try {
         // 1. Upload file ke Storage (Menggunakan uploadBytes yang lebih stabil)
@@ -210,7 +211,10 @@
       if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
       
       try {
+        // Hapus data di Realtime Database terlebih dahulu
         await remove(ref(db, `dokumen/${id}`));
+        
+        // Hapus berkas fisik di Firebase Storage jika path tersedia
         if (storagePath) {
           const fileRef = storageRef(storage, storagePath);
           await deleteObject(fileRef);
@@ -223,7 +227,7 @@
       }
     };
 
-    // Load awal
+    // Load awal saat halaman dibuka
     loadDokumen();
   </script>
 </body>
