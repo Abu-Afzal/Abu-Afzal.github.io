@@ -4,14 +4,14 @@ import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDr7QQrwFLKKlqYdeNeKsNCjqo3KbLIjfs",
-  authDomain: "masjid-al-muhajirin-1c33f.firebaseapp.com",
-  databaseURL: "https://masjid-al-muhajirin-1c33f-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "masjid-al-muhajirin-1c33f",
-  storageBucket: "masjid-al-muhajirin-1c33f.firebasestorage.app",
-  messagingSenderId: "612566112060",
-  appId: "1:612566112060:web:509865825406532c10f039",
-  measurementId: "G-4YHLHK0G3J"
+  apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+  authDomain: "sipelita-digital.firebaseapp.com",
+  databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sipelita-digital",
+  storageBucket: "sipelita-digital.firebasestorage.app",
+  messagingSenderId: "787840817745",
+  appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+  measurementId: "G-1D5DWJV54E"
 };
 
 const app = initializeApp(firebaseConfig);
