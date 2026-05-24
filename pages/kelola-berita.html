@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kelola Berita & Pengumuman - SIPELITA</title>
+  <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .page-header { background: linear-gradient(135deg, #2e7d32 0%, #4caf50 100%); color: white; padding: 40px 24px; border-radius: 14px; text-align: center; margin-bottom: 30px; }
+    .back-btn { display: inline-block; margin-top: 20px; padding: 10px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; transition: background 0.3s; }
+    .back-btn:hover { background: rgba(255,255,255,0.3); }
+    .content { background: white; padding: 30px; border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .form-box { background: #e8f5e9; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
+    .form-box h3 { margin-top: 0; color: #1b5e20; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+    textarea { resize: vertical; min-height: 120px; }
+    .btn-save { background: #2e7d32; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; font-size: 1rem; }
+    .btn-save:hover { background: #1b5e20; }
+    .btn-save:disabled { background: #a5d6a7; cursor: not-allowed; }
+    
+    .berita-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    .berita-table th, .berita-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .berita-table th { background-color: #f5f5f5; color: #333; }
+    .btn-delete { background: #ffebee; color: #c62828; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+    .btn-delete:hover { background: #ffcdd2; }
+    .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; }
+    .error.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <div style="font-size: 3rem; margin-bottom: 10px;">📰</div>
+      <h1>Kelola Berita & Pengumuman</h1>
+      <p>Pusat publikasi informasi dan agenda madrasah</p>
+      <a href="../index.html" class="back-btn">← Kembali ke Dashboard</a>
+    </div>
+
+    <div class="content">
+      <div class="form-box">
+        <h3>✍️ Tulis Berita Baru</h3>
+        <div id="errorMsg" class="error"></div>
+        
+        <div class="form-group">
+          <label>Judul Berita / Pengumuman</label>
+          <input type="text" id="judulBerita" placeholder="Contoh: Jadwal Piket Guru dan Karyawan Bulan Juni 2026" required>
+        </div>
+
+        <div class="form-group">
+          <label>Kategori</label>
+          <select id="kategoriBerita" required>
+            <option value="">-- Pilih Kategori --</option>
+            <option value="Info Madrasah">📢 Info Madrasah</option>
+            <option value="Kegiatan">🗓️ Kegiatan Sekolah</option>
+            <option value="Kurikulum">📚 Kurikulum & Akademik</option>
+            <option value="Kepegawaian">💼 Kepegawaian</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Isi Berita / Pengumuman</label>
+          <textarea id="isiBerita" placeholder="Tuliskan detail informasi di sini..." required></textarea>
+        </div>
+
+        <button id="btnSimpan" class="btn-save">Terbitkan Berita</button>
+      </div>
+
+      <h3 style="color: #2e7d32; margin-bottom: 15px;">List Berita yang Sudah Terbit</h3>
+      <div style="overflow-x: auto;">
+        <table class="berita-table">
+          <thead>
+            <tr>
+              <th>Tanggal</th>
+              <th>Judul Berita</th>
+              <th>Kategori</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tabelBeritaBody">
+            <tr>
+              <td colspan="4" style="text-align: center; color: #666;">⏳ Memuat riwayat berita...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from '../js/firebase-config.js';
+    import { collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const btnSimpan = document.getElementById('btnSimpan');
+    const judulBerita = document.getElementById('judulBerita');
+    const kategoriBerita = document.getElementById('kategoriBerita');
+    const isiBerita = document.getElementById('isiBerita');
+    const errorMsg = document.getElementById('errorMsg');
+    const tabelBody = document.getElementById('tabelBeritaBody');
+
+    // Ambil Data Berita
+    async function loadBeritaAdmin() {
+      tabelBody.innerHTML = '';
+      try {
+        const querySnapshot = await getDocs(collection(db, "berita"));
+        if (querySnapshot.empty) {
+          tabelBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #666;">📭 Belum ada berita yang diterbitkan.</td></tr>';
+          return;
+        }
+
+        const listBerita = [];
+        querySnapshot.forEach((doc) => {
+          listBerita.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Urutkan berdasarkan tanggal terbaru
+        listBerita.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        listBerita.forEach(b => {
+          const tglFormat = new Date(b.createdAt).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'short', year: 'numeric'
+          });
+          tabelBody.innerHTML += `
+            <tr>
+              <td>${tglFormat}</td>
+              <td style="font-weight:600;">${b.judul}</td>
+              <td><span style="background:#e8f5e9; padding:4px 8px; border-radius:4px; font-size:0.85rem;">${b.kategori}</span></td>
+              <td><button class="btn-delete" onclick="hapusBerita('${b.id}')">🗑️ Hapus</button></td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        tabelBody.innerHTML = `<tr><td colspan="4" style="color:red;">Gagal memuat: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Simpan Berita Baru
+    btnSimpan.addEventListener('click', async () => {
+      errorMsg.classList.remove('show');
+      if (!judulBerita.value || !kategoriBerita.value || !isiBerita.value) {
+        errorMsg.textContent = '⚠️ Harap isi seluruh kolom input berita!';
+        errorMsg.classList.add('show');
+        return;
+      }
+
+      btnSimpan.disabled = true;
+      btnSimpan.textContent = '⏳ Memproses...';
+
+      try {
+        await addDoc(collection(db, "berita"), {
+          judul: judulBerita.value.trim(),
+          kategori: kategoriBerita.value,
+          isi: isiBerita.value.trim(),
+          createdAt: new Date().toISOString()
+        });
+
+        alert('✅ Berita Berhasil Diterbitkan!');
+        judulBerita.value = '';
+        kategoriBerita.value = '';
+        isiBerita.value = '';
+        loadBeritaAdmin();
+      } catch (err) {
+        errorMsg.textContent = '❌ Gagal menerbitkan: ' + err.message;
+        errorMsg.classList.add('show');
+      } finally {
+        btnSimpan.disabled = false;
+        btnSimpan.textContent = 'Terbitkan Berita';
+      }
+    });
+
+    // Fungsi Global Hapus Berita
+    window.hapusBerita = async (id) => {
+      if (!confirm('Apakah Anda yakin ingin menghapus berita ini dari dashboard depan?')) return;
+      try {
+        await deleteDoc(doc(db, "berita", id));
+        alert('✅ Berita berhasil dihapus');
+        loadBeritaAdmin();
+      } catch (err) {
+        alert('❌ Gagal menghapus: ' + err.message);
+      }
+    };
+
+    loadBeritaAdmin();
+  </script>
+</body>
+</html>
