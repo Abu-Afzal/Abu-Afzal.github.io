@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Berita - SIPELITA</title>
+  <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .news-container { max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+    .news-meta { font-size: 0.9rem; color: #666; margin: 15px 0 25px 0; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+    .news-body { font-size: 1.1rem; color: #333; line-height: 1.8; white-space: pre-line; }
+    .btn-back { display: inline-block; margin-bottom: 20px; color: #2e7d32; text-decoration: none; font-weight: bold; }
+    .tag { background: #e8f5e9; color: #2e7d32; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="news-container">
+      <a href="../home.html" class="btn-back">← Kembali ke Beranda</a>
+      <div id="loading">⏳ Memuat isi berita...</div>
+      
+      <div id="content" style="display: none;">
+        <span id="newsKategori" class="tag"></span>
+        <h1 id="newsJudul" style="margin-top: 15px; color: #1b5e20;"></h1>
+        <div class="news-meta">
+          <span>📅 <span id="newsTanggal"></span></span>
+        </div>
+        <div id="newsIsi" class="news-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from '../js/firebase-config.js';
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    async function muatDetailBerita() {
+      const params = new URLSearchParams(window.location.search);
+      const beritaId = params.get('id');
+      
+      if (!beritaId) {
+        document.getElementById('loading').textContent = '❌ Berita tidak ditemukan.';
+        return;
+      }
+
+      try {
+        const docRef = doc(db, "berita", beritaId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const tglFormat = new Date(data.createdAt).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+          });
+
+          document.getElementById('newsJudul').textContent = data.judul;
+          document.getElementById('newsKategori').textContent = data.kategori;
+          document.getElementById('newsTanggal').textContent = tglFormat;
+          document.getElementById('newsIsi').textContent = data.isi;
+
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('content').style.style.display = 'block';
+        } else {
+          document.getElementById('loading').textContent = '❌ Berita telah dihapus atau tidak tersedia.';
+        }
+      } catch (err) {
+        document.getElementById('loading').textContent = '❌ Gagal memuat data: ' + err.message;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', muatDetailBerita);
+  </script>
+</body>
+</html>
