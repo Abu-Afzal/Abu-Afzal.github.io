@@ -1,100 +1,282 @@
-/* Warna-warni untuk kartu Layanan Umum */
-#layanan-umum .card {
-    color: white !important;
+/* css/landing.css - Khusus Landing Page & Berita */
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
 }
 
-#layanan-umum .card:nth-child(1) {
-    background: linear-gradient(135deg, #9c27b0 0%, #e91e63 100%) !important;
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+  font-weight: 700;
 }
 
-#layanan-umum .card:nth-child(2) {
-    background: linear-gradient(135deg, #673ab7 0%, #3f51b5 100%) !important;
+.hero p {
+  font-size: 1.2rem;
+  opacity: 0.95;
+  max-width: 600px;
+  margin: 0 auto 30px;
 }
 
-#layanan-umum .card:nth-child(3) {
-    background: linear-gradient(135deg, #7e57c2 0%, #5c6bc0 100%) !important;
+.hero-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-#layanan-umum .card:nth-child(4) {
-    background: linear-gradient(135deg, #546e7a 0%, #78909c 100%) !important;
+.btn-hero {
+  padding: 12px 30px;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: inline-block;
 }
 
-#layanan-umum .card-title,
-#layanan-umum .card-desc {
-    color: white !important;
+.btn-hero.primary {
+  background: white;
+  color: #667eea;
 }
 
-#layanan-umum .status-tag {
-    background: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+.btn-hero.secondary {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 2px solid white;
 }
 
-/* Warna-warni untuk kartu Layanan Madrasah */
-#layanan-madrasah .card:nth-child(1) {
-    background: linear-gradient(135deg, #37474f 0%, #455a64 100%) !important;
+.btn-hero:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
-#layanan-madrasah .card:nth-child(2) {
-    background: linear-gradient(135deg, #00695c 0%, #00897b 100%) !important;
+/* Section Title */
+.section-title {
+  text-align: center;
+  font-size: 2rem;
+  margin: 60px 0 40px;
+  color: #1a237e;
+  position: relative;
+  padding-bottom: 15px;
 }
 
-#layanan-madrasah .card:nth-child(3) {
-    background: linear-gradient(135deg, #00897b 0%, #26a69a 100%) !important;
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: #667eea;
+  border-radius: 2px;
 }
 
-#layanan-madrasah .card:nth-child(4) {
-    background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 100%) !important;
+/* Berita Cards */
+.berita-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  padding: 20px 0;
 }
 
-#layanan-madrasah .card:nth-child(5) {
-    background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%) !important;
+.berita-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: column;
 }
 
-#layanan-madrasah .card:nth-child(6) {
-    background: linear-gradient(135deg, #263238 0%, #37474f 100%) !important;
+.berita-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
 }
 
-#layanan-madrasah .card:nth-child(7) {
-    background: linear-gradient(135deg, #d32f2f 0%, #ef5350 100%) !important;
+.berita-thumbnail {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  background: #f4f6f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #7f8c8d;
 }
 
-#layanan-madrasah .card:nth-child(8) {
-    background: linear-gradient(135deg, #1e88e5 0%, #42a5f5 100%) !important;
+.berita-content {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-#layanan-madrasah .card:nth-child(9) {
-    background: linear-gradient(135deg, #e91e63 0%, #ec407a 100%) !important;
+.berita-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  margin-bottom: 10px;
 }
 
-#layanan-madrasah .card:nth-child(10) {
-    background: linear-gradient(135deg, #6d4c41 0%, #8d6e63 100%) !important;
+.berita-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-#layanan-madrasah .card:nth-child(11) {
-    background: linear-gradient(135deg, #009688 0%, #26a69a 100%) !important;
+.berita-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 10px;
+  color: #2c3e50;
+  line-height: 1.4;
 }
 
-#layanan-madrasah .card:nth-child(12) {
-    background: linear-gradient(135deg, #78909c 0%, #90a4ae 100%) !important;
+.berita-excerpt {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  flex: 1;
 }
 
-#layanan-madrasah .card:nth-child(13) {
-    background: linear-gradient(135deg, #546e7a 0%, #78909c 100%) !important;
+.berita-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: gap 0.2s;
 }
 
-#layanan-madrasah .card:nth-child(14) {
-    background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%) !important;
+.berita-link:hover {
+  gap: 10px;
 }
 
-#layanan-madrasah .card:nth-child(15) {
-    background: linear-gradient(135deg, #283593 0%, #3949ab 100%) !important;
+/* Filter Kategori */
+.kategori-filter {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 30px 0;
 }
 
-#layanan-madrasah .card:nth-child(16) {
-    background: linear-gradient(135deg, #c62828 0%, #e53935 100%) !important;
+.kategori-btn {
+  padding: 8px 20px;
+  border: 2px solid #667eea;
+  background: white;
+  color: #667eea;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
 }
 
-#layanan-madrasah .card-title,
-#layanan-madrasah .card-desc {
-    color: white !important;
+.kategori-btn.active,
+.kategori-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* Detail Berita */
+.berita-detail {
+  background: white;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.berita-detail-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.berita-detail-title {
+  font-size: 2rem;
+  margin: 0 0 15px;
+  color: #1a237e;
+}
+
+.berita-detail-meta {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+}
+
+.berita-detail-thumbnail {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 25px;
+}
+
+.berita-detail-content {
+  line-height: 1.8;
+  color: #2c3e50;
+  font-size: 1.05rem;
+}
+
+.berita-detail-content p {
+  margin-bottom: 15px;
+}
+
+.berita-detail-content img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+/* Back Button */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  margin-bottom: 20px;
+  transition: gap 0.2s;
+}
+
+.back-btn:hover {
+  gap: 12px;
+}
+
+/* Loading & Empty State */
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7f8c8d;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #7f8c8d;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 2rem; }
+  .hero p { font-size: 1rem; }
+  .section-title { font-size: 1.5rem; }
+  .berita-detail { padding: 25px; }
+  .berita-detail-title { font-size: 1.5rem; }
 }
