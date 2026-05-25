@@ -24,30 +24,41 @@ function renderCards() {
     }
 
     // ========== LAYANAN MADRASAH ==========
-    if (madrasahContainer && CONFIG.layananMadrasah) {
-        madrasahContainer.innerHTML = CONFIG.layananMadrasah.map(item => {
-            // ✅ TAMBAHAN: Cek logo juga untuk layanan madrasah
-            const displayContent = item.logo 
-                ? `<img src="${item.logo}" alt="${item.title}" class="card-logo" onerror="this.style.display='none'; this.parentElement.querySelector('.card-icon-fallback').style.display='flex';">
-                   <div class="card-icon card-icon-fallback" style="display:none;">${item.icon || '📌'}</div>`
-                : `<div class="card-icon">${item.icon || '📌'}</div>`;
+    // ✅ KODE BARU (BENAR):
+if (madrasahContainer && CONFIG.layananMadrasah) {
+    madrasahContainer.innerHTML = CONFIG.layananMadrasah.map(item => {
+        // Cek logo atau icon
+        const displayContent = item.logo 
+            ? `<img src="${item.logo}" alt="${item.title}" class="card-logo" onerror="this.style.display='none'; this.parentElement.querySelector('.card-icon-fallback').style.display='flex';">
+               <div class="card-icon card-icon-fallback" style="display:none;">${item.icon || '📌'}</div>`
+            : `<div class="card-icon">${item.icon || '📌'}</div>`;
 
-            const cardContent = `
-                <div class="card" style="background: ${item.color}; color: white;">
-                    ${displayContent}
-                    <div class="card-title">${item.title}</div>
-                    <div class="card-desc">${item.desc || ''}</div>
-                </div>
-            `;
-            
-            // Cek link (url atau page)
-            const link = item.url || item.page;
-            
-            return link 
-                ? `<a href="${link}" class="card-link">${cardContent}</a>`
-                : cardContent;
-        }).join('');
-    }
+        const cardContent = `
+            <div class="card" style="background: ${item.color}; color: white;">
+                ${displayContent}
+                <div class="card-title">${item.title}</div>
+                <div class="card-desc">${item.desc || ''}</div>
+            </div>
+        `;
+        
+        // Prioritaskan url eksternal, baru page internal
+        const link = item.url || item.page;
+        
+        // ✅ DETEKSI LINK EKSTERNAL
+        const isExternal = link && (link.startsWith('http://') || link.startsWith('https://'));
+        
+        // ✅ BUAT LINK YANG BENAR
+        if (isExternal) {
+            return `<a href="${link}" target="_blank" rel="noopener noreferrer" class="card-link">${cardContent}</a>`;
+        } else if (link) {
+            // Untuk link internal (pages/xxx.html)
+            const cleanLink = link.startsWith('pages/') ? link : `pages/${link}`;
+            return `<a href="${cleanLink}" class="card-link">${cardContent}</a>`;
+        } else {
+            return `<div class="card-link">${cardContent}</div>`;
+        }
+    }).join('');
+}
 }
 
 function closeModal() {
