@@ -44,7 +44,13 @@ const CONFIG = {
     ],
     
     layananMadrasah: [
-        { icon: '🌐', title: 'Website', desc: '', color: '#37474f', page: 'pages/website.html' },
+        { 
+            icon: '🌐', 
+            title: 'Website', 
+            desc: '', 
+            color: '#37474f', 
+            url: 'https://www.manbantaeng.sch.id/' 
+        },
         { icon: '🧾', title: 'PMBM', desc: '', color: '#00695c', page: 'pages/pmbm.html' },
         { icon: '🏢', title: 'PTSP', desc: '', color: '#00897b', page: 'pages/ptsp.html' },
         { icon: '📖', title: 'NILABS', desc: '', color: '#3949ab', page: 'pages/nilabs.html' },
