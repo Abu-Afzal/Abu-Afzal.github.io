@@ -33,7 +33,25 @@
         <h2 class="section-title">Layanan Madrasah</h2>
         <div class="grid" id="layanan-madrasah"></div>
     </div>
+<!-- 🔒 PANEL KHUSUS ADMIN (Akan disembunyikan jika login sebagai Guru) -->
+<div id="adminSection" style="display: none; margin-top: 40px; padding-top: 20px; border-top: 2px dashed #ddd;">
+    <h3 style="color: #c62828; margin-bottom: 20px;">🔧 Panel Administrator</h3>
+    <div class="grid" id="adminCards">
+        <!-- Kartu Kelola Berita -->
+        <a href="admin-berita.html" class="card" style="background: #fff3e0; border-left: 5px solid #ff9800;">
+            <div class="icon">📰</div>
+            <div class="title">Kelola Berita</div>
+            <div class="desc">Tambah, Edit & Hapus Berita</div>
+        </a>
 
+        <!-- Kartu Kelola User -->
+        <a href="admin-users.html" class="card" style="background: #e3f2fd; border-left: 5px solid #2196f3;">
+            <div class="icon">👥</div>
+            <div class="title">Kelola User</div>
+            <div class="desc">Tambah Guru & Ganti Password</div>
+        </a>
+    </div>
+</div>
     <!-- Modal -->
     <div class="modal" id="integrationModal">
         <div class="modal-content">
@@ -71,6 +89,39 @@
             await AuthService.logout();
         }
     });
+<script type="module">
+  import { AuthService } from './js/auth-service.js';
+
+  // 1. Ambil data user
+  const user = AuthService.checkAuth();
+
+  if (user) {
+    // Tampilkan nama & role
+    document.getElementById('userName').textContent = user.nama;
+    document.getElementById('userRole').textContent = user.role === 'admin' ? '👑 Admin' : ' Guru';
+
+    // ✅ LOGIKA BARU: Cek Role untuk Tampilkan Menu Admin
+    const adminSection = document.getElementById('adminSection');
+    
+    if (user.role === 'admin') {
+      // Jika Admin, tampilkan section admin
+      adminSection.style.display = 'block';
+    } else {
+      // Jika Guru (atau role lain), pastikan tersembunyi
+      adminSection.style.display = 'none';
+    }
+
+  } else {
+    // Jika tidak login, tendang ke login.html
+    window.location.href = 'login.html';
+  }
+
+  // 2. Handle Tombol Logout
+  document.getElementById('btnLogout').addEventListener('click', async () => {
+    if (confirm('Yakin ingin keluar dari SIPELITA?')) {
+      await AuthService.logout();
+    }
+  });
 </script>
 </body>
 </html>
