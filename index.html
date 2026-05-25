@@ -115,11 +115,6 @@
     // Jika tidak login, tendang ke login.html
     window.location.href = 'login.html';
   }
-
-  // 2. Handle Tombol Logout
-  document.getElementById('btnLogout').addEventListener('click', async () => {
-    if (confirm('Yakin ingin keluar dari SIPELITA?')) {
-      await AuthService.logout();
     }
   });
 </script>
