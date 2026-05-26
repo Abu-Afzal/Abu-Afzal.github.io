@@ -14,11 +14,13 @@ const auth = getAuth();
 export const AuthService = {
     // Fungsi Login
     // Fungsi Login Modifikasi Otomatis (Aktivasi Mandiri)
+    // Fungsi Login Modifikasi Otomatis (Aktivasi Mandiri) - Versi Fix
     async login(email, password) {
         try {
             const formatEmail = email.trim().toLowerCase();
 
             // 1. Cek dulu apakah data email ini ada di Firestore Koleksi Users
+            // PENTING: Pastikan 'collection' sudah di-import di atas file
             const q = query(collection(db, "users"), where("email", "==", formatEmail));
             const querySnapshot = await getDocs(q);
 
@@ -36,13 +38,12 @@ export const AuthService = {
                 const userCredential = await signInWithEmailAndPassword(auth, formatEmail, password);
                 user = userCredential.user;
             } catch (authError) {
-                // Jika password salah pada akun yang sudah aktif
-                if (authError.code === 'auth/wrong-password') {
-                    return { success: false, message: 'Password salah. Silakan periksa kembali.' };
-                }
+                console.log("Firebase Auth Error Code:", authError.code); // Untuk memantau di console log
                 
-                // JIKA AKUN BELUM AKTIF DI AUTH (Tetapi password yang diketik sesuai dengan data dari Admin di Firestore)
-                if (authError.code === 'auth/user-not-found' && password === userData.password) {
+                // JIKA AKUN BELUM AKTIF DI AUTH (Firebase v10+ sering melempar 'auth/invalid-credential' atau 'auth/user-not-found')
+                // Kita ganti validasinya: jika password yang diketik sesuai dengan data dari Admin di Firestore, buatkan akun baru!
+                if ((authError.code === 'auth/user-not-found' || authError.code === 'auth/invalid-credential') && password === userData.password) {
+                    
                     // Import fungsi register dinamis bawaan firebase auth
                     const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
                     
@@ -50,7 +51,7 @@ export const AuthService = {
                     const newCredential = await createUserWithEmailAndPassword(auth, formatEmail, password);
                     user = newCredential.user;
                 } else {
-                    return { success: false, message: 'Login gagal. Email/password tidak cocok dengan data sistem.' };
+                    return { success: false, message: 'Password salah atau tidak cocok dengan data sistem.' };
                 }
             }
 
@@ -65,10 +66,7 @@ export const AuthService = {
             return { success: true, role: userData.role, nama: userData.nama };
 
         } catch (error) {
+            console.error("Error pada sistem login utama:", error);
             return { success: false, message: this.getErrorMessage(error.code) };
         }
     },
-// EXPORT GLOBAL: Agar tombol HTML yang menggunakan onclick="logoutPengguna()" tetap bisa memanggilnya langsung
-window.logoutPengguna = async function() {
-    await AuthService.logout();
-};
