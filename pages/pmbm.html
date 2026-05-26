@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #333; scroll-behavior: smooth; }
         
         /* Navbar */
         .navbar {
@@ -336,17 +336,6 @@
             border-color: #1a237e;
             box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
         }
-        .form-group .file-upload {
-            border: 2px dashed #ddd;
-            padding: 20px;
-            text-align: center;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: border-color 0.3s;
-        }
-        .form-group .file-upload:hover {
-            border-color: #1a237e;
-        }
         .btn-submit {
             width: 100%;
             padding: 15px;
@@ -444,7 +433,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="container">
             <div class="logo">
@@ -460,7 +448,6 @@
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
             <div class="badge-tahun">📚 Tahun Ajaran 2026/2027</div>
@@ -472,13 +459,12 @@
             </div>
             
             <div>
-                <a href="#daftar" class="btn-hero">✍️ Daftar Sekarang</a>
+                <a href="#daftar" id="btnHeroDaftar" class="btn-hero">✍️ Daftar Sekarang</a>
                 <a href="#info" class="btn-hero secondary">ℹ️ Info Lengkap</a>
             </div>
         </div>
     </section>
 
-    <!-- Info Cards -->
     <section class="info-section" id="info">
         <div class="info-grid">
             <div class="info-card">
@@ -504,7 +490,6 @@
         </div>
     </section>
 
-    <!-- Countdown -->
     <section class="countdown-section">
         <h2>⏰ Hitung Mundur Penutupan Pendaftaran</h2>
         <div class="countdown-grid">
@@ -527,10 +512,8 @@
         </div>
     </section>
 
-    <!-- Persyaratan -->
     <section class="container" id="persyaratan">
-        <h2 class="section-title">📋 Persyaratan Pendaftaran</h2>
-        <div class="persyaratan-grid">
+        <h2 class="section-title">📝 Ikon Baru Supervisi & Persyaratan</h2> <div class="persyaratan-grid">
             <div class="persyaratan-card">
                 <h3>📄 Persyaratan Umum</h3>
                 <ul>
@@ -542,7 +525,7 @@
                 </ul>
             </div>
             <div class="persyaratan-card">
-                <h3> Berkas yang Diperlukan</h3>
+                <h3>📋 Berkas yang Diperlukan</h3>
                 <ul>
                     <li>Fotokopi Ijazah/SKL (legalisir)</li>
                     <li>Fotokopi SKHUN/SHUN</li>
@@ -564,7 +547,6 @@
         </div>
     </section>
 
-    <!-- Alur Pendaftaran -->
     <section class="container" id="alur">
         <h2 class="section-title">📝 Alur Pendaftaran</h2>
         <div class="alur-grid">
@@ -596,15 +578,13 @@
         </div>
     </section>
 
-    <!-- Form Pendaftaran -->
     <section class="container" id="daftar">
-        <div class="form-section">
+        <div class="form-section" id="boxFormulir">
             <h2>✍️ Formulir Pendaftaran Online</h2>
             
             <div id="alertForm" class="alert"></div>
 
             <form id="formPMBM">
-                <!-- Data Pribadi -->
                 <h3 style="color:#1a237e; margin-bottom:15px; border-bottom:2px solid #eee; padding-bottom:10px;">📝 Data Pribadi</h3>
                 <div class="form-row">
                     <div class="form-group">
@@ -653,7 +633,6 @@
                     <textarea id="alamat" rows="3" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan" required></textarea>
                 </div>
 
-                <!-- Kontak -->
                 <h3 style="color:#1a237e; margin:30px 0 15px; border-bottom:2px solid #eee; padding-bottom:10px;">📞 Kontak</h3>
                 <div class="form-row">
                     <div class="form-group">
@@ -666,7 +645,6 @@
                     </div>
                 </div>
 
-                <!-- Data Orang Tua -->
                 <h3 style="color:#1a237e; margin:30px 0 15px; border-bottom:2px solid #eee; padding-bottom:10px;">👨‍👩‍👧 Data Orang Tua</h3>
                 <div class="form-row">
                     <div class="form-group">
@@ -697,7 +675,6 @@
                     </div>
                 </div>
 
-                <!-- Data Akademik -->
                 <h3 style="color:#1a237e; margin:30px 0 15px; border-bottom:2px solid #eee; padding-bottom:10px;">📚 Data Akademik</h3>
                 <div class="form-row">
                     <div class="form-group">
@@ -715,7 +692,6 @@
                     </div>
                 </div>
 
-                <!-- Upload Berkas -->
                 <h3 style="color:#1a237e; margin:30px 0 15px; border-bottom:2px solid #eee; padding-bottom:10px;">📎 Upload Berkas</h3>
                 <div class="form-row">
                     <div class="form-group">
@@ -752,7 +728,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
         <p><strong>PMBM MAN Bantaeng 2026/2027</strong></p>
         <p>Jl. Parela Dampang, Kel. Gantarangkeke, Kec. Gantarangkeke, Kab. Bantaeng</p>
@@ -765,18 +740,36 @@
         import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-        // ===== COUNTDOWN TIMER =====
+        // ===== COUNTDOWN & STATUS AUTOMATION =====
         const deadline = new Date('2026-06-30T23:59:59').getTime();
         
         function updateCountdown() {
             const now = new Date().getTime();
             const distance = deadline - now;
+            const statusBadge = document.getElementById('statusBadge');
+            const btnHeroDaftar = document.getElementById('btnHeroDaftar');
+            const boxFormulir = document.getElementById('boxFormulir');
             
             if (distance < 0) {
                 document.getElementById('days').textContent = '00';
                 document.getElementById('hours').textContent = '00';
                 document.getElementById('minutes').textContent = '00';
                 document.getElementById('seconds').textContent = '00';
+                
+                // Otomatis ubah status penutupan di UI
+                if(statusBadge) {
+                    statusBadge.textContent = '🔴 Pendaftaran Ditutup';
+                    statusBadge.className = 'status-badge status-tutup';
+                }
+                if(btnHeroDaftar) {
+                    btnHeroDaftar.style.display = 'none';
+                }
+                if(boxFormulir) {
+                    boxFormulir.innerHTML = `<h2 style="color:#f44336;">🔒 Pendaftaran Telah Ditutup</h2>
+                                             <p style="text-align:center; margin-top:15px; color:#666;">
+                                                Masa pendaftaran PMBM TA 2026/2027 MAN Bantaeng telah berakhir pada 30 Juni 2026. Terima kasih atas partisipasi Anda.
+                                             </p>`;
+                }
                 return;
             }
             
@@ -795,75 +788,79 @@
         updateCountdown();
 
         // ===== FORM SUBMISSION =====
-        document.getElementById('formPMBM').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const alertEl = document.getElementById('alertForm');
-            const btn = document.getElementById('btnSubmit');
-            
-            btn.disabled = true;
-            btn.textContent = '⏳ Mengirim pendaftaran...';
-            alertEl.classList.remove('show');
-            
-            try {
-                // 1. Upload files ke Storage
-                const files = [
-                    { id: 'fileKK', path: 'pmbm/kk/' },
-                    { id: 'fileAkta', path: 'pmbm/akta/' },
-                    { id: 'fileIjazah', path: 'pmbm/ijazah/' },
-                    { id: 'fileFoto', path: 'pmbm/foto/' }
-                ];
+        const formPMBM = document.getElementById('formPMBM');
+        if (formPMBM) {
+            formPMBM.addEventListener('submit', async (e) => {
+                e.preventDefault();
                 
-                const fileUrls = {};
-                for (const file of files) {
-                    const input = document.getElementById(file.id);
-                    if (input.files[0]) {
-                        const fileRef = storageRef(storage, `${file.path}${Date.now()}_${input.files[0].name}`);
-                        await uploadBytes(fileRef, input.files[0]);
-                        fileUrls[file.id] = await getDownloadURL(fileRef);
+                const alertEl = document.getElementById('alertForm');
+                const btn = document.getElementById('btnSubmit');
+                
+                btn.disabled = true;
+                btn.textContent = '⏳ Mengirim pendaftaran...';
+                alertEl.classList.remove('show');
+                
+                try {
+                    // 1. Upload files ke Storage
+                    const files = [
+                        { id: 'fileKK', path: 'pmbm/kk/' },
+                        { id: 'fileAkta', path: 'pmbm/akta/' },
+                        { id: 'fileIjazah', path: 'pmbm/ijazah/' },
+                        { id: 'fileFoto', path: 'pmbm/foto/' }
+                    ];
+                    
+                    const fileUrls = {};
+                    for (const file of files) {
+                        const input = document.getElementById(file.id);
+                        if (input && input.files[0]) {
+                            const fileRef = storageRef(storage, `${file.path}${Date.now()}_${input.files[0].name}`);
+                            await uploadBytes(fileRef, input.files[0]);
+                            fileUrls[file.id] = await getDownloadURL(fileRef);
+                        }
                     }
+                    
+                    // 2. Simpan data ke Firestore
+                    await addDoc(collection(db, 'pmbm_pendaftar'), {
+                        nisn: document.getElementById('nisn').value,
+                        nama: document.getElementById('nama').value,
+                        tempatLahir: document.getElementById('tempatLahir').value,
+                        tanggalLahir: document.getElementById('tanggalLahir').value,
+                        jenisKelamin: document.getElementById('jenisKelamin').value,
+                        agama: document.getElementById('agama').value,
+                        alamat: document.getElementById('alamat').value,
+                        telepon: document.getElementById('telepon').value,
+                        email: document.getElementById('email').value,
+                        namaAyah: document.getElementById('namaAyah').value,
+                        namaIbu: document.getElementById('namaIbu').value,
+                        pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
+                        teleponOrtu: document.getElementById('teleponOrtu').value,
+                        asalSekolah: document.getElementById('asalSekolah').value,
+                        tahunLulus: document.getElementById('tahunLulus').value,
+                        fileKK: fileUrls.fileKK || '',
+                        fileAkta: fileUrls.fileAkta || '',
+                        fileIjazah: fileUrls.fileIjazah || '',
+                        fileFoto: fileUrls.fileFoto || '',
+                        status: 'menunggu',
+                        tanggalDaftar: serverTimestamp(),
+                        tahunAjaran: '2026/2027'
+                    });
+                    
+                    alertEl.textContent = '✅ Pendaftaran berhasil dikirim! Silakan cek status pendaftaran Anda secara berkala.';
+                    alertEl.className = 'alert alert-success show';
+                    formPMBM.reset();
+                    
+                } catch (error) {
+                    // FIXED: Menyelesaikan penutupan blok catch yang sebelumnya terpotong
+                    console.error("Error pendaftaran:", error);
+                    alertEl.textContent = '❌ Gagal mengirim pendaftaran: ' + error.message;
+                    alertEl.className = 'alert alert-error show';
+                } finally {
+                    // Memastikan tombol aktif kembali setelah proses selesai (baik sukses maupun gagal)
+                    btn.disabled = false;
+                    btn.textContent = '🚀 Kirim Pendaftaran';
                 }
-                
-                // 2. Simpan data ke Firestore
-                await addDoc(collection(db, 'pmbm_pendaftar'), {
-                    nisn: document.getElementById('nisn').value,
-                    nama: document.getElementById('nama').value,
-                    tempatLahir: document.getElementById('tempatLahir').value,
-                    tanggalLahir: document.getElementById('tanggalLahir').value,
-                    jenisKelamin: document.getElementById('jenisKelamin').value,
-                    agama: document.getElementById('agama').value,
-                    alamat: document.getElementById('alamat').value,
-                    telepon: document.getElementById('telepon').value,
-                    email: document.getElementById('email').value,
-                    namaAyah: document.getElementById('namaAyah').value,
-                    namaIbu: document.getElementById('namaIbu').value,
-                    pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
-                    teleponOrtu: document.getElementById('teleponOrtu').value,
-                    asalSekolah: document.getElementById('asalSekolah').value,
-                    tahunLulus: document.getElementById('tahunLulus').value,
-                    fileKK: fileUrls.fileKK || '',
-                    fileAkta: fileUrls.fileAkta || '',
-                    fileIjazah: fileUrls.fileIjazah || '',
-                    fileFoto: fileUrls.fileFoto || '',
-                    status: 'menunggu',
-                    tanggalDaftar: serverTimestamp(),
-                    tahunAjaran: '2026/2027'
-                });
-                
-                alertEl.textContent = '✅ Pendaftaran berhasil dikirim! Silakan cek status pendaftaran Anda secara berkala.';
-                alertEl.className = 'alert alert-success show';
-                
-                document.getElementById('formPMBM').reset();
-                
-            } catch (error) {
-                alertEl.textContent = '❌ Gagal mengirim pendaftaran: ' + error.message;
-                alertEl.className = 'alert alert-error show';
-                console.error('PMBM Error:', error);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = ' Kirim Pendaftaran';
-            }
-        });
+            });
+        }
     </script>
 </body>
 </html>
