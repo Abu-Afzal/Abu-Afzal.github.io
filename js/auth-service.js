@@ -13,66 +13,61 @@ const auth = getAuth();
 
 export const AuthService = {
     // Fungsi Login
+    // Fungsi Login Modifikasi Otomatis (Aktivasi Mandiri)
     async login(email, password) {
         try {
-            // 1. Login via Firebase Auth
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
+            const formatEmail = email.trim().toLowerCase();
 
-            // 2. Cek Role di Firestore menggunakan Query Email
-            const q = query(collection(db, "users"), where("email", "==", user.email));
+            // 1. Cek dulu apakah data email ini ada di Firestore Koleksi Users
+            const q = query(collection(db, "users"), where("email", "==", formatEmail));
             const querySnapshot = await getDocs(q);
 
-            if (!querySnapshot.empty) {
-                const docSnap = querySnapshot.docs[0];
-                const userData = docSnap.data();
-                
-                // Simpan info user di LocalStorage agar tidak hilang saat refresh
-                localStorage.setItem('sipelita_user', JSON.stringify({
-                    uid: user.uid,
-                    email: user.email,
-                    nama: userData.nama,
-                    role: userData.role
-                }));
-                return { success: true, role: userData.role, nama: userData.nama };
-            } else {
-                // Jika email ada di Auth tapi tidak di Firestore (User belum didaftarkan admin)
+            if (querySnapshot.empty) {
                 return { success: false, message: "Akun Anda belum terdaftar di sistem SIPELITA." };
             }
+
+            const docSnap = querySnapshot.docs[0];
+            const userData = docSnap.data();
+
+            // 2. Jalankan Proses Sign In atau Auto Register ke Firebase Auth
+            let user;
+            try {
+                // Coba login normal jika akun auth-nya sudah terbentuk
+                const userCredential = await signInWithEmailAndPassword(auth, formatEmail, password);
+                user = userCredential.user;
+            } catch (authError) {
+                // Jika password salah pada akun yang sudah aktif
+                if (authError.code === 'auth/wrong-password') {
+                    return { success: false, message: 'Password salah. Silakan periksa kembali.' };
+                }
+                
+                // JIKA AKUN BELUM AKTIF DI AUTH (Tetapi password yang diketik sesuai dengan data dari Admin di Firestore)
+                if (authError.code === 'auth/user-not-found' && password === userData.password) {
+                    // Import fungsi register dinamis bawaan firebase auth
+                    const { createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+                    
+                    // Buatkan akun Authentication-nya secara otomatis saat itu juga!
+                    const newCredential = await createUserWithEmailAndPassword(auth, formatEmail, password);
+                    user = newCredential.user;
+                } else {
+                    return { success: false, message: 'Login gagal. Email/password tidak cocok dengan data sistem.' };
+                }
+            }
+
+            // 3. Jika Berhasil, Simpan info user di LocalStorage
+            localStorage.setItem('sipelita_user', JSON.stringify({
+                uid: user.uid,
+                email: user.email,
+                nama: userData.nama,
+                role: userData.role
+            }));
+            
+            return { success: true, role: userData.role, nama: userData.nama };
+
         } catch (error) {
             return { success: false, message: this.getErrorMessage(error.code) };
         }
     },
-
-    // Fungsi Logout
-    async logout() {
-        try {
-            await signOut(auth);
-            localStorage.removeItem('sipelita_user');
-            window.location.href = 'login.html';
-        } catch (error) {
-            console.error("Gagal logout:", error);
-        }
-    },
-
-    // Cek Status Login (untuk proteksi halaman)
-    checkAuth() {
-        const userStr = localStorage.getItem('sipelita_user');
-        return userStr ? JSON.parse(userStr) : null;
-    },
-
-    // Helper Pesan Error
-    getErrorMessage(code) {
-        switch(code) {
-            case 'auth/user-not-found': return 'Email tidak terdaftar';
-            case 'auth/wrong-password': return 'Password salah';
-            case 'auth/invalid-email': return 'Format email salah';
-            case 'auth/too-many-requests': return 'Terlalu banyak percobaan. Coba lagi nanti.';
-            default: return 'Login gagal. Coba lagi.';
-        }
-    }
-};
-
 // EXPORT GLOBAL: Agar tombol HTML yang menggunakan onclick="logoutPengguna()" tetap bisa memanggilnya langsung
 window.logoutPengguna = async function() {
     await AuthService.logout();
