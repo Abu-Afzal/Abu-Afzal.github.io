@@ -6,7 +6,8 @@ import {
     onAuthStateChanged, 
     signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// FIXED: Semua import digabungkan dan diletakkan di paling atas file
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const auth = getAuth();
 
@@ -18,20 +19,15 @@ export const AuthService = {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const user = userCredential.user;
 
-            // 2. Cek Role di Firestore
-            const docRef = doc(db, "users", user.email);
-const docSnap = await getDoc(docRef);
+            // 2. Cek Role di Firestore menggunakan Query Email
+            const q = query(collection(db, "users"), where("email", "==", user.email));
+            const querySnapshot = await getDocs(q);
 
-// Dengan query:
-import { query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const q = query(collection(db, "users"), where("email", "==", user.email));
-const querySnapshot = await getDocs(q);
-
-if (!querySnapshot.empty) {
-    const docSnap = querySnapshot.docs[0];
-    const userData = docSnap.data();
-    // Simpan info user di LocalStorage agar tidak hilang saat refresh
+            if (!querySnapshot.empty) {
+                const docSnap = querySnapshot.docs[0];
+                const userData = docSnap.data();
+                
+                // Simpan info user di LocalStorage agar tidak hilang saat refresh
                 localStorage.setItem('sipelita_user', JSON.stringify({
                     uid: user.uid,
                     email: user.email,
@@ -50,9 +46,13 @@ if (!querySnapshot.empty) {
 
     // Fungsi Logout
     async logout() {
-        await signOut(auth);
-        localStorage.removeItem('sipelita_user');
-        window.location.href = 'login.html';
+        try {
+            await signOut(auth);
+            localStorage.removeItem('sipelita_user');
+            window.location.href = 'login.html';
+        } catch (error) {
+            console.error("Gagal logout:", error);
+        }
     },
 
     // Cek Status Login (untuk proteksi halaman)
@@ -71,4 +71,9 @@ if (!querySnapshot.empty) {
             default: return 'Login gagal. Coba lagi.';
         }
     }
+};
+
+// EXPORT GLOBAL: Agar tombol HTML yang menggunakan onclick="logoutPengguna()" tetap bisa memanggilnya langsung
+window.logoutPengguna = async function() {
+    await AuthService.logout();
 };
