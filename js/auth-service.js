@@ -19,12 +19,19 @@ export const AuthService = {
             const user = userCredential.user;
 
             // 2. Cek Role di Firestore
-            const docRef = doc(db, "users", user.email); // ID dokumen = email
-            const docSnap = await getDoc(docRef);
+            const docRef = doc(db, "users", user.email);
+const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
-                const userData = docSnap.data();
-                // Simpan info user di LocalStorage agar tidak hilang saat refresh
+// Dengan query:
+import { query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const q = query(collection(db, "users"), where("email", "==", user.email));
+const querySnapshot = await getDocs(q);
+
+if (!querySnapshot.empty) {
+    const docSnap = querySnapshot.docs[0];
+    const userData = docSnap.data();
+    // Simpan info user di LocalStorage agar tidak hilang saat refresh
                 localStorage.setItem('sipelita_user', JSON.stringify({
                     uid: user.uid,
                     email: user.email,
