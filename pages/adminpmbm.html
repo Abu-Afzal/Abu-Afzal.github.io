@@ -1,98 +1,189 @@
-<script type="module">
-    // 1. Import Modul Firebase SDK
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - PMBM</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans antialiased">
 
-    // 2. Gunakan Firebase Config Anda
-    const firebaseConfig = {
-        apiKey: "AIzaSy...",
-        authDomain: "proyek-anda.firebaseapp.com",
-        projectId: "proyek-anda",
-        storageBucket: "proyek-anda.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "1:1234:web:abcd"
-    };
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 border-b border-slate-200 mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Data Pendaftaran Siswa Baru</h1>
+                <p class="text-slate-500 mt-1">Kelola dan pantau berkas masuk secara real-time.</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.print()" class="bg-white hover:bg-slate-50 text-slate-700 font-medium py-2.5 px-4 rounded-xl border border-slate-200 shadow-sm transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-print"></i> Cetak Halaman
+                </button>
+                <button onclick="window.loadData()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-rotate"></i> Refresh Data
+                </button>
+            </div>
+        </div>
 
-    // Inisialisasi Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Pendaftar</p>
+                    <h3 id="totalPendaftar" class="text-2xl font-bold text-slate-800 mt-0.5">0</h3>
+                </div>
+            </div>
+            <div class="md:col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center">
+                <div class="w-full relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama siswa atau NISN..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 transition">
+                </div>
+            </div>
+        </div>
 
-    // Fungsi Ambil Data dari Firestore
-    async function loadData() {
-        const tableBody = document.getElementById('tableBody');
-        const totalCounter = document.getElementById('totalPendaftar');
-        
-        try {
-            const q = query(collection(db, "pendaftaran"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="pendaftarTable">
+                    <thead>
+                        <tr class="bg-slate-800 text-slate-200 uppercase text-xs font-semibold tracking-wider">
+                            <th class="px-6 py-4">No</th>
+                            <th class="px-6 py-4">Nama Lengkap</th>
+                            <th class="px-6 py-4">NISN / Asal Sekolah</th>
+                            <th class="px-6 py-4">Kontak (WA)</th>
+                            <th class="px-6 py-4">Tanggal Daftar</th>
+                            <th class="px-6 py-4 text-center print:hidden">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700 text-sm">
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
+                                <p>Sedang memuat data siswa...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Ganti konfigurasi di bawah ini sesuai dengan Firebase Config asli milik Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSy...",
+            authDomain: "proyek-anda.firebaseapp.com",
+            projectId: "proyek-anda",
+            storageBucket: "proyek-anda.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:1234:web:abcd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadData() {
+            const tableBody = document.getElementById('tableBody');
+            const totalCounter = document.getElementById('totalPendaftar');
             
-            tableBody.innerHTML = '';
-            let nomor = 1;
+            if (!tableBody || !totalCounter) return;
 
-            if (querySnapshot.empty) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
-                totalCounter.textContent = "0";
-                return;
-            }
+            try {
+                // Catatan: Jika query orderBy("createdAt") memicu error sebelum Anda melakukan pendaftaran pertama,
+                // Anda bisa mengubah baris bawah ini menjadi: collection(db, "pendaftaran") saja terlebih dahulu.
+                const q = query(collection(db, "pendaftaran"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                tableBody.innerHTML = '';
+                let nomor = 1;
 
-            querySnapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                const docId = docSnap.id;
-
-                let tanggalDaftar = "-";
-                if (data.createdAt) {
-                    const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                    tanggalDaftar = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                if (querySnapshot.empty) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
+                    totalCounter.textContent = "0";
+                    return;
                 }
 
-                const row = `
-                    <tr class="hover:bg-slate-50/70 transition">
-                        <td class="px-6 py-4 font-medium text-slate-500">${nomor++}</td>
-                        <td class="px-6 py-4 font-semibold text-slate-800">${data.nama || '-'}</td>
-                        <td class="px-6 py-4">
-                            <div class="text-slate-700 font-medium">${data.nisn || '-'}</div>
-                            <div class="text-xs text-slate-400">${data.asalSekolah || '-'}</div>
-                        </td>
-                        <td class="px-6 py-4 text-slate-600">
-                            <a href="https://wa.me/${data.telepon}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1">
-                                <i class="fa-brands fa-whatsapp text-green-500"></i> ${data.telepon || '-'}
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 text-slate-500">${tanggalDaftar}</td>
-                        <td class="px-6 py-4 text-center print:hidden">
-                            <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer" title="Hapus Data">
-                                <i class="fa-regular fa-trash-can text-sm"></i> Hapus
-                            </button>
-                        </td>
-                    </tr>
-                `;
-                tableBody.innerHTML += row;
-            });
-            
-            totalCounter.textContent = querySnapshot.size;
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
 
-        } catch (error) {
-            console.error("Gagal memuat data admin:", error);
-            tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500 bg-rose-50/50">⚠️ Gagal memuat data: ${error.message}</td></tr>`;
-        }
-    }
+                    let tanggalDaftar = "-";
+                    if (data.createdAt) {
+                        const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                        tanggalDaftar = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                    }
 
-    // Fungsi Hapus Data Terpilih
-    window.hapusSiswa = async function(id) {
-        if (confirm("Apakah Anda yakin ingin menghapus data siswa ini secara permanen?")) {
-            try {
-                await deleteDoc(doc(db, "pendaftaran", id));
-                alert("Data berhasil dihapus!");
-                loadData();
-            } catch (err) {
-                alert("Gagal menghapus: " + err.message);
+                    const row = `
+                        <tr class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-4 font-medium text-slate-500">${nomor++}</td>
+                            <td class="px-6 py-4 font-semibold text-slate-800">${data.nama || '-'}</td>
+                            <td class="px-6 py-4">
+                                <div class="text-slate-700 font-medium">${data.nisn || '-'}</div>
+                                <div class="text-xs text-slate-400">${data.asalSekolah || '-'}</div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                <a href="https://wa.me/${data.telepon}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1">
+                                    <i class="fa-brands fa-whatsapp text-green-500"></i> ${data.telepon || '-'}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 text-slate-500">${tanggalDaftar}</td>
+                            <td class="px-6 py-4 text-center print:hidden">
+                                <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer">
+                                    <i class="fa-regular fa-trash-can"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+                
+                totalCounter.textContent = querySnapshot.size;
+
+            } catch (error) {
+                console.error("Gagal memuat data admin:", error);
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500 bg-rose-50/50">⚠️ Gagal memuat data: ${error.message}</td></tr>`;
             }
         }
-    }
 
-    // Daftarkan ke objek window
-    window.loadData = loadData;
+        window.hapusSiswa = async function(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
+                try {
+                    await deleteDoc(doc(db, "pendaftaran", id));
+                    alert("Data berhasil dihapus!");
+                    loadData();
+                } catch (err) {
+                    alert("Gagal menghapus: " + err.message);
+                }
+            }
+        }
 
-    // Jalankan otomatis saat halaman dibuka
-    window.onload = loadData;
-</script>
+        window.loadData = loadData;
+        window.onload = loadData;
+    </script>
+
+    <script>
+        function searchTable() {
+            let input = document.getElementById("searchInput").value.toLowerCase();
+            let rows = document.getElementById("tableBody").getElementsByTagName("tr");
+            
+            for (let i = 0; i < rows.length; i++) {
+                let nameCell = rows[i].getElementsByTagName("td")[1];
+                let nisnCell = rows[i].getElementsByTagName("td")[2];
+                if (nameCell || nisnCell) {
+                    let nameText = nameCell.textContent.toLowerCase();
+                    let nisnText = nisnCell.textContent.toLowerCase();
+                    if (nameText.includes(input) || nisnText.includes(input)) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
