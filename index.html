@@ -19,11 +19,16 @@
         </div>
     </div>
     <div class="badge">PELAYANAN TERPADU DIGITAL</div>
-            <div id="userPanel" style="display:flex; align-items:center; gap:15px;">
-            <span id="userName" style="background:#1a237e; color:white; padding:4px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;"></span>
-            <span id="userRole" style="background:#ffd700; color:#1a237e; padding:4px 10px; border-radius:12px; font-size:0.8rem; font-weight:600;"></span>
-            <button id="btnLogout" style="background:#f44336; color:#1a237e; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:500;">Logout</button>
-        </div>
+            <div id="userPanel" style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-left: auto;">
+    <!-- Baris 1: Role & Logout -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span id="userRole" style="background: #ffd700; color: #1a237e; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;"></span>
+        <button id="btnLogout" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Logout</button>
+    </div>
+    
+    <!-- Baris 2: Sapaan Nama User -->
+    <span id="userName" style="color: #000; font-weight: bold; font-size: 0.95rem;">Hi, ...</span>
+</div>
     </nav>
 </header>
 
@@ -59,11 +64,21 @@
 
     // Tampilkan info user
     const user = AuthService.checkAuth();
-    if (user) {
-        document.getElementById('userName').textContent = user.nama;
-        document.getElementById('userRole').textContent = user.role === 'admin' ? '👑 Admin' : '👤 Guru';
-    }
+    // ... (kode import dan checkAuth tetap sama) ...
 
+if (user) {
+    // Tampilkan sapaan "Hi, [Nama]"
+    document.getElementById('userName').textContent = `Hi, ${user.nama}`;
+    
+    // Tampilkan role
+    if (user.role === 'admin') {
+        document.getElementById('userRole').textContent = '👑 Admin';
+        document.getElementById('adminSection').style.display = 'block';
+    } else {
+        document.getElementById('userRole').textContent = '👤 Guru';
+        document.getElementById('adminSection').style.display = 'none';
+    }
+}
     // Handle Logout
     document.getElementById('btnLogout')?.addEventListener('click', async () => {
         if (confirm('Yakin ingin keluar?')) {
