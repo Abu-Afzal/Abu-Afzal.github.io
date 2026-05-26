@@ -59,31 +59,46 @@
     <script src="js/config.js"></script>
     <script src="js/main.js"></script>
     <script type="module">
-    import { AuthService } from './js/auth-service.js';
+  import { AuthService } from './js/auth-service.js';
 
-    // Tampilkan info user
-    const user = AuthService.checkAuth();
-    // ... (kode import dan checkAuth tetap sama) ...
+  // 1. Cek apakah user sudah login
+  const user = AuthService.checkAuth();
 
-if (user) {
+  if (user) {
     // Tampilkan sapaan "Hi, [Nama]"
     document.getElementById('userName').textContent = `Hi, ${user.nama}`;
     
     // Tampilkan role
     if (user.role === 'admin') {
-        document.getElementById('userRole').textContent = '👑 Admin';
-        document.getElementById('adminSection').style.display = 'block';
+      document.getElementById('userRole').textContent = '👑 Admin';
     } else {
-        document.getElementById('userRole').textContent = '👤 Guru';
-        document.getElementById('adminSection').style.display = 'none';
+      document.getElementById('userRole').textContent = '👤 Guru';
     }
-}
-    // Handle Logout
-    document.getElementById('btnLogout')?.addEventListener('click', async () => {
-        if (confirm('Yakin ingin keluar?')) {
-            await AuthService.logout();
-        }
+
+    // ✅ PERBAIKAN DI SINI: Cek apakah elemen adminSection ADA sebelum diubah
+    const adminSection = document.getElementById('adminSection');
+    if (adminSection) {
+      if (user.role === 'admin') {
+        adminSection.style.display = 'block';
+      } else {
+        adminSection.style.display = 'none';
+      }
+    }
+
+  } else {
+    // Jika belum login, tendang ke login.html
+    window.location.href = 'login.html';
+  }
+
+  // 2. Handle Tombol Logout (Sekarang ini aman karena script tidak crash di atas)
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      if (confirm('Yakin ingin keluar dari SIPELITA?')) {
+        await AuthService.logout();
+      }
     });
+  }
 </script>
 </body>
 </html>
