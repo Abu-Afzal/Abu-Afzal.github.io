@@ -61,7 +61,7 @@ const CONFIG = {
         { icon: '🏥', title: 'UKSmart', desc: '', color: '#e91e63', page: 'pages/uksmart.html' },
         { icon: '📚', title: 'E-Perpus', desc: '', color: '#6d4c41', page: 'pages/eperpus.html' },
         { icon: '🎯', title: 'Ekskul', desc: '', color: '#009688', page: 'pages/ekskul.html' },
-        { icon: '👁️', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
+        { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
         { icon: '📊', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pages/pkkm.html' },
         { 
