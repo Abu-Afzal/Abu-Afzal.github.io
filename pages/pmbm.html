@@ -122,10 +122,6 @@
             color: white;
             animation: blink 2s infinite;
         }
-        .status-tutup {
-            background: #f44336;
-            color: white;
-        }
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
@@ -173,22 +169,10 @@
             text-align: center;
             transition: transform 0.3s;
         }
-        .info-card:hover {
-            transform: translateY(-5px);
-        }
-        .info-card .icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-        }
-        .info-card h3 {
-            color: #1a237e;
-            margin-bottom: 10px;
-        }
-        .info-card p {
-            color: #666;
-            font-size: 0.95rem;
-            line-height: 1.6;
-        }
+        .info-card:hover { transform: translateY(-5px); }
+        .info-card .icon { font-size: 2.5rem; margin-bottom: 15px; }
+        .info-card h3 { color: #1a237e; margin-bottom: 10px; }
+        .info-card p { color: #666; font-size: 0.95rem; line-height: 1.6; }
 
         /* Section Title */
         .section-title {
@@ -212,11 +196,7 @@
         }
 
         /* Persyaratan */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
         .persyaratan-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -230,32 +210,11 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             border-left: 5px solid #1a237e;
         }
-        .persyaratan-card h3 {
-            color: #1a237e;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .persyaratan-card ul {
-            list-style: none;
-            padding: 0;
-        }
-        .persyaratan-card ul li {
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-        .persyaratan-card ul li:last-child {
-            border-bottom: none;
-        }
-        .persyaratan-card ul li::before {
-            content: '✓';
-            color: #4caf50;
-            font-weight: bold;
-        }
+        .persyaratan-card h3 { color: #1a237e; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .persyaratan-card ul { list-style: none; padding: 0; }
+        .persyaratan-card ul li { padding: 8px 0; border-bottom: 1px solid #f0f0f0; display: flex; align-items: flex-start; gap: 10px; }
+        .persyaratan-card ul li:last-child { border-bottom: none; }
+        .persyaratan-card ul li::before { content: '✓'; color: #4caf50; font-weight: bold; }
 
         /* Alur Pendaftaran */
         .alur-grid {
@@ -264,11 +223,7 @@
             gap: 20px;
             margin-bottom: 40px;
         }
-        .alur-item {
-            text-align: center;
-            padding: 25px 15px;
-            position: relative;
-        }
+        .alur-item { text-align: center; padding: 25px 15px; position: relative; }
         .alur-item .step-number {
             width: 50px;
             height: 50px;
@@ -282,14 +237,8 @@
             font-weight: 700;
             margin: 0 auto 15px;
         }
-        .alur-item h4 {
-            color: #1a237e;
-            margin-bottom: 10px;
-        }
-        .alur-item p {
-            color: #666;
-            font-size: 0.9rem;
-        }
+        .alur-item h4 { color: #1a237e; margin-bottom: 10px; }
+        .alur-item p { color: #666; font-size: 0.9rem; }
 
         /* Form Pendaftaran */
         .form-section {
@@ -299,128 +248,40 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             margin-bottom: 60px;
         }
-        .form-section h2 {
-            color: #1a237e;
-            margin-bottom: 30px;
-            text-align: center;
+        .form-section h2 { color: #1a237e; margin-bottom: 30px; text-align: center; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-        }
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #1a237e;
-            box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none; border-color: #1a237e; box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
         }
         .btn-submit {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #1a237e, #42a5f5);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #1a237e, #42a5f5); color: white; border: none;
+            border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
         }
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(26, 35, 126, 0.3);
-        }
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(26, 35, 126, 0.3); }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         /* Alert */
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border: 1px solid #4caf50;
-        }
-        .alert-error {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #f44336;
-        }
-        .alert.show {
-            display: block;
-        }
+        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
+        .alert-error { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
+        .alert.show { display: block; }
 
         /* Countdown */
-        .countdown-section {
-            background: linear-gradient(135deg, #ff6f00, #ff8f00);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .countdown-grid {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 20px;
-        }
-        .countdown-item {
-            background: rgba(255,255,255,0.2);
-            padding: 15px 25px;
-            border-radius: 10px;
-            min-width: 80px;
-        }
-        .countdown-item .number {
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-        .countdown-item .label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
+        .countdown-section { background: linear-gradient(135deg, #ff6f00, #ff8f00); color: white; padding: 40px 20px; text-align: center; margin-bottom: 40px; }
+        .countdown-grid { display: flex; justify-content: center; gap: 30px; margin-top: 20px; }
+        .countdown-item { background: rgba(255,255,255,0.2); padding: 15px 25px; border-radius: 10px; min-width: 80px; }
+        .countdown-item .number { font-size: 2.5rem; font-weight: 700; }
+        .countdown-item .label { font-size: 0.9rem; opacity: 0.9; }
 
         /* Footer */
-        .footer {
-            background: #1a237e;
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-        }
-        .footer p {
-            margin: 5px 0;
-            opacity: 0.9;
-        }
+        .footer { background: #1a237e; color: white; padding: 40px 20px; text-align: center; }
+        .footer p { margin: 5px 0; opacity: 0.9; }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .hero h1 { font-size: 1.8rem; }
             .hero .subtitle { font-size: 1rem; }
@@ -513,7 +374,8 @@
     </section>
 
     <section class="container" id="persyaratan">
-        <h2 class="section-title">📝 Ikon Baru Supervisi & Persyaratan</h2> <div class="persyaratan-grid">
+        <h2 class="section-title">📝 Supervisi & Persyaratan</h2>
+        <div class="persyaratan-grid">
             <div class="persyaratan-card">
                 <h3>📄 Persyaratan Umum</h3>
                 <ul>
@@ -736,87 +598,102 @@
     </footer>
 
 <script type="module">
-  import { db } from './js/firebase-config.js';
-  import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    // 1. Impor SDK Firebase yang Diperlukan
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ===== COUNTDOWN TIMER =====
-  const deadline = new Date('2026-06-30T23:59:59').getTime();
-  
-  function updateCountdown() {
-      const now = new Date().getTime();
-      const distance = deadline - now;
-      if (distance < 0) {
-          document.querySelectorAll('.countdown-item .number').forEach(el => el.textContent = '00');
-          return;
-      }
-      document.getElementById('days').textContent = String(Math.floor(distance / (1000*60*60*24))).padStart(2,'0');
-      document.getElementById('hours').textContent = String(Math.floor((distance % (1000*60*60*24)) / (1000*60*60))).padStart(2,'0');
-      document.getElementById('minutes').textContent = String(Math.floor((distance % (1000*60*60)) / (1000*60))).padStart(2,'0');
-      document.getElementById('seconds').textContent = String(Math.floor((distance % (1000*60)) / 1000)).padStart(2,'0');
-  }
-  setInterval(updateCountdown, 1000);
-  updateCountdown();
+    // 2. Tempelkan Konfigurasi Firebase Anda Secara Langsung di Sini
+    const firebaseConfig = {
+        apiKey: "AIzaSy...", 
+        authDomain: "proyek-anda.firebaseapp.com",
+        projectId: "proyek-anda",
+        storageBucket: "proyek-anda.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:1234:web:abcd"
+    };
 
-  // ===== FORM SUBMISSION (FIRESTORE ONLY) =====
-  document.getElementById('formPMBM').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const alertEl = document.getElementById('alertForm');
-      const btn = document.getElementById('btnSubmit');
-      
-      btn.disabled = true;
-      btn.textContent = '⏳ Menyimpan data...';
-      alertEl.classList.remove('show');
-      
-      try {
-          // 1. Ambil nilai input (termasuk input file yang diubah jadi teks nama file)
-          const formData = {
-              nisn: document.getElementById('nisn').value.trim(),
-              nama: document.getElementById('nama').value.trim(),
-              tempatLahir: document.getElementById('tempatLahir').value.trim(),
-              tanggalLahir: document.getElementById('tanggalLahir').value,
-              jenisKelamin: document.getElementById('jenisKelamin').value,
-              agama: document.getElementById('agama').value,
-              alamat: document.getElementById('alamat').value.trim(),
-              telepon: document.getElementById('telepon').value.trim(),
-              email: document.getElementById('email').value.trim(),
-              namaAyah: document.getElementById('namaAyah').value.trim(),
-              namaIbu: document.getElementById('namaIbu').value.trim(),
-              pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
-              teleponOrtu: document.getElementById('teleponOrtu').value.trim(),
-              asalSekolah: document.getElementById('asalSekolah').value.trim(),
-              tahunLulus: document.getElementById('tahunLulus').value,
-              
-              // File hanya disimpan sebagai teks (nama file), bukan upload fisik
-              fileKK_nama: document.getElementById('fileKK').files[0]?.name || '-',
-              fileAkta_nama: document.getElementById('fileAkta').files[0]?.name || '-',
-              fileIjazah_nama: document.getElementById('fileIjazah').files[0]?.name || '-',
-              fileFoto_nama: document.getElementById('fileFoto').files[0]?.name || '-',
-              
-              status: 'menunggu_verifikasi',
-              tanggalDaftar: serverTimestamp(),
-              tahunAjaran: '2026/2027'
-          };
-          
-          // 2. Simpan ke Firestore (Collection: pmbm_pendaftar)
-          await addDoc(collection(db, 'pmbm_pendaftar'), formData);
-          
-          // 3. Tampilkan pesan sukses
-          alertEl.textContent = '✅ Pendaftaran BERHASIL! Data Anda telah tersimpan. Silakan cek status secara berkala.';
-          alertEl.className = 'alert alert-success show';
-          
-          // Reset form
-          document.getElementById('formPMBM').reset();
-          
-      } catch (err) {
-          console.error('❌ ERROR PMBM:', err);
-          alertEl.textContent = '❌ Gagal menyimpan: ' + err.message;
-          alertEl.className = 'alert alert-error show';
-      } finally {
-          btn.disabled = false;
-          btn.textContent = '🚀 Kirim Pendaftaran';
-      }
-  });
+    // 3. Inisialisasi Aplikasi Firebase & Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===== COUNTDOWN TIMER =====
+    const deadline = new Date('2026-06-30T23:59:59').getTime();
+    
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const distance = deadline - now;
+        if (distance < 0) {
+            document.querySelectorAll('.countdown-item .number').forEach(el => el.textContent = '00');
+            return;
+        }
+        document.getElementById('days').textContent = String(Math.floor(distance / (1000*60*60*24))).padStart(2,'0');
+        document.getElementById('hours').textContent = String(Math.floor((distance % (1000*60*60*24)) / (1000*60*60))).padStart(2,'0');
+        document.getElementById('minutes').textContent = String(Math.floor((distance % (1000*60*60)) / (1000*60))).padStart(2,'0');
+        document.getElementById('seconds').textContent = String(Math.floor((distance % (1000*60)) / 1000)).padStart(2,'0');
+    }
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    // ===== FORM SUBMISSION (FIRESTORE) =====
+    document.getElementById('formPMBM').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const alertEl = document.getElementById('alertForm');
+        const btn = document.getElementById('btnSubmit');
+        
+        btn.disabled = true;
+        btn.textContent = '⏳ Menyimpan data...';
+        alertEl.classList.remove('show');
+        
+        try {
+            // Ambil nilai input pendaftaran
+            const formData = {
+                nisn: document.getElementById('nisn').value.trim(),
+                nama: document.getElementById('nama').value.trim(),
+                tempatLahir: document.getElementById('tempatLahir').value.trim(),
+                tanggalLahir: document.getElementById('tanggalLahir').value,
+                jenisKelamin: document.getElementById('jenisKelamin').value,
+                agama: document.getElementById('agama').value,
+                alamat: document.getElementById('alamat').value.trim(),
+                telepon: document.getElementById('telepon').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                namaAyah: document.getElementById('namaAyah').value.trim(),
+                namaIbu: document.getElementById('namaIbu').value.trim(),
+                pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
+                teleponOrtu: document.getElementById('teleponOrtu').value.trim(),
+                asalSekolah: document.getElementById('asalSekolah').value.trim(),
+                tahunLulus: document.getElementById('tahunLulus').value,
+                
+                // Menyimpan teks nama file sementara
+                fileKK_nama: document.getElementById('fileKK').files[0]?.name || '-',
+                fileAkta_nama: document.getElementById('fileAkta').files[0]?.name || '-',
+                fileIjazah_nama: document.getElementById('fileIjazah').files[0]?.name || '-',
+                fileFoto_nama: document.getElementById('fileFoto').files[0]?.name || '-',
+                
+                status: 'menunggu_verifikasi',
+                tanggalDaftar: serverTimestamp(),
+                tahunAjaran: '2026/2027'
+            };
+            
+            // Simpan data pendaftaran ke Firestore (Collection: pmbm_pendaftar)
+            await addDoc(collection(db, 'pmbm_pendaftar'), formData);
+            
+            // Tampilkan pesan berhasil
+            alertEl.textContent = '✅ Pendaftaran BERHASIL! Data Anda telah tersimpan ke database.';
+            alertEl.className = 'alert alert-success show';
+            
+            // Reset form setelah sukses pendaftaran
+            document.getElementById('formPMBM').reset();
+            
+        } catch (err) {
+            console.error('❌ ERROR PMBM:', err);
+            alertEl.textContent = '❌ Gagal menyimpan: ' + err.message;
+            alertEl.className = 'alert alert-error show';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🚀 Kirim Pendaftaran';
+        }
+    });
 </script>
 </body>
 </html>
