@@ -736,73 +736,87 @@
     </footer>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { db } from './js/firebase-config.js';
+  import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Masukkan langsung config asli Anda di sini
-    const firebaseConfig = {
-        apiKey: "AIzaSy...",
-        authDomain: "proyek-anda.firebaseapp.com",
-        projectId: "proyek-anda",
-        storageBucket: "proyek-anda.appspot.com",
-        messagingSenderId: "123456789",
-        appId: "1:1234:web:abcd"
-    };
+  // ===== COUNTDOWN TIMER =====
+  const deadline = new Date('2026-06-30T23:59:59').getTime();
+  
+  function updateCountdown() {
+      const now = new Date().getTime();
+      const distance = deadline - now;
+      if (distance < 0) {
+          document.querySelectorAll('.countdown-item .number').forEach(el => el.textContent = '00');
+          return;
+      }
+      document.getElementById('days').textContent = String(Math.floor(distance / (1000*60*60*24))).padStart(2,'0');
+      document.getElementById('hours').textContent = String(Math.floor((distance % (1000*60*60*24)) / (1000*60*60))).padStart(2,'0');
+      document.getElementById('minutes').textContent = String(Math.floor((distance % (1000*60*60)) / (1000*60))).padStart(2,'0');
+      document.getElementById('seconds').textContent = String(Math.floor((distance % (1000*60)) / 1000)).padStart(2,'0');
+  }
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // Event Listener Form Pendaftaran
-    document.getElementById('formPendaftaran').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const btn = document.getElementById('btnSubmit'); // Sesuaikan ID tombol Anda
-        const alertEl = document.getElementById('alertElement'); // Sesuaikan ID alert Anda
-        
-        btn.disabled = true;
-        btn.innerHTML = '⏳ Mengirim pendaftaran...';
-
-        try {
-            // Ambil data input teks
-            const namaSiswa = document.getElementById('nama').value;
-            const nisnSiswa = document.getElementById('nisn').value;
-            const asalSekolahSiswa = document.getElementById('asalSekolah').value;
-            const nomorWa = document.getElementById('telepon').value;
-
-            // Ambil input file (Ambil namanya saja dulu agar tidak crash sebelum setup Storage)
-            const fileKK = document.getElementById('fotoKK').files[0]?.name || '';
-            const fileAkta = document.getElementById('fotoAkta').files[0]?.name || '';
-            const fileIjazah = document.getElementById('fotoIjazah').files[0]?.name || '';
-            const pasFoto = document.getElementById('pasFoto').files[0]?.name || '';
-
-            // Simpan ke Firestore
-            await addDoc(collection(db, "pendaftaran"), {
-                nama: namaSiswa,
-                nisn: nisnSiswa,
-                asalSekolah: asalSekolahSiswa,
-                telepon: nomorWa,
-                dokumen: {
-                    kk: fileKK,
-                    akta: fileAkta,
-                    ijazah: fileIjazah,
-                    foto: pasFoto
-                },
-                createdAt: serverTimestamp() // Menggunakan timestamp server Firebase
-            });
-
-            alertEl.textContent = '✅ Pendaftaran berhasil dikirim!';
-            alertEl.className = 'alert alert-success show';
-            document.getElementById('formPendaftaran').reset();
-
-        } catch (error) {
-            alertEl.textContent = '❌ Gagal mengirim pendaftaran: ' + error.message;
-            alertEl.className = 'alert alert-error show';
-            console.error('PMBM Error:', error);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '🚀 Kirim Pendaftaran';
-        }
-    });
+  // ===== FORM SUBMISSION (FIRESTORE ONLY) =====
+  document.getElementById('formPMBM').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const alertEl = document.getElementById('alertForm');
+      const btn = document.getElementById('btnSubmit');
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Menyimpan data...';
+      alertEl.classList.remove('show');
+      
+      try {
+          // 1. Ambil nilai input (termasuk input file yang diubah jadi teks nama file)
+          const formData = {
+              nisn: document.getElementById('nisn').value.trim(),
+              nama: document.getElementById('nama').value.trim(),
+              tempatLahir: document.getElementById('tempatLahir').value.trim(),
+              tanggalLahir: document.getElementById('tanggalLahir').value,
+              jenisKelamin: document.getElementById('jenisKelamin').value,
+              agama: document.getElementById('agama').value,
+              alamat: document.getElementById('alamat').value.trim(),
+              telepon: document.getElementById('telepon').value.trim(),
+              email: document.getElementById('email').value.trim(),
+              namaAyah: document.getElementById('namaAyah').value.trim(),
+              namaIbu: document.getElementById('namaIbu').value.trim(),
+              pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
+              teleponOrtu: document.getElementById('teleponOrtu').value.trim(),
+              asalSekolah: document.getElementById('asalSekolah').value.trim(),
+              tahunLulus: document.getElementById('tahunLulus').value,
+              
+              // File hanya disimpan sebagai teks (nama file), bukan upload fisik
+              fileKK_nama: document.getElementById('fileKK').files[0]?.name || '-',
+              fileAkta_nama: document.getElementById('fileAkta').files[0]?.name || '-',
+              fileIjazah_nama: document.getElementById('fileIjazah').files[0]?.name || '-',
+              fileFoto_nama: document.getElementById('fileFoto').files[0]?.name || '-',
+              
+              status: 'menunggu_verifikasi',
+              tanggalDaftar: serverTimestamp(),
+              tahunAjaran: '2026/2027'
+          };
+          
+          // 2. Simpan ke Firestore (Collection: pmbm_pendaftar)
+          await addDoc(collection(db, 'pmbm_pendaftar'), formData);
+          
+          // 3. Tampilkan pesan sukses
+          alertEl.textContent = '✅ Pendaftaran BERHASIL! Data Anda telah tersimpan. Silakan cek status secara berkala.';
+          alertEl.className = 'alert alert-success show';
+          
+          // Reset form
+          document.getElementById('formPMBM').reset();
+          
+      } catch (err) {
+          console.error('❌ ERROR PMBM:', err);
+          alertEl.textContent = '❌ Gagal menyimpan: ' + err.message;
+          alertEl.className = 'alert alert-error show';
+      } finally {
+          btn.disabled = false;
+          btn.textContent = '🚀 Kirim Pendaftaran';
+      }
+  });
 </script>
 </body>
 </html>
