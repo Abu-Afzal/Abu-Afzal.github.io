@@ -735,132 +735,74 @@
         <p style="margin-top:20px; opacity:0.7;">&copy; 2026 SIPELITA - MAN Bantaeng. All rights reserved.</p>
     </footer>
 
-    <script type="module">
-        import { db, storage } from './js/firebase-config.js';
-        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ===== COUNTDOWN & STATUS AUTOMATION =====
-        const deadline = new Date('2026-06-30T23:59:59').getTime();
-        
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const distance = deadline - now;
-            const statusBadge = document.getElementById('statusBadge');
-            const btnHeroDaftar = document.getElementById('btnHeroDaftar');
-            const boxFormulir = document.getElementById('boxFormulir');
-            
-            if (distance < 0) {
-                document.getElementById('days').textContent = '00';
-                document.getElementById('hours').textContent = '00';
-                document.getElementById('minutes').textContent = '00';
-                document.getElementById('seconds').textContent = '00';
-                
-                // Otomatis ubah status penutupan di UI
-                if(statusBadge) {
-                    statusBadge.textContent = '🔴 Pendaftaran Ditutup';
-                    statusBadge.className = 'status-badge status-tutup';
-                }
-                if(btnHeroDaftar) {
-                    btnHeroDaftar.style.display = 'none';
-                }
-                if(boxFormulir) {
-                    boxFormulir.innerHTML = `<h2 style="color:#f44336;">🔒 Pendaftaran Telah Ditutup</h2>
-                                             <p style="text-align:center; margin-top:15px; color:#666;">
-                                                Masa pendaftaran PMBM TA 2026/2027 MAN Bantaeng telah berakhir pada 30 Juni 2026. Terima kasih atas partisipasi Anda.
-                                             </p>`;
-                }
-                return;
-            }
-            
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            
-            document.getElementById('days').textContent = String(days).padStart(2, '0');
-            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
-            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
-            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
-        }
-        
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
+    // Masukkan langsung config asli Anda di sini
+    const firebaseConfig = {
+        apiKey: "AIzaSy...",
+        authDomain: "proyek-anda.firebaseapp.com",
+        projectId: "proyek-anda",
+        storageBucket: "proyek-anda.appspot.com",
+        messagingSenderId: "123456789",
+        appId: "1:1234:web:abcd"
+    };
 
-        // ===== FORM SUBMISSION =====
-        const formPMBM = document.getElementById('formPMBM');
-        if (formPMBM) {
-            formPMBM.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const alertEl = document.getElementById('alertForm');
-                const btn = document.getElementById('btnSubmit');
-                
-                btn.disabled = true;
-                btn.textContent = '⏳ Mengirim pendaftaran...';
-                alertEl.classList.remove('show');
-                
-                try {
-                    // 1. Upload files ke Storage
-                    const files = [
-                        { id: 'fileKK', path: 'pmbm/kk/' },
-                        { id: 'fileAkta', path: 'pmbm/akta/' },
-                        { id: 'fileIjazah', path: 'pmbm/ijazah/' },
-                        { id: 'fileFoto', path: 'pmbm/foto/' }
-                    ];
-                    
-                    const fileUrls = {};
-                    for (const file of files) {
-                        const input = document.getElementById(file.id);
-                        if (input && input.files[0]) {
-                            const fileRef = storageRef(storage, `${file.path}${Date.now()}_${input.files[0].name}`);
-                            await uploadBytes(fileRef, input.files[0]);
-                            fileUrls[file.id] = await getDownloadURL(fileRef);
-                        }
-                    }
-                    
-                    // 2. Simpan data ke Firestore
-                    await addDoc(collection(db, 'pmbm_pendaftar'), {
-                        nisn: document.getElementById('nisn').value,
-                        nama: document.getElementById('nama').value,
-                        tempatLahir: document.getElementById('tempatLahir').value,
-                        tanggalLahir: document.getElementById('tanggalLahir').value,
-                        jenisKelamin: document.getElementById('jenisKelamin').value,
-                        agama: document.getElementById('agama').value,
-                        alamat: document.getElementById('alamat').value,
-                        telepon: document.getElementById('telepon').value,
-                        email: document.getElementById('email').value,
-                        namaAyah: document.getElementById('namaAyah').value,
-                        namaIbu: document.getElementById('namaIbu').value,
-                        pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
-                        teleponOrtu: document.getElementById('teleponOrtu').value,
-                        asalSekolah: document.getElementById('asalSekolah').value,
-                        tahunLulus: document.getElementById('tahunLulus').value,
-                        fileKK: fileUrls.fileKK || '',
-                        fileAkta: fileUrls.fileAkta || '',
-                        fileIjazah: fileUrls.fileIjazah || '',
-                        fileFoto: fileUrls.fileFoto || '',
-                        status: 'menunggu',
-                        tanggalDaftar: serverTimestamp(),
-                        tahunAjaran: '2026/2027'
-                    });
-                    
-                    alertEl.textContent = '✅ Pendaftaran berhasil dikirim! Silakan cek status pendaftaran Anda secara berkala.';
-                    alertEl.className = 'alert alert-success show';
-                    formPMBM.reset();
-                    
-                } catch (error) {
-                    // FIXED: Menyelesaikan penutupan blok catch yang sebelumnya terpotong
-                    console.error("Error pendaftaran:", error);
-                    alertEl.textContent = '❌ Gagal mengirim pendaftaran: ' + error.message;
-                    alertEl.className = 'alert alert-error show';
-                } finally {
-                    // Memastikan tombol aktif kembali setelah proses selesai (baik sukses maupun gagal)
-                    btn.disabled = false;
-                    btn.textContent = '🚀 Kirim Pendaftaran';
-                }
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Event Listener Form Pendaftaran
+    document.getElementById('formPendaftaran').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const btn = document.getElementById('btnSubmit'); // Sesuaikan ID tombol Anda
+        const alertEl = document.getElementById('alertElement'); // Sesuaikan ID alert Anda
+        
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Mengirim pendaftaran...';
+
+        try {
+            // Ambil data input teks
+            const namaSiswa = document.getElementById('nama').value;
+            const nisnSiswa = document.getElementById('nisn').value;
+            const asalSekolahSiswa = document.getElementById('asalSekolah').value;
+            const nomorWa = document.getElementById('telepon').value;
+
+            // Ambil input file (Ambil namanya saja dulu agar tidak crash sebelum setup Storage)
+            const fileKK = document.getElementById('fotoKK').files[0]?.name || '';
+            const fileAkta = document.getElementById('fotoAkta').files[0]?.name || '';
+            const fileIjazah = document.getElementById('fotoIjazah').files[0]?.name || '';
+            const pasFoto = document.getElementById('pasFoto').files[0]?.name || '';
+
+            // Simpan ke Firestore
+            await addDoc(collection(db, "pendaftaran"), {
+                nama: namaSiswa,
+                nisn: nisnSiswa,
+                asalSekolah: asalSekolahSiswa,
+                telepon: nomorWa,
+                dokumen: {
+                    kk: fileKK,
+                    akta: fileAkta,
+                    ijazah: fileIjazah,
+                    foto: pasFoto
+                },
+                createdAt: serverTimestamp() // Menggunakan timestamp server Firebase
             });
+
+            alertEl.textContent = '✅ Pendaftaran berhasil dikirim!';
+            alertEl.className = 'alert alert-success show';
+            document.getElementById('formPendaftaran').reset();
+
+        } catch (error) {
+            alertEl.textContent = '❌ Gagal mengirim pendaftaran: ' + error.message;
+            alertEl.className = 'alert alert-error show';
+            console.error('PMBM Error:', error);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '🚀 Kirim Pendaftaran';
         }
-    </script>
+    });
+</script>
 </body>
 </html>
