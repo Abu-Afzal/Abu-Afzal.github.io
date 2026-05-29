@@ -598,104 +598,75 @@
     </footer>
 
 <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Masukkan langsung config asli Anda di sini
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+  authDomain: "sipelita-digital.firebaseapp.com",
+  databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sipelita-digital",
+  storageBucket: "sipelita-digital.firebasestorage.app",
+  messagingSenderId: "787840817745",
+  appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+  measurementId: "G-1D5DWJV54E"
+};
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Event Listener Form Pendaftaran
+    document.getElementById('formPendaftaran').addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        const firebaseConfig = {
-            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-            authDomain: "sipelita-digital.firebaseapp.com",
-            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sipelita-digital",
-            storageBucket: "sipelita-digital.firebasestorage.app",
-            messagingSenderId: "787840817745",
-            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
-            measurementId: "G-1D5DWJV54E"
-        };
+        const btn = document.getElementById('btnSubmit'); // Sesuaikan ID tombol Anda
+        const alertEl = document.getElementById('alertElement'); // Sesuaikan ID alert Anda
+        
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Mengirim pendaftaran...';
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        try {
+            // Ambil data input teks
+            const namaSiswa = document.getElementById('nama').value;
+            const nisnSiswa = document.getElementById('nisn').value;
+            const asalSekolahSiswa = document.getElementById('asalSekolah').value;
+            const nomorWa = document.getElementById('telepon').value;
 
-        async function loadData() {
-            const tableBody = document.getElementById('tableBody');
-            const totalCounter = document.getElementById('totalPendaftar');
-            
-            if (!tableBody || !totalCounter) return;
+            // Ambil input file (Ambil namanya saja dulu agar tidak crash sebelum setup Storage)
+            const fileKK = document.getElementById('fotoKK').files[0]?.name || '';
+            const fileAkta = document.getElementById('fotoAkta').files[0]?.name || '';
+            const fileIjazah = document.getElementById('fotoIjazah').files[0]?.name || '';
+            const pasFoto = document.getElementById('pasFoto').files[0]?.name || '';
 
-            try {
-                // Ambil langsung tanpa diurutkan terlebih dahulu untuk memastikan data masuk
-const querySnapshot = await getDocs(collection(db, "pendaftaran"));
-                
-                tableBody.innerHTML = '';
-                let nomor = 1;
+            // Simpan ke Firestore
+            await addDoc(collection(db, "pendaftaran"), {
+                nama: namaSiswa,
+                nisn: nisnSiswa,
+                asalSekolah: asalSekolahSiswa,
+                telepon: nomorWa,
+                dokumen: {
+                    kk: fileKK,
+                    akta: fileAkta,
+                    ijazah: fileIjazah,
+                    foto: pasFoto
+                },
+                createdAt: serverTimestamp() // Menggunakan timestamp server Firebase
+            });
 
-                if (querySnapshot.empty) {
-                    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
-                    totalCounter.textContent = "0";
-                    return;
-                }
+            alertEl.textContent = '✅ Pendaftaran berhasil dikirim!';
+            alertEl.className = 'alert alert-success show';
+            document.getElementById('formPendaftaran').reset();
 
-                querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const docId = docSnap.id;
-
-                    // MENGATASI PENYEBAB 1: Antisipasi jika nama field di form pendaftaran berbeda
-                    const namaSiswa = data.nama || data.namaLengkap || '-';
-                    const nomorNisn = data.nisn || '-';
-                    const sekolahAsal = data.asalSekolah || data.sekolah || '-';
-                    const nomorTelepon = data.telepon || data.kontak || data.whatsapp || '';
-
-                    let tanggalDaftar = "-";
-                    if (data.createdAt) {
-                        const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                        tanggalDaftar = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-                    }
-
-                    const row = `
-                        <tr class="hover:bg-slate-50/70 transition">
-                            <td class="px-6 py-4 font-medium text-slate-500">${nomor++}</td>
-                            <td class="px-6 py-4 font-semibold text-slate-800">${namaSiswa}</td>
-                            <td class="px-6 py-4">
-                                <div class="text-slate-700 font-medium">${nomorNisn}</div>
-                                <div class="text-xs text-slate-400">${sekolahAsal}</div>
-                            </td>
-                            <td class="px-6 py-4 text-slate-600">
-                                ${nomorTelepon ? `
-                                <a href="https://wa.me/${nomorTelepon.replace(/[^0-9]/g, '')}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-brands fa-whatsapp text-green-500"></i> ${nomorTelepon}
-                                </a>` : '-'}
-                            </td>
-                            <td class="px-6 py-4 text-slate-500">${tanggalDaftar}</td>
-                            <td class="px-6 py-4 text-center print:hidden">
-                                <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer">
-                                    <i class="fa-regular fa-trash-can"></i> Hapus
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
-                });
-                
-                totalCounter.textContent = querySnapshot.size;
-
-            } catch (error) {
-                console.error("Gagal memuat data admin:", error);
-                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500 bg-rose-50/50">⚠️ Gagal memuat data: ${error.message}</td></tr>`;
-            }
+        } catch (error) {
+            alertEl.textContent = '❌ Gagal mengirim pendaftaran: ' + error.message;
+            alertEl.className = 'alert alert-error show';
+            console.error('PMBM Error:', error);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '🚀 Kirim Pendaftaran';
         }
-
-        window.hapusSiswa = async function(id) {
-            if (confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
-                try {
-                    await deleteDoc(doc(db, "pendaftaran", id));
-                    alert("Data berhasil dihapus!");
-                    loadData();
-                } catch (err) {
-                    alert("Gagal menghapus: " + err.message);
-                }
-            }
-        }
-        window.loadData = loadData;
-        window.onload = loadData;
-    </script>
+    });
+</script>
 </body>
 </html>
