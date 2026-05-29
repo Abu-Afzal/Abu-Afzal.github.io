@@ -19,8 +19,8 @@
                 <button onclick="window.print()" class="bg-white hover:bg-slate-50 text-slate-700 font-medium py-2.5 px-4 rounded-xl border border-slate-200 shadow-sm transition flex items-center gap-2 cursor-pointer">
                     <i class="fa-solid fa-print"></i> Cetak Halaman
                 </button>
-                <button onclick="window.loadData()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer">
-                    <i class="fa-solid fa-rotate"></i> Refresh Data
+                <button onclick="loadData()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-4 rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-rotate animate-spin-hover"></i> Refresh Data
                 </button>
             </div>
         </div>
@@ -70,10 +70,11 @@
     </div>
 
     <script type="module">
+        // 1. Import Modul Firebase SDK v9/v10
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Tulis ulang config utama Anda di sini agar tidak memanggil file luar
+        // 2. PASTE CONFIG FIREBASE ANDA DI SINI (Sama seperti di halaman pendaftaran)
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
@@ -85,18 +86,19 @@ const firebaseConfig = {
   appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
   measurementId: "G-1D5DWJV54E"
 };
+
+        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Fungsi Ambil Data dari Firestore
         async function loadData() {
             const tableBody = document.getElementById('tableBody');
             const totalCounter = document.getElementById('totalPendaftar');
             
-            if (!tableBody || !totalCounter) return;
-
             try {
-                // Catatan: Jika kompilasi indeks awal Firebase belum siap, 
-                // ubah parameter query menjadi: query(collection(db, "pendaftaran"))
+                // Urutkan berdasarkan waktu mendaftar (terbaru di atas)
+                // Catatan: Pastikan di form pendaftaran Anda menyimpan field 'createdAt' atau sejenisnya
                 const q = query(collection(db, "pendaftaran"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
                 
@@ -105,7 +107,7 @@ const firebaseConfig = {
 
                 if (querySnapshot.empty) {
                     tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
-                    totalCounter.textContent = "0";
+                    totalCounter.textContent = 0;
                     return;
                 }
 
@@ -113,12 +115,14 @@ const firebaseConfig = {
                     const data = docSnap.data();
                     const docId = docSnap.id;
 
+                    // Mengonversi timestamp Firebase ke format tanggal lokal Indonesia
                     let tanggalDaftar = "-";
                     if (data.createdAt) {
                         const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
                         tanggalDaftar = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                     }
 
+                    // Render baris tabel (sesuaikan properti data.nama, data.nisn dll dengan form Anda)
                     const row = `
                         <tr class="hover:bg-slate-50/70 transition">
                             <td class="px-6 py-4 font-medium text-slate-500">${nomor++}</td>
@@ -134,14 +138,14 @@ const firebaseConfig = {
                             </td>
                             <td class="px-6 py-4 text-slate-500">${tanggalDaftar}</td>
                             <td class="px-6 py-4 text-center print:hidden">
-                                <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer">
-                                    <i class="fa-regular fa-trash-can"></i> Hapus
+                                <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer" title="Hapus Data">
+                                    <i class="fa-regular fa-trash-can text-sm"></i> Hapus
                                 </button>
                             </td>
                         </tr>
                     `;
                     tableBody.innerHTML += row;
-                });
+                </script>`;
                 
                 totalCounter.textContent = querySnapshot.size;
 
@@ -151,23 +155,29 @@ const firebaseConfig = {
             }
         }
 
+        // Fungsi Hapus Data Terpilih
         window.hapusSiswa = async function(id) {
-            if (confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
+            if (confirm("Apakah Anda yakin ingin menghapus data siswa ini secara permanen?")) {
                 try {
+                    import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
                     await deleteDoc(doc(db, "pendaftaran", id));
                     alert("Data berhasil dihapus!");
-                    loadData();
+                    loadData(); // Muat ulang tabel
                 } catch (err) {
                     alert("Gagal menghapus: " + err.message);
                 }
             }
         }
 
+        // Daftarkan fungsi ke objek window agar bisa dipicu tombol HTML konvensional
         window.loadData = loadData;
+
+        // Jalankan otomatis saat halaman dibuka
         window.onload = loadData;
     </script>
 
     <script>
+        // Fungsi Pencarian Sederhana di Sisi Klien
         function searchTable() {
             let input = document.getElementById("searchInput").value.toLowerCase();
             let rows = document.getElementById("tableBody").getElementsByTagName("tr");
