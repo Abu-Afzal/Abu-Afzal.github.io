@@ -598,105 +598,65 @@
     </footer>
 
 <script type="module">
-    // 1. Impor SDK Firebase yang Diperlukan
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    // Pastikan mengimpor dari firebase-firestore, BUKAN firebase-database
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 2. Tempelkan Konfigurasi Firebase Anda Secara Langsung di Sini
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-  authDomain: "sipelita-digital.firebaseapp.com",
-  databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sipelita-digital",
-  storageBucket: "sipelita-digital.firebasestorage.app",
-  messagingSenderId: "787840817745",
-  appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
-  measurementId: "G-1D5DWJV54E"
-};
+    // Konfigurasi Sipelta-Digital Anda yang sudah benar
+    const firebaseConfig = {
+        apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+        authDomain: "sipelita-digital.firebaseapp.com",
+        databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "sipelita-digital",
+        storageBucket: "sipelita-digital.firebasestorage.app",
+        messagingSenderId: "787840817745",
+        appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+        measurementId: "G-1D5DWJV54E"
+    };
 
-    // 3. Inisialisasi Aplikasi Firebase & Firestore
+    // Inisialisasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ===== COUNTDOWN TIMER =====
-    const deadline = new Date('2026-06-30T23:59:59').getTime();
-    
-    function updateCountdown() {
-        const now = new Date().getTime();
-        const distance = deadline - now;
-        if (distance < 0) {
-            document.querySelectorAll('.countdown-item .number').forEach(el => el.textContent = '00');
-            return;
-        }
-        document.getElementById('days').textContent = String(Math.floor(distance / (1000*60*60*24))).padStart(2,'0');
-        document.getElementById('hours').textContent = String(Math.floor((distance % (1000*60*60*24)) / (1000*60*60))).padStart(2,'0');
-        document.getElementById('minutes').textContent = String(Math.floor((distance % (1000*60*60)) / (1000*60))).padStart(2,'0');
-        document.getElementById('seconds').textContent = String(Math.floor((distance % (1000*60)) / 1000)).padStart(2,'0');
-    }
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
+    // Ambil elemen form dari HTML Anda (Sesuaikan id="formPendaftaran" dengan id form Anda)
+    const formSiswa = document.getElementById('formPendaftaran');
 
-    // ===== FORM SUBMISSION (FIRESTORE) =====
-    document.getElementById('formPMBM').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const alertEl = document.getElementById('alertForm');
-        const btn = document.getElementById('btnSubmit');
-        
-        btn.disabled = true;
-        btn.textContent = '⏳ Menyimpan data...';
-        alertEl.classList.remove('show');
-        
-        try {
-            // Ambil nilai input pendaftaran
-            const formData = {
-                nisn: document.getElementById('nisn').value.trim(),
-                nama: document.getElementById('nama').value.trim(),
-                tempatLahir: document.getElementById('tempatLahir').value.trim(),
-                tanggalLahir: document.getElementById('tanggalLahir').value,
-                jenisKelamin: document.getElementById('jenisKelamin').value,
-                agama: document.getElementById('agama').value,
-                alamat: document.getElementById('alamat').value.trim(),
-                telepon: document.getElementById('telepon').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                namaAyah: document.getElementById('namaAyah').value.trim(),
-                namaIbu: document.getElementById('namaIbu').value.trim(),
-                pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
-                teleponOrtu: document.getElementById('teleponOrtu').value.trim(),
-                asalSekolah: document.getElementById('asalSekolah').value.trim(),
-                tahunLulus: document.getElementById('tahunLulus').value,
-                
-                // Menyimpan teks nama file sementara
-                fileKK_nama: document.getElementById('fileKK').files[0]?.name || '-',
-                fileAkta_nama: document.getElementById('fileAkta').files[0]?.name || '-',
-                fileIjazah_nama: document.getElementById('fileIjazah').files[0]?.name || '-',
-                fileFoto_nama: document.getElementById('fileFoto').files[0]?.name || '-',
-                
-                status: 'menunggu_verifikasi',
-                tanggalDaftar: serverTimestamp(),
-                tahunAjaran: '2026/2027'
-            };
-            
-            // Simpan data pendaftaran ke Firestore (Collection: pmbm_pendaftar)
-            await addDoc(collection(db, 'pmbm_pendaftar'), formData);
-            
-            // Tampilkan pesan berhasil
-            alertEl.textContent = '✅ Pendaftaran BERHASIL! Data Anda telah tersimpan ke database.';
-            alertEl.className = 'alert alert-success show';
-            
-            // Reset form setelah sukses pendaftaran
-            document.getElementById('formPMBM').reset();
-            
-        } catch (err) {
-            console.error('❌ ERROR PMBM:', err);
-            alertEl.textContent = '❌ Gagal menyimpan: ' + err.message;
-            alertEl.className = 'alert alert-error show';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🚀 Kirim Pendaftaran';
-        }
-    });
+    if (formSiswa) {
+        formSiswa.addEventListener('submit', async (e) => {
+            // 1. PENTING: Cegah halaman agar tidak refresh otomatis saat disubmit
+            e.preventDefault(); 
+
+            // Ambil data dari input HTML (Sesuaikan id-id ini dengan form pendaftaran Anda)
+            const namaInput = document.getElementById('namaSiswa')?.value;
+            const nisnInput = document.getElementById('nisnSiswa')?.value;
+            const sekolahInput = document.getElementById('asalSekolah')?.value;
+            const teleponInput = document.getElementById('nomorWa')?.value;
+
+            // Beri efek loading pada tombol jika diperlukan
+            console.log("Memulai proses pendaftaran untuk:", namaInput);
+
+            try {
+                // 2. Kirim data ke Firestore ke dalam koleksi "pendaftaran"
+                // Pastikan Nama Field (nama, nisn, asalSekolah, telepon) SAMA PERSIS dengan yang dipanggil di adminpmbm.html
+                await addDoc(collection(db, "pendaftaran"), {
+                    nama: namaInput,
+                    nisn: nisnInput,
+                    asalSekolah: sekolahInput,
+                    telepon: teleponInput,
+                    createdAt: serverTimestamp() // Ini untuk sorting orderBy di admin
+                });
+
+                alert("Pendaftaran BERHASIL dan data tersimpan!");
+                formSiswa.reset(); // Kosongkan form setelah sukses
+
+            } catch (error) {
+                console.error("Error saat submit pendaftaran:", error);
+                alert("Gagal mengirim data pendaftaran: " + error.message);
+            }
+        });
+    } else {
+        console.error("Elemen form dengan id 'formPendaftaran' tidak ditemukan di HTML ini.");
+    }
 </script>
 </body>
 </html>
