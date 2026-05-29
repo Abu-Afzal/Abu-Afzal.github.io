@@ -50,11 +50,12 @@ if (madrasahContainer && CONFIG.layananMadrasah) {
         // ✅ BUAT LINK YANG BENAR
         if (isExternal) {
             return `<a href="${link}" target="_blank" rel="noopener noreferrer" class="card-link">${cardContent}</a>`;
+        // ✅ MENJADI INI:
         } else if (link) {
-            // Untuk link internal (pages/xxx.html)
-            const cleanLink = link.startsWith('pages/') ? link : `pages/${link}`;
-            return `<a href="${cleanLink}" class="card-link">${cardContent}</a>`;
-        } else {
+        // Gunakan link apa adanya (tidak dipaksa masuk folder pages/)
+        return `<a href="${link}" class="card-link">${cardContent}</a>`;
+        } 
+        else {
             return `<div class="card-link">${cardContent}</div>`;
         }
     }).join('');
