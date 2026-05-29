@@ -598,104 +598,104 @@
     </footer>
 
 <script type="module">
-    // 1. Impor SDK Firebase yang Diperlukan
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-  authDomain: "sipelita-digital.firebaseapp.com",
-  databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sipelita-digital",
-  storageBucket: "sipelita-digital.firebasestorage.app",
-  messagingSenderId: "787840817745",
-  appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
-  measurementId: "G-1D5DWJV54E"
-};
-
-    // 3. Inisialisasi Aplikasi Firebase & Firestore
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // ===== COUNTDOWN TIMER =====
-    const deadline = new Date('2026-06-30T23:59:59').getTime();
-    
-    function updateCountdown() {
-        const now = new Date().getTime();
-        const distance = deadline - now;
-        if (distance < 0) {
-            document.querySelectorAll('.countdown-item .number').forEach(el => el.textContent = '00');
-            return;
-        }
-        document.getElementById('days').textContent = String(Math.floor(distance / (1000*60*60*24))).padStart(2,'0');
-        document.getElementById('hours').textContent = String(Math.floor((distance % (1000*60*60*24)) / (1000*60*60))).padStart(2,'0');
-        document.getElementById('minutes').textContent = String(Math.floor((distance % (1000*60*60)) / (1000*60))).padStart(2,'0');
-        document.getElementById('seconds').textContent = String(Math.floor((distance % (1000*60)) / 1000)).padStart(2,'0');
-    }
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
-
-    // ===== FORM SUBMISSION (FIRESTORE) =====
-    document.getElementById('formPMBM').addEventListener('submit', async (e) => {
-        e.preventDefault();
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
-        const alertEl = document.getElementById('alertForm');
-        const btn = document.getElementById('btnSubmit');
-        
-        btn.disabled = true;
-        btn.textContent = '⏳ Menyimpan data...';
-        alertEl.classList.remove('show');
-        
-        try {
-            // Ambil nilai input pendaftaran
-            const formData = {
-                nisn: document.getElementById('nisn').value.trim(),
-                nama: document.getElementById('nama').value.trim(),
-                tempatLahir: document.getElementById('tempatLahir').value.trim(),
-                tanggalLahir: document.getElementById('tanggalLahir').value,
-                jenisKelamin: document.getElementById('jenisKelamin').value,
-                agama: document.getElementById('agama').value,
-                alamat: document.getElementById('alamat').value.trim(),
-                telepon: document.getElementById('telepon').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                namaAyah: document.getElementById('namaAyah').value.trim(),
-                namaIbu: document.getElementById('namaIbu').value.trim(),
-                pekerjaanOrtu: document.getElementById('pekerjaanOrtu').value,
-                teleponOrtu: document.getElementById('teleponOrtu').value.trim(),
-                asalSekolah: document.getElementById('asalSekolah').value.trim(),
-                tahunLulus: document.getElementById('tahunLulus').value,
+        const firebaseConfig = {
+            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+            authDomain: "sipelita-digital.firebaseapp.com",
+            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sipelita-digital",
+            storageBucket: "sipelita-digital.firebasestorage.app",
+            messagingSenderId: "787840817745",
+            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+            measurementId: "G-1D5DWJV54E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadData() {
+            const tableBody = document.getElementById('tableBody');
+            const totalCounter = document.getElementById('totalPendaftar');
+            
+            if (!tableBody || !totalCounter) return;
+
+            try {
+                // Ambil langsung tanpa diurutkan terlebih dahulu untuk memastikan data masuk
+const querySnapshot = await getDocs(collection(db, "pendaftaran"));
                 
-                // Menyimpan teks nama file sementara
-                fileKK_nama: document.getElementById('fileKK').files[0]?.name || '-',
-                fileAkta_nama: document.getElementById('fileAkta').files[0]?.name || '-',
-                fileIjazah_nama: document.getElementById('fileIjazah').files[0]?.name || '-',
-                fileFoto_nama: document.getElementById('fileFoto').files[0]?.name || '-',
+                tableBody.innerHTML = '';
+                let nomor = 1;
+
+                if (querySnapshot.empty) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
+                    totalCounter.textContent = "0";
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const docId = docSnap.id;
+
+                    // MENGATASI PENYEBAB 1: Antisipasi jika nama field di form pendaftaran berbeda
+                    const namaSiswa = data.nama || data.namaLengkap || '-';
+                    const nomorNisn = data.nisn || '-';
+                    const sekolahAsal = data.asalSekolah || data.sekolah || '-';
+                    const nomorTelepon = data.telepon || data.kontak || data.whatsapp || '';
+
+                    let tanggalDaftar = "-";
+                    if (data.createdAt) {
+                        const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+                        tanggalDaftar = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                    }
+
+                    const row = `
+                        <tr class="hover:bg-slate-50/70 transition">
+                            <td class="px-6 py-4 font-medium text-slate-500">${nomor++}</td>
+                            <td class="px-6 py-4 font-semibold text-slate-800">${namaSiswa}</td>
+                            <td class="px-6 py-4">
+                                <div class="text-slate-700 font-medium">${nomorNisn}</div>
+                                <div class="text-xs text-slate-400">${sekolahAsal}</div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                ${nomorTelepon ? `
+                                <a href="https://wa.me/${nomorTelepon.replace(/[^0-9]/g, '')}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1">
+                                    <i class="fa-brands fa-whatsapp text-green-500"></i> ${nomorTelepon}
+                                </a>` : '-'}
+                            </td>
+                            <td class="px-6 py-4 text-slate-500">${tanggalDaftar}</td>
+                            <td class="px-6 py-4 text-center print:hidden">
+                                <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer">
+                                    <i class="fa-regular fa-trash-can"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
                 
-                status: 'menunggu_verifikasi',
-                tanggalDaftar: serverTimestamp(),
-                tahunAjaran: '2026/2027'
-            };
-            
-            // Simpan data pendaftaran ke Firestore (Collection: pmbm_pendaftar)
-            await addDoc(collection(db, 'pmbm_pendaftar'), formData);
-            
-            // Tampilkan pesan berhasil
-            alertEl.textContent = '✅ Pendaftaran BERHASIL! Data Anda telah tersimpan ke database.';
-            alertEl.className = 'alert alert-success show';
-            
-            // Reset form setelah sukses pendaftaran
-            document.getElementById('formPMBM').reset();
-            
-        } catch (err) {
-            console.error('❌ ERROR PMBM:', err);
-            alertEl.textContent = '❌ Gagal menyimpan: ' + err.message;
-            alertEl.className = 'alert alert-error show';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = '🚀 Kirim Pendaftaran';
+                totalCounter.textContent = querySnapshot.size;
+
+            } catch (error) {
+                console.error("Gagal memuat data admin:", error);
+                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500 bg-rose-50/50">⚠️ Gagal memuat data: ${error.message}</td></tr>`;
+            }
         }
-    });
-</script>
+
+        window.hapusSiswa = async function(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
+                try {
+                    await deleteDoc(doc(db, "pendaftaran", id));
+                    alert("Data berhasil dihapus!");
+                    loadData();
+                } catch (err) {
+                    alert("Gagal menghapus: " + err.message);
+                }
+            }
+        }
+        window.loadData = loadData;
+        window.onload = loadData;
+    </script>
 </body>
 </html>
