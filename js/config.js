@@ -55,7 +55,7 @@ const CONFIG = {
         { icon: '🏢', title: 'PTSP', desc: '', color: '#00897b', page: 'pages/ptsp.html' },
         { icon: '📖', title: 'NILABS', desc: '', color: '#3949ab', page: 'pages/nilabs.html' },
         { icon: '✅', title: 'SiTaat', desc: '', color: '#f57c00', page: 'pages/sitaat.html' },
-        { icon: '🪪', title: 'SICAN', desc: '', color: '#263238', page: 'pages/sidiks.html' },
+        { icon: '🪪', title: 'SICAN', desc: '', color: '#263238', page: 'pages/sican.html' },
         { icon: '🎓', title: 'E-Learning', desc: '', color: '#d32f2f', page: 'pages/elearning.html' },
         { icon: '📁', title: 'E-Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
         { icon: '🏥', title: 'UKSmart', desc: '', color: '#e91e63', page: 'pages/uksmart.html' },
