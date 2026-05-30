@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SICAN - Rekapitulasi Absensi</title>
+    <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+        
+        .header { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .header p { opacity: 0.9; font-size: 0.95rem; }
+
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        
+        /* Panel Filter */
+        .filter-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 0.85rem; font-weight: 600; color: #555; }
+        .filter-control { padding: 10px; border: 1px solid #ccd1d9; border-radius: 6px; outline: none; font-size: 0.9rem; background-color: #fff; }
+        .filter-control:focus { border-color: #1976d2; }
+        
+        /* Tombol Aksi */
+        .btn-group { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: 0.2s; }
+        .btn-primary { background: #1976d2; color: white; }
+        .btn-primary:hover { background: #0d47a1; }
+        .btn-success { background: #2e7d32; color: white; }
+        .btn-success:hover { background: #1b5e20; }
+        
+        /* Tabel Rekap */
+        .rekap-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-hidden; }
+        .rekap-card h3 { color: #0d47a1; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #f8f9fa; color: #0d47a1; font-weight: 600; }
+        tr:hover { background: #fdfdfd; }
+        .text-center { text-align: center; }
+        .badge-hadir { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+
+        /* Gaya Khusus Cetak / Print PDF */
+        @media print {
+            body { background: white; color: black; }
+            .header, .filter-card, .btn-group, .btn-logout { display: none !important; }
+            .container { max-width: 100%; margin: 0; padding: 0; }
+            .rekap-card { box-shadow: none; padding: 0; }
+            th { background: #eee !important; color: black !important; border: 1px solid #999; }
+            td { border: 1px solid #999; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>📊 Dashboard Rekapitulasi Absensi (SICAN)</h1>
+        <p>Laporan Kehadiran Elektronik Siswa Madrasah</p>
+    </div>
+
+    <div class="container">
+        <div class="filter-card">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label for="periodeFilter">Jenis Rentang Laporan</label>
+                    <select id="periodeFilter" class="filter-control">
+                        <option value="pekanan">7 Hari Terakhir (Pekanan)</option>
+                        <option value="bulanan" selected>Bulanan</option>
+                        <option value="semester_ganjil">Semester Ganjil (Jul - Des)</option>
+                        <option value="semester_genap">Semester Genap (Jan - Jun)</option>
+                        <option value="tahunan">Tahunan (1 Tahun Penuh)</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group" id="bulanGroup">
+                    <label for="bulanFilter">Pilih Bulan</label>
+                    <select id="bulanFilter" class="filter-control">
+                        <option value="01">Januari</option>
+                        <option value="02">Februari</option>
+                        <option value="03">Maret</option>
+                        <option value="04">April</option>
+                        <option value="05" selected>Mei</option>
+                        <option value="06">Juni</option>
+                        <option value="07">Juli</option>
+                        <option value="08">Agustus</option>
+                        <option value="09">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="tahunFilter">Tahun</label>
+                    <select id="tahunFilter" class="filter-control">
+                        <option value="2026" selected>2026</option>
+                        <option value="2027">2027</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="kelasFilter">Filter Kelas</label>
+                    <select id="kelasFilter" class="filter-control">
+                        <option value="SEMUA">-- Semua Kelas --</option>
+                        <option value="X">Kelas X</option>
+                        <option value="XI">Kelas XI</option>
+                        <option value="XII">Kelas XII</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button id="btnProses" class="btn btn-primary">🔍 Tampilkan Rekap</button>
+                <button id="btnCetak" class="btn btn-success">🖨️ Cetak / Simpan PDF</button>
+            </div>
+        </div>
+
+        <div class="rekap-card">
+            <h3 id="judulRekap">📋 Laporan Absensi Bulanan</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="60px" class="text-center">No</th>
+                            <th width="150px">NIS</th>
+                            <th>Nama Lengkap Siswa</th>
+                            <th width="120px" class="text-center">Kelas</th>
+                            <th width="180px" class="text-center">Total Hari Hadir</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rekapBody">
+                        <tr>
+                            <td colspan="5" class="text-center" style="color: #666; padding: 20px;">Silakan klik tombol "Tampilkan Rekap" untuk memuat data dari server.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+            authDomain: "sipelita-digital.firebaseapp.com",
+            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sipelita-digital",
+            storageBucket: "sipelita-digital.firebasestorage.app",
+            messagingSenderId: "787840817745",
+            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+            measurementId: "G-1D5DWJV54E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Proteksi Halaman: Wajib Login
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Sembunyikan filter bulan jika memilih laporan tahunan/semesteran
+        document.getElementById('periodeFilter').addEventListener('change', (e) => {
+            const bulanGroup = document.getElementById('bulanGroup');
+            if (e.target.value === 'bulanan') {
+                bulanGroup.style.display = 'flex';
+            } else {
+                bulanGroup.style.display = 'none';
+            }
+        });
+
+        document.getElementById('btnProses').addEventListener('click', muatRekapitulasi);
+        document.getElementById('btnCetak').addEventListener('click', () => { window.print(); });
+
+        async function muatRekapitulasi() {
+            const rekapBody = document.getElementById('rekapBody');
+            const periode = document.getElementById('periodeFilter').value;
+            const bulan = document.getElementById('bulanFilter').value;
+            const tahun = document.getElementById('tahunFilter').value;
+            const filterKelas = document.getElementById('kelasFilter').value;
+            
+            rekapBody.innerHTML = '<tr><td colspan="5" class="text-center">Sedang mengkalkulasi data absensi dari server...</td></tr>';
+
+            // Mengubah Judul Dinamis Laporan
+            const opsiPeriodeText = document.getElementById('periodeFilter').options[document.getElementById('periodeFilter').selectedIndex].text;
+            document.getElementById('judulRekap').textContent = `📋 Laporan Absensi ${opsiPeriodeText} (${filterKelas === 'SEMUA' ? 'Semua Kelas' : 'Kelas ' + filterKelas})`;
+
+            try {
+                let qRef = collection(db, 'absensi');
+                let snapshot = await getDocs(qRef);
+                
+                if (snapshot.empty) {
+                    rekapBody.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ditemukan riwayat absensi pada basis data.</td></tr>';
+                    return;
+                }
+
+                // Map Penampung Penghitungan (Agregasi) Data
+                let petaSiswa = {};
+
+                // Penentuan Batasan Validasi Tanggal Berdasarkan Filter
+                const hariIni = new Date();
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const tglDokumen = data.tanggal; // Format di DB: YYYY-MM-DD
+                    const kelasDokumen = data.siswa_kelas || '';
+                    
+                    if (!tglDokumen) return;
+
+                    const porsiTgl = tglDokumen.split('-');
+                    const thnDok = porsiTgl[0];
+                    const blnDok = porsiTgl[1];
+
+                    // 1. Validasi Filter Kelas
+                    if (filterKelas !== 'SEMUA') {
+                        // Memeriksa substring kelas (contoh: jika filter 'XI', maka kelas 'XI-A' atau 'XI MIPA' lolos)
+                        if (!kelasDokumen.toUpperCase().startsWith(filterKelas.toUpperCase())) return;
+                    }
+
+                    // 2. Validasi Rentang Waktu Laporan
+                    let lolosWaktu = false;
+                    
+                    if (periode === 'bulanan') {
+                        if (thnDok === tahun && blnDok === bulan) lolosWaktu = true;
+                    } else if (periode === 'pekanan') {
+                        const dDok = new Date(tglDokumen);
+                        const selisihHari = (hariIni - dDok) / (1000 * 60 * 60 * 24);
+                        if (selisihHari <= 7 && selisihHari >= 0) lolosWaktu = true;
+                    } else if (periode === 'semester_ganjil') {
+                        if (thnDok === tahun && parseInt(blnDok) >= 7 && parseInt(blnDok) <= 12) lolosWaktu = true;
+                    } else if (periode === 'semester_genap') {
+                        if (thnDok === tahun && parseInt(blnDok) >= 1 && parseInt(blnDok) <= 6) lolosWaktu = true;
+                    } else if (periode === 'tahunan') {
+                        if (thnDok === tahun) lolosWaktu = true;
+                    }
+
+                    if (!lolosWaktu) return;
+
+                    // Jika lolos semua filter, hitung frekuensi kehadirannya
+                    const nis = data.siswa_nis;
+                    if (!petaSiswa[nis]) {
+                        petaSiswa[nis] = {
+                            nis: nis,
+                            nama: data.siswa_nama,
+                            kelas: kelasDokumen,
+                            hadir: 0
+                        };
+                    }
+                    petaSiswa[nis].hadir += 1;
+                });
+
+                // Tampilkan data hasil kalkulasi ke dalam tabel HTML
+                const daftarSiswa = Object.values(petaSiswa);
+                
+                // Urutkan alfabet nama siswa agar rapi
+                daftarSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
+
+                rekapBody.innerHTML = '';
+                if (daftarSiswa.length === 0) {
+                    rekapBody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:#d32f2f;">Tidak ada riwayat kehadiran siswa yang cocok dengan filter ini.</td></tr>';
+                    return;
+                }
+
+                let no = 1;
+                daftarSiswa.forEach(siswa => {
+                    rekapBody.innerHTML += `
+                        <tr>
+                            <td class="text-center">${no++}</td>
+                            <td style="font-family: monospace; font-size: 0.95rem;">${siswa.nis}</td>
+                            <td style="font-weight: 500;">${siswa.nama}</td>
+                            <td class="text-center">${siswa.kelas}</td>
+                            <td class="text-center"><span class="badge-hadir">${siswa.hadir} Hari</span></td>
+                        </tr>
+                    `;
+                });
+
+            } catch (err) {
+                console.error("Gagal memproses rekap:", err);
+                rekapBody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Gagal mengambil data laporan: ${err.message}</td></tr>`;
+            }
+        }
+    </script>
+</body>
+</html>
