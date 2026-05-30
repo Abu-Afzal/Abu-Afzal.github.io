@@ -13,8 +13,16 @@
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header p { opacity: 0.9; }
         .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        .scanner-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; }
+        
+        .scanner-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+        
+        /* Style Tambahan untuk Kontrol Kamera */
+        .camera-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .select-camera { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #fff; outline: none; min-width: 200px; }
+        .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
+        .btn-camera:hover { background: #0d47a1; }
+        
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; }
         .status-box { padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; font-weight: 600; display: none; }
         .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
         .status-warning { background: #fff3e0; color: #e65100; border: 1px solid #ff9800; }
@@ -40,6 +48,14 @@
 
     <div class="container">
         <div class="scanner-box">
+            <div class="camera-controls">
+                <select id="cameraSelect" class="select-camera">
+                    <option value="environment">Kamera Belakang (Default)</option>
+                    <option value="user">Kamera Depan (Selfie)</option>
+                </select>
+                <button id="btnToggleCamera" class="btn-camera">Ganti Kamera</button>
+            </div>
+
             <div id="reader"></div>
             <div id="statusBox" class="status-box"></div>
         </div>
@@ -66,7 +82,6 @@
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-        // Menggunakan konfigurasi resmi sipelita-digital secara langsung
         const firebaseConfig = {
             apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
             authDomain: "sipelita-digital.firebaseapp.com",
@@ -84,27 +99,43 @@
         
         let currentUser = null;
         let html5QrCode = null;
-        let isProcessingScan = false; // Mencegah scan ganda akibat jepretan kamera beruntun
+        let isProcessingScan = false;
+        let currentFacingMode = "environment"; // Menyimpan status kamera aktif
 
-        // Cek Status Login Pengguna/Guru
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'login.html';
             } else {
                 currentUser = user;
-                initScanner();
+                initScanner(currentFacingMode);
                 loadTodayLog();
             }
         });
 
         document.getElementById('btnLogout').addEventListener('click', async () => {
             if (confirm('Yakin ingin keluar dari sistem SICAN?')) {
-                if(html5QrCode) {
-                    try { await html5QrCode.stop(); } catch(e) {}
-                }
+                await stopScanner();
                 await signOut(auth);
                 window.location.href = 'login.html';
             }
+        });
+
+        // Event Listener untuk tombol ganti kamera
+        document.getElementById('btnToggleCamera').addEventListener('click', async () => {
+            const cameraSelect = document.getElementById('cameraSelect');
+            currentFacingMode = cameraSelect.value;
+            
+            // Hentikan kamera aktif terlebih dahulu sebelum beralih
+            await stopScanner();
+            // Jalankan kamera baru pilihan pengguna
+            initScanner(currentFacingMode);
+        });
+
+        // Handler otomatis jika dropdown pilihan diganti langsung
+        document.getElementById('cameraSelect').addEventListener('change', async (e) => {
+            currentFacingMode = e.target.value;
+            await stopScanner();
+            initScanner(currentFacingMode);
         });
 
         function showStatus(msg, type) {
@@ -113,34 +144,46 @@
             box.textContent = msg;
             box.className = `status-box status-${type}`;
             box.style.display = 'block';
-            
-            // Kunci status warning/error sedikit lebih lama agar terbaca jelas
             const duration = type === 'success' ? 2500 : 4000;
             setTimeout(() => { box.style.display = 'none'; }, duration);
         }
 
-        async function initScanner() {
+        async function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                try {
+                    await html5QrCode.stop();
+                } catch (err) {
+                    console.error("Gagal menghentikan kamera aktif:", err);
+                }
+            }
+        }
+
+        async function initScanner(facingModeValue) {
             const config = { fps: 6, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-            html5QrCode = new Html5Qrcode("reader");
+            
+            // Jaga agar instansiasi objek pembaca kamera tetap tunggal
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
             
             try {
                 await html5QrCode.start(
-                    { facingMode: "environment" },
+                    { facingMode: facingModeValue },
                     config,
                     onScanSuccess,
-                    () => {} // mengabaikan log kegagalan bidik frame mini
+                    () => {}
                 );
+                console.log(`Kamera aktif menggunakan mode: ${facingModeValue}`);
             } catch (err) {
                 console.error("Kamera gagal diakses:", err);
-                showStatus('⚠️ Mohon izinkan akses kamera perangkat untuk memindai QR.', 'warning');
+                showStatus('⚠️ Gagal mengakses kamera pilihan. Berikan izin atau periksa kompatibilitas perangkat.', 'warning');
             }
         }
 
         async function onScanSuccess(decodedText) {
-            if (isProcessingScan) return; // Abaikan pembacaan jika proses input data sebelumnya belum selesai
+            if (isProcessingScan) return;
             isProcessingScan = true;
 
-            // Ekspektasi Format QR Kartu Pelajar -> NIS:NAMA:KELAS
             const parts = decodedText.trim().split(':');
             if (parts.length < 3) {
                 showStatus('❌ Format QR Code salah atau tidak dikenali!', 'error');
@@ -149,15 +192,12 @@
             }
 
             const [nis, nama, kelas] = parts;
-            
-            // Format pencatatan tanggal lokal (WIB/WITA/WIT sesuai gadget)
             const localDate = new Date();
             const todayStr = localDate.getFullYear() + '-' + 
                              String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
                              String(localDate.getDate()).padStart(2, '0');
 
             try {
-                // Periksa apakah siswa terkait sudah terekam hadir pada tanggal hari ini
                 const qCek = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', todayStr));
                 const snapshotCek = await getDocs(qCek);
 
@@ -167,7 +207,6 @@
                     return;
                 }
 
-                // Kirim record baru ke Firestore koleksi 'absensi'
                 await addDoc(collection(db, 'absensi'), {
                     siswa_nis: nis,
                     siswa_nama: nama,
@@ -180,13 +219,12 @@
                 });
 
                 showStatus(`✅ Absensi ${nama} (${kelas}) berhasil dicatat!`, 'success');
-                loadTodayLog(); // Perbarui tampilan tabel histori
+                loadTodayLog();
 
             } catch (err) {
                 console.error('Proses simpan database gagal:', err);
                 showStatus('❌ Gagal menginput absensi: ' + err.message, 'error');
-            } {
-                // Berikan jeda waktu 2.5 detik sebelum kamera siap menerima scan murid berikutnya
+            } finally {
                 setTimeout(() => { isProcessingScan = false; }, 2500);
             }
         }
@@ -197,8 +235,6 @@
                              String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
                              String(localDate.getDate()).padStart(2, '0');
             
-            // Solusi Perbaikan Utama: Hapus pengurutan orderBy jika struktur indeks belum siap, 
-            // kita lakukan sorting data secara lokal menggunakan JavaScript agar aman dari error Firestore.
             const qLog = query(collection(db, 'absensi'), where('tanggal', '==', todayStr));
             
             try {
@@ -220,13 +256,11 @@
                 loadingText.style.display = 'none';
                 logTable.style.display = 'table';
 
-                // Array penampung untuk diurutkan secara manual
                 let listAbsen = [];
                 snapshot.forEach(doc => {
                     listAbsen.push(doc.data());
                 });
 
-                // Urutkan data berdasarkan jam terbaru (descending)
                 listAbsen.sort((a, b) => (b.jam || "").localeCompare(a.jam || ""));
 
                 listAbsen.forEach(data => {
@@ -241,7 +275,6 @@
                 });
             } catch (err) {
                 console.error('Gagal memperbarui riwayat:', err);
-                document.getElementById('loadingLog').textContent = '⚠️ Gangguan memuat riwayat: ' + err.message;
             }
         }
     </script>
