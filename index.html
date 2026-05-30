@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Administrasi Sekolah Terintegrasi</title>
+    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <!-- Ganti 'logo-custom.png' dengan nama file logo Anda -->
+        <img src="assets/images/sipelita-app.png" alt="Logo SIPELITA" class="header-logo">
+        <div>
+            <h1 style="margin: 0; font-size: 1.4rem;">SIPELITA</h1>
+            <p style="margin: 0; font-size: 0.85rem;">Sistem Pengelolaan Edukasi & Layanan Terpadu</p>
+        </div>
+    </div>
+            <div id="userPanel" style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-left: auto;">
+    <!-- Baris 1: Role & Logout -->
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span id="userRole" style="background: #ffd700; color: #1a237e; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;"></span>
+        <button id="btnLogout" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Logout</button>
+    </div>
+    
+    <!-- Baris 2: Sapaan Nama User -->
+    <span id="userName" style="color: #000; font-weight: bold; font-size: 0.95rem;">Hi, ...</span>
+</div>
+    </nav>
+</header>
+
+        <h2 class="section-title">Layanan Umum</h2>
+        <div class="grid" id="layanan-umum"></div>
+
+        <h2 class="section-title">Layanan Madrasah</h2>
+        <div class="grid" id="layanan-madrasah"></div>
+    </div>
+    <!-- Modal -->
+    <div class="modal" id="integrationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Konfigurasi Internal</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Catatan Administrator</label>
+                <input type="text" placeholder="Fitur ini untuk pengembangan internal...">
+            </div>
+            <button class="btn" onclick="closeModal()">Tutup</button>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 Portal Administrasi Sekolah Terintegrasi. Dibuat untuk efisiensi manajemen madrasah modern.
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script type="module">
+  import { AuthService } from './js/auth-service.js';
+
+  // 1. Cek apakah user sudah login
+  const user = AuthService.checkAuth();
+
+  if (user) {
+    // Tampilkan sapaan "Hi, [Nama]"
+    document.getElementById('userName').textContent = `Hi, ${user.nama}`;
+    
+    // Tampilkan role
+    if (user.role === 'admin') {
+      document.getElementById('userRole').textContent = '👑 Admin';
+    } else {
+      document.getElementById('userRole').textContent = '👤 Guru';
+    }
+
+    // ✅ PERBAIKAN DI SINI: Cek apakah elemen adminSection ADA sebelum diubah
+    const adminSection = document.getElementById('adminSection');
+    if (adminSection) {
+      if (user.role === 'admin') {
+        adminSection.style.display = 'block';
+      } else {
+        adminSection.style.display = 'none';
+      }
+    }
+
+  } else {
+    // Jika belum login, tendang ke login.html
+    window.location.href = 'login.html';
+  }
+
+  // 2. Handle Tombol Logout (Sekarang ini aman karena script tidak crash di atas)
+  const btnLogout = document.getElementById('btnLogout');
+  if (btnLogout) {
+    btnLogout.addEventListener('click', async () => {
+      if (confirm('Yakin ingin keluar dari SIPELITA?')) {
+        await AuthService.logout();
+      }
+    });
+  }
+</script>
+</body>
+</html>
