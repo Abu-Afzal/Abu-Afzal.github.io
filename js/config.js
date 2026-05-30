@@ -79,5 +79,11 @@ const CONFIG = {
             logo: 'assets/images/rapor-app.png'  // ← Path ke logo
         },
         { icon: '📈', title: 'ScoreUp!', desc: '', color: '#c62828', page: 'pages/scoreup.html' }
+        { 
+            icon: '📊', 
+            title: 'Rekap Absensi', 
+            desc: '', 
+            color: '#37474f', 
+            url: 'https://rekap-absensi.html/' 
     ]
 };
