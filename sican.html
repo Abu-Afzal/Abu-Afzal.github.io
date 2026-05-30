@@ -16,13 +16,12 @@
         
         .scanner-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
         
-        /* Style Tambahan untuk Kontrol Kamera */
         .camera-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .select-camera { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #fff; outline: none; min-width: 200px; }
         .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
         .btn-camera:hover { background: #0d47a1; }
         
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; border: 2px dashed #ccc; }
         .status-box { padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; font-weight: 600; display: none; }
         .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
         .status-warning { background: #fff3e0; color: #e65100; border: 1px solid #ff9800; }
@@ -32,7 +31,7 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #0d47a1; }
-        .btn-logout { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .btn-logout { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
         @media (max-width: 600px) {
             .header h1 { font-size: 1.4rem; }
             th, td { padding: 8px; font-size: 0.9rem; }
@@ -41,15 +40,16 @@
 </head>
 <body>
     <div class="header">
-    <h1>📊 Dashboard Rekapitulasi Absensi (SICAN)</h1>
-    <p>Laporan Kehadiran Elektronik Siswa Madrasah</p>
-    
-    <div style="margin-top: 15px;">
-        <a href="../index.html" style="background: rgba(255,255,255,0.15); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-            🏠 Kembali ke Dashboard Utama
-        </a>
+        <h1>📷 SICAN - Scan Absensi</h1>
+        <p>Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
+        
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; align-items: center;">
+            <a href="index.html" style="background: rgba(255,255,255,0.15); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+                🏠 Kembali ke Dashboard Utama
+            </a>
+            <button id="btnLogout" class="btn-logout">Logout</button>
+        </div>
     </div>
-</div>
 
     <div class="container">
         <div class="scanner-box">
@@ -105,11 +105,12 @@
         let currentUser = null;
         let html5QrCode = null;
         let isProcessingScan = false;
-        let currentFacingMode = "environment"; // Menyimpan status kamera aktif
+        let currentFacingMode = "environment";
 
+        // Proteksi Akun Sejajar Folder
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                window.location.href = 'login.html';
+                window.location.href = 'login.html'; // Tepat mencari ke folder utama sejajar
             } else {
                 currentUser = user;
                 initScanner(currentFacingMode);
@@ -125,22 +126,17 @@
             }
         });
 
-        // Event Listener untuk tombol ganti kamera
         document.getElementById('btnToggleCamera').addEventListener('click', async () => {
             const cameraSelect = document.getElementById('cameraSelect');
             currentFacingMode = cameraSelect.value;
-            
-            // Hentikan kamera aktif terlebih dahulu sebelum beralih
             await stopScanner();
-            // Jalankan kamera baru pilihan pengguna
-            initScanner(currentFacingMode);
+            setTimeout(() => { initScanner(currentFacingMode); }, 400); // Jeda hardware melepaskan sensor stream
         });
 
-        // Handler otomatis jika dropdown pilihan diganti langsung
         document.getElementById('cameraSelect').addEventListener('change', async (e) => {
             currentFacingMode = e.target.value;
             await stopScanner();
-            initScanner(currentFacingMode);
+            setTimeout(() => { initScanner(currentFacingMode); }, 400);
         });
 
         function showStatus(msg, type) {
@@ -164,12 +160,20 @@
         }
 
         async function initScanner(facingModeValue) {
-            const config = { fps: 6, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            const config = { 
+                fps: 12, 
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                    return { width: Math.floor(minEdge * 0.7), height: Math.floor(minEdge * 0.7) };
+                }, 
+                aspectRatio: 1.0,
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+            };
             
-            // Jaga agar instansiasi objek pembaca kamera tetap tunggal
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
+            const readerElement = document.getElementById("reader");
+            if (readerElement) { readerElement.innerHTML = ""; } // Reset wadah tangkapan video
+            
+            html5QrCode = new Html5Qrcode("reader");
             
             try {
                 await html5QrCode.start(
@@ -178,10 +182,9 @@
                     onScanSuccess,
                     () => {}
                 );
-                console.log(`Kamera aktif menggunakan mode: ${facingModeValue}`);
             } catch (err) {
                 console.error("Kamera gagal diakses:", err);
-                showStatus('⚠️ Gagal mengakses kamera pilihan. Berikan izin atau periksa kompatibilitas perangkat.', 'warning');
+                showStatus('⚠️ Akses kamera terganggu. Pastikan izin kamera aktif.', 'warning');
             }
         }
 
@@ -189,9 +192,13 @@
             if (isProcessingScan) return;
             isProcessingScan = true;
 
-            const parts = decodedText.trim().split(':');
-            if (parts.length < 3) {
-                showStatus('❌ Format QR Code salah atau tidak dikenali!', 'error');
+            // Memisahkan karakter dengan toleransi spasi liar
+            let separator = ':';
+            if (!decodedText.includes(':') && decodedText.includes(',')) { separator = ','; }
+
+            const parts = decodedText.trim().split(separator).map(item => item.trim());
+            if (parts.length < 3 || parts[0] === "" || parts[1] === "") {
+                showStatus(`❌ Format QR tidak valid! Terbaca: "${decodedText}"`, 'error');
                 setTimeout(() => { isProcessingScan = false; }, 3000);
                 return;
             }
@@ -227,7 +234,6 @@
                 loadTodayLog();
 
             } catch (err) {
-                console.error('Proses simpan database gagal:', err);
                 showStatus('❌ Gagal menginput absensi: ' + err.message, 'error');
             } finally {
                 setTimeout(() => { isProcessingScan = false; }, 2500);
@@ -262,10 +268,7 @@
                 logTable.style.display = 'table';
 
                 let listAbsen = [];
-                snapshot.forEach(doc => {
-                    listAbsen.push(doc.data());
-                });
-
+                snapshot.forEach(doc => { listAbsen.push(doc.data()); });
                 listAbsen.sort((a, b) => (b.jam || "").localeCompare(a.jam || ""));
 
                 listAbsen.forEach(data => {
