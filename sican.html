@@ -107,17 +107,26 @@
         let isProcessingScan = false;
         let currentFacingMode = "environment";
 
-        // Proteksi Akun Sejajar Folder
+        // 1. PROTEKSI LOGIN (Diberikan Jeda Agar Stabil)
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                window.location.href = 'login.html'; // Tepat mencari ke folder utama sejajar
+                console.log("User tidak terdeteksi, dialihkan ke login.");
+                window.location.href = 'login.html';
             } else {
+                console.log("User terverifikasi:", user.email);
                 currentUser = user;
-                initScanner(currentFacingMode);
+                
+                // Ambil riwayat log terlebih dahulu
                 loadTodayLog();
+                
+                // Berikan jeda 800ms sebelum menyalakan kamera agar browser tidak crash/terpental
+                setTimeout(() => {
+                    initScanner(currentFacingMode);
+                }, 800);
             }
         });
 
+        // 2. TOMBOL LOGOUT SEJAJAR FOLDER
         document.getElementById('btnLogout').addEventListener('click', async () => {
             if (confirm('Yakin ingin keluar dari sistem SICAN?')) {
                 await stopScanner();
@@ -126,17 +135,18 @@
             }
         });
 
+        // 3. KONTROL KAMERA
         document.getElementById('btnToggleCamera').addEventListener('click', async () => {
             const cameraSelect = document.getElementById('cameraSelect');
             currentFacingMode = cameraSelect.value;
             await stopScanner();
-            setTimeout(() => { initScanner(currentFacingMode); }, 400); // Jeda hardware melepaskan sensor stream
+            setTimeout(() => { initScanner(currentFacingMode); }, 500);
         });
 
         document.getElementById('cameraSelect').addEventListener('change', async (e) => {
             currentFacingMode = e.target.value;
             await stopScanner();
-            setTimeout(() => { initScanner(currentFacingMode); }, 400);
+            setTimeout(() => { initScanner(currentFacingMode); }, 500);
         });
 
         function showStatus(msg, type) {
@@ -154,45 +164,42 @@
                 try {
                     await html5QrCode.stop();
                 } catch (err) {
-                    console.error("Gagal menghentikan kamera aktif:", err);
+                    console.error("Gagal menghentikan kamera:", err);
                 }
             }
         }
 
         async function initScanner(facingModeValue) {
+            // Konfigurasi kamera yang lebih ringan agar anti-gagal di HP
             const config = { 
-                fps: 12, 
-                qrbox: function(viewfinderWidth, viewfinderHeight) {
-                    const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                    return { width: Math.floor(minEdge * 0.7), height: Math.floor(minEdge * 0.7) };
-                }, 
-                aspectRatio: 1.0,
-                experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+                fps: 8, 
+                qrbox: { width: 250, height: 250 }, 
+                aspectRatio: 1.0 
             };
             
             const readerElement = document.getElementById("reader");
-            if (readerElement) { readerElement.innerHTML = ""; } // Reset wadah tangkapan video
-            
-            html5QrCode = new Html5Qrcode("reader");
+            if (readerElement) { readerElement.innerHTML = ""; }
             
             try {
+                html5QrCode = new Html5Qrcode("reader");
                 await html5QrCode.start(
                     { facingMode: facingModeValue },
                     config,
                     onScanSuccess,
-                    () => {}
+                    () => {} // fungsi dikosongkan saat mencari QR agar tidak membebani log
                 );
+                console.log("Kamera berhasil dinyalakan:", facingModeValue);
             } catch (err) {
-                console.error("Kamera gagal diakses:", err);
-                showStatus('⚠️ Akses kamera terganggu. Pastikan izin kamera aktif.', 'warning');
+                console.error("Kamera gagal diakses penuh:", err);
+                showStatus('⚠️ Kamera belum siap atau izin diblokir. Silakan klik tombol "Ganti Kamera" untuk memuat ulang.', 'warning');
             }
         }
 
+        // 4. PROSES SCAN SUKSES (DENGAN TRIM SPASI)
         async function onScanSuccess(decodedText) {
             if (isProcessingScan) return;
             isProcessingScan = true;
 
-            // Memisahkan karakter dengan toleransi spasi liar
             let separator = ':';
             if (!decodedText.includes(':') && decodedText.includes(',')) { separator = ','; }
 
@@ -214,7 +221,7 @@
                 const snapshotCek = await getDocs(qCek);
 
                 if (!snapshotCek.empty) {
-                    showStatus(`⚠️ ${nama} sudah melakukan absensi hari ini!`, 'warning');
+                    showStatus(`⚠️ ${nama} sudah absen hari ini!`, 'warning');
                     setTimeout(() => { isProcessingScan = false; }, 3000);
                     return;
                 }
@@ -230,7 +237,7 @@
                     status: 'hadir'
                 });
 
-                showStatus(`✅ Absensi ${nama} (${kelas}) berhasil dicatat!`, 'success');
+                showStatus(`✅ Absensi ${nama} berhasil dicatat!`, 'success');
                 loadTodayLog();
 
             } catch (err) {
@@ -240,6 +247,7 @@
             }
         }
 
+        // 5. MEMUAT LOG DATA MASUK HARI INI
         async function loadTodayLog() {
             const localDate = new Date();
             const todayStr = localDate.getFullYear() + '-' + 
