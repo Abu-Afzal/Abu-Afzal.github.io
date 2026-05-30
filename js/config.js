@@ -84,6 +84,6 @@ const CONFIG = {
             title: 'Rekap Absensi', 
             desc: '', 
             color: '#37474f', 
-            url: 'https://rekap-absensi.html/' 
+            url: 'pages/rekap.absensi.html' 
     ]
 };
