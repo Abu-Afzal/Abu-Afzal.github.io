@@ -9,6 +9,25 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+        
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1976d2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         .header { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header p { opacity: 0.9; }
@@ -21,7 +40,7 @@
         .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
         .btn-camera:hover { background: #0d47a1; }
         
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; border: 2px dashed #ccc; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; border: 2px dashed #ccc; min-height: 300px; }
         .status-box { padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; font-weight: 600; display: none; }
         .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
         .status-warning { background: #fff3e0; color: #e65100; border: 1px solid #ff9800; }
@@ -39,6 +58,12 @@
     </style>
 </head>
 <body>
+    <!-- Loading Overlay (Mencegah Redirect Dini) -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p style="color: #0d47a1; font-weight: 500;">Memverifikasi akses...</p>
+    </div>
+
     <div class="header">
         <h1>📷 SICAN - Scan Absensi</h1>
         <p>Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
@@ -83,6 +108,7 @@
     </div>
 
     <script type="module">
+        // ✅ PATH BENAR: Karena file di root, gunakan ./js/
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -107,26 +133,37 @@
         let isProcessingScan = false;
         let currentFacingMode = "environment";
 
-        // 1. PROTEKSI LOGIN (Diberikan Jeda Agar Stabil)
+        // ✅ LOGIKA AUTH YANG STABIL
         onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                console.log("User tidak terdeteksi, dialihkan ke login.");
-                window.location.href = 'login.html';
-            } else {
-                console.log("User terverifikasi:", user.email);
+            if (user) {
+                // User TERDETEKSI LOGIN
+                console.log("✅ User terverifikasi:", user.email);
                 currentUser = user;
                 
-                // Ambil riwayat log terlebih dahulu
+                // 1. Hilangkan loading overlay
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                // 2. Load data riwayat
                 loadTodayLog();
                 
-                // Berikan jeda 800ms sebelum menyalakan kamera agar browser tidak crash/terpental
+                // 3. Tunggu sebentar, lalu nyalakan kamera (agar UI siap dulu)
                 setTimeout(() => {
                     initScanner(currentFacingMode);
                 }, 800);
+                
+            } else {
+                // User BENAR-BENAR BELUM LOGIN
+                console.log("❌ User tidak login, redirect ke login.html");
+                
+                // Opsional: Simpan halaman tujuan agar setelah login bisa kembali ke SICAN
+                localStorage.setItem('redirectAfterLogin', 'sican.html');
+                
+                // Redirect ke login
+                window.location.href = 'login.html';
             }
         });
 
-        // 2. TOMBOL LOGOUT SEJAJAR FOLDER
+        // Tombol Logout
         document.getElementById('btnLogout').addEventListener('click', async () => {
             if (confirm('Yakin ingin keluar dari sistem SICAN?')) {
                 await stopScanner();
@@ -135,7 +172,7 @@
             }
         });
 
-        // 3. KONTROL KAMERA
+        // Kontrol Kamera
         document.getElementById('btnToggleCamera').addEventListener('click', async () => {
             const cameraSelect = document.getElementById('cameraSelect');
             currentFacingMode = cameraSelect.value;
@@ -170,7 +207,6 @@
         }
 
         async function initScanner(facingModeValue) {
-            // Konfigurasi kamera yang lebih ringan agar anti-gagal di HP
             const config = { 
                 fps: 8, 
                 qrbox: { width: 250, height: 250 }, 
@@ -186,16 +222,15 @@
                     { facingMode: facingModeValue },
                     config,
                     onScanSuccess,
-                    () => {} // fungsi dikosongkan saat mencari QR agar tidak membebani log
+                    () => {} 
                 );
-                console.log("Kamera berhasil dinyalakan:", facingModeValue);
+                console.log("📷 Kamera aktif:", facingModeValue);
             } catch (err) {
-                console.error("Kamera gagal diakses penuh:", err);
-                showStatus('⚠️ Kamera belum siap atau izin diblokir. Silakan klik tombol "Ganti Kamera" untuk memuat ulang.', 'warning');
+                console.error("Kamera error:", err);
+                showStatus('⚠️ Izinkan akses kamera atau klik "Ganti Kamera" untuk refresh.', 'warning');
             }
         }
 
-        // 4. PROSES SCAN SUKSES (DENGAN TRIM SPASI)
         async function onScanSuccess(decodedText) {
             if (isProcessingScan) return;
             isProcessingScan = true;
@@ -205,7 +240,7 @@
 
             const parts = decodedText.trim().split(separator).map(item => item.trim());
             if (parts.length < 3 || parts[0] === "" || parts[1] === "") {
-                showStatus(`❌ Format QR tidak valid! Terbaca: "${decodedText}"`, 'error');
+                showStatus(`❌ Format QR salah!`, 'error');
                 setTimeout(() => { isProcessingScan = false; }, 3000);
                 return;
             }
@@ -217,6 +252,7 @@
                              String(localDate.getDate()).padStart(2, '0');
 
             try {
+                // Cek duplikasi
                 const qCek = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', todayStr));
                 const snapshotCek = await getDocs(qCek);
 
@@ -226,6 +262,7 @@
                     return;
                 }
 
+                // Simpan ke Firestore
                 await addDoc(collection(db, 'absensi'), {
                     siswa_nis: nis,
                     siswa_nama: nama,
@@ -237,17 +274,16 @@
                     status: 'hadir'
                 });
 
-                showStatus(`✅ Absensi ${nama} berhasil dicatat!`, 'success');
+                showStatus(`✅ Absensi ${nama} berhasil!`, 'success');
                 loadTodayLog();
 
             } catch (err) {
-                showStatus('❌ Gagal menginput absensi: ' + err.message, 'error');
+                showStatus('❌ Gagal simpan: ' + err.message, 'error');
             } finally {
                 setTimeout(() => { isProcessingScan = false; }, 2500);
             }
         }
 
-        // 5. MEMUAT LOG DATA MASUK HARI INI
         async function loadTodayLog() {
             const localDate = new Date();
             const todayStr = localDate.getFullYear() + '-' + 
@@ -266,7 +302,7 @@
                 tbody.innerHTML = '';
 
                 if (snapshot.empty) {
-                    loadingText.textContent = 'Belum ada data siswa masuk hari ini.';
+                    loadingText.textContent = 'Belum ada data absensi hari ini.';
                     loadingText.style.display = 'block';
                     logTable.style.display = 'none';
                     return;
@@ -290,7 +326,7 @@
                     `;
                 });
             } catch (err) {
-                console.error('Gagal memperbarui riwayat:', err);
+                console.error('Gagal load log:', err);
             }
         }
     </script>
