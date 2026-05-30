@@ -8,9 +8,9 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; display: none; }
+        body.loaded { display: block; }
         
-        /* Loading Overlay */
         #loadingOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.95);
@@ -28,18 +28,14 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .header { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .header { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 20px; text-align: center; }
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
-        .header p { opacity: 0.9; }
         .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        
         .scanner-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
-        
         .camera-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .select-camera { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #fff; outline: none; min-width: 200px; }
-        .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
+        .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; }
         .btn-camera:hover { background: #0d47a1; }
-        
         #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; border: 2px dashed #ccc; min-height: 300px; }
         .status-box { padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; font-weight: 600; display: none; }
         .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
@@ -50,28 +46,22 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #0d47a1; }
-        .btn-logout { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-        @media (max-width: 600px) {
-            .header h1 { font-size: 1.4rem; }
-            th, td { padding: 8px; font-size: 0.9rem; }
-        }
+        .btn-logout { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-left: 10px; }
+        .btn-back { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-block; }
+        .btn-back:hover { background: rgba(255,255,255,0.3); }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay (Mencegah Redirect Dini) -->
     <div id="loadingOverlay">
         <div class="spinner"></div>
-        <p style="color: #0d47a1; font-weight: 500;">Memverifikasi akses...</p>
+        <p style="color: #0d47a1; font-weight: 500;">Memeriksa login...</p>
     </div>
 
     <div class="header">
         <h1>📷 SICAN - Scan Absensi</h1>
-        <p>Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
-        
-        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; align-items: center;">
-            <a href="index.html" style="background: rgba(255,255,255,0.15); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.4); display: inline-flex; align-items: center; gap: 5px; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                🏠 Kembali ke Dashboard Utama
-            </a>
+        <p id="userInfo">Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
+        <div style="margin-top: 15px;">
+            <a href="index.html" class="btn-back">🏠 Kembali</a>
             <button id="btnLogout" class="btn-logout">Logout</button>
         </div>
     </div>
@@ -80,12 +70,11 @@
         <div class="scanner-box">
             <div class="camera-controls">
                 <select id="cameraSelect" class="select-camera">
-                    <option value="environment">Kamera Belakang (Default)</option>
-                    <option value="user">Kamera Depan (Selfie)</option>
+                    <option value="environment">Kamera Belakang</option>
+                    <option value="user">Kamera Depan</option>
                 </select>
                 <button id="btnToggleCamera" class="btn-camera">Ganti Kamera</button>
             </div>
-
             <div id="reader"></div>
             <div id="statusBox" class="status-box"></div>
         </div>
@@ -95,12 +84,7 @@
             <div id="loadingLog" style="text-align:center; padding:10px; color:#666;">Memuat data...</div>
             <table id="logTable" style="display:none;">
                 <thead>
-                    <tr>
-                        <th>Waktu</th>
-                        <th>NIS</th>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                    </tr>
+                    <tr><th>Waktu</th><th>NIS</th><th>Nama</th><th>Kelas</th></tr>
                 </thead>
                 <tbody id="logBody"></tbody>
             </table>
@@ -108,7 +92,6 @@
     </div>
 
     <script type="module">
-        // ✅ PATH BENAR: Karena file di root, gunakan ./js/
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -133,46 +116,63 @@
         let isProcessingScan = false;
         let currentFacingMode = "environment";
 
-        // ✅ LOGIKA AUTH YANG STABIL
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // User TERDETEKSI LOGIN
-                console.log("✅ User terverifikasi:", user.email);
-                currentUser = user;
-                
-                // 1. Hilangkan loading overlay
-                document.getElementById('loadingOverlay').style.display = 'none';
-                
-                // 2. Load data riwayat
-                loadTodayLog();
-                
-                // 3. Tunggu sebentar, lalu nyalakan kamera (agar UI siap dulu)
-                setTimeout(() => {
-                    initScanner(currentFacingMode);
-                }, 800);
-                
+        // ✅ CEK LOGIN: localStorage DULU (lebih cepat), baru Firebase Auth
+        function checkLogin() {
+            const storedUser = localStorage.getItem('sipelita_user');
+            
+            if (storedUser) {
+                // User sudah login (data ada di localStorage)
+                currentUser = JSON.parse(storedUser);
+                console.log("✅ Login terdeteksi dari localStorage:", currentUser.email);
+                initApp();
             } else {
-                // User BENAR-BENAR BELUM LOGIN
-                console.log("❌ User tidak login, redirect ke login.html");
-                
-                // Opsional: Simpan halaman tujuan agar setelah login bisa kembali ke SICAN
-                localStorage.setItem('redirectAfterLogin', 'sican.html');
-                
-                // Redirect ke login
-                window.location.href = 'login.html';
+                // Cek Firebase Auth sebagai fallback
+                console.log("⏳ Menunggu Firebase Auth...");
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            nama: user.email,
+                            role: 'user'
+                        };
+                        console.log("✅ Login terdeteksi dari Firebase Auth:", user.email);
+                        initApp();
+                    } else {
+                        console.log("❌ Tidak ada login, redirect ke login.html");
+                        window.location.href = 'login.html';
+                    }
+                });
             }
-        });
+        }
 
-        // Tombol Logout
+        function initApp() {
+            // Tampilkan halaman
+            document.body.classList.add('loaded');
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            // Tampilkan info user
+            if (currentUser) {
+                document.getElementById('userInfo').textContent = `Login sebagai: ${currentUser.nama || currentUser.email}`;
+            }
+            
+            // Load data & kamera
+            loadTodayLog();
+            setTimeout(() => {
+                initScanner(currentFacingMode);
+            }, 800);
+        }
+
+        // Logout
         document.getElementById('btnLogout').addEventListener('click', async () => {
-            if (confirm('Yakin ingin keluar dari sistem SICAN?')) {
-                await stopScanner();
-                await signOut(auth);
+            if (confirm('Yakin ingin keluar?')) {
+                localStorage.removeItem('sipelita_user');
+                await signOut(auth).catch(() => {});
                 window.location.href = 'login.html';
             }
         });
 
-        // Kontrol Kamera
+        // Ganti Kamera
         document.getElementById('btnToggleCamera').addEventListener('click', async () => {
             const cameraSelect = document.getElementById('cameraSelect');
             currentFacingMode = cameraSelect.value;
@@ -188,46 +188,30 @@
 
         function showStatus(msg, type) {
             const box = document.getElementById('statusBox');
-            if(!box) return;
             box.textContent = msg;
             box.className = `status-box status-${type}`;
             box.style.display = 'block';
-            const duration = type === 'success' ? 2500 : 4000;
-            setTimeout(() => { box.style.display = 'none'; }, duration);
+            setTimeout(() => { box.style.display = 'none'; }, type === 'success' ? 2500 : 4000);
         }
 
         async function stopScanner() {
             if (html5QrCode && html5QrCode.isScanning) {
-                try {
-                    await html5QrCode.stop();
-                } catch (err) {
-                    console.error("Gagal menghentikan kamera:", err);
-                }
+                try { await html5QrCode.stop(); } catch (err) { console.error(err); }
             }
         }
 
         async function initScanner(facingModeValue) {
-            const config = { 
-                fps: 8, 
-                qrbox: { width: 250, height: 250 }, 
-                aspectRatio: 1.0 
-            };
-            
+            const config = { fps: 8, qrbox: { width: 250, height: 250 } };
             const readerElement = document.getElementById("reader");
             if (readerElement) { readerElement.innerHTML = ""; }
             
             try {
                 html5QrCode = new Html5Qrcode("reader");
-                await html5QrCode.start(
-                    { facingMode: facingModeValue },
-                    config,
-                    onScanSuccess,
-                    () => {} 
-                );
-                console.log("📷 Kamera aktif:", facingModeValue);
+                await html5QrCode.start({ facingMode: facingModeValue }, config, onScanSuccess, () => {});
+                console.log("📷 Kamera aktif");
             } catch (err) {
                 console.error("Kamera error:", err);
-                showStatus('⚠️ Izinkan akses kamera atau klik "Ganti Kamera" untuk refresh.', 'warning');
+                showStatus('⚠️ Izinkan akses kamera atau klik "Ganti Kamera"', 'warning');
             }
         }
 
@@ -236,99 +220,82 @@
             isProcessingScan = true;
 
             let separator = ':';
-            if (!decodedText.includes(':') && decodedText.includes(',')) { separator = ','; }
+            if (!decodedText.includes(':') && decodedText.includes(',')) separator = ',';
 
             const parts = decodedText.trim().split(separator).map(item => item.trim());
-            if (parts.length < 3 || parts[0] === "" || parts[1] === "") {
-                showStatus(`❌ Format QR salah!`, 'error');
+            if (parts.length < 3) {
+                showStatus('❌ Format QR tidak valid', 'error');
                 setTimeout(() => { isProcessingScan = false; }, 3000);
                 return;
             }
 
             const [nis, nama, kelas] = parts;
-            const localDate = new Date();
-            const todayStr = localDate.getFullYear() + '-' + 
-                             String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                             String(localDate.getDate()).padStart(2, '0');
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
             try {
-                // Cek duplikasi
                 const qCek = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', todayStr));
                 const snapshotCek = await getDocs(qCek);
 
                 if (!snapshotCek.empty) {
-                    showStatus(`⚠️ ${nama} sudah absen hari ini!`, 'warning');
+                    showStatus(`⚠️ ${nama} sudah absen hari ini`, 'warning');
                     setTimeout(() => { isProcessingScan = false; }, 3000);
                     return;
                 }
 
-                // Simpan ke Firestore
                 await addDoc(collection(db, 'absensi'), {
                     siswa_nis: nis,
                     siswa_nama: nama,
                     siswa_kelas: kelas,
                     tanggal: todayStr,
-                    jam: localDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    jam: today.toLocaleTimeString('id-ID'),
                     timestamp: serverTimestamp(),
                     scanned_by: currentUser.email,
                     status: 'hadir'
                 });
 
-                showStatus(`✅ Absensi ${nama} berhasil!`, 'success');
+                showStatus(`✅ ${nama} berhasil absen`, 'success');
                 loadTodayLog();
 
             } catch (err) {
-                showStatus('❌ Gagal simpan: ' + err.message, 'error');
+                showStatus('❌ Gagal: ' + err.message, 'error');
             } finally {
                 setTimeout(() => { isProcessingScan = false; }, 2500);
             }
         }
 
         async function loadTodayLog() {
-            const localDate = new Date();
-            const todayStr = localDate.getFullYear() + '-' + 
-                             String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                             String(localDate.getDate()).padStart(2, '0');
-            
-            const qLog = query(collection(db, 'absensi'), where('tanggal', '==', todayStr));
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
             
             try {
-                const snapshot = await getDocs(qLog);
+                const snapshot = await getDocs(query(collection(db, 'absensi'), where('tanggal', '==', todayStr)));
                 const tbody = document.getElementById('logBody');
-                const loadingText = document.getElementById('loadingLog');
-                const logTable = document.getElementById('logTable');
-                
-                if (!tbody) return;
                 tbody.innerHTML = '';
 
                 if (snapshot.empty) {
-                    loadingText.textContent = 'Belum ada data absensi hari ini.';
-                    loadingText.style.display = 'block';
-                    logTable.style.display = 'none';
+                    document.getElementById('loadingLog').textContent = 'Belum ada absensi hari ini';
+                    document.getElementById('logTable').style.display = 'none';
                     return;
                 }
 
-                loadingText.style.display = 'none';
-                logTable.style.display = 'table';
+                document.getElementById('loadingLog').style.display = 'none';
+                document.getElementById('logTable').style.display = 'table';
 
                 let listAbsen = [];
-                snapshot.forEach(doc => { listAbsen.push(doc.data()); });
+                snapshot.forEach(doc => listAbsen.push(doc.data()));
                 listAbsen.sort((a, b) => (b.jam || "").localeCompare(a.jam || ""));
 
                 listAbsen.forEach(data => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="font-weight: 600; color: #1976d2;">${data.jam || '-'}</td>
-                            <td>${data.siswa_nis || '-'}</td>
-                            <td style="font-weight: 500;">${data.siswa_nama || '-'}</td>
-                            <td>${data.siswa_kelas || '-'}</td>
-                        </tr>
-                    `;
+                    tbody.innerHTML += `<tr><td>${data.jam}</td><td>${data.siswa_nis}</td><td>${data.siswa_nama}</td><td>${data.siswa_kelas}</td></tr>`;
                 });
             } catch (err) {
-                console.error('Gagal load log:', err);
+                console.error('Load log error:', err);
             }
         }
+
+        // Mulai cek login
+        checkLogin();
     </script>
 </body>
 </html>
