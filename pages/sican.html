@@ -62,14 +62,31 @@
     </div>
 
     <script type="module">
-        import { db } from '../js/firebase-config.js';
-        import { collection, addDoc, query, where, getDocs, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-        const auth = getAuth();
-        let currentUser = null;
+        // Menggunakan konfigurasi resmi sipelita-digital secara langsung
+        const firebaseConfig = {
+            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+            authDomain: "sipelita-digital.firebaseapp.com",
+            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sipelita-digital",
+            storageBucket: "sipelita-digital.firebasestorage.app",
+            messagingSenderId: "787840817745",
+            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+            measurementId: "G-1D5DWJV54E"
+        };
 
-        // Cek Login
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        let currentUser = null;
+        let html5QrCode = null;
+        let isProcessingScan = false; // Mencegah scan ganda akibat jepretan kamera beruntun
+
+        // Cek Status Login Pengguna/Guru
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'login.html';
@@ -81,7 +98,10 @@
         });
 
         document.getElementById('btnLogout').addEventListener('click', async () => {
-            if (confirm('Yakin ingin keluar?')) {
+            if (confirm('Yakin ingin keluar dari sistem SICAN?')) {
+                if(html5QrCode) {
+                    try { await html5QrCode.stop(); } catch(e) {}
+                }
                 await signOut(auth);
                 window.location.href = 'login.html';
             }
@@ -89,101 +109,139 @@
 
         function showStatus(msg, type) {
             const box = document.getElementById('statusBox');
+            if(!box) return;
             box.textContent = msg;
             box.className = `status-box status-${type}`;
             box.style.display = 'block';
-            setTimeout(() => { box.style.display = 'none'; }, 3000);
+            
+            // Kunci status warning/error sedikit lebih lama agar terbaca jelas
+            const duration = type === 'success' ? 2500 : 4000;
+            setTimeout(() => { box.style.display = 'none'; }, duration);
         }
 
         async function initScanner() {
-            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
-            const html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 6, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            html5QrCode = new Html5Qrcode("reader");
             
             try {
                 await html5QrCode.start(
                     { facingMode: "environment" },
                     config,
                     onScanSuccess,
-                    () => {} // ignore errors
+                    () => {} // mengabaikan log kegagalan bidik frame mini
                 );
             } catch (err) {
-                showStatus('⚠️ Izinkan akses kamera untuk scan QR', 'warning');
+                console.error("Kamera gagal diakses:", err);
+                showStatus('⚠️ Mohon izinkan akses kamera perangkat untuk memindai QR.', 'warning');
             }
         }
 
         async function onScanSuccess(decodedText) {
-            // Format QR: NIS:NAMA:KELAS
+            if (isProcessingScan) return; // Abaikan pembacaan jika proses input data sebelumnya belum selesai
+            isProcessingScan = true;
+
+            // Ekspektasi Format QR Kartu Pelajar -> NIS:NAMA:KELAS
             const parts = decodedText.trim().split(':');
             if (parts.length < 3) {
-                showStatus('❌ Format QR tidak valid!', 'error');
+                showStatus('❌ Format QR Code salah atau tidak dikenali!', 'error');
+                setTimeout(() => { isProcessingScan = false; }, 3000);
                 return;
             }
 
             const [nis, nama, kelas] = parts;
-            const today = new Date().toISOString().split('T')[0];
+            
+            // Format pencatatan tanggal lokal (WIB/WITA/WIT sesuai gadget)
+            const localDate = new Date();
+            const todayStr = localDate.getFullYear() + '-' + 
+                             String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                             String(localDate.getDate()).padStart(2, '0');
 
             try {
-                // Cek duplikasi hari ini
-                const q = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', today));
-                const snapshot = await getDocs(q);
+                // Periksa apakah siswa terkait sudah terekam hadir pada tanggal hari ini
+                const qCek = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', todayStr));
+                const snapshotCek = await getDocs(qCek);
 
-                if (!snapshot.empty) {
-                    showStatus(`⚠️ ${nama} sudah absen hari ini!`, 'warning');
+                if (!snapshotCek.empty) {
+                    showStatus(`⚠️ ${nama} sudah melakukan absensi hari ini!`, 'warning');
+                    setTimeout(() => { isProcessingScan = false; }, 3000);
                     return;
                 }
 
-                // Simpan ke Firestore
+                // Kirim record baru ke Firestore koleksi 'absensi'
                 await addDoc(collection(db, 'absensi'), {
                     siswa_nis: nis,
                     siswa_nama: nama,
                     siswa_kelas: kelas,
-                    tanggal: today,
-                    jam: new Date().toLocaleTimeString('id-ID'),
+                    tanggal: todayStr,
+                    jam: localDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                     timestamp: serverTimestamp(),
                     scanned_by: currentUser.email,
                     status: 'hadir'
                 });
 
-                showStatus(`✅ ${nama} (${kelas}) berhasil absen!`, 'success');
-                loadTodayLog(); // Refresh tabel
+                showStatus(`✅ Absensi ${nama} (${kelas}) berhasil dicatat!`, 'success');
+                loadTodayLog(); // Perbarui tampilan tabel histori
 
             } catch (err) {
-                console.error('Scan Error:', err);
-                showStatus('❌ Gagal menyimpan data: ' + err.message, 'error');
+                console.error('Proses simpan database gagal:', err);
+                showStatus('❌ Gagal menginput absensi: ' + err.message, 'error');
+            } {
+                // Berikan jeda waktu 2.5 detik sebelum kamera siap menerima scan murid berikutnya
+                setTimeout(() => { isProcessingScan = false; }, 2500);
             }
         }
 
         async function loadTodayLog() {
-            const today = new Date().toISOString().split('T')[0];
-            const q = query(collection(db, 'absensi'), where('tanggal', '==', today), orderBy('timestamp', 'desc'));
+            const localDate = new Date();
+            const todayStr = localDate.getFullYear() + '-' + 
+                             String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                             String(localDate.getDate()).padStart(2, '0');
+            
+            // Solusi Perbaikan Utama: Hapus pengurutan orderBy jika struktur indeks belum siap, 
+            // kita lakukan sorting data secara lokal menggunakan JavaScript agar aman dari error Firestore.
+            const qLog = query(collection(db, 'absensi'), where('tanggal', '==', todayStr));
             
             try {
-                const snapshot = await getDocs(q);
+                const snapshot = await getDocs(qLog);
                 const tbody = document.getElementById('logBody');
+                const loadingText = document.getElementById('loadingLog');
+                const logTable = document.getElementById('logTable');
+                
+                if (!tbody) return;
                 tbody.innerHTML = '';
 
                 if (snapshot.empty) {
-                    document.getElementById('loadingLog').textContent = 'Belum ada absensi hari ini';
-                    document.getElementById('logTable').style.display = 'none';
+                    loadingText.textContent = 'Belum ada data siswa masuk hari ini.';
+                    loadingText.style.display = 'block';
+                    logTable.style.display = 'none';
                     return;
                 }
 
-                document.getElementById('loadingLog').style.display = 'none';
-                document.getElementById('logTable').style.display = 'table';
+                loadingText.style.display = 'none';
+                logTable.style.display = 'table';
 
+                // Array penampung untuk diurutkan secara manual
+                let listAbsen = [];
                 snapshot.forEach(doc => {
-                    const data = doc.data();
+                    listAbsen.push(doc.data());
+                });
+
+                // Urutkan data berdasarkan jam terbaru (descending)
+                listAbsen.sort((a, b) => (b.jam || "").localeCompare(a.jam || ""));
+
+                listAbsen.forEach(data => {
                     tbody.innerHTML += `
                         <tr>
-                            <td>${data.jam}</td>
-                            <td>${data.siswa_nis}</td>
-                            <td>${data.siswa_nama}</td>
-                            <td>${data.siswa_kelas}</td>
+                            <td style="font-weight: 600; color: #1976d2;">${data.jam || '-'}</td>
+                            <td>${data.siswa_nis || '-'}</td>
+                            <td style="font-weight: 500;">${data.siswa_nama || '-'}</td>
+                            <td>${data.siswa_kelas || '-'}</td>
                         </tr>
                     `;
                 });
             } catch (err) {
-                console.error('Load Log Error:', err);
+                console.error('Gagal memperbarui riwayat:', err);
+                document.getElementById('loadingLog').textContent = '⚠️ Gangguan memuat riwayat: ' + err.message;
             }
         }
     </script>
