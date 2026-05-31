@@ -84,6 +84,8 @@
     </div>
 
     <script type="module">
+        console.log("KEY sipelita_user:", localStorage.getItem('sipelita_user'));
+console.log("Semua localStorage:", JSON.stringify({...localStorage}));
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -110,35 +112,48 @@
 
         // ✅ CHECK LOGIN - Cek localStorage DULU (lebih cepat)
         function checkLoginAndInit() {
-            const storedUser = localStorage.getItem('sipelita_user');
-            
-            if (storedUser) {
-                // User sudah login dari dashboard
-                currentUser = JSON.parse(storedUser);
-                console.log("✅ Login dari localStorage:", currentUser.email);
-                initPage();
-            } else {
-                // Fallback ke Firebase Auth
-                console.log("⏳ Cek Firebase Auth...");
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        currentUser = {
-                            uid: user.uid,
-                            email: user.email,
-                            nama: user.email,
-                            role: 'user'
-                        };
-                        console.log("✅ Login dari Firebase:", user.email);
-                        initPage();
-                    } else {
-                        console.log("❌ Tidak login, redirect...");
-                        // ✅ FIX: Path yang benar (naik satu folder)
-                        window.location.href = '../login.html';
-                    }
-                });
-            }
-        }
+    const storedUser = localStorage.getItem('sipelita_user');
 
+    if (storedUser) {
+        try {
+            currentUser = JSON.parse(storedUser);
+            console.log("✅ Login dari localStorage:", currentUser.email);
+            initPage();
+            return; // ← PENTING: stop di sini, jangan lanjut ke Firebase
+        } catch (e) {
+            console.warn("⚠️ Data localStorage rusak, hapus dan cek Firebase");
+            localStorage.removeItem('sipelita_user');
+        }
+    }
+
+    // Fallback Firebase Auth — JANGAN redirect sebelum Firebase selesai
+    console.log("⏳ Cek Firebase Auth...");
+    
+    // Tambahkan timeout agar tidak loading selamanya
+    const authTimeout = setTimeout(() => {
+        console.log("❌ Firebase Auth timeout, redirect login");
+        window.location.href = '../login.html';
+    }, 5000);
+
+    onAuthStateChanged(auth, (user) => {
+        clearTimeout(authTimeout); // batalkan timeout jika Firebase sudah jawab
+        if (user) {
+            currentUser = {
+                uid: user.uid,
+                email: user.email,
+                nama: user.email,
+                role: 'user'
+            };
+            // Simpan ke localStorage supaya next visit lebih cepat
+            localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
+            console.log("✅ Login dari Firebase:", user.email);
+            initPage();
+        } else {
+            console.log("❌ Tidak login, redirect...");
+            window.location.href = '../login.html';
+        }
+    });
+}
         function initPage() {
             // Tampilkan info user
             if (currentUser) {
