@@ -9,29 +9,144 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
-        .header { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
+
+        /* ── HEADER ── */
+        .header {
+            background: linear-gradient(135deg, #0d47a1, #1976d2);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
-        .header p { opacity: 0.9; }
+        .header p { opacity: 0.9; font-size: 0.9rem; }
+
+        /* ── TOMBOL HEADER ── */
+        .header-actions {
+            display: inline-flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            border-radius: 7px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: inherit;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        /* Biru — Kembali */
+        .btn-back {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border-color: rgba(255,255,255,0.4);
+        }
+        .btn-back:hover {
+            background: rgba(255,255,255,0.28);
+            border-color: rgba(255,255,255,0.7);
+            transform: translateY(-1px);
+        }
+        /* Merah — Logout */
+        .btn-logout {
+            background: rgba(239,68,68,0.18);
+            color: #fecaca;
+            border-color: rgba(239,68,68,0.45);
+        }
+        .btn-logout:hover {
+            background: rgba(239,68,68,0.38);
+            border-color: rgba(239,68,68,0.75);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        /* ── LAYOUT ── */
         .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        
-        .scanner-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
-        
-        .camera-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .select-camera { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #fff; outline: none; min-width: 200px; }
-        .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
+
+        .scanner-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .camera-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .select-camera {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;
+            background: #fff;
+            outline: none;
+            min-width: 200px;
+        }
+        .btn-camera {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
         .btn-camera:hover { background: #0d47a1; }
-        
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; min-height: 300px; border: 2px dashed #ddd; }
-        .status-box { padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; font-weight: 600; display: none; }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fafafa;
+            min-height: 300px;
+            border: 2px dashed #ddd;
+        }
+
+        .status-box {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
         .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
         .status-warning { background: #fff3e0; color: #e65100; border: 1px solid #ff9800; }
-        .status-error { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
-        .log-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .status-error   { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
+
+        .log-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
         .log-box h3 { margin-bottom: 15px; color: #0d47a1; }
+
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #0d47a1; }
-        btn-logout { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+
         @media (max-width: 600px) {
             .header h1 { font-size: 1.4rem; }
             th, td { padding: 8px; font-size: 0.9rem; }
@@ -42,9 +157,9 @@
     <div class="header">
         <h1>📷 SICAN - Scan Absensi</h1>
         <p id="userInfo">Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
-        <div style="margin-top: 15px;">
-            <a href="../index.html" class="btn-back">🏠 Kembali</a>
-            <button id="btnLogout" class="btn-logout">Logout</button>
+        <div class="header-actions">
+            <a href="../index.html" class="btn-header btn-back">🏠 Kembali</a>
+            <button id="btnLogout" class="btn-header btn-logout">🚪 Logout</button>
         </div>
     </div>
 
@@ -57,7 +172,6 @@
                 </select>
                 <button id="btnToggleCamera" class="btn-camera">Ganti Kamera</button>
             </div>
-
             <div id="reader">
                 <p style="padding: 50px; color: #999;">⏳ Mengaktifkan kamera...</p>
             </div>
@@ -82,8 +196,6 @@
     </div>
 
     <script type="module">
-        console.log("KEY sipelita_user:", localStorage.getItem('sipelita_user'));
-console.log("Semua localStorage:", JSON.stringify({...localStorage}));
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -102,67 +214,51 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        
+
         let currentUser = null;
         let html5QrCode = null;
         let isProcessingScan = false;
         let currentFacingMode = "environment";
 
-        // ✅ CHECK LOGIN - Cek localStorage DULU (lebih cepat)
+        // ✅ CHECK LOGIN
         function checkLoginAndInit() {
-    const storedUser = localStorage.getItem('sipelita_user');
+            const storedUser = localStorage.getItem('sipelita_user');
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                    console.log("✅ Login dari localStorage:", currentUser.email);
+                    initPage();
+                    return;
+                } catch (e) {
+                    console.warn("⚠️ Data localStorage rusak");
+                    localStorage.removeItem('sipelita_user');
+                }
+            }
 
-    if (storedUser) {
-        try {
-            currentUser = JSON.parse(storedUser);
-            console.log("✅ Login dari localStorage:", currentUser.email);
-            initPage();
-            return; // ← PENTING: stop di sini, jangan lanjut ke Firebase
-        } catch (e) {
-            console.warn("⚠️ Data localStorage rusak, hapus dan cek Firebase");
-            localStorage.removeItem('sipelita_user');
+            console.log("⏳ Cek Firebase Auth...");
+            const authTimeout = setTimeout(() => {
+                window.location.href = '../login.html';
+            }, 5000);
+
+            onAuthStateChanged(auth, (user) => {
+                clearTimeout(authTimeout);
+                if (user) {
+                    currentUser = { uid: user.uid, email: user.email, nama: user.email, role: 'user' };
+                    localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
+                    console.log("✅ Login dari Firebase:", user.email);
+                    initPage();
+                } else {
+                    window.location.href = '../login.html';
+                }
+            });
         }
-    }
 
-    // Fallback Firebase Auth — JANGAN redirect sebelum Firebase selesai
-    console.log("⏳ Cek Firebase Auth...");
-    
-    // Tambahkan timeout agar tidak loading selamanya
-    const authTimeout = setTimeout(() => {
-        console.log("❌ Firebase Auth timeout, redirect login");
-        window.location.href = '../login.html';
-    }, 5000);
-
-    onAuthStateChanged(auth, (user) => {
-        clearTimeout(authTimeout); // batalkan timeout jika Firebase sudah jawab
-        if (user) {
-            currentUser = {
-                uid: user.uid,
-                email: user.email,
-                nama: user.email,
-                role: 'user'
-            };
-            // Simpan ke localStorage supaya next visit lebih cepat
-            localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
-            console.log("✅ Login dari Firebase:", user.email);
-            initPage();
-        } else {
-            console.log("❌ Tidak login, redirect...");
-            window.location.href = '../login.html';
-        }
-    });
-}
         function initPage() {
-            // Tampilkan info user
             if (currentUser) {
                 document.getElementById('userInfo').textContent = `Login: ${currentUser.nama || currentUser.email}`;
             }
-            
-            // Load data dan kamera
             loadTodayLog();
-            setTimeout(() => {
-                initScanner(currentFacingMode);
-            }, 500);
+            setTimeout(() => { initScanner(currentFacingMode); }, 500);
         }
 
         document.getElementById('btnLogout').addEventListener('click', async () => {
@@ -174,8 +270,7 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
         });
 
         document.getElementById('btnToggleCamera').addEventListener('click', async () => {
-            const cameraSelect = document.getElementById('cameraSelect');
-            currentFacingMode = cameraSelect.value;
+            currentFacingMode = document.getElementById('cameraSelect').value;
             await stopScanner();
             setTimeout(() => { initScanner(currentFacingMode); }, 500);
         });
@@ -196,53 +291,28 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
 
         async function stopScanner() {
             if (html5QrCode && html5QrCode.isScanning) {
-                try {
-                    await html5QrCode.stop();
-                    console.log("Kamera dimatikan");
-                } catch (err) {
-                    console.error("Error stop kamera:", err);
-                }
+                try { await html5QrCode.stop(); } catch (err) { console.error(err); }
             }
         }
 
         async function initScanner(facingModeValue) {
-            console.log("🎥 Mencoba aktifkan kamera:", facingModeValue);
-            
-            const config = { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                aspectRatio: 1.0 
-            };
-            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
             const readerElement = document.getElementById("reader");
-            readerElement.innerHTML = ""; // Clear placeholder
-            
+            readerElement.innerHTML = "";
             try {
                 html5QrCode = new Html5Qrcode("reader");
-                await html5QrCode.start(
-                    { facingMode: facingModeValue },
-                    config,
-                    onScanSuccess,
-                    (errorMessage) => {
-                        // Ignore scanning errors (normal saat mencari QR)
-                    }
-                );
-                console.log("✅ Kamera berhasil aktif!");
+                await html5QrCode.start({ facingMode: facingModeValue }, config, onScanSuccess, () => {});
             } catch (err) {
-                console.error("❌ Gagal akses kamera:", err);
                 readerElement.innerHTML = `
                     <div style="padding: 50px; color: #f44336;">
                         <p style="font-size: 3rem; margin-bottom: 10px;">📷</p>
                         <p><strong>Kamera tidak bisa diakses</strong></p>
                         <p style="font-size: 0.9rem; margin-top: 10px;">
-                            Pastikan:<br>
-                            1. Browser memiliki izin akses kamera<br>
-                            2. Menggunakan HTTPS atau localhost<br>
-                            3. Perangkat memiliki kamera
+                            Pastikan:<br>1. Browser memiliki izin akses kamera<br>
+                            2. Menggunakan HTTPS atau localhost<br>3. Perangkat memiliki kamera
                         </p>
-                        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 6px; cursor: pointer;">Coba Lagi</button>
-                    </div>
-                `;
+                        <button onclick="location.reload()" style="margin-top:15px;padding:10px 20px;background:#1976d2;color:white;border:none;border-radius:6px;cursor:pointer;">Coba Lagi</button>
+                    </div>`;
                 showStatus('⚠️ Kamera gagal diakses. Periksa izin browser.', 'warning');
             }
         }
@@ -250,8 +320,6 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
         async function onScanSuccess(decodedText) {
             if (isProcessingScan) return;
             isProcessingScan = true;
-
-            console.log("📱 QR Terdeteksi:", decodedText);
 
             const parts = decodedText.trim().split(':');
             if (parts.length < 3) {
@@ -265,7 +333,6 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
             const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
             try {
-                // Cek duplikasi
                 const qCek = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', todayStr));
                 const snapshotCek = await getDocs(qCek);
 
@@ -275,23 +342,15 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
                     return;
                 }
 
-                // Simpan ke Firestore
                 await addDoc(collection(db, 'absensi'), {
-                    siswa_nis: nis,
-                    siswa_nama: nama,
-                    siswa_kelas: kelas,
-                    tanggal: todayStr,
-                    jam: today.toLocaleTimeString('id-ID'),
-                    timestamp: serverTimestamp(),
-                    scanned_by: currentUser.email,
-                    status: 'hadir'
+                    siswa_nis: nis, siswa_nama: nama, siswa_kelas: kelas,
+                    tanggal: todayStr, jam: today.toLocaleTimeString('id-ID'),
+                    timestamp: serverTimestamp(), scanned_by: currentUser.email, status: 'hadir'
                 });
 
                 showStatus(`✅ ${nama} (${kelas}) berhasil absen!`, 'success');
                 loadTodayLog();
-
             } catch (err) {
-                console.error("Error simpan data:", err);
                 showStatus('❌ Gagal simpan: ' + err.message, 'error');
             } finally {
                 setTimeout(() => { isProcessingScan = false; }, 2500);
@@ -301,56 +360,41 @@ console.log("Semua localStorage:", JSON.stringify({...localStorage}));
         async function loadTodayLog() {
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-            
-            console.log("📊 Loading absensi tanggal:", todayStr);
-            
             try {
-                const qLog = query(collection(db, 'absensi'), where('tanggal', '==', todayStr));
-                const snapshot = await getDocs(qLog);
-                
+                const snapshot = await getDocs(query(collection(db, 'absensi'), where('tanggal', '==', todayStr)));
                 const tbody = document.getElementById('logBody');
                 const loadingText = document.getElementById('loadingLog');
                 const logTable = document.getElementById('logTable');
-                
                 tbody.innerHTML = '';
 
                 if (snapshot.empty) {
                     loadingText.textContent = 'Belum ada absensi hari ini.';
                     loadingText.style.display = 'block';
                     logTable.style.display = 'none';
-                    console.log("📭 Belum ada data");
                     return;
                 }
 
-                console.log(`✅ Ditemukan ${snapshot.size} data absensi`);
                 loadingText.style.display = 'none';
                 logTable.style.display = 'table';
 
                 let listAbsen = [];
-                snapshot.forEach(doc => {
-                    listAbsen.push(doc.data());
-                });
-
+                snapshot.forEach(doc => listAbsen.push(doc.data()));
                 listAbsen.sort((a, b) => (b.jam || "").localeCompare(a.jam || ""));
 
                 listAbsen.forEach(data => {
                     tbody.innerHTML += `
                         <tr>
-                            <td style="font-weight: 600; color: #1976d2;">${data.jam || '-'}</td>
+                            <td style="font-weight:600;color:#1976d2;">${data.jam || '-'}</td>
                             <td>${data.siswa_nis || '-'}</td>
-                            <td style="font-weight: 500;">${data.siswa_nama || '-'}</td>
+                            <td style="font-weight:500;">${data.siswa_nama || '-'}</td>
                             <td>${data.siswa_kelas || '-'}</td>
-                        </tr>
-                    `;
+                        </tr>`;
                 });
             } catch (err) {
-                console.error("❌ Error load data:", err);
                 document.getElementById('loadingLog').textContent = 'Gagal memuat data: ' + err.message;
             }
         }
 
-        // Mulai proses
-        console.log("🚀 SICAN dimulai...");
         checkLoginAndInit();
     </script>
 </body>
