@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SICAN - Rekapitulasi Absensi</title>
-    <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
@@ -32,20 +32,22 @@
         .btn-success:hover { background: #1b5e20; }
         
         /* Tabel Rekap */
-        .rekap-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow-hidden; }
-        .rekap-card h3 { color: #0d47a1; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        .rekap-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .rekap-card h3 { color: #0d47a1; margin-bottom: 5px; padding-bottom: 5px; }
+        .info-tambahan { font-size: 0.85rem; color: #666; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
         .table-responsive { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e0e0e0; }
         th { background: #f8f9fa; color: #0d47a1; font-weight: 600; }
         tr:hover { background: #fdfdfd; }
         .text-center { text-align: center; }
         .badge-hadir { background: #e8f5e9; color: #2e7d32; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .badge-waktu { background: #e3f2fd; color: #0d47a1; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+        .badge-persen { background: #fff3e0; color: #e65100; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
 
-        /* Gaya Khusus Cetak / Print PDF */
         @media print {
             body { background: white; color: black; }
-            .header, .filter-card, .btn-group, .btn-logout { display: none !important; }
+            .header, .filter-card, .btn-group { display: none !important; }
             .container { max-width: 100%; margin: 0; padding: 0; }
             .rekap-card { box-shadow: none; padding: 0; }
             th { background: #eee !important; color: black !important; border: 1px solid #999; }
@@ -56,13 +58,13 @@
 <body>
 
     <div class="header">
-    <h1>📊 Dashboard Rekapitulasi Absensi (SICAN)</h1>
-    <p>Laporan Kehadiran Elektronik Siswa Madrasah</p>
-    
-    <div style="margin-top: 15px;">
-        <a href="../index.html" style="background: rgba(255,255,255,0.2); color: white; padding: 6px 15px; border-radius: 5px; text-decoration: none; font-size: 0.85rem; border: 1px solid white; margin-right: 10px;">⬅️ Kembali ke Dashboard</a>
+        <h1>📊 Dashboard Rekapitulasi Absensi (SICAN)</h1>
+        <p>Laporan Kehadiran Elektronik Siswa Madrasah</p>
+        
+        <div style="margin-top: 15px;">
+            <a href="index.html" style="background: rgba(255,255,255,0.2); color: white; padding: 6px 15px; border-radius: 5px; text-decoration: none; font-size: 0.85rem; border: 1px solid white;">🏠 Ke Dashboard Utama</a>
+        </div>
     </div>
-</div>
 
     <div class="container">
         <div class="filter-card">
@@ -123,20 +125,23 @@
 
         <div class="rekap-card">
             <h3 id="judulRekap">📋 Laporan Absensi Bulanan</h3>
+            <div id="infoTambahan" class="info-tambahan">Hari efektif pindaian terdeteksi: - hari</div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th width="60px" class="text-center">No</th>
-                            <th width="150px">NIS</th>
+                            <th width="50px" class="text-center">No</th>
+                            <th width="120px">NIS</th>
                             <th>Nama Lengkap Siswa</th>
-                            <th width="120px" class="text-center">Kelas</th>
-                            <th width="180px" class="text-center">Total Hari Hadir</th>
+                            <th width="100px" class="text-center">Kelas</th>
+                            <th width="220px" class="text-center">Waktu Datang (Rentang)</th>
+                            <th width="140px" class="text-center">Total Hadir</th>
+                            <th width="130px" class="text-center">Persentase</th>
                         </tr>
                     </thead>
                     <tbody id="rekapBody">
                         <tr>
-                            <td colspan="5" class="text-center" style="color: #666; padding: 20px;">Silakan klik tombol "Tampilkan Rekap" untuk memuat data dari server.</td>
+                            <td colspan="7" class="text-center" style="color: #666; padding: 20px;">Silakan klik tombol "Tampilkan Rekap" untuk memuat data dari server.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -164,14 +169,13 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Proteksi Halaman: Wajib Login
+        // Proteksi Halaman Sejajar Folder Utama
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location.href = 'login.html';
             }
         });
 
-        // Sembunyikan filter bulan jika memilih laporan tahunan/semesteran
         document.getElementById('periodeFilter').addEventListener('change', (e) => {
             const bulanGroup = document.getElementById('bulanGroup');
             if (e.target.value === 'bulanan') {
@@ -186,14 +190,15 @@
 
         async function muatRekapitulasi() {
             const rekapBody = document.getElementById('rekapBody');
+            const infoTambahan = document.getElementById('infoTambahan');
             const periode = document.getElementById('periodeFilter').value;
             const bulan = document.getElementById('bulanFilter').value;
             const tahun = document.getElementById('tahunFilter').value;
             const filterKelas = document.getElementById('kelasFilter').value;
             
-            rekapBody.innerHTML = '<tr><td colspan="5" class="text-center">Sedang mengkalkulasi data absensi dari server...</td></tr>';
+            rekapBody.innerHTML = '<tr><td colspan="7" class="text-center">Sedang mengkalkulasi data absensi dari server...</td></tr>';
+            infoTambahan.textContent = 'Menghitung hari efektif...';
 
-            // Mengubah Judul Dinamis Laporan
             const opsiPeriodeText = document.getElementById('periodeFilter').options[document.getElementById('periodeFilter').selectedIndex].text;
             document.getElementById('judulRekap').textContent = `📋 Laporan Absensi ${opsiPeriodeText} (${filterKelas === 'SEMUA' ? 'Semua Kelas' : 'Kelas ' + filterKelas})`;
 
@@ -202,20 +207,20 @@
                 let snapshot = await getDocs(qRef);
                 
                 if (snapshot.empty) {
-                    rekapBody.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ditemukan riwayat absensi pada basis data.</td></tr>';
+                    rekapBody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ditemukan riwayat absensi pada basis data.</td></tr>';
+                    infoTambahan.textContent = 'Hari efektif pindaian terdeteksi: 0 hari';
                     return;
                 }
 
-                // Map Penampung Penghitungan (Agregasi) Data
                 let petaSiswa = {};
-
-                // Penentuan Batasan Validasi Tanggal Berdasarkan Filter
+                let setHariEfektif = new Set(); // Menyimpan tanggal-tanggal unik yang ada aktivitas scan
                 const hariIni = new Date();
                 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const tglDokumen = data.tanggal; // Format di DB: YYYY-MM-DD
+                    const tglDokumen = data.tanggal; 
                     const kelasDokumen = data.siswa_kelas || '';
+                    const jamDokumen = data.jam || '';
                     
                     if (!tglDokumen) return;
 
@@ -225,7 +230,6 @@
 
                     // 1. Validasi Filter Kelas
                     if (filterKelas !== 'SEMUA') {
-                        // Memeriksa substring kelas (contoh: jika filter 'XI', maka kelas 'XI-A' atau 'XI MIPA' lolos)
                         if (!kelasDokumen.toUpperCase().startsWith(filterKelas.toUpperCase())) return;
                     }
 
@@ -248,47 +252,72 @@
 
                     if (!lolosWaktu) return;
 
-                    // Jika lolos semua filter, hitung frekuensi kehadirannya
+                    // Catat tanggal ini sebagai hari efektif bermunculan absensi
+                    setHariEfektif.add(tglDokumen);
+
                     const nis = data.siswa_nis;
                     if (!petaSiswa[nis]) {
                         petaSiswa[nis] = {
                             nis: nis,
                             nama: data.siswa_nama,
                             kelas: kelasDokumen,
-                            hadir: 0
+                            hadir: 0,
+                            jamKoleksi: [] // Menyimpan jam kedatangan untuk ditarik jam terawal & terakhirnya
                         };
                     }
                     petaSiswa[nis].hadir += 1;
+                    if (jamDokumen) {
+                        petaSiswa[nis].jamKoleksi.push(jamDokumen);
+                    }
                 });
 
-                // Tampilkan data hasil kalkulasi ke dalam tabel HTML
                 const daftarSiswa = Object.values(petaSiswa);
-                
-                // Urutkan alfabet nama siswa agar rapi
                 daftarSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
 
                 rekapBody.innerHTML = '';
+                
+                // Hari Kerja Efektif dihitung dari total tanggal unik terkumpul
+                const totalHariEfektif = setHariEfektif.size || 1; 
+                infoTambahan.textContent = `Hari efektif pindaian terdeteksi: ${totalHariEfektif} hari kerja (Siswa hadir terbanyak dijadikan tolok ukur 100%)`;
+
                 if (daftarSiswa.length === 0) {
-                    rekapBody.innerHTML = '<tr><td colspan="5" class="text-center" style="color:#d32f2f;">Tidak ada riwayat kehadiran siswa yang cocok dengan filter ini.</td></tr>';
+                    rekapBody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:#d32f2f;">Tidak ada riwayat kehadiran siswa yang cocok dengan filter ini.</td></tr>';
                     return;
                 }
 
                 let no = 1;
                 daftarSiswa.forEach(siswa => {
+                    // Cari jam paling pagi (terawal) dan paling siang (terakhir) dari koleksi absen siswa
+                    let rentangWaktu = "-";
+                    if (siswa.jamKoleksi.length > 0) {
+                        siswa.jamKoleksi.sort();
+                        const jamTerawal = siswa.jamKoleksi[0];
+                        const jamTerakhir = siswa.jamKoleksi[siswa.jamKoleksi.length - 1];
+                        
+                        // Jika jam terawal dan terakhir sama, tampilkan satu saja. Jika beda, buat rentangnya.
+                        rentangWaktu = jamTerawal === jamTerakhir ? jamTerawal : `${jamTerawal} s.d ${jamTerakhir}`;
+                    }
+
+                    // Hitung Persentase Kehadiran
+                    let persentase = (siswa.hadir / totalHariEfektif) * 100;
+                    if (persentase > 100) persentase = 100; // Proteksi pembagi batas atas
+
                     rekapBody.innerHTML += `
                         <tr>
                             <td class="text-center">${no++}</td>
                             <td style="font-family: monospace; font-size: 0.95rem;">${siswa.nis}</td>
                             <td style="font-weight: 500;">${siswa.nama}</td>
                             <td class="text-center">${siswa.kelas}</td>
+                            <td class="text-center"><span class="badge-waktu">🕒 ${rentangWaktu}</span></td>
                             <td class="text-center"><span class="badge-hadir">${siswa.hadir} Hari</span></td>
+                            <td class="text-center"><span class="badge-persen">${persentase.toFixed(1)}%</span></td>
                         </tr>
                     `;
                 });
 
             } catch (err) {
                 console.error("Gagal memproses rekap:", err);
-                rekapBody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Gagal mengambil data laporan: ${err.message}</td></tr>`;
+                rekapBody.innerHTML = `<tr><td colspan="7" class="text-center" style="color:red;">Gagal mengambil data laporan: ${err.message}</td></tr>`;
             }
         }
     </script>
