@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SICAN - Scan Absensi</title>
-    <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
+    <link rel="icon" type="image/png" href="../assets/images/sipelita-app.png">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -16,13 +16,12 @@
         
         .scanner-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
         
-        /* Style Tambahan untuk Kontrol Kamera */
         .camera-controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .select-camera { padding: 10px 15px; border-radius: 8px; border: 1px solid #ccc; font-size: 0.9rem; background: #fff; outline: none; min-width: 200px; }
         .btn-camera { background: #1976d2; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; font-size: 0.9rem; transition: 0.2s; }
         .btn-camera:hover { background: #0d47a1; }
         
-        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border-radius: 10px; overflow: hidden; background: #fafafa; min-height: 300px; border: 2px dashed #ddd; }
         .status-box { padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center; font-weight: 600; display: none; }
         .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
         .status-warning { background: #fff3e0; color: #e65100; border: 1px solid #ff9800; }
@@ -33,6 +32,8 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; color: #0d47a1; }
         .btn-logout { background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px; }
+        .btn-back { background: rgba(255,255,255,0.2); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; display: inline-block; margin-right: 10px; }
+        .btn-back:hover { background: rgba(255,255,255,0.3); }
         @media (max-width: 600px) {
             .header h1 { font-size: 1.4rem; }
             th, td { padding: 8px; font-size: 0.9rem; }
@@ -42,8 +43,11 @@
 <body>
     <div class="header">
         <h1>📷 SICAN - Scan Absensi</h1>
-        <p>Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
-        <button id="btnLogout" class="btn-logout">Logout</button>
+        <p id="userInfo">Scan QR Code Kartu Pelajar untuk Absensi Otomatis</p>
+        <div style="margin-top: 15px;">
+            <a href="../index.html" class="btn-back">🏠 Kembali</a>
+            <button id="btnLogout" class="btn-logout">Logout</button>
+        </div>
     </div>
 
     <div class="container">
@@ -56,7 +60,9 @@
                 <button id="btnToggleCamera" class="btn-camera">Ganti Kamera</button>
             </div>
 
-            <div id="reader"></div>
+            <div id="reader">
+                <p style="padding: 50px; color: #999;">⏳ Mengaktifkan kamera...</p>
+            </div>
             <div id="statusBox" class="status-box"></div>
         </div>
 
@@ -100,83 +106,131 @@
         let currentUser = null;
         let html5QrCode = null;
         let isProcessingScan = false;
-        let currentFacingMode = "environment"; // Menyimpan status kamera aktif
+        let currentFacingMode = "environment";
 
-        onAuthStateChanged(auth, (user) => {
-            if (!user) {
-                window.location.href = '../login.html';
+        // ✅ CHECK LOGIN - Cek localStorage DULU (lebih cepat)
+        function checkLoginAndInit() {
+            const storedUser = localStorage.getItem('sipelita_user');
+            
+            if (storedUser) {
+                // User sudah login dari dashboard
+                currentUser = JSON.parse(storedUser);
+                console.log("✅ Login dari localStorage:", currentUser.email);
+                initPage();
             } else {
-                currentUser = user;
-                initScanner(currentFacingMode);
-                loadTodayLog();
+                // Fallback ke Firebase Auth
+                console.log("⏳ Cek Firebase Auth...");
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            nama: user.email,
+                            role: 'user'
+                        };
+                        console.log("✅ Login dari Firebase:", user.email);
+                        initPage();
+                    } else {
+                        console.log("❌ Tidak login, redirect...");
+                        // ✅ FIX: Path yang benar (naik satu folder)
+                        window.location.href = '../login.html';
+                    }
+                });
             }
-        });
+        }
+
+        function initPage() {
+            // Tampilkan info user
+            if (currentUser) {
+                document.getElementById('userInfo').textContent = `Login: ${currentUser.nama || currentUser.email}`;
+            }
+            
+            // Load data dan kamera
+            loadTodayLog();
+            setTimeout(() => {
+                initScanner(currentFacingMode);
+            }, 500);
+        }
 
         document.getElementById('btnLogout').addEventListener('click', async () => {
-            if (confirm('Yakin ingin keluar dari sistem SICAN?')) {
-                await stopScanner();
-                await signOut(auth);
+            if (confirm('Yakin ingin keluar dari SICAN?')) {
+                localStorage.removeItem('sipelita_user');
+                await signOut(auth).catch(() => {});
                 window.location.href = '../login.html';
             }
         });
 
-        // Event Listener untuk tombol ganti kamera
         document.getElementById('btnToggleCamera').addEventListener('click', async () => {
             const cameraSelect = document.getElementById('cameraSelect');
             currentFacingMode = cameraSelect.value;
-            
-            // Hentikan kamera aktif terlebih dahulu sebelum beralih
             await stopScanner();
-            // Jalankan kamera baru pilihan pengguna
-            initScanner(currentFacingMode);
+            setTimeout(() => { initScanner(currentFacingMode); }, 500);
         });
 
-        // Handler otomatis jika dropdown pilihan diganti langsung
         document.getElementById('cameraSelect').addEventListener('change', async (e) => {
             currentFacingMode = e.target.value;
             await stopScanner();
-            initScanner(currentFacingMode);
+            setTimeout(() => { initScanner(currentFacingMode); }, 500);
         });
 
         function showStatus(msg, type) {
             const box = document.getElementById('statusBox');
-            if(!box) return;
             box.textContent = msg;
             box.className = `status-box status-${type}`;
             box.style.display = 'block';
-            const duration = type === 'success' ? 2500 : 4000;
-            setTimeout(() => { box.style.display = 'none'; }, duration);
+            setTimeout(() => { box.style.display = 'none'; }, type === 'success' ? 2500 : 4000);
         }
 
         async function stopScanner() {
             if (html5QrCode && html5QrCode.isScanning) {
                 try {
                     await html5QrCode.stop();
+                    console.log("Kamera dimatikan");
                 } catch (err) {
-                    console.error("Gagal menghentikan kamera aktif:", err);
+                    console.error("Error stop kamera:", err);
                 }
             }
         }
 
         async function initScanner(facingModeValue) {
-            const config = { fps: 6, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+            console.log("🎥 Mencoba aktifkan kamera:", facingModeValue);
             
-            // Jaga agar instansiasi objek pembaca kamera tetap tunggal
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0 
+            };
+            
+            const readerElement = document.getElementById("reader");
+            readerElement.innerHTML = ""; // Clear placeholder
             
             try {
+                html5QrCode = new Html5Qrcode("reader");
                 await html5QrCode.start(
                     { facingMode: facingModeValue },
                     config,
                     onScanSuccess,
-                    () => {}
+                    (errorMessage) => {
+                        // Ignore scanning errors (normal saat mencari QR)
+                    }
                 );
-                console.log(`Kamera aktif menggunakan mode: ${facingModeValue}`);
+                console.log("✅ Kamera berhasil aktif!");
             } catch (err) {
-                console.error("Kamera gagal diakses:", err);
-                showStatus('⚠️ Gagal mengakses kamera pilihan. Berikan izin atau periksa kompatibilitas perangkat.', 'warning');
+                console.error("❌ Gagal akses kamera:", err);
+                readerElement.innerHTML = `
+                    <div style="padding: 50px; color: #f44336;">
+                        <p style="font-size: 3rem; margin-bottom: 10px;">📷</p>
+                        <p><strong>Kamera tidak bisa diakses</strong></p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">
+                            Pastikan:<br>
+                            1. Browser memiliki izin akses kamera<br>
+                            2. Menggunakan HTTPS atau localhost<br>
+                            3. Perangkat memiliki kamera
+                        </p>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 6px; cursor: pointer;">Coba Lagi</button>
+                    </div>
+                `;
+                showStatus('⚠️ Kamera gagal diakses. Periksa izin browser.', 'warning');
             }
         }
 
@@ -184,75 +238,78 @@
             if (isProcessingScan) return;
             isProcessingScan = true;
 
+            console.log("📱 QR Terdeteksi:", decodedText);
+
             const parts = decodedText.trim().split(':');
             if (parts.length < 3) {
-                showStatus('❌ Format QR Code salah atau tidak dikenali!', 'error');
+                showStatus('❌ Format QR tidak valid!', 'error');
                 setTimeout(() => { isProcessingScan = false; }, 3000);
                 return;
             }
 
             const [nis, nama, kelas] = parts;
-            const localDate = new Date();
-            const todayStr = localDate.getFullYear() + '-' + 
-                             String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                             String(localDate.getDate()).padStart(2, '0');
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
             try {
+                // Cek duplikasi
                 const qCek = query(collection(db, 'absensi'), where('siswa_nis', '==', nis), where('tanggal', '==', todayStr));
                 const snapshotCek = await getDocs(qCek);
 
                 if (!snapshotCek.empty) {
-                    showStatus(`⚠️ ${nama} sudah melakukan absensi hari ini!`, 'warning');
+                    showStatus(`⚠️ ${nama} sudah absen hari ini!`, 'warning');
                     setTimeout(() => { isProcessingScan = false; }, 3000);
                     return;
                 }
 
+                // Simpan ke Firestore
                 await addDoc(collection(db, 'absensi'), {
                     siswa_nis: nis,
                     siswa_nama: nama,
                     siswa_kelas: kelas,
                     tanggal: todayStr,
-                    jam: localDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    jam: today.toLocaleTimeString('id-ID'),
                     timestamp: serverTimestamp(),
                     scanned_by: currentUser.email,
                     status: 'hadir'
                 });
 
-                showStatus(`✅ Absensi ${nama} (${kelas}) berhasil dicatat!`, 'success');
+                showStatus(`✅ ${nama} (${kelas}) berhasil absen!`, 'success');
                 loadTodayLog();
 
             } catch (err) {
-                console.error('Proses simpan database gagal:', err);
-                showStatus('❌ Gagal menginput absensi: ' + err.message, 'error');
+                console.error("Error simpan data:", err);
+                showStatus('❌ Gagal simpan: ' + err.message, 'error');
             } finally {
                 setTimeout(() => { isProcessingScan = false; }, 2500);
             }
         }
 
         async function loadTodayLog() {
-            const localDate = new Date();
-            const todayStr = localDate.getFullYear() + '-' + 
-                             String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                             String(localDate.getDate()).padStart(2, '0');
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
             
-            const qLog = query(collection(db, 'absensi'), where('tanggal', '==', todayStr));
+            console.log("📊 Loading absensi tanggal:", todayStr);
             
             try {
+                const qLog = query(collection(db, 'absensi'), where('tanggal', '==', todayStr));
                 const snapshot = await getDocs(qLog);
+                
                 const tbody = document.getElementById('logBody');
                 const loadingText = document.getElementById('loadingLog');
                 const logTable = document.getElementById('logTable');
                 
-                if (!tbody) return;
                 tbody.innerHTML = '';
 
                 if (snapshot.empty) {
-                    loadingText.textContent = 'Belum ada data siswa masuk hari ini.';
+                    loadingText.textContent = 'Belum ada absensi hari ini.';
                     loadingText.style.display = 'block';
                     logTable.style.display = 'none';
+                    console.log("📭 Belum ada data");
                     return;
                 }
 
+                console.log(`✅ Ditemukan ${snapshot.size} data absensi`);
                 loadingText.style.display = 'none';
                 logTable.style.display = 'table';
 
@@ -274,9 +331,14 @@
                     `;
                 });
             } catch (err) {
-                console.error('Gagal memperbarui riwayat:', err);
+                console.error("❌ Error load data:", err);
+                document.getElementById('loadingLog').textContent = 'Gagal memuat data: ' + err.message;
             }
         }
+
+        // Mulai proses
+        console.log("🚀 SICAN dimulai...");
+        checkLoginAndInit();
     </script>
 </body>
 </html>
