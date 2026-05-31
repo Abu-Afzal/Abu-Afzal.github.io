@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -25,42 +26,64 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <!-- Statistik -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
                 <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-xl">
                     <i class="fa-solid fa-users"></i>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Pendaftar</p>
-                    <h3 id="totalPendaftar" class="text-2xl font-bold text-slate-800 mt-0.5">0</h3>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Pendaftar</p>
+                    <h3 id="totalPendaftar" class="text-2xl font-bold text-slate-800 mt-0.5">-</h3>
                 </div>
             </div>
-            <div class="md:col-span-2 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center">
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-mars"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Laki-laki</p>
+                    <h3 id="totalL" class="text-2xl font-bold text-slate-800 mt-0.5">-</h3>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 bg-pink-50 text-pink-600 rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-venus"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Perempuan</p>
+                    <h3 id="totalP" class="text-2xl font-bold text-slate-800 mt-0.5">-</h3>
+                </div>
+            </div>
+            <div class="md:col-span-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center">
                 <div class="w-full relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-400"></i>
-                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama siswa atau NISN..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 transition">
+                    <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari nama / NISN..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-700 transition text-sm">
                 </div>
             </div>
         </div>
 
+        <!-- Tabel -->
         <div class="bg-white rounded-2xl border border-slate-100 shadow-md overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse" id="pendaftarTable">
                     <thead>
                         <tr class="bg-slate-800 text-slate-200 uppercase text-xs font-semibold tracking-wider">
-                            <th class="px-6 py-4">No</th>
-                            <th class="px-6 py-4">Nama Lengkap</th>
-                            <th class="px-6 py-4">NISN / Asal Sekolah</th>
-                            <th class="px-6 py-4">Kontak (WA)</th>
-                            <th class="px-6 py-4">Tanggal Daftar</th>
-                            <th class="px-6 py-4 text-center print:hidden">Aksi</th>
+                            <th class="px-5 py-4">No</th>
+                            <th class="px-5 py-4">Nama Lengkap</th>
+                            <th class="px-5 py-4">NISN / Asal Sekolah</th>
+                            <th class="px-5 py-4">JK</th>
+                            <th class="px-5 py-4">Kontak (WA)</th>
+                            <th class="px-5 py-4">Email</th>
+                            <th class="px-5 py-4">Tgl Daftar</th>
+                            <th class="px-5 py-4 text-center print:hidden">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-100 text-slate-700 text-sm">
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-400">
-                                <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500"></i>
-                                <p>Sedang memuat data siswa...</p>
+                            <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                                <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500 block"></i>
+                                Sedang memuat data siswa...
                             </td>
                         </tr>
                     </tbody>
@@ -69,121 +92,190 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- Modal Detail -->
+    <div id="modalDetail" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-slate-100">
+                <h2 class="text-xl font-bold text-slate-800">Detail Pendaftar</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl leading-none cursor-pointer">&times;</button>
+            </div>
+            <div id="modalContent" class="p-6 grid grid-cols-2 gap-4 text-sm"></div>
+        </div>
+    </div>
 
-        // Tulis ulang config utama Anda di sini agar tidak memanggil file luar
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-  authDomain: "sipelita-digital.firebaseapp.com",
-  databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sipelita-digital",
-  storageBucket: "sipelita-digital.firebasestorage.app",
-  messagingSenderId: "787840817745",
-  appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
-  measurementId: "G-1D5DWJV54E"
-};
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+            authDomain: "sipelita-digital.firebaseapp.com",
+            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sipelita-digital",
+            storageBucket: "sipelita-digital.firebasestorage.app",
+            messagingSenderId: "787840817745",
+            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+            measurementId: "G-1D5DWJV54E"
+        };
+
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db  = getFirestore(app);
+
+        // Simpan semua data untuk modal & search
+        let allData = [];
 
         async function loadData() {
-            const tableBody = document.getElementById('tableBody');
+            const tableBody    = document.getElementById('tableBody');
             const totalCounter = document.getElementById('totalPendaftar');
-            
-            if (!tableBody || !totalCounter) return;
+            const totalL       = document.getElementById('totalL');
+            const totalP       = document.getElementById('totalP');
+
+            tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                <i class="fa-solid fa-spinner animate-spin text-2xl mb-2 text-indigo-500 block"></i>Memuat data...</td></tr>`;
 
             try {
-                // Catatan: Jika kompilasi indeks awal Firebase belum siap, 
-                // ubah parameter query menjadi: query(collection(db, "pendaftaran"))
-                const q = query(collection(db, "pendaftaran"), orderBy("createdAt", "desc"));
-                const querySnapshot = await getDocs(q);
-                
-                tableBody.innerHTML = '';
-                let nomor = 1;
+                // ✅ Collection: "pendaftaran" — field: "createdAt"
+                const q = query(collection(db, 'pendaftaran'), orderBy('createdAt', 'desc'));
+                const snapshot = await getDocs(q);
 
-                if (querySnapshot.empty) {
-                    tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
-                    totalCounter.textContent = "0";
+                if (snapshot.empty) {
+                    tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-slate-400">Belum ada siswa yang mendaftar.</td></tr>`;
+                    totalCounter.textContent = '0';
+                    totalL.textContent = '0';
+                    totalP.textContent = '0';
                     return;
                 }
 
-                querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const docId = docSnap.id;
-
-                    let tanggalDaftar = "-";
-                    if (data.createdAt) {
-                        const dateObj = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                        tanggalDaftar = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-                    }
-
-                    const row = `
-                        <tr class="hover:bg-slate-50/70 transition">
-                            <td class="px-6 py-4 font-medium text-slate-500">${nomor++}</td>
-                            <td class="px-6 py-4 font-semibold text-slate-800">${data.nama || '-'}</td>
-                            <td class="px-6 py-4">
-                                <div class="text-slate-700 font-medium">${data.nisn || '-'}</div>
-                                <div class="text-xs text-slate-400">${data.asalSekolah || '-'}</div>
-                            </td>
-                            <td class="px-6 py-4 text-slate-600">
-                                <a href="https://wa.me/${data.telepon}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1">
-                                    <i class="fa-brands fa-whatsapp text-green-500"></i> ${data.telepon || '-'}
-                                </a>
-                            </td>
-                            <td class="px-6 py-4 text-slate-500">${tanggalDaftar}</td>
-                            <td class="px-6 py-4 text-center print:hidden">
-                                <button onclick="hapusSiswa('${docId}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-lg transition text-xs font-medium cursor-pointer">
-                                    <i class="fa-regular fa-trash-can"></i> Hapus
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    tableBody.innerHTML += row;
+                allData = [];
+                snapshot.forEach(docSnap => {
+                    allData.push({ id: docSnap.id, ...docSnap.data() });
                 });
-                
-                totalCounter.textContent = querySnapshot.size;
+
+                renderTable(allData);
 
             } catch (error) {
-                console.error("Gagal memuat data admin:", error);
-                tableBody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-rose-500 bg-rose-50/50">⚠️ Gagal memuat data: ${error.message}</td></tr>`;
+                console.error('Gagal memuat data admin:', error);
+                tableBody.innerHTML = `<tr><td colspan="8" class="px-6 py-8 text-center text-rose-500 bg-rose-50/50">
+                    ⚠️ Gagal memuat data: ${error.message}</td></tr>`;
             }
         }
 
-        window.hapusSiswa = async function(id) {
-            if (confirm("Apakah Anda yakin ingin menghapus data siswa ini?")) {
-                try {
-                    await deleteDoc(doc(db, "pendaftaran", id));
-                    alert("Data berhasil dihapus!");
-                    loadData();
-                } catch (err) {
-                    alert("Gagal menghapus: " + err.message);
+        function renderTable(data) {
+            const tableBody    = document.getElementById('tableBody');
+            const totalCounter = document.getElementById('totalPendaftar');
+            const totalL       = document.getElementById('totalL');
+            const totalP       = document.getElementById('totalP');
+
+            tableBody.innerHTML = '';
+            let cL = 0, cP = 0;
+
+            data.forEach((item, idx) => {
+                if (item.jenisKelamin === 'L') cL++;
+                if (item.jenisKelamin === 'P') cP++;
+
+                let tanggalDaftar = '-';
+                if (item.createdAt) {
+                    const d = item.createdAt.toDate ? item.createdAt.toDate() : new Date(item.createdAt);
+                    tanggalDaftar = d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
                 }
-            }
+
+                const jkBadge = item.jenisKelamin === 'L'
+                    ? `<span class="bg-blue-50 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full">L</span>`
+                    : `<span class="bg-pink-50 text-pink-700 text-xs font-semibold px-2 py-0.5 rounded-full">P</span>`;
+
+                tableBody.innerHTML += `
+                    <tr class="hover:bg-slate-50/70 transition" data-nama="${(item.nama||'').toLowerCase()}" data-nisn="${(item.nisn||'').toLowerCase()}">
+                        <td class="px-5 py-4 font-medium text-slate-400">${idx + 1}</td>
+                        <td class="px-5 py-4 font-semibold text-slate-800">${item.nama || '-'}</td>
+                        <td class="px-5 py-4">
+                            <div class="text-slate-700 font-medium">${item.nisn || '-'}</div>
+                            <div class="text-xs text-slate-400">${item.asalSekolah || '-'}</div>
+                        </td>
+                        <td class="px-5 py-4">${jkBadge}</td>
+                        <td class="px-5 py-4">
+                            <a href="https://wa.me/62${(item.telepon||'').replace(/^0/,'')}" target="_blank" class="text-indigo-600 hover:underline flex items-center gap-1">
+                                <i class="fa-brands fa-whatsapp text-green-500"></i> ${item.telepon || '-'}
+                            </a>
+                        </td>
+                        <td class="px-5 py-4 text-slate-500 text-xs">${item.email || '-'}</td>
+                        <td class="px-5 py-4 text-slate-500 text-xs">${tanggalDaftar}</td>
+                        <td class="px-5 py-4 text-center print:hidden flex gap-2 justify-center">
+                            <button onclick="lihatDetail('${item.id}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition">
+                                <i class="fa-solid fa-eye"></i> Detail
+                            </button>
+                            <button onclick="hapusSiswa('${item.id}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition">
+                                <i class="fa-regular fa-trash-can"></i> Hapus
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            totalCounter.textContent = data.length;
+            totalL.textContent = cL;
+            totalP.textContent = cP;
         }
+
+        // ── HAPUS ──
+        window.hapusSiswa = async function(id) {
+            if (!confirm('Hapus data siswa ini secara permanen?')) return;
+            try {
+                await deleteDoc(doc(db, 'pendaftaran', id));
+                allData = allData.filter(d => d.id !== id);
+                renderTable(allData);
+            } catch (err) {
+                alert('Gagal menghapus: ' + err.message);
+            }
+        };
+
+        // ── DETAIL MODAL ──
+        window.lihatDetail = function(id) {
+            const item = allData.find(d => d.id === id);
+            if (!item) return;
+
+            const fields = [
+                ['NISN', item.nisn], ['Nama Lengkap', item.nama],
+                ['Tempat Lahir', item.tempatLahir], ['Tanggal Lahir', item.tanggalLahir],
+                ['Jenis Kelamin', item.jenisKelamin === 'L' ? 'Laki-laki' : 'Perempuan'], ['Agama', item.agama],
+                ['Alamat', item.alamat], ['Telepon Siswa', item.telepon],
+                ['Email', item.email], ['Nama Ayah', item.namaAyah],
+                ['Nama Ibu', item.namaIbu], ['Pekerjaan Ortu', item.pekerjaanOrtu],
+                ['Telepon Ortu', item.teleponOrtu], ['Asal Sekolah', item.asalSekolah],
+                ['Tahun Lulus', item.tahunLulus], ['Tahun Ajaran', item.tahunAjaran],
+                ['File KK', item.fileKK_nama], ['File Akta', item.fileAkta_nama],
+                ['File Ijazah', item.fileIjazah_nama], ['File Foto', item.fileFoto_nama],
+            ];
+
+            document.getElementById('modalContent').innerHTML = fields.map(([label, val]) => `
+                <div class="col-span-1">
+                    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">${label}</p>
+                    <p class="text-slate-700 font-medium break-words">${val || '-'}</p>
+                </div>
+            `).join('');
+
+            const modal = document.getElementById('modalDetail');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeModal = function() {
+            const modal = document.getElementById('modalDetail');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
 
         window.loadData = loadData;
-        window.onload = loadData;
+        window.onload   = loadData;
     </script>
 
     <script>
         function searchTable() {
-            let input = document.getElementById("searchInput").value.toLowerCase();
-            let rows = document.getElementById("tableBody").getElementsByTagName("tr");
-            
-            for (let i = 0; i < rows.length; i++) {
-                let nameCell = rows[i].getElementsByTagName("td")[1];
-                let nisnCell = rows[i].getElementsByTagName("td")[2];
-                if (nameCell || nisnCell) {
-                    let nameText = nameCell.textContent.toLowerCase();
-                    let nisnText = nisnCell.textContent.toLowerCase();
-                    if (nameText.includes(input) || nisnText.includes(input)) {
-                        rows[i].style.display = "";
-                    } else {
-                        rows[i].style.display = "none";
-                    }
-                }
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const rows  = document.getElementById('tableBody').getElementsByTagName('tr');
+            for (let row of rows) {
+                const nama = (row.dataset.nama || '');
+                const nisn = (row.dataset.nisn || '');
+                row.style.display = (nama.includes(input) || nisn.includes(input)) ? '' : 'none';
             }
         }
     </script>
