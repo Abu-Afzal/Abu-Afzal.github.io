@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SICAN - Scan Absensi</title>
-    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -104,7 +104,7 @@
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                window.location.href = 'login.html';
+                window.location.href = './login.html';
             } else {
                 currentUser = user;
                 initScanner(currentFacingMode);
