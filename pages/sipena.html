@@ -166,7 +166,7 @@
 
         // 2. MUAT DAFTAR KELAS (HANYA MILIK GURU INI)
         async function loadKelas() {
-            const q = query(collection(db, 'sipena_kelas'), where('guru_email', '==', currentUser.email), orderBy('created_at', 'desc'));
+            const q = query(collection(db, 'sipena_kelas'), where('guru_email', '==', currentUser.email), );
             const snapshot = await getDocs(q);
             const container = document.getElementById('listKelas');
             container.innerHTML = '';
