@@ -3,195 +3,1411 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SIPENA - Administrasi Kelas</title>
-    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <title>SIPENA - Sistem Penilaian & Administrasi Kelas</title>
+    <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #333; }
         
-        .header { background: linear-gradient(135deg, #2e7d32, #43a047); color: white; padding: 25px 20px 20px 20px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .header h1 { font-size: 1.6rem; margin-bottom: 5px; }
-        
-        /* Kartu Kontrol Navigasi Header Modern (Glassmorphism) */
-        .nav-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 10px 18px;
-            border-radius: 12px;
-            display: inline-flex;
-            gap: 12px;
-            margin-top: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        /* Header Gradient SIPELITA */
+        .header { 
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%); 
+            color: white; 
+            padding: 25px 20px; 
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
-        .nav-link {
-            color: white;
-            padding: 6px 14px;
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; font-weight: 700; }
+        .header p { opacity: 0.95; font-size: 0.95rem; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 25px 20px; }
+        
+        /* Card Design */
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 25px; 
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); 
+            margin-bottom: 25px;
+        }
+        
+        /* Grid Kelas */
+        .grid-kelas { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 20px; 
+        }
+        .kelas-item { 
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-left: 5px solid #43a047; 
+            padding: 25px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .kelas-item:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 20px rgba(46, 125, 50, 0.2);
+        }
+        .kelas-item h3 { color: #2e7d32; margin-bottom: 8px; font-size: 1.3rem; font-weight: 700; }
+        .kelas-item p { font-size: 0.9rem; color: #555; margin: 5px 0; }
+        .kelas-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .kelas-item:hover .kelas-actions { opacity: 1; }
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border: none;
             border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: 500;
+            cursor: pointer;
+            background: white;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: #2e7d32; color: white; }
+        
+        /* Buttons */
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+        }
+        .btn-primary { background: #2e7d32; color: white; }
+        .btn-primary:hover { background: #1b5e20; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3); }
+        .btn-success { background: #43a047; color: white; }
+        .btn-success:hover { background: #2e7d32; }
+        .btn-blue { background: #1976d2; color: white; }
+        .btn-blue:hover { background: #0d47a1; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-back { background: #6c757d; color: white; margin-bottom: 20px; }
+        .btn-back:hover { background: #5a6268; }
+        
+        /* Tabs */
+        .tabs { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 25px; 
+            border-bottom: 3px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        .tab { 
+            padding: 12px 24px; 
+            cursor: pointer; 
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: #f5f5f5;
+            color: #666;
+        }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { 
+            background: #2e7d32; 
+            color: white;
+            border-bottom: 3px solid #2e7d32;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Table */
+        .table-responsive { overflow-x: auto; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th, td { padding: 14px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { 
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); 
+            color: #2e7d32; 
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tr:hover { background: #f9f9f9; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        
+        /* Input Scores */
+        .score-input {
+            width: 70px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .score-input:focus {
+            outline: none;
+            border-color: #43a047;
+            box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.1);
+        }
+        
+        /* Column Tags */
+        .column-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        .tag {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid #43a047;
+            color: #2e7d32;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+        .tag-remove {
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            cursor: pointer;
+            justify-content: center;
         }
-        .nav-link:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-1px);
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
         }
-
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-        .btn-primary { background: #2e7d32; color: white; }
-        .btn-primary:hover { background: #1b5e20; }
-        .btn-danger { background: #d32f2f; color: white; }
-        .btn-danger:hover { background: #c62828; }
-        .btn-back { background: #666; color: white; margin-bottom: 15px; }
+        .modal.show { display: flex; animation: fadeIn 0.3s; }
+        .modal-content {
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .modal-header h3 { color: #2e7d32; font-size: 1.4rem; }
+        .close-btn { 
+            background: none; 
+            border: none; 
+            font-size: 1.8rem; 
+            cursor: pointer; 
+            color: #999;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .close-btn:hover { background: #f5f5f5; color: #333; }
         
-        .grid-kelas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .kelas-item { background: #e8f5e9; border-left: 5px solid #43a047; padding: 15px; border-radius: 8px; cursor: pointer; transition: 0.2s; position: relative; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-        .kelas-item:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .kelas-info { flex-grow: 1; }
-        .kelas-item h3 { color: #2e7d32; margin-bottom: 5px; font-size: 1.1rem; }
-        .kelas-item p { font-size: 0.9rem; color: #555; }
+        /* Form Inputs */
+        .form-group { margin-bottom: 18px; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            color: #555;
+            font-size: 0.9rem;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #43a047;
+            box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.1);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         
-        .btn-delete-kelas { background: transparent; border: none; color: #c62828; cursor: pointer; padding: 5px; font-size: 1.1rem; border-radius: 4px; transition: 0.2s; }
-        .btn-delete-kelas:hover { background: rgba(198, 40, 40, 0.1); }
-
-        .tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .tab { padding: 8px 16px; cursor: pointer; border-radius: 6px; font-weight: 500; }
-        .tab.active { background: #2e7d32; color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid #43a047;
+        }
+        .stat-card h4 { font-size: 2rem; color: #2e7d32; margin-bottom: 5px; }
+        .stat-card p { font-size: 0.9rem; color: #555; font-weight: 600; }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #2e7d32; font-weight: 600; }
+        /* Empty State */
+        .empty-state { 
+            text-align: center; 
+            padding: 60px 20px; 
+            color: #999;
+        }
+        .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.3; }
         
-        .form-row-tiga { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 10px; margin-bottom: 10px; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; }
-        input:focus, select:focus { border-color: #2e7d32; }
+        /* Alert */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 600;
+        }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #43a047; }
+        .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ef4444; }
+        .alert.show { display: block; animation: slideDown 0.3s; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
-        .badge-l { background: #e3f2fd; color: #1565c0; }
-        .badge-p { background: #fce4ec; color: #c2185b; }
-        .empty-state { text-align: center; padding: 30px; color: #888; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.4rem; }
+            .grid-kelas { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .tabs { overflow-x: auto; flex-wrap: nowrap; }
+            table { font-size: 0.85rem; }
+            .score-input { width: 60px; padding: 6px; }
+        }
         
-        @media (max-width: 600px) { 
-            .form-row, .form-row-tiga { grid-template-columns: 1fr; } 
-            .header h1 { font-size: 1.3rem; }
-            .nav-card { padding: 6px 12px; gap: 8px; }
-            .nav-link { padding: 5px 10px; font-size: 0.8rem; }
+        /* Print Styles */
+        @media print {
+            .header, .btn, .tabs, .kelas-actions, .column-tags { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+            body { background: white; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>📁 SIPENA - Administrasi Kelas</h1>
+        <h1>📊 SIPENA - Sistem Penilaian & Administrasi Kelas</h1>
         <p id="userDisplay">Memuat profil guru...</p>
-        
-        <div class="nav-card">
-            <a href="../index.html" class="nav-link">🏠 Kembali ke Dashboard Utama</a>
-        </div>
     </div>
 
     <div class="container">
+        <!-- VIEW: DAFTAR KELAS -->
         <div id="viewKelas">
             <div class="card">
-                <h2 style="margin-bottom:15px;">📂 Kelas Saya</h2>
-                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" onclick="showModal('modalTambahKelas')">+ Tambah Kelas Baru</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
+                    <h2 style="color:#2e7d32; font-size:1.5rem;">📚 Kelas Saya</h2>
+                    <button class="btn btn-primary" onclick="showModal('modalKelas')">
+                        <span>➕</span> Tambah Kelas Baru
+                    </button>
                 </div>
-                <div id="listKelas" class="grid-kelas"></div>
+                <div id="listKelas" class="grid-kelas">
+                    <div class="empty-state">
+                        <div style="font-size:4rem; margin-bottom:15px;">📂</div>
+                        <p>Belum ada kelas. Buat kelas baru untuk memulai.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- VIEW: DETAIL KELAS -->
         <div id="viewDetail" style="display:none;">
-            <button class="btn btn-back" onclick="kembaliKeKelas()">← Kembali ke Daftar Kelas</button>
+            <button class="btn btn-back" onclick="kembaliKeKelas()">
+                <span>←</span> Kembali ke Daftar Kelas
+            </button>
+            
             <div class="card">
-                <h2 id="judulKelas">Detail Kelas</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; flex-wrap:wrap; gap:15px;">
+                    <div>
+                        <h2 id="judulKelas" style="color:#2e7d32; font-size:1.6rem; margin-bottom:5px;">Detail Kelas</h2>
+                        <p id="infoKelas" style="color:#666;">-</p>
+                    </div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-blue" onclick="showModal('modalImporExcel')">
+                            <span>📊</span> Impor Excel
+                        </button>
+                        <button class="btn btn-success" onclick="showModal('modalSiswa')">
+                            <span>➕</span> Tambah Siswa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TABS -->
                 <div class="tabs">
-                    <div class="tab active" id="btnTabSiswa" onclick="switchTab('tabSiswa')">Daftar Siswa</div>
-                    <div class="tab" id="btnTabNilai" onclick="switchTab('tabNilai')">📝 Input Nilai</div>
-                    <div class="tab" id="btnTabRekap" onclick="switchTab('tabRekap')">📊 Rekap Nilai</div>
+                    <div class="tab active" onclick="switchTab('tabSiswa')">👥 Daftar Siswa</div>
+                    <div class="tab" onclick="switchTab('tabPengetahuan')">📘 Penilaian Pengetahuan</div>
+                    <div class="tab" onclick="switchTab('tabSikap')">💚 Penilaian Sikap</div>
+                    <div class="tab" onclick="switchTab('tabKeterampilan')">🛠️ Penilaian Keterampilan</div>
+                    <div class="tab" onclick="switchTab('tabRekap')">📈 Rekap Nilai</div>
                 </div>
 
+                <!-- TAB SISWA -->
                 <div id="tabSiswa" class="tab-content active">
-                    <div class="form-row-tiga">
-                        <input type="text" id="inputNIS" placeholder="NIS Siswa">
-                        <input type="text" id="inputNamaSiswa" placeholder="Nama Lengkap">
-                        <select id="selectGender">
-                            <option value="">-- Jkel --</option>
-                            <option value="L">Laki-laki</option>
-                            <option value="P">Perempuan</option>
-                        </select>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th width="50">No</th>
+                                    <th>NIS</th>
+                                    <th>Nama Lengkap</th>
+                                    <th width="100">Jenis Kelamin</th>
+                                    <th width="120">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodySiswa"></tbody>
+                        </table>
                     </div>
-                    <button class="btn btn-primary" onclick="tambahSiswa()" style="margin-bottom: 15px;">+ Tambah Siswa</button>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 60px;">No</th>
-                                <th style="width: 150px;">NIS</th>
-                                <th>Nama</th>
-                                <th style="width: 150px;">Jenis Kelamin</th>
-                                <th style="width: 100px; text-align: center;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodySiswa"></tbody>
-                    </table>
                 </div>
 
-                <div id="tabNilai" class="tab-content">
-                    <div class="form-row">
-                        <select id="selectSiswaNilai"></select>
-                        <select id="selectJenisNilai">
-                            <option value="Pengetahuan">📘 Pengetahuan</option>
-                            <option value="Sikap">⭐ Sikap</option>
-                            <option value="Keterampilan">🛠️ Keterampilan</option>
-                        </select>
+                <!-- TAB PENGETAHUAN -->
+                <div id="tabPengetahuan" class="tab-content">
+                    <div id="alertPH" class="alert"></div>
+                    <div style="margin-bottom:20px;">
+                        <h3 style="color:#2e7d32; margin-bottom:15px;">Kolom Penilaian</h3>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                            <button class="btn btn-blue" onclick="tambahKolom('PH')">+ Tambah Kolom PH</button>
+                            <button class="btn btn-warning" onclick="tambahKolom('UH')">+ Tambah Kolom UH</button>
+                            <button class="btn btn-success" onclick="tambahKolom('SAS')">+ Tambah Kolom SAS</button>
+                        </div>
+                        <div id="columnTagsPH" class="column-tags"></div>
                     </div>
-                    <div class="form-row">
-                        <input type="number" id="inputNilai" placeholder="Nilai (0-100)" min="0" max="100">
-                        <input type="text" id="inputCatatan" placeholder="Catatan (opsional)">
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+                        <button class="btn btn-primary" onclick="simpanSemuaNilai('PH')">
+                            <span>💾</span> Simpan Semua Nilai
+                        </button>
                     </div>
-                    <button class="btn btn-primary" onclick="simpanNilai()">💾 Simpan Nilai</button>
+                    <div class="table-responsive">
+                        <table id="tablePengetahuan">
+                            <thead>
+                                <tr id="headerPH">
+                                    <th>No</th>
+                                    <th>Nama Siswa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyPH"></tbody>
+                        </table>
+                    </div>
                 </div>
 
+                <!-- TAB SIKAP -->
+                <div id="tabSikap" class="tab-content">
+                    <div id="alertSikap" class="alert"></div>
+                    <div style="margin-bottom:20px;">
+                        <h3 style="color:#2e7d32; margin-bottom:15px;">Penilaian Sikap Spiritual & Sosial</h3>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                            <button class="btn btn-blue" onclick="tambahKolomSikap()">+ Tambah Kolom Penilaian</button>
+                        </div>
+                        <div id="columnTagsSikap" class="column-tags"></div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+                        <button class="btn btn-primary" onclick="simpanSemuaNilai('Sikap')">
+                            <span>💾</span> Simpan Semua Nilai
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="tableSikap">
+                            <thead>
+                                <tr id="headerSikap">
+                                    <th>No</th>
+                                    <th>Nama Siswa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodySikap"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB KETERAMPILAN -->
+                <div id="tabKeterampilan" class="tab-content">
+                    <div id="alertKeterampilan" class="alert"></div>
+                    <div style="margin-bottom:20px;">
+                        <h3 style="color:#2e7d32; margin-bottom:15px;">Penilaian Keterampilan</h3>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+                            <button class="btn btn-blue" onclick="tambahKolom('Keterampilan')">+ Tambah Kolom Praktik</button>
+                            <button class="btn btn-warning" onclick="tambahKolom('Proyek')">+ Tambah Kolom Proyek</button>
+                        </div>
+                        <div id="columnTagsKeterampilan" class="column-tags"></div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:15px;">
+                        <button class="btn btn-primary" onclick="simpanSemuaNilai('Keterampilan')">
+                            <span>💾</span> Simpan Semua Nilai
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="tableKeterampilan">
+                            <thead>
+                                <tr id="headerKeterampilan">
+                                    <th>No</th>
+                                    <th>Nama Siswa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyKeterampilan"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB REKAP -->
                 <div id="tabRekap" class="tab-content">
-                    <div id="loadingRekap" class="empty-state">Memuat rekap nilai...</div>
-                    <table id="tableRekap" style="display:none;">
-                        <thead>
-                            <tr><th>Nama</th><th>Pengetahuan</th><th>Sikap</th><th>Keterampilan</th><th>Rata-rata</th></tr>
-                        </thead>
-                        <tbody id="tbodyRekap"></tbody>
-                    </table>
+                    <div class="stats-grid" id="statsRekap"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px;">
+                        <h3 style="color:#2e7d32;">Rekapitulasi Nilai Siswa</h3>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-success" onclick="exportExcel()">
+                                <span>📊</span> Export Excel
+                            </button>
+                            <button class="btn btn-danger" onclick="exportPDF()">
+                                <span>📄</span> Export PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="tableRekap">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama</th>
+                                    <th>Pengetahuan</th>
+                                    <th>Sikap</th>
+                                    <th>Keterampilan</th>
+                                    <th>Rata-rata</th>
+                                    <th>Predikat</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyRekap"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="modalTambahKelas" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
-        <div class="card" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:400px;">
-            <h3>Tambah Kelas Baru</h3>
-            <div style="margin:15px 0;">
-                <input type="text" id="inputNamaKelas" placeholder="Contoh: VIII-A" style="margin-bottom:10px;">
-                <input type="text" id="inputMapel" placeholder="Mata Pelajaran (Contoh: Informatika)">
+    <!-- MODAL TAMBAH KELAS -->
+    <div id="modalKelas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Kelas Baru</h3>
+                <button class="close-btn" onclick="hideModal('modalKelas')">&times;</button>
             </div>
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="btn" onclick="hideModal('modalTambahKelas')" style="background:#eee;">Batal</button>
-                <button class="btn btn-primary" onclick="buatKelas()">Simpan</button>
+            <div class="form-group">
+                <label>Nama Kelas</label>
+                <input type="text" id="inputNamaKelas" placeholder="Contoh: Matematika X-IPA-1">
+            </div>
+            <div class="form-group">
+                <label>Mata Pelajaran</label>
+                <input type="text" id="inputMapel" placeholder="Contoh: Matematika Wajib">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Semester</label>
+                    <select id="inputSemester">
+                        <option value="Ganjil">Ganjil</option>
+                        <option value="Genap">Genap</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tahun Ajaran</label>
+                    <input type="text" id="inputTahun" placeholder="2026/2027" value="2026/2027">
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
+                <button class="btn" onclick="hideModal('modalKelas')" style="background:#e0e0e0;">Batal</button>
+                <button class="btn btn-primary" onclick="buatKelas()">Simpan Kelas</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH SISWA -->
+    <div id="modalSiswa" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Siswa</h3>
+                <button class="close-btn" onclick="hideModal('modalSiswa')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>NIS</label>
+                <input type="text" id="inputNIS" placeholder="Nomor Induk Siswa">
+            </div>
+            <div class="form-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="inputNamaSiswa" placeholder="Nama lengkap siswa">
+            </div>
+            <div class="form-group">
+                <label>Jenis Kelamin</label>
+                <select id="inputGender">
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
+                <button class="btn" onclick="hideModal('modalSiswa')" style="background:#e0e0e0;">Batal</button>
+                <button class="btn btn-success" onclick="tambahSiswa()">Tambah Siswa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IMPOR EXCEL -->
+    <div id="modalImporExcel" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Impor Data Siswa dari Excel</h3>
+                <button class="close-btn" onclick="hideModal('modalImporExcel')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Pilih File Excel (.xlsx)</label>
+                <input type="file" id="fileExcel" accept=".xlsx, .xls" onchange="prosesExcel(this)">
+                <p style="font-size:0.85rem; color:#666; margin-top:8px;">Format: Kolom NIS, Nama, Jenis Kelamin</p>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
+                <button class="btn" onclick="hideModal('modalImporExcel')" style="background:#e0e0e0;">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH KOLOM -->
+    <div id="modalKolom" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="judulModalKolom">Tambah Kolom Penilaian</h3>
+                <button class="close-btn" onclick="hideModal('modalKolom')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nama Kolom</label>
+                <input type="text" id="inputNamaKolom" placeholder="Contoh: PH1, UH1, Praktik 1">
+            </div>
+            <div class="form-group">
+                <label>Bobot (%)</label>
+                <input type="number" id="inputBobot" placeholder="Contoh: 10" min="0" max="100" value="10">
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
+                <button class="btn" onclick="hideModal('modalKolom')" style="background:#e0e0e0;">Batal</button>
+                <button class="btn btn-primary" onclick="konfirmasiTambahKolom()">Tambah</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https
+        import { getFirestore, collection, addDoc, query, where, getDocs, deleteDoc, doc, updateDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+            authDomain: "sipelita-digital.firebaseapp.com",
+            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sipelita-digital",
+            storageBucket: "sipelita-digital.firebasestorage.app",
+            messagingSenderId: "787840817745",
+            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
+            measurementId: "G-1D5DWJV54E"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let currentUser = null;
+        let currentKelasId = null;
+        let currentKelasData = {};
+        let kolomAktif = { PH: [], Sikap: [], Keterampilan: [] };
+        let nilaiData = { PH: {}, Sikap: {}, Keterampilan: {} };
+
+        // INIT AUTH
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                currentUser = user;
+                const storedUser = localStorage.getItem('sipelita_user');
+                const namaGuru = storedUser ? JSON.parse(storedUser).nama : user.email;
+                document.getElementById('userDisplay').textContent = `👤 Login: ${namaGuru}`;
+                loadKelas();
+            }
+        });
+
+        // LOAD KELAS
+        async function loadKelas() {
+            try {
+                const q = query(collection(db, 'sipena_kelas'), where('guru_email', '==', currentUser.email), orderBy('created_at', 'desc'));
+                const snapshot = await getDocs(q);
+                const container = document.getElementById('listKelas');
+                container.innerHTML = '';
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div style="font-size:4rem; margin-bottom:15px;">📂</div>
+                            <p>Belum ada kelas. Klik "Tambah Kelas Baru" untuk memulai.</p>
+                        </div>`;
+                    return;
+                }
+
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const div = document.createElement('div');
+                    div.className = 'kelas-item';
+                    div.innerHTML = `
+                        <div class="kelas-actions">
+                            <button class="btn-icon" onclick="event.stopPropagation(); editKelas('${docSnap.id}')" title="Edit">✏️</button>
+                            <button class="btn-icon" onclick="event.stopPropagation(); hapusKelas('${docSnap.id}')" title="Hapus">🗑️</button>
+                        </div>
+                        <h3>${data.nama}</h3>
+                        <p>📚 ${data.mapel}</p>
+                        <p>🎓 Semester ${data.semester} ${data.tahun}</p>
+                        <p style="margin-top:10px; font-size:0.85rem; color:#2e7d32; font-weight:600;">
+                            👥 ${data.jumlah_siswa || 0} Siswa
+                        </p>
+                    `;
+                    div.onclick = () => bukaKelas(docSnap.id, data);
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Error load kelas:", error);
+            }
+        }
+
+        // BUAT KELAS
+        window.buatKelas = async () => {
+            const nama = document.getElementById('inputNamaKelas').value.trim();
+            const mapel = document.getElementById('inputMapel').value.trim();
+            const semester = document.getElementById('inputSemester').value;
+            const tahun = document.getElementById('inputTahun').value.trim();
+
+            if (!nama || !mapel) return alert('Isi nama kelas dan mata pelajaran!');
+
+            try {
+                await addDoc(collection(db, 'sipena_kelas'), {
+                    nama, mapel, semester, tahun,
+                    guru_email: currentUser.email,
+                    guru_nama: localStorage.getItem('sipelita_user') ? JSON.parse(localStorage.getItem('sipelita_user')).nama : currentUser.email,
+                    jumlah_siswa: 0,
+                    created_at: new Date()
+                });
+
+                hideModal('modalKelas');
+                document.getElementById('inputNamaKelas').value = '';
+                document.getElementById('inputMapel').value = '';
+                loadKelas();
+                alert('✅ Kelas berhasil dibuat!');
+            } catch (error) {
+                console.error("Error buat kelas:", error);
+                alert('Gagal membuat kelas: ' + error.message);
+            }
+        };
+
+        // BUKA KELAS
+        window.bukaKelas = (id, data) => {
+            currentKelasId = id;
+            currentKelasData = data;
+            document.getElementById('judulKelas').textContent = `📚 ${data.nama}`;
+            document.getElementById('infoKelas').textContent = `${data.mapel} | Semester ${data.semester} ${data.tahun}`;
+            document.getElementById('viewKelas').style.display = 'none';
+            document.getElementById('viewDetail').style.display = 'block';
+            
+            loadSiswa();
+            loadKolomDanNilai();
+        };
+
+        window.kembaliKeKelas = () => {
+            currentKelasId = null;
+            document.getElementById('viewDetail').style.display = 'none';
+            document.getElementById('viewKelas').style.display = 'block';
+            loadKelas();
+        };
+
+        // LOAD SISWA
+        async function loadSiswa() {
+            try {
+                const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), orderBy('nama'));
+                const snapshot = await getDocs(q);
+                const tbody = document.getElementById('tbodySiswa');
+                tbody.innerHTML = '';
+
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding:40px; color:#999;">Belum ada siswa. Tambah siswa secara manual atau impor dari Excel.</td></tr>';
+                    return;
+                }
+
+                let no = 1;
+                snapshot.forEach(docSnap => {
+                    const s = docSnap.data();
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${no++}</td>
+                            <td>${s.nis}</td>
+                            <td><strong>${s.nama}</strong></td>
+                            <td class="text-center">${s.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</td>
+                            <td>
+                                <button class="btn btn-danger" style="padding:6px 12px; font-size:0.85rem;" onclick="hapusSiswa('${docSnap.id}')">Hapus</button>
+                            </td>
+                        </tr>`;
+                });
+
+                // Update jumlah siswa
+                await updateDoc(doc(db, 'sipena_kelas', currentKelasId), { jumlah_siswa: snapshot.size });
+            } catch (error) {
+                console.error("Error load siswa:", error);
+            }
+        }
+
+        // TAMBAH SISWA
+        window.tambahSiswa = async () => {
+            const nis = document.getElementById('inputNIS').value.trim();
+            const nama = document.getElementById('inputNamaSiswa').value.trim();
+            const gender = document.getElementById('inputGender').value;
+
+            if (!nis || !nama) return alert('Isi NIS dan nama!');
+
+            try {
+                await addDoc(collection(db, 'sipena_siswa'), {
+                    kelas_id: currentKelasId,
+                    nis, nama, gender,
+                    guru_email: currentUser.email
+                });
+
+                hideModal('modalSiswa');
+                document.getElementById('inputNIS').value = '';
+                document.getElementById('inputNamaSiswa').value = '';
+                loadSiswa();
+                alert('✅ Siswa berhasil ditambahkan!');
+            } catch (error) {
+                console.error("Error tambah siswa:", error);
+                alert('Gagal menambah siswa: ' + error.message);
+            }
+        };
+
+        window.hapusSiswa = async (id) => {
+            if (!confirm('Yakin hapus siswa ini?')) return;
+            try {
+                await deleteDoc(doc(db, 'sipena_siswa', id));
+                loadSiswa();
+            } catch (error) {
+                console.error("Error hapus siswa:", error);
+            }
+        };
+
+        // IMPOR EXCEL
+        window.prosesExcel = async (input) => {
+            const file = input.files[0];
+            if (!file) return;
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+                if (jsonData.length === 0) return alert("Excel kosong!");
+
+                let count = 0;
+                for (const row of jsonData) {
+                    const nis = row.NIS || row.nis || '';
+                    const nama = row.Nama || row.nama || '';
+                    const gender = row['Jenis Kelamin'] || row.gender || 'L';
+
+                    if (nis && nama) {
+                        await addDoc(collection(db, 'sipena_siswa'), {
+                            kelas_id: currentKelasId,
+                            nis: nis.toString().trim(),
+                            nama: nama.toString().trim(),
+                            gender: gender.toString().toUpperCase().trim(),
+                            guru_email: currentUser.email
+                        });
+                        count++;
+                    }
+                }
+
+                hideModal('modalImporExcel');
+                input.value = '';
+                loadSiswa();
+                alert(`✅ Berhasil mengimpor ${count} siswa!`);
+            } catch (error) {
+                console.error("Error impor excel:", error);
+                alert('Gagal membaca file Excel');
+            }
+        };
+
+        // LOAD KOLOM & NILAI
+        async function loadKolomDanNilai() {
+            try {
+                // Load kolom Pengetahuan
+                const qPH = query(collection(db, 'sipena_kolom'), where('kelas_id', '==', currentKelasId), where('kategori', '==', 'PH'), where('guru_email', '==', currentUser.email));
+                const snapPH = await getDocs(qPH);
+                kolomAktif.PH = [];
+                snapPH.forEach(d => {
+                    const data = d.data();
+                    kolomAktif.PH.push({ id: d.id, ...data });
+                });
+
+                // Load kolom Sikap
+                const qSikap = query(collection(db, 'sipena_kolom'), where('kelas_id', '==', currentKelasId), where('kategori', '==', 'Sikap'), where('guru_email', '==', currentUser.email));
+                const snapSikap = await getDocs(qSikap);
+                kolomAktif.Sikap = [];
+                snapSikap.forEach(d => {
+                    const data = d.data();
+                    kolomAktif.Sikap.push({ id: d.id, ...data });
+                });
+
+                // Load kolom Keterampilan
+                const qKeterampilan = query(collection(db, 'sipena_kolom'), where('kelas_id', '==', currentKelasId), where('kategori', '==', 'Keterampilan'), where('guru_email', '==', currentUser.email));
+                const snapKeterampilan = await getDocs(qKeterampilan);
+                kolomAktif.Keterampilan = [];
+                snapKeterampilan.forEach(d => {
+                    const data = d.data();
+                    kolomAktif.Keterampilan.push({ id: d.id, ...data });
+                });
+
+                // Load nilai
+                await loadNilai();
+
+                renderKolomTags();
+                renderTabelPenilaian();
+            } catch (error) {
+                console.error("Error load kolom:", error);
+            }
+        }
+
+        async function loadNilai() {
+            try {
+                const q = query(collection(db, 'sipena_nilai'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email));
+                const snapshot = await getDocs(q);
+                
+                nilaiData = { PH: {}, Sikap: {}, Keterampilan: {} };
+                
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const key = `${data.siswa_nis}_${data.kolom_id}`;
+                    
+                    if (data.kategori === 'PH') nilaiData.PH[key] = data.nilai;
+                    else if (data.kategori === 'Sikap') nilaiData.Sikap[key] = data.nilai;
+                    else if (data.kategori === 'Keterampilan') nilaiData.Keterampilan[key] = data.nilai;
+                });
+            } catch (error) {
+                console.error("Error load nilai:", error);
+            }
+        }
+
+        function renderKolomTags() {
+            // Render tags PH
+            const containerPH = document.getElementById('columnTagsPH');
+            containerPH.innerHTML = kolomAktif.PH.map(k => `
+                <div class="tag">
+                    ${k.nama} (${k.bobot}%)
+                    <button class="tag-remove" onclick="hapusKolom('${k.id}', 'PH')">✕</button>
+                </div>
+            `).join('');
+
+            // Render tags Sikap
+            const containerSikap = document.getElementById('columnTagsSikap');
+            containerSikap.innerHTML = kolomAktif.Sikap.map(k => `
+                <div class="tag">
+                    ${k.nama}
+                    <button class="tag-remove" onclick="hapusKolom('${k.id}', 'Sikap')">✕</button>
+                </div>
+            `).join('');
+
+            // Render tags Keterampilan
+            const containerKeterampilan = document.getElementById('columnTagsKeterampilan');
+            containerKeterampilan.innerHTML = kolomAktif.Keterampilan.map(k => `
+                <div class="tag">
+                    ${k.nama} (${k.bobot}%)
+                    <button class="tag-remove" onclick="hapusKolom('${k.id}', 'Keterampilan')">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function renderTabelPenilaian() {
+            renderTabelPH();
+            renderTabelSikap();
+            renderTabelKeterampilan();
+            renderRekap();
+        }
+
+        function renderTabelPH() {
+            const thead = document.getElementById('headerPH');
+            const tbody = document.getElementById('tbodyPH');
+            
+            // Build header
+            let headerHTML = '<th>No</th><th>Nama Siswa</th>';
+            kolomAktif.PH.forEach(k => {
+                headerHTML += `<th class="text-center">${k.nama}<br><small style="font-weight:400;">(${k.bobot}%)</small></th>`;
+            });
+            headerHTML += '<th class="text-center">Rata-rata</th>';
+            thead.innerHTML = headerHTML;
+
+            // Build body
+            tbody.innerHTML = '';
+            const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), orderBy('nama'));
+            
+            getDocs(q).then(snapshot => {
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="' + (kolomAktif.PH.length + 3) + '" class="text-center" style="padding:40px; color:#999;">Belum ada siswa</td></tr>';
+                    return;
+                }
+
+                let no = 1;
+                snapshot.forEach(docSnap => {
+                    const s = docSnap.data();
+                    const nis = s.nis;
+                    let rowHTML = `<tr><td>${no++}</td><td><strong>${s.nama}</strong></td>`;
+                    
+                    let totalNilai = 0;
+                    let countKolom = 0;
+
+                    kolomAktif.PH.forEach(k => {
+                        const key = `${nis}_${k.id}`;
+                        const nilai = nilaiData.PH[key] || '';
+                        rowHTML += `<td class="text-center"><input type="number" class="score-input" data-nis="${nis}" data-kolom="${k.id}" data-kategori="PH" value="${nilai}" min="0" max="100" onchange="updateNilaiSementara(this)"></td>`;
+                        
+                        if (nilai) {
+                            totalNilai += parseFloat(nilai);
+                            countKolom++;
+                        }
+                    });
+
+                    const rata = countKolom > 0 ? (totalNilai / countKolom).toFixed(1) : '-';
+                    rowHTML += `<td class="text-center" style="font-weight:700; color:#2e7d32;">${rata}</td></tr>`;
+                    tbody.innerHTML += rowHTML;
+                });
+            });
+        }
+
+        function renderTabelSikap() {
+            const thead = document.getElementById('headerSikap');
+            const tbody = document.getElementById('tbodySikap');
+            
+            let headerHTML = '<th>No</th><th>Nama Siswa</th>';
+            kolomAktif.Sikap.forEach(k => {
+                headerHTML += `<th class="text-center">${k.nama}</th>`;
+            });
+            thead.innerHTML = headerHTML;
+
+            tbody.innerHTML = '';
+            const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), orderBy('nama'));
+            
+            getDocs(q).then(snapshot => {
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="' + (kolomAktif.Sikap.length + 2) + '" class="text-center" style="padding:40px; color:#999;">Belum ada siswa</td></tr>';
+                    return;
+                }
+
+                let no = 1;
+                snapshot.forEach(docSnap => {
+                    const s = docSnap.data();
+                    const nis = s.nis;
+                    let rowHTML = `<tr><td>${no++}</td><td><strong>${s.nama}</strong></td>`;
+                    
+                    kolomAktif.Sikap.forEach(k => {
+                        const key = `${nis}_${k.id}`;
+                        const nilai = nilaiData.Sikap[key] || '';
+                        rowHTML += `<td class="text-center"><input type="number" class="score-input" data-nis="${nis}" data-kolom="${k.id}" data-kategori="Sikap" value="${nilai}" min="0" max="100" onchange="updateNilaiSementara(this)"></td>`;
+                    });
+                    
+                    rowHTML += '</tr>';
+                    tbody.innerHTML += rowHTML;
+                });
+            });
+        }
+
+        function renderTabelKeterampilan() {
+            const thead = document.getElementById('headerKeterampilan');
+            const tbody = document.getElementById('tbodyKeterampilan');
+            
+            let headerHTML = '<th>No</th><th>Nama Siswa</th>';
+            kolomAktif.Keterampilan.forEach(k => {
+                headerHTML += `<th class="text-center">${k.nama}<br><small style="font-weight:400;">(${k.bobot}%)</small></th>`;
+            });
+            headerHTML += '<th class="text-center">Rata-rata</th>';
+            thead.innerHTML = headerHTML;
+
+            tbody.innerHTML = '';
+            const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), orderBy('nama'));
+            
+            getDocs(q).then(snapshot => {
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="' + (kolomAktif.Keterampilan.length + 3) + '" class="text-center" style="padding:40px; color:#999;">Belum ada siswa</td></tr>';
+                    return;
+                }
+
+                let no = 1;
+                snapshot.forEach(docSnap => {
+                    const s = docSnap.data();
+                    const nis = s.nis;
+                    let rowHTML = `<tr><td>${no++}</td><td><strong>${s.nama}</strong></td>`;
+                    
+                    let totalNilai = 0;
+                    let countKolom = 0;
+
+                    kolomAktif.Keterampilan.forEach(k => {
+                        const key = `${nis}_${k.id}`;
+                        const nilai = nilaiData.Keterampilan[key] || '';
+                        rowHTML += `<td class="text-center"><input type="number" class="score-input" data-nis="${nis}" data-kolom="${k.id}" data-kategori="Keterampilan" value="${nilai}" min="0" max="100" onchange="updateNilaiSementara(this)"></td>`;
+                        
+                        if (nilai) {
+                            totalNilai += parseFloat(nilai);
+                            countKolom++;
+                        }
+                    });
+
+                    const rata = countKolom > 0 ? (totalNilai / countKolom).toFixed(1) : '-';
+                    rowHTML += `<td class="text-center" style="font-weight:700; color:#2e7d32;">${rata}</td></tr>`;
+                    tbody.innerHTML += rowHTML;
+                });
+            });
+        }
+
+        window.updateNilaiSementara = (input) => {
+            const nis = input.dataset.nis;
+            const kolomId = input.dataset.kolom;
+            const kategori = input.dataset.kategori;
+            const nilai = input.value;
+
+            const key = `${nis}_${kolomId}`;
+            nilaiData[kategori][key] = nilai;
+
+            // Re-render untuk update rata-rata
+            if (kategori === 'PH') renderTabelPH();
+            else if (kategori === 'Keterampilan') renderTabelKeterampilan();
+        };
+
+        window.tambahKolom = (kategori) => {
+            let judul = '';
+            if (kategori === 'PH') judul = 'Tambah Kolom Penilaian Harian (PH)';
+            else if (kategori === 'UH') judul = 'Tambah Kolom Ujian Harian (UH)';
+            else if (kategori === 'SAS') judul = 'Tambah Kolom Sumatif Akhir Semester (SAS)';
+            else if (kategori === 'Keterampilan') judul = 'Tambah Kolom Penilaian Keterampilan';
+            else if (kategori === 'Proyek') judul = 'Tambah Kolom Proyek';
+
+            document.getElementById('judulModalKolom').textContent = judul;
+            document.getElementById('inputNamaKolom').dataset.kategori = kategori;
+            document.getElementById('inputNamaKolom').value = '';
+            document.getElementById('inputBobot').value = '10';
+            showModal('modalKolom');
+        };
+
+        window.tambahKolomSikap = () => {
+            document.getElementById('judulModalKolom').textContent = 'Tambah Kolom Penilaian Sikap';
+            document.getElementById('inputNamaKolom').dataset.kategori = 'Sikap';
+            document.getElementById('inputNamaKolom').value = '';
+            document.getElementById('inputBobot').value = '';
+            document.getElementById('inputBobot').disabled = true;
+            showModal('modalKolom');
+        };
+
+        window.konfirmasiTambahKolom = async () => {
+            const nama = document.getElementById('inputNamaKolom').value.trim();
+            const kategori = document.getElementById('inputNamaKolom').dataset.kategori;
+            const bobot = kategori === 'Sikap' ? 0 : parseInt(document.getElementById('inputBobot').value) || 0;
+
+            if (!nama) return alert('Isi nama kolom!');
+
+            try {
+                await addDoc(collection(db, 'sipena_kolom'), {
+                    kelas_id: currentKelasId,
+                    nama,
+                    kategori,
+                    bobot,
+                    guru_email: currentUser.email,
+                    created_at: new Date()
+                });
+
+                hideModal('modalKolom');
+                document.getElementById('inputBobot').disabled = false;
+                loadKolomDanNilai();
+                alert('✅ Kolom berhasil ditambahkan!');
+            } catch (error) {
+                console.error("Error tambah kolom:", error);
+                alert('Gagal menambah kolom: ' + error.message);
+            }
+        };
+
+        window.hapusKolom = async (id, kategori) => {
+            if (!confirm('Hapus kolom ini beserta semua nilainya?')) return;
+            try {
+                await deleteDoc(doc(db, 'sipena_kolom', id));
+                // Hapus semua nilai untuk kolom ini
+                const q = query(collection(db, 'sipena_nilai'), where('kelas_id', '==', currentKelasId), where('kolom_id', '==', id), where('guru_email', '==', currentUser.email));
+                const snapshot = await getDocs(q);
+                snapshot.forEach(d => deleteDoc(doc(db, 'sipena_nilai', d.id)));
+                
+                loadKolomDanNilai();
+            } catch (error) {
+                console.error("Error hapus kolom:", error);
+            }
+        };
+
+        window.simpanSemuaNilai = async (kategori) => {
+            try {
+                const inputs = document.querySelectorAll(`input[data-kategori="${kategori}"]`);
+                let count = 0;
+
+                for (const input of inputs) {
+                    const nis = input.dataset.nis;
+                    const kolomId = input.dataset.kolom;
+                    const nilai = input.value;
+
+                    if (nilai !== '') {
+                        const key = `${nis}_${kolomId}`;
+                        const q = query(collection(db, 'sipena_nilai'), 
+                            where('kelas_id', '==', currentKelasId),
+                            where('siswa_nis', '==', nis),
+                            where('kolom_id', '==', kolomId),
+                            where('guru_email', '==', currentUser.email)
+                        );
+                        const snapshot = await getDocs(q);
+
+                        const dataNilai = {
+                            kelas_id: currentKelasId,
+                            siswa_nis: nis,
+                            kolom_id: kolomId,
+                            kategori,
+                            nilai: parseFloat(nilai),
+                            guru_email: currentUser.email,
+                            updated_at: new Date()
+                        };
+
+                        // Ambil nama siswa
+                        const siswaSnap = await getDocs(query(collection(db, 'sipena_siswa'), where('nis', '==', nis), where('guru_email', '==', currentUser.email)));
+                        if (!siswaSnap.empty) {
+                            dataNilai.siswa_nama = siswaSnap.docs[0].data().nama;
+                        }
+
+                        if (snapshot.empty) {
+                            await addDoc(collection(db, 'sipena_nilai'), dataNilai);
+                        } else {
+                            await updateDoc(doc(db, 'sipena_nilai', snapshot.docs[0].id), dataNilai);
+                        }
+                        count++;
+                    }
+                }
+
+                showAlert(kategori, `✅ Berhasil menyimpan ${count} nilai!`, 'success');
+                loadNilai();
+                renderTabelPenilaian();
+            } catch (error) {
+                console.error("Error simpan nilai:", error);
+                showAlert(kategori, '❌ Gagal menyimpan nilai: ' + error.message, 'error');
+            }
+        };
+
+        function showAlert(kategori, message, type) {
+            const alertId = kategori === 'PH' ? 'alertPH' : kategori === 'Sikap' ? 'alertSikap' : 'alertKeterampilan';
+            const alertEl = document.getElementById(alertId);
+            alertEl.textContent = message;
+            alertEl.className = `alert alert-${type} show`;
+            setTimeout(() => alertEl.classList.remove('show'), 3000);
+        }
+
+        function renderRekap() {
+            const tbody = document.getElementById('tbodyRekap');
+            const statsDiv = document.getElementById('statsRekap');
+            tbody.innerHTML = '';
+
+            const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), orderBy('nama'));
+            
+            getDocs(q).then(async snapshot => {
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:40px; color:#999;">Belum ada data</td></tr>';
+                    statsDiv.innerHTML = '';
+                    return;
+                }
+
+                let totalSiswa = 0;
+                let totalNilaiAkhir = 0;
+                let countLulus = 0;
+
+                let no = 1;
+                for (const docSnap of snapshot.docs) {
+                    const s = docSnap.data();
+                    const nis = s.nis;
+
+                    // Hitung rata-rata Pengetahuan
+                    const nilaiPH = await getNilaiByKategori(nis, 'PH');
+                    const avgPH = nilaiPH.length > 0 ? nilaiPH.reduce((a,b) => a+b, 0) / nilaiPH.length : 0;
+
+                    // Hitung rata-rata Sikap
+                    const nilaiSikap = await getNilaiByKategori(nis, 'Sikap');
+                    const avgSikap = nilaiSikap.length > 0 ? nilaiSikap.reduce((a,b) => a+b, 0) / nilaiSikap.length : 0;
+
+                    // Hitung rata-rata Keterampilan
+                    const nilaiKeterampilan = await getNilaiByKategori(nis, 'Keterampilan');
+                    const avgKeterampilan = nilaiKeterampilan.length > 0 ? nilaiKeterampilan.reduce((a,b) => a+b, 0) / nilaiKeterampilan.length : 0;
+
+                    // Rata-rata akhir (asumsi bobot: PH 40%, Sikap 30%, Keterampilan 30%)
+                    const rataAkhir = (avgPH * 0.4) + (avgSikap * 0.3) + (avgKeterampilan * 0.3);
+                    const predikat = getPredikat(rataAkhir);
+
+                    totalSiswa++;
+                    if (rataAkhir > 0) {
+                        totalNilaiAkhir += rataAkhir;
+                        if (rataAkhir >= 75) countLulus++;
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${no++}</td>
+                            <td><strong>${s.nama}</strong></td>
+                            <td class="text-center" style="font-weight:600;">${avgPH.toFixed(1)}</td>
+                            <td class="text-center" style="font-weight:600;">${avgSikap.toFixed(1)}</td>
+                            <td class="text-center" style="font-weight:600;">${avgKeterampilan.toFixed(1)}</td>
+                            <td class="text-center" style="font-weight:700; color:#2e7d32;">${rataAkhir.toFixed(1)}</td>
+                            <td class="text-center"><span style="background:${predikat.color}; color:white; padding:4px 12px; border-radius:12px; font-weight:600; font-size:0.85rem;">${predikat.text}</span></td>
+                        </tr>`;
+                }
+
+                const avgKelas = totalSiswa > 0 ? (totalNilaiAkhir / totalSiswa).toFixed(1) : 0;
+                const persentaseLulus = totalSiswa > 0 ? ((countLulus / totalSiswa) * 100).toFixed(1) : 0;
+
+                statsDiv.innerHTML = `
+                    <div class="stat-card">
+                        <h4 style="color:#1976d2;">${totalSiswa}</h4>
+                        <p>Total Siswa</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color:#2e7d32;">${avgKelas}</h4>
+                        <p>Rata-rata Kelas</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color:#43a047;">${countLulus}</h4>
+                        <p>Siswa Lulus KKM</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color:#f59e0b;">${persentaseLulus}%</h4>
+                        <p>Persentase Lulus</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 style="color:#ef4444;">${totalSiswa - countLulus}</h4>
+                        <p>Perlu Remedial</p>
+                    </div>
+                `;
+            });
+        }
+
+        async function getNilaiByKategori(nis, kategori) {
+            const q = query(collection(db, 'sipena_nilai'), 
+                where('kelas_id', '==', currentKelasId),
+                where('siswa_nis', '==', nis),
+                where('kategori', '==', kategori),
+                where('guru_email', '==', currentUser.email)
+            );
+            const snapshot = await getDocs(q);
+            const nilai = [];
+            snapshot.forEach(d => nilai.push(d.data().nilai));
+            return nilai;
+        }
+
+        function getPredikat(nilai) {
+            if (nilai >= 90) return { text: 'A (Sangat Baik)', color: '#43a047' };
+            if (nilai >= 80) return { text: 'B (Baik)', color: '#1976d2' };
+            if (nilai >= 70) return { text: 'C (Cukup)', color: '#f59e0b' };
+            if (nilai >= 60) return { text: 'D (Kurang)', color: '#ef4444' };
+            return { text: 'E (Sangat Kurang)', color: '#c62828' };
+        }
+
+        window.exportExcel = () => {
+            const wb = XLSX.utils.table_to_book(document.getElementById('tableRekap'), { sheet: "Rekap Nilai" });
+            XLSX.writeFile(wb, `Rekap_Nilai_${currentKelasData.nama}.xlsx`);
+        };
+
+        window.exportPDF = () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            
+            doc.setFontSize(16);
+            doc.text(`REKAP NILAI - ${currentKelasData.nama}`, 14, 15);
+            doc.setFontSize(12);
+            doc.text(`${currentKelasData.mapel} | Semester ${currentKelasData.semester} ${currentKelasData.tahun}`, 14, 22);
+            
+            doc.autoTable({ 
+                startY: 30, 
+                html: '#tableRekap',
+                theme: 'grid',
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [46, 125, 50] }
+            });
+            
+            doc.save(`Rekap_Nilai_${currentKelasData.nama}.pdf`);
+        };
+
+        // UTILS
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (tabId === 'tabRekap') renderRekap();
+        };
+
+        window.showModal = (id) => document.getElementById(id).classList.add('show');
+        window.hideModal = (id) => document.getElementById(id).classList.remove('show');
+        window.editKelas = (id) => alert('Fitur edit kelas akan segera hadir!');
+        window.hapusKelas = async (id) => {
+            if (!confirm('Yakin hapus kelas ini beserta semua data siswa dan nilainya?')) return;
+            try {
+                // Hapus semua siswa
+                const qSiswa = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', id), where('guru_email', '==', currentUser.email));
+                const snapSiswa = await getDocs(qSiswa);
+                snapSiswa.forEach(d => deleteDoc(doc(db, 'sipena_siswa', d.id)));
+
+                // Hapus semua kolom
+                const qKolom = query(collection(db, 'sipena_kolom'), where('kelas_id', '==', id), where('guru_email', '==', currentUser.email));
+                const snapKolom = await getDocs(qKolom);
+                snapKolom.forEach(d => deleteDoc(doc(db, 'sipena_kolom', d.id)));
+
+                // Hapus semua nilai
+                const qNilai = query(collection(db, 'sipena_nilai'), where('kelas_id', '==', id), where('guru_email', '==', currentUser.email));
+                const snapNilai = await getDocs(qNilai);
+                snapNilai.forEach(d => deleteDoc(doc(db, 'sipena_nilai', d.id)));
+
+                // Hapus kelas
+                await deleteDoc(doc(db, 'sipena_kelas', id));
+                
+                loadKelas();
+                alert('✅ Kelas berhasil dihapus!');
+            } catch (error) {
+                console.error("Error hapus kelas:", error);
+                alert('Gagal menghapus kelas: ' + error.message);
+            }
+        };
+    </script>
+</body>
+</html>
