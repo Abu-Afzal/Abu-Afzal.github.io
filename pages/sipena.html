@@ -327,206 +327,187 @@
         </div>
 
         <!-- VIEW: DETAIL KELAS DENGAN SUB-NAVIGATION -->
-        <div id="viewDetail" class="view-section">
-            <button class="btn btn-back" onclick="kembaliKeKelas()">
-                <span>←</span> Kembali ke Daftar Kelas
+        <!-- VIEW: DETAIL KELAS DENGAN SUB-NAVIGATION TERKUNCI -->
+<div id="viewDetail" class="view-section">
+    <button class="btn btn-back" onclick="kembaliKeKelas()">
+        <span>←</span> Kembali ke Daftar Kelas
+    </button>
+    
+    <div class="card">
+        <div style="margin-bottom:25px;">
+            <h2 id="judulKelas" style="color:#2e7d32; font-size:1.6rem; margin-bottom:5px;">Detail Kelas</h2>
+            <p id="infoKelas" style="color:#666;">-</p>
+        </div>
+
+        <!-- SUB NAVIGATION -->
+        <div class="sub-nav">
+            <button class="sub-nav-btn active" onclick="switchSubView('subSiswa', this)">
+                <span>👥</span> Daftar Siswa
             </button>
+            <button class="sub-nav-btn" onclick="switchSubView('subPenilaian', this)">
+                <span>📝</span> Penilaian
+            </button>
+            <button class="sub-nav-btn" onclick="switchSubView('subAbsensi', this)">
+                <span>✅</span> Absensi
+            </button>
+        </div>
+
+        <!-- 🔒 SUB VIEW 1: DAFTAR SISWA -->
+        <div id="subSiswa" class="sub-view active">
+            <div style="display:flex; justify-content:flex-end; margin-bottom:20px; gap:10px;">
+                <button class="btn btn-blue" onclick="showModal('modalImporExcel')">
+                    <span>📊</span> Impor Excel
+                </button>
+                <button class="btn btn-success" onclick="showModal('modalSiswa')">
+                    <span>➕</span> Tambah Siswa
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th width="50">No</th>
+                            <th>NIS</th>
+                            <th>Nama Lengkap</th>
+                            <th width="120">Jenis Kelamin</th>
+                            <th width="120">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodySiswa"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 🔒 SUB VIEW 2: PENILAIAN -->
+        <div id="subPenilaian" class="sub-view">
+            <!-- Inner Tabs untuk Jenis Penilaian -->
+            <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid #e0e0e0; padding-bottom:10px;">
+                <button class="btn" style="background:#2e7d32; color:white;" id="btnTabPH" onclick="switchTabInner('kontenPH', this)">📘 Pengetahuan</button>
+                <button class="btn" style="background:#e0e0e0;" id="btnTabSikap" onclick="switchTabInner('kontenSikap', this)">💚 Sikap</button>
+                <button class="btn" style="background:#e0e0e0;" id="btnTabKeterampilan" onclick="switchTabInner('kontenKeterampilan', this)">🛠️ Keterampilan</button>
+            </div>
             
-            <div class="card">
-                <div style="margin-bottom:25px;">
-                    <h2 id="judulKelas" style="color:#2e7d32; font-size:1.6rem; margin-bottom:5px;">Detail Kelas</h2>
-                    <p id="infoKelas" style="color:#666;">-</p>
-                </div>
+            <!-- Konten Pengetahuan -->
+            <div id="kontenPH" class="inner-content active">
+                <p style="text-align:center; padding:40px; color:#999;">📌 Masukkan tabel & logika Penilaian Pengetahuan di sini</p>
+            </div>
+            
+            <!-- Konten Sikap -->
+            <div id="kontenSikap" class="inner-content" style="display:none;">
+                <p style="text-align:center; padding:40px; color:#999;"> Masukkan tabel & logika Penilaian Sikap di sini</p>
+            </div>
+            
+            <!-- Konten Keterampilan -->
+            <div id="kontenKeterampilan" class="inner-content" style="display:none;">
+                <p style="text-align:center; padding:40px; color:#999;">📌 Masukkan tabel & logika Penilaian Keterampilan di sini</p>
+            </div>
+        </div>
 
-                <!-- SUB NAVIGATION -->
-                <div class="sub-nav">
-                    <button class="sub-nav-btn active" onclick="switchSubView('subSiswa', this)">
-                        <span>👥</span> Daftar Siswa
-                    </button>
-                    <button class="sub-nav-btn" onclick="switchSubView('subPenilaian', this)">
-                        <span>📝</span> Penilaian
-                    </button>
-                    <button class="sub-nav-btn" onclick="switchSubView('subAbsensi', this)">
-                        <span>✅</span> Absensi
-                    </button>
-                </div>
-
-                <!-- SUB VIEW: DAFTAR SISWA -->
-                <div id="subSiswa" class="sub-view active">
-                    <div style="display:flex; justify-content:flex-end; margin-bottom:20px; gap:10px;">
-                        <button class="btn btn-blue" onclick="showModal('modalImporExcel')">
-                            <span>📊</span> Impor Excel
-                        </button>
-                        <button class="btn btn-success" onclick="showModal('modalSiswa')">
-                            <span>➕</span> Tambah Siswa
-                        </button>
+        <!-- 🔒 SUB VIEW 3: ABSENSI -->
+        <div id="subAbsensi" class="sub-view">
+            <!-- Input Absensi -->
+            <div id="absenInput">
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Tanggal Absensi</label>
+                            <input type="date" id="inputTglAbsen">
+                        </div>
+                        <div class="filter-item" style="display:flex; align-items:flex-end;">
+                            <button class="btn btn-hadir" onclick="hadirSemua()" style="flex:1;">
+                                <span>✅</span> Hadir Semua
+                            </button>
+                        </div>
                     </div>
+                </div>
+                
+                <div style="margin-bottom:20px;">
+                    <h3 style="color:#2e7d32; margin-bottom:15px;">Input Absensi Siswa</h3>
                     <div class="table-responsive">
                         <table>
                             <thead>
                                 <tr>
                                     <th width="50">No</th>
-                                    <th>NIS</th>
-                                    <th>Nama Lengkap</th>
-                                    <th width="120">Jenis Kelamin</th>
-                                    <th width="120">Aksi</th>
+                                    <th>Nama Siswa</th>
+                                    <th width="100">NIS</th>
+                                    <th width="250" class="text-center">Status Kehadiran</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbodySiswa"></tbody>
+                            <tbody id="tbodyAbsensi"></tbody>
                         </table>
                     </div>
                 </div>
+                
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button class="btn btn-primary" onclick="simpanAbsensi()">
+                        <span>💾</span> Simpan Absensi
+                    </button>
+                </div>
+            </div>
 
-                <!-- SUB VIEW: PENILAIAN -->
-                <div id="subPenilaian" class="sub-view">
-                    <div class="tabs" style="display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid #e0e0e0; padding-bottom:10px;">
-                        <button class="btn" style="background:#2e7d32; color:white;" onclick="switchTabPenilaian('tabPengetahuan')">📘 Pengetahuan</button>
-                        <button class="btn" style="background:#e0e0e0;" onclick="switchTabPenilaian('tabSikap')">💚 Sikap</button>
-                        <button class="btn" style="background:#e0e0e0;" onclick="switchTabPenilaian('tabKeterampilan')">🛠️ Keterampilan</button>
-                    </div>
-                    
-                    <div id="tabPengetahuan" class="tab-penilaian">
-                        <p style="text-align:center; padding:40px; color:#999;">Fitur penilaian pengetahuan (sama seperti kode sebelumnya)</p>
-                    </div>
-                    <div id="tabSikap" class="tab-penilaian" style="display:none;">
-                        <p style="text-align:center; padding:40px; color:#999;">Fitur penilaian sikap (sama seperti kode sebelumnya)</p>
-                    </div>
-                    <div id="tabKeterampilan" class="tab-penilaian" style="display:none;">
-                        <p style="text-align:center; padding:40px; color:#999;">Fitur penilaian keterampilan (sama seperti kode sebelumnya)</p>
+            <!-- Rekap Absensi (Terpisah & Tersembunyi Default) -->
+            <div id="absenRekap" style="display:none; margin-top:30px; border-top:2px solid #e0e0e0; padding-top:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                    <h3 style="color:#2e7d32;">📊 Rekap Absensi</h3>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-success" onclick="exportRekapExcel()"> Excel</button>
+                        <button class="btn btn-danger" onclick="cetakRekapPDF()">📄 PDF</button>
+                        <button class="btn btn-back" onclick="tutupRekap()">← Kembali</button>
                     </div>
                 </div>
 
-                <!-- SUB VIEW: ABSENSI -->
-                <div id="subAbsensi" class="sub-view">
-                    <!-- Input Absensi -->
-                    <div id="absenInput" style="display:block;">
-                        <div class="filter-section">
-                            <div class="filter-row">
-                                <div class="filter-item">
-                                    <label>Tanggal Absensi</label>
-                                    <input type="date" id="inputTglAbsen">
-                                </div>
-                                <div class="filter-item" style="display:flex; align-items:flex-end;">
-                                    <button class="btn btn-hadir" onclick="hadirSemua()" style="flex:1;">
-                                        <span>✅</span> Hadir Semua
-                                    </button>
-                                </div>
-                            </div>
+                <div class="filter-section">
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Periode Rekap</label>
+                            <select id="periodeRekap" onchange="toggleFilterRekap()">
+                                <option value="pekan">Per Pekan</option>
+                                <option value="bulan">Per Bulan</option>
+                                <option value="semester">Per Semester</option>
+                            </select>
                         </div>
-                        
-                        <div style="margin-bottom:20px;">
-                            <h3 style="color:#2e7d32; margin-bottom:15px;">Input Absensi Siswa</h3>
-                            <div class="table-responsive">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th width="50">No</th>
-                                            <th>Nama Siswa</th>
-                                            <th width="100">NIS</th>
-                                            <th width="250" class="text-center">Status Kehadiran</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbodyAbsensi"></tbody>
-                                </table>
-                            </div>
+                        <div class="filter-item" id="filterPekan">
+                            <label>Pekan Ke-</label>
+                            <select id="pekanKe"><option value="1">Pekan 1</option><option value="2">Pekan 2</option></select>
                         </div>
-                        
-                        <div style="display:flex; justify-content:flex-end; gap:10px;">
-                            <button class="btn btn-primary" onclick="simpanAbsensi()">
-                                <span>💾</span> Simpan Absensi
-                            </button>
+                        <div class="filter-item" id="filterBulan" style="display:none;">
+                            <label>Bulan</label>
+                            <input type="month" id="bulanRekap">
                         </div>
-                    </div>
-
-                    <!-- Rekap Absensi -->
-                    <div id="absenRekap" style="display:none; margin-top:30px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                            <h3 style="color:#2e7d32;">📊 Rekap Absensi</h3>
-                            <div style="display:flex; gap:10px;">
-                                <button class="btn btn-success" onclick="exportRekapExcel()">
-                                    <span>📊</span> Export Excel
-                                </button>
-                                <button class="btn btn-danger" onclick="cetakRekapPDF()">
-                                    <span>📄</span> Cetak PDF
-                                </button>
-                                <button class="btn btn-back" onclick="tutupRekap()">
-                                    <span>←</span> Kembali
-                                </button>
-                            </div>
+                        <div class="filter-item" id="filterSemester" style="display:none;">
+                            <label>Semester</label>
+                            <select id="semesterRekap"><option value="ganjil">Ganjil</option><option value="genap">Genap</option></select>
+                            <input type="number" id="tahunSemester" placeholder="Tahun" value="2026" style="margin-top:5px;">
                         </div>
-
-                        <div class="filter-section">
-                            <div class="filter-row">
-                                <div class="filter-item">
-                                    <label>Periode Rekap</label>
-                                    <select id="periodeRekap" onchange="toggleFilterRekap()">
-                                        <option value="pekan">Per Pekan</option>
-                                        <option value="bulan">Per Bulan</option>
-                                        <option value="semester">Per Semester</option>
-                                    </select>
-                                </div>
-                                <div class="filter-item" id="filterPekan">
-                                    <label>Pekan Ke-</label>
-                                    <select id="pekanKe">
-                                        <option value="1">Pekan 1</option>
-                                        <option value="2">Pekan 2</option>
-                                        <option value="3">Pekan 3</option>
-                                        <option value="4">Pekan 4</option>
-                                    </select>
-                                </div>
-                                <div class="filter-item" id="filterBulan" style="display:none;">
-                                    <label>Bulan</label>
-                                    <input type="month" id="bulanRekap">
-                                </div>
-                                <div class="filter-item" id="filterSemester" style="display:none;">
-                                    <label>Semester</label>
-                                    <select id="semesterRekap">
-                                        <option value="ganjil">Ganjil (Jul-Des)</option>
-                                        <option value="genap">Genap (Jan-Jun)</option>
-                                    </select>
-                                    <input type="number" id="tahunSemester" placeholder="Tahun" value="2026" style="margin-top:5px;">
-                                </div>
-                                <div class="filter-item" style="display:flex; align-items:flex-end;">
-                                    <button class="btn btn-primary" onclick="generateRekap()" style="flex:1;">
-                                        <span>🔍</span> Tampilkan
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="filter-item" style="display:flex; align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="generateRekap()" style="flex:1;">🔍 Tampilkan</button>
                         </div>
-
-                        <div id="statsAbsensi" class="stats-grid"></div>
-
-                        <div class="table-responsive" id="tableRekapAbsensiContainer">
-                            <table id="tableRekapAbsensi">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Nama Siswa</th>
-                                        <th class="text-center">Hadir</th>
-                                        <th class="text-center">Izin</th>
-                                        <th class="text-center">Sakit</th>
-                                        <th class="text-center">Alpa</th>
-                                        <th class="text-center">Bolos</th>
-                                        <th class="text-center">Total</th>
-                                        <th class="text-center">Persentase</th>
-                                        <th>Keterangan</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbodyRekapAbsensi"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div style="margin-top:20px; display:flex; gap:10px;">
-                        <button class="btn btn-primary" onclick="tampilkanRekap()">
-                            <span>📊</span> Lihat Rekap Absensi
-                        </button>
                     </div>
                 </div>
+
+                <div id="statsAbsensi" class="stats-grid"></div>
+                <div class="table-responsive" id="tableRekapAbsensiContainer">
+                    <table id="tableRekapAbsensi">
+                        <thead>
+                            <tr>
+                                <th>No</th><th>Nama Siswa</th>
+                                <th class="text-center">H</th><th class="text-center">I</th><th class="text-center">S</th>
+                                <th class="text-center">A</th><th class="text-center">B</th>
+                                <th class="text-center">Total</th><th class="text-center">%</th><th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyRekapAbsensi"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tombol Pemicu Rekap -->
+            <div style="margin-top:20px;">
+                <button class="btn btn-primary" onclick="tampilkanRekap()">📊 Lihat Rekap Absensi</button>
             </div>
         </div>
     </div>
-
+</div>
     <!-- MODAL-MODAL (Sama seperti sebelumnya) -->
     <div id="modalKelas" class="modal">
         <div class="modal-content">
