@@ -756,7 +756,7 @@
         // LOAD SISWA
         async function loadSiswa() {
             try {
-                const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), orderBy('nama'));
+                const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email), );
                 const snapshot = await getDocs(q);
                 const tbody = document.getElementById('tbodySiswa');
                 tbody.innerHTML = '';
