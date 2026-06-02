@@ -95,7 +95,7 @@ export const AuthService = {
         try {
             await signOut(auth);
             localStorage.removeItem('sipelita_user');
-            window.location.href = 'login.html';
+            window.location.href = 'home.html';
         } catch (error) {
             console.error("Gagal logout:", error);
         }
