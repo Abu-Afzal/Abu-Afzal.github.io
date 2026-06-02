@@ -1,5 +1,5 @@
 /* ==========================================================================
-   STYLE HALAMAN PORTAL UTAMA - SIPELITA MAN BANTAENG (GLASSMORPHISM LOG IN)
+   STYLE HALAMAN PORTAL UTAMA - SIPELITA MAN BANTAENG (FULL UTAN LAYOUT)
    ========================================================================== */
 
 /* Navbar Adjustments */
@@ -41,9 +41,8 @@
 }
 
 /* ==========================================================================
-   STYLE HALAMAN PORTAL UTAMA - LAYOUT VERTIKAL MEMANJANG (SESUAI SS 139)
+   HERO VERTICAL LAYOUT (SESUAI REKOMENDASI TAMPILAN SCREENSHOT (139).JPG)
    ========================================================================== */
-
 .hero {
     padding: 60px 0 80px 0;
     background: linear-gradient(135deg, #1a237e 0%, #764ba2 100%);
@@ -55,7 +54,7 @@
     align-items: center;
 }
 
-/* Mengubah flex container menjadi tumpukan kolom (Vertikal) */
+/* Mengubah flex container menjadi tumpukan kolom (Vertikal Atas-Bawah) */
 .hero .container.hero-vertical-layout {
     display: flex;
     flex-direction: column;
@@ -63,7 +62,7 @@
     justify-content: center;
     gap: 35px;
     width: 100%;
-    max-width: 1000px; /* Lebar maksimal area konten agar tidak terlalu melebar di monitor ultra-wide */
+    max-width: 1000px; /* Batas area konten agar tidak terlalu melebar di layar lebar */
     margin: 0 auto;
     padding: 0 24px;
     box-sizing: border-box;
@@ -75,7 +74,7 @@
     text-align: center;
 }
 .hero-text-center h1 {
-    font-size: 3.2rem; /* Ukuran teks diperbesar agar tegas */
+    font-size: 3.2rem; /* Ukuran teks diperbesar agar tegas sesuai referensi */
     margin: 0 0 12px 0;
     font-weight: 800;
     letter-spacing: -0.5px;
@@ -89,14 +88,16 @@
     opacity: 0.95;
 }
 
-/* Card Login Bawah - Lebar Memanjang Mengikuti Pembungkus */
+/* ==========================================================================
+   KOTAK LOGIN GLASSMORPHISM (DAPAT DIATUR UKURANNYA DI SINI)
+   ========================================================================== */
 .hero-login-card-wide {
-    width: 100%; /* Memanjang penuh memenuhi kontainer */
-    max-width: 800px; /* Batas lebar optimal kotak login agar tetap proporsional */
+    width: 100%; 
+    max-width: 520px; /* Lebar kotak login yang ideal dan terfokus di tengah */
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 40px 45px;
+    padding: 35px 40px; /* Mengatur ketebalan spasi atas-bawah dan kiri-kanan */
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
@@ -115,49 +116,73 @@
 .hero-login-card-wide p.subtitle {
     font-size: 0.95rem;
     color: rgba(255, 255, 255, 0.8);
-    margin: 0 0 35px 0;
+    margin: 0 0 30px 0;
     text-align: center;
 }
 
-/* Form Groups di dalam kotak lebar */
+/* Form Groups */
 .form-group {
-    margin-bottom: 24px;
+    margin-bottom: 22px;
     text-align: left;
 }
 .form-group label {
     display: block;
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.95);
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-.input-icon-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-/* --- Penyesuaian Wrapper Input untuk Tombol Mata --- */
+
+/* ==========================================================================
+   FITUR STRUKTUR INPUT & IKON YANG HIDUP (EMAIL, LOCK & MATA)
+   ========================================================================== */
 .input-icon-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-/* Icon Utama (Kiri) */
+/* Ikon Utama Sebelah Kiri (Email & Password Lock) */
 .input-icon-wrapper i.icon-main {
     position: absolute;
     left: 18px;
     font-size: 1.1rem;
     pointer-events: none;
+    
+    /* Membuat warna ikon menjadi gradasi cerah & hidup */
     background: linear-gradient(135deg, #00ffff 0%, #00c6ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    
+    /* Efek pendaran neon halus */
     filter: drop-shadow(0 2px 8px rgba(0, 255, 255, 0.4));
 }
 
-/* Ikon Tanda Mata (Kanan) */
+/* Input Isian (Box Model) */
+.input-icon-wrapper input {
+    width: 100%;
+    padding: 15px 50px 15px 52px; /* Diberikan ruang kanan 50px agar teks tak tertutup ikon mata */
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    box-sizing: border-box;
+    font-size: 1.05rem;
+    color: white;
+    transition: all 0.3s ease;
+}
+.input-icon-wrapper input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+.input-icon-wrapper input:focus {
+    background: rgba(255, 255, 255, 0.28);
+    border-color: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Ikon Tanda Mata Sebelah Kanan (Lihat Password) */
 .input-icon-wrapper .toggle-password {
     position: absolute;
     right: 18px;
@@ -170,17 +195,19 @@
 .input-icon-wrapper .toggle-password:hover {
     color: #00ffff;
     filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+    transform: scale(1.1);
 }
 
-/* Memastikan teks password tidak tertutup ikon mata */
-.input-icon-wrapper input[type="password"],
-.input-icon-wrapper input[type="text"] {
-    padding-right: 50px; 
+/* Efek Interaktif: Ikon Menyala saat Form Aktif Diklik */
+.input-icon-wrapper input:focus + i.icon-main {
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) brightness(1.3);
 }
 
-/* --- Gaya Desain Pilihan Ingat Saya --- */
+/* ==========================================================================
+   KOMPONEN KOTAK CENTANG (REMEMBER ME / INGAT SAYA)
+   ========================================================================== */
 .remember-me-container {
-    margin: -5px 0 20px 0;
+    margin: -5px 0 25px 0;
     text-align: left;
 }
 .remember-me-label {
@@ -197,27 +224,29 @@
     color: #ffffff;
 }
 .remember-me-label input {
-    display: none; /* Sembunyikan checkbox bawaan browser */
+    display: none; /* Sembunyikan checkbox bawaan default browser */
 }
 
-/* Custom Kotak Checkbox Gelas (Glassmorphism) */
+/* Custom Desain Kotak Centang Gelas (Glassmorphism Checkbox) */
 .checkbox-custom {
     width: 18px;
     height: 18px;
     border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 4px;
+    border-radius: 5px;
     background: rgba(255, 255, 255, 0.1);
     display: inline-block;
     position: relative;
     transition: all 0.3s ease;
 }
+
+/* Animasi & Pendaran Warna saat Checkbox Aktif Tercentang */
 .remember-me-label input:checked + .checkbox-custom {
     background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
     border-color: #00ffff;
-    box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.6);
 }
 
-/* Membuat Tanda Centang (v) */
+/* Membuat Simbol Tanda Centang (v) Putih */
 .checkbox-custom::after {
     content: "";
     position: absolute;
@@ -233,7 +262,10 @@
 .remember-me-label input:checked + .checkbox-custom::after {
     display: block;
 }
-/* Tombol Login Lebar Bergradasi */
+
+/* ==========================================================================
+   TOMBOL LOGIN UTAMA & ALERT
+   ========================================================================== */
 .btn-inline-login {
     width: 100%;
     padding: 16px;
@@ -245,7 +277,6 @@
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 15px;
     letter-spacing: 1px;
     text-transform: uppercase;
     box-shadow: 0 5px 15px rgba(0, 114, 255, 0.3);
@@ -253,27 +284,6 @@
 .btn-inline-login:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 30px rgba(0, 198, 255, 0.5);
-    filter: brightness(1.1);
-}
-
-/* Responsif Mobile Skala Kecil */
-@media (max-width: 768px) {
-    .hero {
-        padding: 40px 0;
-    }
-    .hero-text-center h1 {
-        font-size: 2.2rem;
-    }
-    .hero-text-center p {
-        font-size: 1.1rem;
-    }
-    .hero-login-card-wide {
-        padding: 25px 20px;
-    }
-}
-.btn-inline-login:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 198, 255, 0.5);
     filter: brightness(1.1);
 }
 .btn-inline-login:disabled {
@@ -298,58 +308,22 @@
     font-weight: 500;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-/* Identitas Table-Grid Layout */
-.identitas-wrapper {
-    background: white; 
-    padding: 40px; 
-    border-radius: 15px; 
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-}
-.identitas-wrapper h3 {
-    color: #1a237e; 
-    margin: 0 0 30px; 
-    font-size: 1.5rem; 
-    text-align: center; 
-    border-bottom: 3px solid #667eea; 
-    padding-bottom: 10px;
-}
-.identitas-grid {
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-    gap: 20px;
-}
-.identitas-item {
-    padding: 15px; 
-    background: #f8f9fa; 
-    border-radius: 8px; 
-    border-left: 4px solid #667eea;
-}
-.label-id {
-    color: #667eea; 
-    display: block; 
-    margin-bottom: 5px;
-}
-.value-id {
-    color: #2c3e50;
-}
 
-/* Penyesuaian Responsif Layar Kecil (Mobile) */
+/* ==========================================================================
+   MEDIA QUERY RESPONSIVE (TAMPILAN MOBILE SMARTPHONE)
+   ========================================================================== */
 @media (max-width: 768px) {
     .hero {
-        padding: 50px 0;
+        padding: 40px 0;
     }
-    .hero .container {
-        flex-direction: column;
-        text-align: center;
-    }
-    .hero-text {
-        text-align: center;
-    }
-    .hero-text h1 {
+    .hero-text-center h1 {
         font-size: 2.2rem;
     }
-    .hero-login-card {
-        flex: 1 1 100%;
+    .hero-text-center p {
+        font-size: 1.1rem;
+    }
+    .hero-login-card-wide {
+        padding: 25px 20px;
         max-width: 100%;
     }
 }
