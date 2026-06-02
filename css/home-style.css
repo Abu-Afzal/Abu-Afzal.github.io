@@ -458,4 +458,27 @@
         grid-template-columns: 1fr; /* Menjadi tumpukan vertikal jika layar hp */
         gap: 30px;
     }
+   /* ==========================================================================
+   PERBAIKAN PAKSA UNTUK TEKS BERJALAN (MARQUEE FIX)
+   ========================================================================== */
+.marquee-running-bar {
+    width: 100% !important;
+    display: block !important; /* Memastikan baris info menggunakan layout block */
+    box-sizing: border-box;
+}
+
+.marquee-overflow-hide {
+    display: block !important;
+    flex: 1 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+/* Memaksa elemen marquee mengambil ruang penuh dan aktif */
+.marquee-overflow-hide marquee {
+    display: block !important;
+    width: 100% !important;
+    color: #ffffff !important; /* Memastikan teks berwarna putih terang */
+    font-size: 0.95rem;
+    font-weight: 500;
 }
