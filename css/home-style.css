@@ -319,20 +319,131 @@
 }
 
 /* ==========================================================================
-   MEDIA QUERY RESPONSIVE (TAMPILAN MOBILE SMARTPHONE)
+   WARNA ASLI BRAND IKON SOSIAL MEDIA (BRAND COLORS)
    ========================================================================== */
+.social-grid {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    flex-wrap: wrap;
+}
+
+.social-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 30px;
+    background: #ffffff;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #333333;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+    min-width: 160px;
+}
+
+.social-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+/* Pewarnaan Ikon Spesifik */
+.social-card.facebook i {
+    color: #1877F2; /* Biru Facebook */
+    font-size: 1.3rem;
+}
+.social-card.instagram i {
+    /* Gradasi Warna Instagram */
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.3rem;
+}
+.social-card.youtube i {
+    color: #FF0000; /* Merah YouTube */
+    font-size: 1.3rem;
+}
+.social-card.whatsapp i {
+    color: #25D366; /* Hijau WhatsApp */
+    font-size: 1.3rem;
+}
+
+
+/* ==========================================================================
+   TATA LETAK PRESISI UTAMA - MAIN FOOTER
+   ========================================================================== */
+.main-footer {
+    background-color: #0b132b; /* Warna latar gelap sesuai gambar */
+    color: #ffffff;
+    padding: 50px 0 25px 0;
+    font-family: sans-serif;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Membagi rata 2 kolom (SIPELITA & Kontak) */
+    gap: 50px;
+    padding: 0 40px;
+    box-sizing: border-box;
+}
+
+.footer-column {
+    text-align: left;
+}
+
+.footer-column h3 {
+    font-size: 1.4rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.footer-column p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0 0 12px 0;
+}
+
+/* Jarak ikon kecil pada list kontak */
+.footer-column p i {
+    margin-right: 10px;
+    color: #00ffff; /* Warna cyan lembut pemanis ikon kontak */
+}
+
+
+/* ==========================================================================
+   BAGIAN COPYRIGHT PALING BAWAH
+   ========================================================================== */
+.footer-bottom {
+    max-width: 1200px;
+    margin: 40px auto 0 auto;
+    padding: 0 40px;
+    text-align: center; /* Teks copyright berada di tengah paling bawah */
+    box-sizing: border-box;
+}
+
+.footer-divider {
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+}
+
+.footer-bottom p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0;
+}
+
+/* Responsif untuk Smartphone Lebar Kecil */
 @media (max-width: 768px) {
-    .hero {
-        padding: 40px 0;
-    }
-    .hero-text-center h1 {
-        font-size: 2.2rem;
-    }
-    .hero-text-center p {
-        font-size: 1.1rem;
-    }
-    .hero-login-card-wide {
-        padding: 25px 20px;
-        max-width: 100%;
+    .footer-container {
+        grid-template-columns: 1fr; /* Berubah menjadi baris vertikal di mobile */
+        gap: 30px;
     }
 }
