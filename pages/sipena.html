@@ -13,11 +13,6 @@
 /* ...[SEMUA CSS ASLI DIPERTAHANKAN, TIDAK DIKURANGI]... */
 body{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100%;overflow-x:hidden;}
 *{box-sizing:border-box;}
-.login-container{display:flex;justify-content:center;align-items:center;min-height:100%;padding:20px;}
-.login-box{background:white;padding:40px;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);width:100%;max-width:400px;text-align:center;}
-.login-logo{width:100px;height:100px;margin:0 auto 20px;border-radius:50%;object-fit:cover;border:4px solid #667eea;}
-.login-title{font-size:24px;font-weight:bold;color:#333333;margin-bottom:10px;}
-.login-subtitle{font-size:14px;color:#333333;margin-bottom:30px;}
 .form-group{margin-bottom:20px;text-align:left;}
 .form-label{display:block;font-size:14px;font-weight:600;color:#333333;margin-bottom:8px;}
 .form-input{width:100%;padding:12px 15px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;transition:all 0.3s;}
@@ -104,57 +99,8 @@ tr:hover{background:#f8f9fa;}
 </head>
 
 <body>
-<!-- Login Screen -->
-<div id="loginScreen" class="login-container">
-  <div class="login-box">
-    <img src="https://iili.io/KSGDE9s.jpg" alt="Logo MAN BANTAENG" class="login-logo" onerror="this.style.display='none'">
-    <div class="login-title">Absen Digital</div>
-    <div class="login-title"><strong>MAN BANTAENG</strong></p></div>
-
-     <!-- Login Form -->
-    <form id="loginForm" style="display:block;">
-      <div class="form-group">
-        <label for="username" class="form-label">Username</label>
-        <input type="text" id="username" class="form-input" placeholder="Masukkan username" required>
-      </div>
-      <div class="form-group">
-        <label for="password" class="form-label">Password</label>
-        <input type="password" id="password" class="form-input" placeholder="Masukkan password" required>
-      </div>
-      <button type="submit" class="login-btn" id="loginBtn"><span id="loginBtnText">Masuk</span></button>
-      <div class="error-message" id="errorMessage">Username atau password salah!</div>
-      <div style="text-align:center;margin-top:20px;">
-        <button type="button" onclick="showRegisterForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">
-          </p>Belum punya akun? <strong>Daftar di sini</strong></p>
-      </div>
-    </form>
-
-    <!-- Register Form -->
-    <form id="registerForm" style="display:none;">
-      <div class="form-group">
-        <label for="regUsername" class="form-label">Username</label>
-        <input type="text" id="regUsername" class="form-input" placeholder="Buat username baru" required>
-      </div>
-      <div class="form-group">
-        <label for="regPassword" class="form-label">Password</label>
-        <input type="password" id="regPassword" class="form-input" placeholder="Buat password" required>
-      </div>
-      <div class="form-group">
-        <label for="regPasswordConfirm" class="form-label">Konfirmasi Password</label>
-        <input type="password" id="regPasswordConfirm" class="form-input" placeholder="Ketik ulang password" required>
-      </div>
-      <button type="submit" class="login-btn" id="registerBtn"><span id="registerBtnText">Daftar</span></button>
-      <div class="error-message" id="registerErrorMessage"></div>
-      <div style="color:#27ae60;font-size:13px;margin-top:10px;display:none;" id="registerSuccessMessage">Pendaftaran berhasil! Silakan login.</div>
-      <div style="text-align:center;margin-top:20px;">
-        <button type="button" onclick="showLoginForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">Sudah punya akun? Login di sini</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- Main Application -->
-<div id="mainApp" class="main-container">
+<div id="mainApp" class="main-container" style="display:block;">
   <!-- Header -->
   <div class="header">
     <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo" onerror="this.style.display='none'">
@@ -164,7 +110,7 @@ tr:hover{background:#f8f9fa;}
     </div>
     <div class="header-user">
       <div class="user-name" id="currentUser">Guru</div>
-      <button class="logout-btn" onclick="logout()">Keluar</button>
+      <button class="logout-btn" onclick="window.location.href='../index.html'">← Dashboard</button>
     </div>
   </div>
 
@@ -452,7 +398,11 @@ function showToast(message, type='success'){
 
 // ---- INIT APP ----
 async function initApp(){
-  // initial fetch to avoid empty allData on first actions
+  // ✅ Ambil nama dari localStorage SIPELITA jika ada, atau pakai default
+  const stored = localStorage.getItem('sipelita_user');
+  currentUser = stored ? JSON.parse(stored).email : 'guru';
+  document.getElementById('currentUser').textContent = currentUser;
+
   try { const snap = await get(ROOT); allData = toArray(snap.val()); } catch(e) {}
   onValue(ROOT, (snap) => {
     allData = toArray(snap.val());
@@ -468,8 +418,9 @@ async function initApp(){
   });
   updateCurrentDate();
   setInterval(updateCurrentDate, 60000);
+  showContent('presensi'); // ✅ Langsung buka halaman presensi
 }
-function updateCurrentDate(){
+  function updateCurrentDate(){
   const now = new Date();
   const options = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
   const dateStr = now.toLocaleDateString('id-ID', options);
@@ -479,22 +430,6 @@ function updateCurrentDate(){
 window.addEventListener('load', initApp);
 
 // ---- AUTH ----
-window.showRegisterForm = function(){
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('registerForm').style.display = 'block';
-  document.getElementById('registerErrorMessage').style.display = 'none';
-  document.getElementById('registerSuccessMessage').style.display = 'none';
-  document.getElementById('regUsername').value = '';
-  document.getElementById('regPassword').value = '';
-  document.getElementById('regPasswordConfirm').value = '';
-};
-window.showLoginForm = function(){
-  document.getElementById('loginForm').style.display = 'block';
-  document.getElementById('registerForm').style.display = 'none';
-  document.getElementById('errorMessage').style.display = 'none';
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
-};
 function logout(){
   currentUser = '';
   document.getElementById('loginScreen').style.display = 'flex';
@@ -504,7 +439,6 @@ function logout(){
   document.getElementById('errorMessage').style.display = 'none';
 }
 window.logout = logout;
-
 document.getElementById('registerForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const username = document.getElementById('regUsername').value.trim();
