@@ -1,3 +1,7 @@
+/* ==========================================================================
+   STYLE LANDING PAGE UTAMA - SIPELITA MAN BANTAENG (DIREVISI & DISINKRONKAN)
+   ========================================================================== */
+
 /* --- Google Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -214,35 +218,6 @@ body {
     gap: 20px;
 }
 
-.social-card {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background: white;
-    padding: 18px;
-    border-radius: 12px;
-    text-decoration: none;
-    font-weight: 600;
-    color: #334155;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    transition: all 0.3s;
-}
-
-.social-card i {
-    font-size: 1.5rem;
-}
-
-.social-card:hover {
-    transform: translateY(-4px);
-    color: white;
-}
-
-.facebook:hover { background: #1877f2; }
-.instagram:hover { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
-.youtube:hover { background: #ff0000; }
-.whatsapp:hover { background: #25d366; }
-
 /* --- Footer --- */
 footer {
     background: #0f172a;
@@ -296,40 +271,32 @@ footer {
 
 /* Responsive Breakpoint */
 @media (max-width: 768px) {
-    .nav-links { display: none; } /* Idealnya diganti hamburger menu nantinya */
+    .nav-links { display: none; }
     .hero h1 { font-size: 2rem; }
     .hero p { font-size: 1rem; }
     .hero-buttons { flex-direction: column; gap: 10px; padding: 0 40px; }
 }
-/* Marquee / Running Text */
-.marquee-container {
-    overflow: hidden;
-    white-space: nowrap;
+
+/* ==========================================================================
+   PERBAIKAN SINKRONISASI RUNNING TEXT / MARQUEE (MENGHINDARI BENTROKAN)
+   ========================================================================== */
+.marquee-running-bar {
+    width: 100% !important;
+    display: block !important;
+    box-sizing: border-box;
 }
 
-.marquee-content {
-    display: inline-block;
-    animation: marquee 30s linear infinite;
-    padding-left: 100%;
+.marquee-overflow-hide {
+    display: block !important;
+    width: 100% !important;
+    overflow: hidden !important;
 }
 
-@keyframes marquee {
-    0% {
-        transform: translateX(0);
-    }
-    100% {
-        transform: translateX(-100%);
-    }
-}
-
-/* Pause saat hover */
-.marquee-container:hover .marquee-content {
-    animation-play-state: paused;
-}
-
-/* Responsive untuk mobile */
-@media (max-width: 768px) {
-    .marquee-content {
-        animation-duration: 20s;
-    }
+/* Memaksa tag <marquee> bawaan berjalan konvensional tanpa intervensi animasi CSS */
+.marquee-overflow-hide marquee {
+    display: block !important;
+    width: 100% !important;
+    color: #ffffff !important;
+    font-size: 0.95rem;
+    font-weight: 500;
 }
