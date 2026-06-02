@@ -182,22 +182,31 @@
     box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-/* Ikon Tanda Mata Sebelah Kanan (Lihat Password) */
+/* Ikon Tanda Mata Sebelah Kanan (Lihat Password) - Disamakan Warnanya */
 .input-icon-wrapper .toggle-password {
     position: absolute;
     right: 18px;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.6);
     font-size: 1.1rem;
     transition: all 0.2s ease;
     z-index: 10;
-}
-.input-icon-wrapper .toggle-password:hover {
-    color: #00ffff;
-    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
-    transform: scale(1.1);
+
+    /* Menyamakan warna dengan ikon email & gembok (Gradasi Cyan-Biru) */
+    background: linear-gradient(135deg, #00ffff 0%, #00c6ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    
+    /* Efek pendaran neon halus bawaan */
+    filter: drop-shadow(0 2px 8px rgba(0, 255, 255, 0.4));
+    opacity: 0.75; /* Diberi sedikit transparansi default agar tidak terlalu mencolok saat tidak diarahkan kursor */
 }
 
+/* Efek saat kursor diarahkan (Hover) ke ikon mata */
+.input-icon-wrapper .toggle-password:hover {
+    opacity: 1; /* Menjadi terang benderang penuh */
+    filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.9)) brightness(1.2);
+    transform: scale(1.1);
+}
 /* Efek Interaktif: Ikon Menyala saat Form Aktif Diklik */
 .input-icon-wrapper input:focus + i.icon-main {
     filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) brightness(1.3);
