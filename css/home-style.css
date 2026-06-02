@@ -1,0 +1,268 @@
+/* ==========================================================================
+   STYLE HALAMAN PORTAL UTAMA - SIPELITA MAN BANTAENG (GLASSMORPHISM LOG IN)
+   ========================================================================== */
+
+/* Navbar Adjustments */
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Running Text Bar Custom */
+.marquee-running-bar {
+    background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); 
+    color: white; 
+    padding: 12px 0; 
+    overflow: hidden;
+}
+.marquee-container-wrapper {
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 0 20px;
+}
+.marquee-flex-layout {
+    display: flex; 
+    align-items: center; 
+    gap: 15px;
+}
+.info-badge {
+    background: #ffd700; 
+    color: #1a237e; 
+    padding: 4px 12px; 
+    border-radius: 4px; 
+    font-weight: 700; 
+    font-size: 0.85rem; 
+    white-space: nowrap;
+}
+.marquee-overflow-hide {
+    overflow: hidden; 
+    flex: 1;
+}
+
+/* Modifikasi Struktur Grid Utama Hero */
+.hero {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #1a237e 0%, #764ba2 100%);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+.hero .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 50px;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+.hero-text {
+    flex: 1;
+    min-width: 320px;
+    text-align: left;
+}
+.hero-text h1 {
+    font-size: 2.8rem;
+    margin-bottom: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+.hero-text p {
+    font-size: 1.25rem;
+    line-height: 1.7;
+    margin-bottom: 35px;
+    opacity: 0.9;
+}
+.btn-read-news {
+    background: rgba(255, 255, 255, 0.2); 
+    color: white; 
+    padding: 12px 24px; 
+    border-radius: 8px; 
+    text-decoration: none; 
+    font-weight: 600; 
+    display: inline-block; 
+    transition: 0.3s; 
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.btn-read-news:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: white;
+}
+
+/* Desain Kotak Login Sesuai Referensi Gambar (Glassmorphism) */
+.hero-login-card {
+    flex: 0 0 380px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 35px 30px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    color: white;
+    width: 100%;
+    box-sizing: border-box;
+}
+.hero-login-card h2 {
+    font-size: 1.6rem;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+.hero-login-card p.subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0 0 25px 0;
+    text-align: center;
+}
+
+/* Form Controls & Icon Styling */
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.input-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-icon-wrapper i {
+    position: absolute;
+    left: 15px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    pointer-events: none;
+}
+.input-icon-wrapper input {
+    width: 100%;
+    padding: 14px 15px 14px 45px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    color: white;
+    transition: all 0.3s ease;
+}
+.input-icon-wrapper input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+.input-icon-wrapper input:focus {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #ffffff;
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
+}
+
+/* Tombol Login Mengkilap / Bergradasi */
+.btn-inline-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.btn-inline-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 198, 255, 0.5);
+    filter: brightness(1.1);
+}
+.btn-inline-login:disabled {
+    background: #555 !important;
+    color: #aaa;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Alert Notifikasi Error */
+.error-msg {
+    background: #ffebee;
+    color: #c62828;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    display: none;
+    text-align: left;
+    border-left: 5px solid #c62828;
+    font-weight: 500;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+/* Identitas Table-Grid Layout */
+.identitas-wrapper {
+    background: white; 
+    padding: 40px; 
+    border-radius: 15px; 
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+.identitas-wrapper h3 {
+    color: #1a237e; 
+    margin: 0 0 30px; 
+    font-size: 1.5rem; 
+    text-align: center; 
+    border-bottom: 3px solid #667eea; 
+    padding-bottom: 10px;
+}
+.identitas-grid {
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 20px;
+}
+.identitas-item {
+    padding: 15px; 
+    background: #f8f9fa; 
+    border-radius: 8px; 
+    border-left: 4px solid #667eea;
+}
+.label-id {
+    color: #667eea; 
+    display: block; 
+    margin-bottom: 5px;
+}
+.value-id {
+    color: #2c3e50;
+}
+
+/* Penyesuaian Responsif Layar Kecil (Mobile) */
+@media (max-width: 768px) {
+    .hero {
+        padding: 50px 0;
+    }
+    .hero .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .hero-text {
+        text-align: center;
+    }
+    .hero-text h1 {
+        font-size: 2.2rem;
+    }
+    .hero-login-card {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+}
