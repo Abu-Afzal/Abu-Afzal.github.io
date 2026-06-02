@@ -7,170 +7,317 @@
     <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
     <link rel="stylesheet" href="css/landing.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* CSS Tambahan untuk Penyesuaian Kolom Login Terintegrasi */
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Modifikasi Hero Section menjadi Layout 2 Kolom */
+        .hero {
+            padding: 80px 0;
+            background: linear-gradient(135deg, #1a237e 0%, #764ba2 100%);
+            color: white;
+        }
+        .hero .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .hero-text {
+            flex: 1;
+            min-width: 300px;
+            text-align: left;
+        }
+        .hero-text h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .hero-text p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        /* Desain Kotak Login Terintegrasi */
+        .hero-login-card {
+            flex: 0 0 380px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            color: #333;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .hero-login-card h2 {
+            font-size: 1.4rem;
+            color: #1a237e;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+            text-align: center;
+        }
+        .hero-login-card p {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0 0 20px 0;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #444;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            transition: 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .btn-inline-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 5px;
+        }
+        .btn-inline-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-inline-login:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .error-msg {
+            background: #ffebee;
+            color: #c62828;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            display: none;
+            text-align: left;
+            border-left: 4px solid #c62828;
+        }
+
+        /* Responsif Mobile */
+        @media (max-width: 768px) {
+            .hero .container {
+                flex-direction: column;
+                text-align: center;
+            }
+            .hero-text {
+                text-align: center;
+            }
+            .hero-login-card {
+                flex: 1 1 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
+
     <nav class="navbar">
         <div class="container">
             <div class="logo">
                 <img src="assets/images/sipelita-app.png" alt="SIPELITA">
                 <span>SIPELITA</span>
             </div>
-            <ul class="nav-links">
-                <li><a href="home.html" class="active">Beranda</a></li>
-                <li><a href="#berita">Berita</a></li>
-                <li><a href="#profil">Profil</a></li>
-                <li><a href="login.html" class="btn-login">Login</a></li>
-            </ul>
+            <ul class="nav-links"></ul>
         </div>
     </nav>
-     <!-- Running Text / Marquee -->
-<div style="background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); color: white; padding: 12px 0; overflow: hidden;">
-    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <span style="background: #ffd700; color: #1a237e; padding: 4px 12px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; white-space: nowrap;">
-                📢 INFO
-            </span>
-            <div style="overflow: hidden; flex: 1;">
-                <div class="marquee-container">
-                    <div class="marquee-content">
-                        Selamat Datang di Portal SIPELITA MAN Bantaeng - Sistem Pengelolaan Edukasi & Layanan Terpadu 
-                        ✨ PPDB Tahun Ajaran 2026/2027 Segera Dibuka 
+
+    <div style="background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); color: white; padding: 12px 0; overflow: hidden;">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="background: #ffd700; color: #1a237e; padding: 4px 12px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; white-space: nowrap;">
+                    📢 INFO
+                </span>
+                <div style="overflow: hidden; flex: 1;">
+                    <div class="marquee-container">
+                        <div class="marquee-content">
+                            Selamat Datang di Portal SIPELITA MAN Bantaeng - Sistem Pengelolaan Edukasi & Layanan Terpadu 
+                            ✨ PPDB Tahun Ajaran 2026/2027 Segera Dibuka 
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-    <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <h1>Selamat Datang di SIPELITA</h1>
-            <p>Sistem Pengelolaan Edukasi & Layanan Terpadu<br>MAN Bantaeng</p>
-            <div class="hero-buttons">
-                <a href="login.html" class="btn-primary">Portal Guru & Staf</a>
-                <a href="#berita" class="btn-secondary">Baca Berita</a>
+            <div class="hero-text">
+                <h1>Selamat Datang di SIPELITA</h1>
+                <p>Sistem Pengelolaan Edukasi & Layanan Terpadu<br>MAN Bantaeng</p>
+                <div class="hero-buttons">
+                    <a href="#berita" class="btn-secondary" style="background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Baca Berita Terbaru</a>
+                </div>
+            </div>
+
+            <div class="hero-login-card">
+                <h2>Login Pengguna</h2>
+                <p>Masukkan akun Guru & Staf Madrasah</p>
+                
+                <div id="errorMsg" class="error-msg"></div>
+
+                <form id="landingLoginForm">
+                    <div class="form-group">
+                        <label>Email Resmi</label>
+                        <input type="email" id="email" placeholder="nama@manbantaeng.sch.id" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="Masukkan password" required>
+                    </div>
+                    <button type="submit" id="btnLogin" class="btn-inline-login">Masuk Aplikasi</button>
+                </form>
             </div>
         </div>
     </section>
 
-    <!-- Berita Section -->
     <section id="berita" class="berita-section">
         <div class="container">
             <h2 class="section-title">Berita Terbaru</h2>
             <div class="berita-grid" id="beritaContainer">
-                <!-- Berita akan dimuat dari JavaScript -->
-            </div>
+                </div>
             <a href="berita.html" class="btn-more">Lihat Semua Berita →</a>
         </div>
     </section>
-    <!-- Profil Section -->
-<section id="profil" class="profil-section" style="padding: 80px 0; background: #f8f9fa;">
-    <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-        <h2 class="section-title">Profil Madrasah</h2>
-        
-        <!-- Sambutan & Foto Kepala Madrasah -->
-        <div class="sambutan-wrapper" style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); margin-bottom: 50px; display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
-            <div style="flex: 0 0 300px; text-align: center;">
-                <img src="assets/images/kepala-madrasah.jpg" alt="Kepala Madrasah" 
-                     style="width: 250px; height: 300px; object-fit: cover; border-radius: 10px; border: 5px solid #667eea; box-shadow: 0 5px 15px rgba(0,0,0,0.2);"
-                     onerror="this.src='https://via.placeholder.com/250x300/667eea/ffffff?text=FOTO+KEPALA'">
-                <h3 style="margin: 20px 0 5px; color: #1a237e; font-size: 1.2rem;">Drs. H. Muhammad Yusuf, M.Pd.</h3>
-                <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Kepala MAN Bantaeng</p>
-            </div>
-            
-            <div style="flex: 1; min-width: 300px;">
-                <h3 style="color: #1a237e; margin: 0 0 20px; font-size: 1.5rem; border-bottom: 3px solid #667eea; padding-bottom: 10px;">
-                    Sambutan Kepala Madrasah
-                </h3>
-                <div style="color: #2c3e50; line-height: 1.8; font-size: 1rem;">
-                    <p style="margin: 0 0 15px;">
-                        <strong>Assalamu'alaikum Warahmatullahi Wabarakatuh.</strong>
-                    </p>
-                    <p style="margin: 0 0 15px; text-align: justify;">
-                        Selamat datang di portal SIPELITA (Sistem Pengelolaan Edukasi & Layanan Terpadu) MAN Bantaeng. 
-                        Platform ini kami hadirkan sebagai bentuk komitmen madrasah dalam menyelenggarakan layanan 
-                        administrasi yang modern, transparan, dan terintegrasi.
-                    </p>
-                    <p style="margin: 0 0 15px; text-align: justify;">
-                        Melalui SIPELITA, kami berharap dapat meningkatkan kualitas pelayanan kepada seluruh 
-                        stakeholders madrasah, baik guru, siswa, orang tua, maupun masyarakat umum.
-                    </p>
-                    <p style="margin: 0; text-align: justify;">
-                        Mari bersama-sama kita wujudkan generasi yang beriman, bertakwa, berakhlak mulia, cerdas, 
-                        kompetitif, dan berwawasan lingkungan.
-                    </p>
-                    <p style="margin: 20px 0 0; text-align: right; font-weight: 600; color: #667eea;">
-                        Wassalamu'alaikum Warahmatullahi Wabarakatuh.<br>
-                        <span style="font-size: 0.9rem; color: #7f8c8d;">Kepala MAN Bantaeng</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Visi & Misi -->
-        <div class="visi-misi-wrapper" style="margin-bottom: 50px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);">
-                <h3 style="margin: 0 0 20px; font-size: 1.8rem; text-align: center;">
-                    🎯 VISI MADRASAH
-                </h3>
-                <p style="margin: 0; text-align: center; font-size: 1.2rem; font-style: italic; line-height: 1.8;">
-                    "Terwujudnya Insan Madrasah Yang Religius, Intelektual, Kompetitif dan Berwawasan Lingkungan"
-                </p>
-            </div>
-            
-            <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
-                <h3 style="color: #1a237e; margin: 0 0 25px; font-size: 1.5rem; border-bottom: 3px solid #667eea; padding-bottom: 10px;">
-                    🚀 MISI MADRASAH
-                </h3>
-                <ol style="margin: 0; padding-left: 25px; line-height: 2; color: #2c3e50; font-size: 1.05rem;">
-                    <li>Melaksanakan Tata Kelola Madrasah yang Transparan dan Bertanggungjawab</li>
-                    <li>Menyediakan sarana dan prasarana penunjang pembelajaran yang berkualitas</li>
-                    <li>Mengembangkan perilaku insan madrasah yang Islami, berakhlakul karimah dan menghargai nilai-nilai kearifan lokal</li>
-                    <li>Meningkatkan kompetensi guru melalui inovasi pendidikan dan pembelajaran</li>
-                    <li>Menyelenggarakan pembelajaran yang aktif, inovatif, kreatif, efektif, dan menyenangkan</li>
-                    <li>Membangun kerjasama yang baik dengan stakeholders dalam pengembangan madrasah</li>
-                </ol>
-            </div>
-        </div>
-        
-        <!-- Identitas Madrasah -->
-        <div class="identitas-wrapper" style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
-            <h3 style="color: #1a237e; margin: 0 0 30px; font-size: 1.5rem; text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 10px;">
-                🏫 IDENTITAS MADRASAH
-            </h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong style="color: #667eea; display: block; margin-bottom: 5px;">Nama Madrasah:</strong>
-                    <span style="color: #2c3e50;">MAN Bantaeng</span>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong style="color: #667eea; display: block; margin-bottom: 5px;">NPSN:</strong>
-                    <span style="color: #2c3e50;">60101234</span>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong style="color: #667eea; display: block; margin-bottom: 5px;">Status:</strong>
-                    <span style="color: #2c3e50;">Negeri</span>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong style="color: #667eea; display: block; margin-bottom: 5px;">Alamat:</strong>
-                    <span style="color: #2c3e50;">Jl. Parela Dampang, Kel. Gantarangkeke, Kec. Gantarangkeke, Kab. Bantaeng</span>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong style="color: #667eea; display: block; margin-bottom: 5px;">Email:</strong>
-                    <span style="color: #2c3e50;">info@manbantaeng.sch.id</span>
-                </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
-                    <strong style="color: #667eea; display: block; margin-bottom: 5px;">Telepon:</strong>
-                    <span style="color: #2c3e50;">Humas: 082193722448 | TU: 081354902416</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
 
-    <!-- Sosial Media Section -->
+    <section id="profil" class="profil-section" style="padding: 80px 0; background: #f8f9fa;">
+        <div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+            <h2 class="section-title">Profil Madrasah</h2>
+            
+            <div class="sambutan-wrapper" style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); margin-bottom: 50px; display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap;">
+                <div style="flex: 0 0 300px; text-align: center;">
+                    <img src="assets/images/kepala-madrasah.jpg" alt="Kepala Madrasah" 
+                         style="width: 250px; height: 300px; object-fit: cover; border-radius: 10px; border: 5px solid #667eea; box-shadow: 0 5px 15px rgba(0,0,0,0.2);"
+                         onerror="this.src='https://via.placeholder.com/250x300/667eea/ffffff?text=FOTO+KEPALA'">
+                    <h3 style="margin: 20px 0 5px; color: #1a237e; font-size: 1.2rem;">Drs. H. Muhammad Yusuf, M.Pd.</h3>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 0.9rem;">Kepala MAN Bantaeng</p>
+                </div>
+                
+                <div style="flex: 1; min-width: 300px;">
+                    <h3 style="color: #1a237e; margin: 0 0 20px; font-size: 1.5rem; border-bottom: 3px solid #667eea; padding-bottom: 10px;">
+                        Sambutan Kepala Madrasah
+                    </h3>
+                    <div style="color: #2c3e50; line-height: 1.8; font-size: 1rem;">
+                        <p style="margin: 0 0 15px;">
+                            <strong>Assalamu'alaikum Warahmatullahi Wabarakatuh.</strong>
+                        </p>
+                        <p style="margin: 0 0 15px; text-align: justify;">
+                            Selamat datang di portal SIPELITA (Sistem Pengelolaan Edukasi & Layanan Terpadu) MAN Bantaeng. 
+                            Platform ini kami hadirkan sebagai bentuk komitmen madrasah dalam menyelenggarakan layanan 
+                            administrasi yang modern, transparan, dan terintegrasi.
+                        </p>
+                        <p style="margin: 0 0 15px; text-align: justify;">
+                            Melalui SIPELITA, kami berharap dapat meningkatkan kualitas pelayanan kepada seluruh 
+                            text-align stakeholders madrasah, baik guru, siswa, orang tua, maupun masyarakat umum.
+                        </p>
+                        <p style="margin: 0; text-align: justify;">
+                            Mari bersama-sama kita wujudkan generasi yang beriman, bertakwa, berakhlak mulia, cerdas, 
+                            kompetitif, dan berwawasan lingkungan.
+                        </p>
+                        <p style="margin: 20px 0 0; text-align: right; font-weight: 600; color: #667eea;">
+                            Wassalamu'alaikum Warahmatullahi Wabarakatuh.<br>
+                            <span style="font-size: 0.9rem; color: #7f8c8d;">Kepala MAN Bantaeng</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="visi-misi-wrapper" style="margin-bottom: 50px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);">
+                    <h3 style="margin: 0 0 20px; font-size: 1.8rem; text-align: center;">
+                        🎯 VISI MADRASAH
+                    </h3>
+                    <p style="margin: 0; text-align: center; font-size: 1.2rem; font-style: italic; line-height: 1.8;">
+                        "Terwujudnya Insan Madrasah Yang Religius, Intelektual, Kompetitif dan Berwawasan Lingkungan"
+                    </p>
+                </div>
+                
+                <div style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                    <h3 style="color: #1a237e; margin: 0 0 25px; font-size: 1.5rem; border-bottom: 3px solid #667eea; padding-bottom: 10px;">
+                        🚀 MISI MADRASAH
+                    </h3>
+                    <ol style="margin: 0; padding-left: 25px; line-height: 2; color: #2c3e50; font-size: 1.05rem;">
+                        <li>Melaksanakan Tata Kelola Madrasah yang Transparan dan Bertanggungjawab</li>
+                        <li>Menyediakan sarana dan prasarana penunjang pembelajaran yang berkualitas</li>
+                        <li>Mengembangkan perilaku insan madrasah yang Islami, berakhlakul karimah dan menghargai nilai-nilai kearifan lokal</li>
+                        <li>Meningkatkan kompetensi guru melalui inovasi pendidikan dan pembelajaran</li>
+                        <li>Menyelenggarakan pembelajaran yang aktif, inovatif, kreatif, efektif, dan menyenangkan</li>
+                        <li>Membangun kerjasama yang baik dengan stakeholders dalam pengembangan madrasah</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="identitas-wrapper" style="background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1);">
+                <h3 style="color: #1a237e; margin: 0 0 30px; font-size: 1.5rem; text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 10px;">
+                    🏫 IDENTITAS MADRASAH
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea; display: block; margin-bottom: 5px;">Nama Madrasah:</strong>
+                        <span style="color: #2c3e50;">MAN Bantaeng</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea; display: block; margin-bottom: 5px;">NPSN:</strong>
+                        <span style="color: #2c3e50;">60101234</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea; display: block; margin-bottom: 5px;">Status:</strong>
+                        <span style="color: #2c3e50;">Negeri</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea; display: block; margin-bottom: 5px;">Alamat:</strong>
+                        <span style="color: #2c3e50;">Jl. Parela Dampang, Kel. Gantarangkeke, Kab. Bantaeng</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea; display: block; margin-bottom: 5px;">Email:</strong>
+                        <span style="color: #2c3e50;">info@manbantaeng.sch.id</span>
+                    </div>
+                    <div style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <strong style="color: #667eea; display: block; margin-bottom: 5px;">Telepon:</strong>
+                        <span style="color: #2c3e50;">Humas: 082193722448 | TU: 081354902416</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="social-section">
         <div class="container">
             <h2>Ikuti Kami</h2>
@@ -195,7 +342,6 @@
         </div>
     </section>
 
-    <!-- Footer -->
     <footer>
         <div class="container">
             <div class="footer-content">
@@ -205,17 +351,16 @@
                 </div>
                 <div class="footer-section">
                     <h3>Kontak</h3>
-                    <p>📍 Jl. Parela Dampang Kel. Gantarangkeke Kec. Gantarangkeke Kab. Bantaeng</p>
-                    <p>📞 Humas. 082193722448, 
-                    <p>📞 Kaur TU. 081354902416</p>
-                    <p>✉️ info@manbantaeng.sch.id/</p>
+                    <p>📍 Jl. Parela Dampang Kel. Gantarangkeke Kab. Bantaeng</p>
+                    <p>📞 Humas. 082193722448</p>
+                    <p>✉️ info@manbantaeng.sch.id</p>
                 </div>
                 <div class="footer-section">
                     <h3>Link Cepat</h3>
                     <ul>
-                        <li><a href="login.html">Portal Guru</a></li>
+                        <li><a href="#profil">Profil Madrasah</a></li>
                         <li><a href="#berita">Berita</a></li>
-                        <li><a href="#">Website Madrasah</a></li>
+                        <li><a href="#">Website Kemenag</a></li>
                     </ul>
                 </div>
             </div>
@@ -225,7 +370,52 @@
         </div>
     </footer>
 
-    <script src="js/berita.js"></script>
+    <script type="module">
+        import { AuthService } from './js/auth-service.js';
+
+        // Jika user kedeteksi sudah pernah login, otomatis lewati landing & langsung arahkan ke dashboard
+        try {
+            const loggedInUser = AuthService.checkAuth();
+            if (loggedInUser) {
+                window.location.href = 'index.html';
+            }
+        } catch(e) {
+            console.log("Belum login atau module auth belum aktif.");
+        }
+
+        const loginForm = document.getElementById('landingLoginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const btnLogin = document.getElementById('btnLogin');
+
+        if(loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMsg.style.display = 'none';
+                btnLogin.disabled = true;
+                btnLogin.textContent = 'Memproses...';
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const result = await AuthService.login(email, password);
+                    if (result && result.success) {
+                        window.location.href = 'index.html';
+                    } else {
+                        errorMsg.textContent = result ? result.message : 'Gagal Masuk. Periksa kembali email & password.';
+                        errorMsg.style.display = 'block';
+                        btnLogin.disabled = false;
+                        btnLogin.textContent = 'Masuk Aplikasi';
+                    }
+                } catch (err) {
+                    errorMsg.textContent = 'Terjadi kesalahan sistem koneksi database.';
+                    errorMsg.style.display = 'block';
+                    btnLogin.disabled = false;
+                    btnLogin.textContent = 'Masuk Aplikasi';
+                }
+            });
+        }
+    </script>
     <script type="module" src="js/berita.js"></script>
 </body>
 </html>
