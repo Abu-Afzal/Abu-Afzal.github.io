@@ -138,34 +138,101 @@
     display: flex;
     align-items: center;
 }
-.input-icon-wrapper i {
-    position: absolute;
-    left: 18px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 1.1rem;
-    pointer-events: none;
-}
-.input-icon-wrapper input {
-    width: 100%;
-    padding: 16px 20px 16px 52px; /* Input disesuaikan lebih longgar */
-    background: rgba(255, 255, 255, 0.18);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 12px;
-    box-sizing: border-box;
-    font-size: 1.05rem;
-    color: #ffd700;
-    transition: all 0.3s ease;
-}
-.input-icon-wrapper input::placeholder {
-    color: rgba(255, 255, 255, 0.55);
-}
-.input-icon-wrapper input:focus {
-    background: rgba(255, 255, 255, 0.28);
-    border-color: #ffffff;
-    outline: none;
-    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.2);
+/* --- Penyesuaian Wrapper Input untuk Tombol Mata --- */
+.input-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
+/* Icon Utama (Kiri) */
+.input-icon-wrapper i.icon-main {
+    position: absolute;
+    left: 18px;
+    font-size: 1.1rem;
+    pointer-events: none;
+    background: linear-gradient(135deg, #00ffff 0%, #00c6ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 8px rgba(0, 255, 255, 0.4));
+}
+
+/* Ikon Tanda Mata (Kanan) */
+.input-icon-wrapper .toggle-password {
+    position: absolute;
+    right: 18px;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+.input-icon-wrapper .toggle-password:hover {
+    color: #00ffff;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.8));
+}
+
+/* Memastikan teks password tidak tertutup ikon mata */
+.input-icon-wrapper input[type="password"],
+.input-icon-wrapper input[type="text"] {
+    padding-right: 50px; 
+}
+
+/* --- Gaya Desain Pilihan Ingat Saya --- */
+.remember-me-container {
+    margin: -5px 0 20px 0;
+    text-align: left;
+}
+.remember-me-label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    user-select: none;
+    gap: 10px;
+    transition: color 0.2s;
+}
+.remember-me-label:hover {
+    color: #ffffff;
+}
+.remember-me-label input {
+    display: none; /* Sembunyikan checkbox bawaan browser */
+}
+
+/* Custom Kotak Checkbox Gelas (Glassmorphism) */
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    display: inline-block;
+    position: relative;
+    transition: all 0.3s ease;
+}
+.remember-me-label input:checked + .checkbox-custom {
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
+    border-color: #00ffff;
+    box-shadow: 0 0 10px rgba(0, 198, 255, 0.5);
+}
+
+/* Membuat Tanda Centang (v) */
+.checkbox-custom::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.remember-me-label input:checked + .checkbox-custom::after {
+    display: block;
+}
 /* Tombol Login Lebar Bergradasi */
 .btn-inline-login {
     width: 100%;
