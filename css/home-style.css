@@ -1,6 +1,6 @@
 /* ==========================================================================
-   STYLE HALAMAN PORTAL UTAMA - SIPELITA MAN BANTAENG (FULL UTAN LAYOUT)
-   ========================================================================== */
+   STYLE HALAMAN PORTAL UTAMA - SIPELITA MAN BANTAENG (UTUH & LENGKAP)
+   ========================================================================= */
 
 /* Navbar Adjustments */
 .navbar .container {
@@ -41,7 +41,7 @@
 }
 
 /* ==========================================================================
-   HERO VERTICAL LAYOUT (SESUAI REKOMENDASI TAMPILAN SCREENSHOT (139).JPG)
+   HERO VERTICAL LAYOUT (STRUKTUR TUMPUKAN ATAS-BAWAH MEMANJANG)
    ========================================================================== */
 .hero {
     padding: 60px 0 80px 0;
@@ -49,12 +49,12 @@
     color: white;
     position: relative;
     overflow: hidden;
-    min-height: calc(100vh - 140px); /* Menjaga proporsi tinggi layar penuh */
+    min-height: calc(100vh - 140px); /* Menjaga tinggi proporsional layar penuh */
     display: flex;
     align-items: center;
 }
 
-/* Mengubah flex container menjadi tumpukan kolom (Vertikal Atas-Bawah) */
+/* Mengubah flex container menjadi tumpukan kolom vertikal */
 .hero .container.hero-vertical-layout {
     display: flex;
     flex-direction: column;
@@ -62,7 +62,7 @@
     justify-content: center;
     gap: 35px;
     width: 100%;
-    max-width: 1000px; /* Batas area konten agar tidak terlalu melebar di layar lebar */
+    max-width: 1000px; /* Batas area konten tengah */
     margin: 0 auto;
     padding: 0 24px;
     box-sizing: border-box;
@@ -74,7 +74,7 @@
     text-align: center;
 }
 .hero-text-center h1 {
-    font-size: 3.2rem; /* Ukuran teks diperbesar agar tegas sesuai referensi */
+    font-size: 3.2rem;
     margin: 0 0 12px 0;
     font-weight: 800;
     letter-spacing: -0.5px;
@@ -89,15 +89,15 @@
 }
 
 /* ==========================================================================
-   KOTAK LOGIN GLASSMORPHISM (DAPAT DIATUR UKURANNYA DI SINI)
+   KOTAK LOGIN GLASSMORPHISM (UKURAN PRESISI & IDEAL)
    ========================================================================== */
 .hero-login-card-wide {
     width: 100%; 
-    max-width: 520px; /* Lebar kotak login yang ideal dan terfokus di tengah */
+    max-width: 520px; /* Lebar kotak login proporsional di tengah */
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 35px 40px; /* Mengatur ketebalan spasi atas-bawah dan kiri-kanan */
+    padding: 35px 40px; /* Jarak ruang dalam kotak */
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
@@ -136,7 +136,7 @@
 }
 
 /* ==========================================================================
-   FITUR STRUKTUR INPUT & IKON YANG HIDUP (EMAIL, LOCK & MATA)
+   FITUR STRUKTUR INPUT & IKON (EMAIL, LOCK & MATA SELARAS WARNA ASLI)
    ========================================================================== */
 .input-icon-wrapper {
     position: relative;
@@ -156,14 +156,13 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     
-    /* Efek pendaran neon halus */
     filter: drop-shadow(0 2px 8px rgba(0, 255, 255, 0.4));
 }
 
 /* Input Isian (Box Model) */
 .input-icon-wrapper input {
     width: 100%;
-    padding: 15px 50px 15px 52px; /* Diberikan ruang kanan 50px agar teks tak tertutup ikon mata */
+    padding: 15px 50px 15px 52px; /* Jarak kanan 50px agar teks tidak menabrak ikon mata */
     background: rgba(255, 255, 255, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 12px;
@@ -182,7 +181,7 @@
     box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.2);
 }
 
-/* Ikon Tanda Mata Sebelah Kanan (Lihat Password) - Disamakan Warnanya */
+/* Ikon Tanda Mata Sebelah Kanan (Lihat Password) - Selaras Berwarna */
 .input-icon-wrapper .toggle-password {
     position: absolute;
     right: 18px;
@@ -191,25 +190,27 @@
     transition: all 0.2s ease;
     z-index: 10;
 
-    /* Menyamakan warna dengan ikon email & gembok (Gradasi Cyan-Biru) */
+    /* Menyamakan warna gradasi dengan ikon email & lock */
     background: linear-gradient(135deg, #00ffff 0%, #00c6ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     
-    /* Efek pendaran neon halus bawaan */
     filter: drop-shadow(0 2px 8px rgba(0, 255, 255, 0.4));
-    opacity: 0.75; /* Diberi sedikit transparansi default agar tidak terlalu mencolok saat tidak diarahkan kursor */
+    opacity: 0.75; /* Efek transparansi halus bawaan */
 }
 
-/* Efek saat kursor diarahkan (Hover) ke ikon mata */
+/* Efek Interaktif pada Ikon Mata & Utama */
 .input-icon-wrapper .toggle-password:hover {
-    opacity: 1; /* Menjadi terang benderang penuh */
+    opacity: 1;
     filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.9)) brightness(1.2);
     transform: scale(1.1);
 }
-/* Efek Interaktif: Ikon Menyala saat Form Aktif Diklik */
 .input-icon-wrapper input:focus + i.icon-main {
     filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.9)) brightness(1.3);
+}
+.input-icon-wrapper input:focus ~ .toggle-password {
+    opacity: 1;
+    filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.7));
 }
 
 /* ==========================================================================
@@ -233,7 +234,7 @@
     color: #ffffff;
 }
 .remember-me-label input {
-    display: none; /* Sembunyikan checkbox bawaan default browser */
+    display: none; /* Sembunyikan checkbox bawaan browser */
 }
 
 /* Custom Desain Kotak Centang Gelas (Glassmorphism Checkbox) */
@@ -248,7 +249,7 @@
     transition: all 0.3s ease;
 }
 
-/* Animasi & Pendaran Warna saat Checkbox Aktif Tercentang */
+/* Efek saat Checkbox Aktif Tercentang */
 .remember-me-label input:checked + .checkbox-custom {
     background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%);
     border-color: #00ffff;
@@ -272,9 +273,7 @@
     display: block;
 }
 
-/* ==========================================================================
-   TOMBOL LOGIN UTAMA & ALERT
-   ========================================================================== */
+/* Tombol Login Utama & Alert */
 .btn-inline-login {
     width: 100%;
     padding: 16px;
@@ -321,14 +320,24 @@
 /* ==========================================================================
    WARNA ASLI BRAND IKON SOSIAL MEDIA (BRAND COLORS)
    ========================================================================== */
+.social-section {
+    padding: 40px 0;
+    background: #f8f9fa;
+    text-align: center;
+}
+.social-section h2 {
+    font-size: 1.8rem;
+    color: #1a237e;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
 .social-grid {
     display: flex;
     justify-content: center;
     gap: 20px;
-    padding: 20px;
+    padding: 0 20px;
     flex-wrap: wrap;
 }
-
 .social-card {
     display: flex;
     align-items: center;
@@ -342,14 +351,14 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     transition: transform 0.2s, box-shadow 0.2s;
     min-width: 160px;
+    box-sizing: border-box;
 }
-
 .social-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
-/* Pewarnaan Ikon Spesifik */
+/* Pewarnaan Ikon Asli Sesuai Sosmed */
 .social-card.facebook i {
     color: #1877F2; /* Biru Facebook */
     font-size: 1.3rem;
@@ -370,31 +379,27 @@
     font-size: 1.3rem;
 }
 
-
 /* ==========================================================================
-   TATA LETAK PRESISI UTAMA - MAIN FOOTER
+   TATA LETAK PRESISI - MAIN FOOTER DUA KOLOM & COPYRIGHT PALING BAWAH
    ========================================================================== */
 .main-footer {
-    background-color: #0b132b; /* Warna latar gelap sesuai gambar */
+    background-color: #0b132b; /* Warna latar gelap elegan */
     color: #ffffff;
     padding: 50px 0 25px 0;
     font-family: sans-serif;
 }
-
 .footer-container {
     max-width: 1200px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Membagi rata 2 kolom (SIPELITA & Kontak) */
+    grid-template-columns: 1fr 1fr; /* Membagi rata 2 kolom presisi */
     gap: 50px;
     padding: 0 40px;
     box-sizing: border-box;
 }
-
 .footer-column {
     text-align: left;
 }
-
 .footer-column h3 {
     font-size: 1.4rem;
     margin-top: 0;
@@ -402,48 +407,55 @@
     font-weight: 700;
     letter-spacing: 0.5px;
 }
-
 .footer-column p {
     font-size: 0.95rem;
     line-height: 1.7;
     color: rgba(255, 255, 255, 0.75);
     margin: 0 0 12px 0;
 }
-
-/* Jarak ikon kecil pada list kontak */
 .footer-column p i {
     margin-right: 10px;
-    color: #00ffff; /* Warna cyan lembut pemanis ikon kontak */
+    color: #00ffff; /* Warna cyan penanda ikon kontak */
 }
 
-
-/* ==========================================================================
-   BAGIAN COPYRIGHT PALING BAWAH
-   ========================================================================== */
+/* BAGIAN COPYRIGHT PALING BAWAH SEBAGAI PENUTUP */
 .footer-bottom {
     max-width: 1200px;
     margin: 40px auto 0 auto;
     padding: 0 40px;
-    text-align: center; /* Teks copyright berada di tengah paling bawah */
+    text-align: center; /* Posisikan teks hak cipta di tengah bawah */
     box-sizing: border-box;
 }
-
 .footer-divider {
     border: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-bottom: 20px;
 }
-
 .footer-bottom p {
     font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.5);
     margin: 0;
 }
 
-/* Responsif untuk Smartphone Lebar Kecil */
+/* ==========================================================================
+   MEDIA QUERY RESPONSIVE (TAMPILAN MOBILE LAYAR KECIL)
+   ========================================================================== */
 @media (max-width: 768px) {
+    .hero {
+        padding: 40px 0;
+    }
+    .hero-text-center h1 {
+        font-size: 2.2rem;
+    }
+    .hero-text-center p {
+        font-size: 1.1rem;
+    }
+    .hero-login-card-wide {
+        padding: 25px 20px;
+        max-width: 100%;
+    }
     .footer-container {
-        grid-template-columns: 1fr; /* Berubah menjadi baris vertikal di mobile */
+        grid-template-columns: 1fr; /* Menjadi tumpukan vertikal jika layar hp */
         gap: 30px;
     }
 }
