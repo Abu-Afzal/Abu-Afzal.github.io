@@ -634,7 +634,7 @@
         });
 
         // LOAD KELAS
-        async function loadKelas() {
+        window.loadKelas = async function loadKelas() {
             try {
                 const q = query(collection(db, 'sipena_kelas'), where('guru_email', '==', currentUser.email));
                 const snapshot = await getDocs(q);
@@ -751,7 +751,7 @@
 };
 
         // TAMBAH SISWA
-        window.tambahSiswa = async () => {
+        window.loadSiswa = async function loadSiswa() {
             const nis = document.getElementById('inputNIS').value.trim();
             const nama = document.getElementById('inputNamaSiswa').value.trim();
             const gender = document.getElementById('inputGender').value;
@@ -828,7 +828,7 @@
         };
 
         // LOAD ABSENSI
-        async function loadAbsensi() {
+        window.loadAbsensi = async function loadAbsensi() {
             const tbody = document.getElementById('tbodyAbsensi');
             tbody.innerHTML = '';
 
