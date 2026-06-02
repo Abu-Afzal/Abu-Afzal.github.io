@@ -8,24 +8,23 @@
     <link rel="stylesheet" href="css/landing.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* CSS Tambahan untuk Penyesuaian Kolom Login Terintegrasi */
-        .navbar .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* ==========================================================================
+           STYLE TAMBAHAN: HERO & HERO LOGIN GLASSMORPHISM STYLE (SESUAI GAMBAR)
+           ========================================================================== */
         
-        /* Modifikasi Hero Section menjadi Layout 2 Kolom */
+        /* Modifikasi Struktur Grid Utama Hero */
         .hero {
             padding: 80px 0;
             background: linear-gradient(135deg, #1a237e 0%, #764ba2 100%);
             color: white;
+            position: relative;
+            overflow: hidden;
         }
         .hero .container {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 40px;
+            gap: 50px;
             flex-wrap: wrap;
             max-width: 1200px;
             margin: 0 auto;
@@ -33,112 +32,157 @@
         }
         .hero-text {
             flex: 1;
-            min-width: 300px;
+            min-width: 320px;
             text-align: left;
         }
         .hero-text h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             margin-bottom: 20px;
-            font-weight: 700;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
         }
         .hero-text p {
-            font-size: 1.2rem;
-            line-height: 1.6;
-            margin-bottom: 30px;
+            font-size: 1.25rem;
+            line-height: 1.7;
+            margin-bottom: 35px;
             opacity: 0.9;
         }
 
-        /* Desain Kotak Login Terintegrasi */
+        /* Desain Kotak Login Sesuai Referensi Gambar */
         .hero-login-card {
             flex: 0 0 380px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            color: #333;
+            background: rgba(255, 255, 255, 0.15); /* Efek Transparan */
+            backdrop-filter: blur(10px); /* Efek Blur di belakang kotak */
+            -webkit-backdrop-filter: blur(10px);
+            padding: 35px 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.25); /* Garis tepi tipis berkilau */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            color: white;
             width: 100%;
             box-sizing: border-box;
         }
         .hero-login-card h2 {
-            font-size: 1.4rem;
-            color: #1a237e;
-            margin: 0 0 5px 0;
+            font-size: 1.6rem;
+            color: #ffffff;
+            margin: 0 0 8px 0;
             font-weight: 700;
             text-align: center;
+            letter-spacing: 0.5px;
         }
-        .hero-login-card p {
-            font-size: 0.85rem;
-            color: #666;
-            margin: 0 0 20px 0;
+        .hero-login-card p.subtitle {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.75);
+            margin: 0 0 25px 0;
             text-align: center;
         }
+
+        /* Form Controls & Icon Styling */
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             text-align: left;
         }
         .form-group label {
             display: block;
             font-size: 0.85rem;
-            color: #444;
-            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 8px;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .form-group input {
+        .input-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-icon-wrapper i {
+            position: absolute;
+            left: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        .input-icon-wrapper input {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            padding: 14px 15px 14px 45px; /* Spasi kiri ekstra untuk icon */
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
             box-sizing: border-box;
-            font-size: 0.95rem;
-            transition: 0.3s;
+            font-size: 1rem;
+            color: white;
+            transition: all 0.3s ease;
         }
-        .form-group input:focus {
-            border-color: #667eea;
+        .input-icon-wrapper input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .input-icon-wrapper input:focus {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: #ffffff;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
         }
+
+        /* Tombol Login Mengkilap / Bergradasi */
         .btn-inline-login {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 14px;
+            background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); /* Biru neon modern */
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: 0.3s;
-            margin-top: 5px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
         .btn-inline-login:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 198, 255, 0.5);
+            filter: brightness(1.1);
         }
         .btn-inline-login:disabled {
-            background: #ccc;
+            background: #555 !important;
+            color: #aaa;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
+
+        /* Alert Notifikasi Error */
         .error-msg {
             background: #ffebee;
             color: #c62828;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 12px;
+            border-radius: 8px;
             font-size: 0.85rem;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: none;
             text-align: left;
-            border-left: 4px solid #c62828;
+            border-left: 5px solid #c62828;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        /* Responsif Mobile */
+        /* Penyesuaian Responsif Layar Kecil (Mobile) */
         @media (max-width: 768px) {
+            .hero {
+                padding: 50px 0;
+            }
             .hero .container {
                 flex-direction: column;
                 text-align: center;
             }
             .hero-text {
                 text-align: center;
+            }
+            .hero-text h1 {
+                font-size: 2.2rem;
             }
             .hero-login-card {
                 flex: 1 1 100%;
@@ -183,26 +227,32 @@
                 <h1>Selamat Datang di SIPELITA</h1>
                 <p>Sistem Pengelolaan Edukasi & Layanan Terpadu<br>MAN Bantaeng</p>
                 <div class="hero-buttons">
-                    <a href="#berita" class="btn-secondary" style="background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">Baca Berita Terbaru</a>
+                    <a href="#berita" class="btn-secondary" style="background: rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; transition: 0.3s; border: 1px solid rgba(255,255,255,0.4);">Baca Berita Terbaru</a>
                 </div>
             </div>
 
             <div class="hero-login-card">
-                <h2>Login Pengguna</h2>
-                <p>Masukkan akun Guru & Staf Madrasah</p>
+                <h2>LOGIN USER</h2>
+                <p class="subtitle">Portal Akses Guru & Staf Madrasah</p>
                 
                 <div id="errorMsg" class="error-msg"></div>
 
                 <form id="landingLoginForm">
                     <div class="form-group">
-                        <label>Email Resmi</label>
-                        <input type="email" id="email" placeholder="nama@manbantaeng.sch.id" required>
+                        <label>Email</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" id="email" placeholder="admin@manbantaeng.sch.id" required>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" id="password" placeholder="Masukkan password" required>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="password" placeholder="Masukkan password" required>
+                        </div>
                     </div>
-                    <button type="submit" id="btnLogin" class="btn-inline-login">Masuk Aplikasi</button>
+                    <button type="submit" id="btnLogin" class="btn-inline-login">MASUK PORTAL</button>
                 </form>
             </div>
         </div>
@@ -245,7 +295,7 @@
                         </p>
                         <p style="margin: 0 0 15px; text-align: justify;">
                             Melalui SIPELITA, kami berharap dapat meningkatkan kualitas pelayanan kepada seluruh 
-                            text-align stakeholders madrasah, baik guru, siswa, orang tua, maupun masyarakat umum.
+                            stakeholders madrasah, baik guru, siswa, orang tua, maupun masyarakat umum.
                         </p>
                         <p style="margin: 0; text-align: justify;">
                             Mari bersama-sama kita wujudkan generasi yang beriman, bertakwa, berakhlak mulia, cerdas, 
@@ -373,14 +423,14 @@
     <script type="module">
         import { AuthService } from './js/auth-service.js';
 
-        // Jika user kedeteksi sudah pernah login, otomatis lewati landing & langsung arahkan ke dashboard
+        // Cek status autentikasi aktif
         try {
             const loggedInUser = AuthService.checkAuth();
             if (loggedInUser) {
                 window.location.href = 'index.html';
             }
         } catch(e) {
-            console.log("Belum login atau module auth belum aktif.");
+            console.log("Sistem otentikasi siap menerima input pengguna.");
         }
 
         const loginForm = document.getElementById('landingLoginForm');
@@ -392,7 +442,7 @@
                 e.preventDefault();
                 errorMsg.style.display = 'none';
                 btnLogin.disabled = true;
-                btnLogin.textContent = 'Memproses...';
+                btnLogin.textContent = 'MEMPROSES...';
 
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
@@ -402,16 +452,16 @@
                     if (result && result.success) {
                         window.location.href = 'index.html';
                     } else {
-                        errorMsg.textContent = result ? result.message : 'Gagal Masuk. Periksa kembali email & password.';
+                        errorMsg.textContent = result ? result.message : 'Akses ditolak. Email atau password salah.';
                         errorMsg.style.display = 'block';
                         btnLogin.disabled = false;
-                        btnLogin.textContent = 'Masuk Aplikasi';
+                        btnLogin.textContent = 'MASUK PORTAL';
                     }
                 } catch (err) {
-                    errorMsg.textContent = 'Terjadi kesalahan sistem koneksi database.';
+                    errorMsg.textContent = 'Gagal terhubung ke server database Firebase.';
                     errorMsg.style.display = 'block';
                     btnLogin.disabled = false;
-                    btnLogin.textContent = 'Masuk Aplikasi';
+                    btnLogin.textContent = 'MASUK PORTAL';
                 }
             });
         }
