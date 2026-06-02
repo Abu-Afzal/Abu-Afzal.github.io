@@ -278,9 +278,16 @@
         .empty-state i { font-size: 4rem; margin-bottom: 20px; opacity: 0.3; }
         
         /* View Sections */
-        .view-section { display: none; }
-        .view-section.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.view-section { display: none; }
+.view-section.active { display: block; animation: fadeIn 0.3s; }
+
+/* ✅ TAMBAHKAN INI — Sub Views */
+.sub-view { display: none; }
+.sub-view.active { display: block; animation: fadeIn 0.3s; }
+
+/* ✅ TAMBAHKAN INI — Inner Content Penilaian */
+.inner-content { display: none; }
+.inner-content.active { display: block; animation: fadeIn 0.3s; }
         
         /* Responsive */
         @media (max-width: 768px) {
@@ -393,12 +400,12 @@
             </div>
             
             <!-- Konten Sikap -->
-            <div id="kontenSikap" class="inner-content" style="display:none;">
+            <div id="kontenSikap" class="inner-content">
                 <p style="text-align:center; padding:40px; color:#999;"> Masukkan tabel & logika Penilaian Sikap di sini</p>
             </div>
             
             <!-- Konten Keterampilan -->
-            <div id="kontenKeterampilan" class="inner-content" style="display:none;">
+            <div id="kontenKeterampilan" class="inner-content">
                 <p style="text-align:center; padding:40px; color:#999;">📌 Masukkan tabel & logika Penilaian Keterampilan di sini</p>
             </div>
         </div>
@@ -715,51 +722,33 @@
 
         // SWITCH SUB VIEW
         window.switchSubView = (viewId, btn) => {
-            document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active'));
-            
-            document.getElementById(viewId).classList.add('active');
-            btn.classList.add('active');
-            
-            if (viewId === 'subSiswa') loadSiswa();
-            else if (viewId === 'subAbsensi') loadAbsensi();
-        };
+    // Sembunyikan semua sub-view
+    document.querySelectorAll('.sub-view').forEach(v => v.classList.remove('active'));
+    // Reset semua tombol nav
+    document.querySelectorAll('.sub-nav-btn').forEach(b => b.classList.remove('active'));
 
-        // LOAD SISWA
-        async function loadSiswa() {
-            try {
-                const q = query(collection(db, 'sipena_siswa'), where('kelas_id', '==', currentKelasId), where('guru_email', '==', currentUser.email));
-                const snapshot = await getDocs(q);
-                const tbody = document.getElementById('tbodySiswa');
-                tbody.innerHTML = '';
-                daftarSiswa = [];
+    // Tampilkan sub-view yang dipilih
+    document.getElementById(viewId).classList.add('active');
+    btn.classList.add('active');
 
-                if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding:40px; color:#999;">Belum ada siswa. Tambah siswa secara manual atau impor dari Excel.</td></tr>';
-                    return;
-                }
+    // Reset inner tab penilaian ke Pengetahuan saat masuk sub Penilaian
+    if (viewId === 'subPenilaian') {
+        document.querySelectorAll('.inner-content').forEach(c => {
+            c.classList.remove('active');
+            c.style.display = 'none';
+        });
+        document.getElementById('kontenPH').classList.add('active');
+        document.getElementById('kontenPH').style.display = 'block';
+        document.querySelectorAll('#subPenilaian .btn').forEach(b => {
+            b.style.background = '#e0e0e0'; b.style.color = '#333';
+        });
+        document.getElementById('btnTabPH').style.background = '#2e7d32';
+        document.getElementById('btnTabPH').style.color = 'white';
+    }
 
-                let no = 1;
-                snapshot.forEach(docSnap => {
-                    const s = docSnap.data();
-                    daftarSiswa.push({ id: docSnap.id, ...s });
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${no++}</td>
-                            <td>${s.nis}</td>
-                            <td><strong>${s.nama}</strong></td>
-                            <td class="text-center">${s.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</td>
-                            <td>
-                                <button class="btn btn-danger" style="padding:6px 12px; font-size:0.85rem;" onclick="hapusSiswa('${docSnap.id}')">Hapus</button>
-                            </td>
-                        </tr>`;
-                });
-
-                await updateDoc(doc(db, 'sipena_kelas', currentKelasId), { jumlah_siswa: snapshot.size });
-            } catch (error) {
-                console.error("Error load siswa:", error);
-            }
-        }
+    if (viewId === 'subSiswa') loadSiswa();
+    else if (viewId === 'subAbsensi') loadAbsensi();
+};
 
         // TAMBAH SISWA
         window.tambahSiswa = async () => {
@@ -1092,6 +1081,29 @@
 
         window.showModal = (id) => document.getElementById(id).classList.add('show');
         window.hideModal = (id) => document.getElementById(id).classList.remove('show');
+
+        window.switchTabInner = (contentId, btn) => {
+    // Sembunyikan semua inner-content
+    document.querySelectorAll('.inner-content').forEach(c => {
+        c.classList.remove('active');
+        c.style.display = 'none'; // ✅ pastikan tersembunyi
+    });
+
+    // Reset semua tombol tab
+    document.querySelectorAll('#subPenilaian .btn').forEach(b => {
+        b.style.background = '#e0e0e0';
+        b.style.color = '#333';
+    });
+
+    // Tampilkan yang dipilih
+    const target = document.getElementById(contentId);
+    target.classList.add('active');
+    target.style.display = 'block';
+
+    // Aktifkan tombol yang diklik
+    btn.style.background = '#2e7d32';
+    btn.style.color = 'white';
+};
     </script>
 </body>
 </html>
