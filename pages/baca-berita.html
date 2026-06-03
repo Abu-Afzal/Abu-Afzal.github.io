@@ -40,7 +40,7 @@
       const beritaId = params.get('id');
       
       if (!beritaId) {
-        document.getElementById('loading').textContent = '❌ Berita tidak ditemukan.';
+        document.getElementById('loading').textContent = '❌ ID Berita tidak ditemukan di URL.';
         return;
       }
 
@@ -50,26 +50,35 @@
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const tglFormat = new Date(data.createdAt).toLocaleDateString('id-ID', {
+          
+          // Mengatasi jika string tanggal bermasalah atau kosong
+          const tglObj = data.createdAt ? new Date(data.createdAt) : new Date();
+          const tglFormat = tglObj.toLocaleDateString('id-ID', {
             day: 'numeric', month: 'long', year: 'numeric'
           });
 
+          // Mengisi konten dokumen ke elemen HTML
           document.getElementById('newsJudul').textContent = data.judul;
-          document.getElementById('newsKategori').textContent = data.kategori;
+          document.getElementById('newsKategori').textContent = data.kategori || 'Umum';
           document.getElementById('newsTanggal').textContent = tglFormat;
-          document.getElementById('newsIsi').textContent = data.isi;
+          
+          // Menggunakan innerText agar perpindahan baris (paragraf) terbaca dengan baik
+          document.getElementById('newsIsi').innerText = data.isi;
 
+          // PERBAIKAN SINTAKS: Menghilangkan double .style
           document.getElementById('loading').style.display = 'none';
-          document.getElementById('content').style.style.display = 'block';
+          document.getElementById('content').style.display = 'block';
         } else {
           document.getElementById('loading').textContent = '❌ Berita telah dihapus atau tidak tersedia.';
         }
       } catch (err) {
         document.getElementById('loading').textContent = '❌ Gagal memuat data: ' + err.message;
+        console.error("Firestore Error:", err);
       }
     }
 
-    document.addEventListener('DOMContentLoaded', muatDetailBerita);
+    // Jalankan fungsi secara langsung tanpa menunggu DOMContentLoaded (karena script bertipe module otomatis defer)
+    muatDetailBerita();
   </script>
 </body>
 </html>
