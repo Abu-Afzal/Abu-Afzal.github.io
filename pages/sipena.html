@@ -242,15 +242,36 @@ tr:hover td{background:#fafbff;}
   </div>
 
   <!-- ══ BANK SOAL ══ -->
-  <div id="bank-soal" class="content-area">
-    <div class="content-card">
-      <div class="section-title">📚 Bank Soal</div>
-      <div class="action-bar">
-        <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen</button>
+ <!-- ══ MODAL: TAMBAH DOKUMEN ══ -->
+<div class="modal" id="modalDokumen">
+  <div class="modal-box">
+    <div class="modal-title">📄 Upload Dokumen</div>
+    <div class="fg">
+      <label>Nama Dokumen *</label>
+      <input type="text" id="inputNamaDokumen" placeholder="Contoh: Soal PAS Sosiologi Kelas X">
+    </div>
+    <div class="fg">
+      <label>Keterangan</label>
+      <input type="text" id="inputKetDokumen" placeholder="Opsional">
+    </div>
+    <div class="fg">
+      <label>File Dokumen * <span style="color:#ef4444;font-size:0.75rem;">(Maks. 5 MB)</span></label>
+      <input type="file" id="inputFileDokumen" 
+             accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
+             style="padding:10px;border:2px dashed #667eea;border-radius:8px;width:100%;background:#f8fafc;cursor:pointer;">
+      <small style="color:#64748b;display:block;margin-top:5px;">
+        Format: PDF, Word, Excel, PowerPoint, Gambar
+      </small>
+      <div id="fileInfo" style="display:none;margin-top:8px;padding:8px;background:#dcfce7;border-radius:6px;font-size:0.8rem;color:#065f46;">
+        <span id="fileInfoText"></span>
       </div>
-      <div id="documentList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnBatalDokumen">Batal</button>
+      <button class="btn btn-primary" id="btnSimpanDokumen">📤 Upload</button>
     </div>
   </div>
+</div>
 
 </div><!-- /app-wrap -->
 
@@ -1044,39 +1065,257 @@ async function simpanKonfigKolom(){
 //                BANK SOAL
 // ══════════════════════════════════════════════
 function renderBankSoal(){
-  const docs=allData.filter(d=>d.type==='document' && d.user_name===currentUser);
-  const cont=document.getElementById('documentList');
-  if(!docs.length){ cont.innerHTML='<div class="empty"><div class="ei">📚</div><p>Belum ada dokumen.</p></div>'; return; }
-  cont.innerHTML=docs.map(d=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid #e2e8f0;">
-      <div>
-        <div style="font-weight:700;color:#1e293b;">📄 ${d.doc_name}</div>
-        ${d.keterangan?`<div style="font-size:0.78rem;color:#64748b;">${d.keterangan}</div>`:''}
-        <div style="font-size:0.72rem;color:#94a3b8;">${new Date(d.created_at).toLocaleString('id-ID')}</div>
+  const docs = allData.filter(d => d.type === 'document' && d.user_name === currentUser);
+  const cont = document.getElementById('documentList');
+  
+  if(!docs.length){
+    cont.innerHTML = '<div class="empty"><div class="ei">📚</div><p>Belum ada dokumen. Klik "+ Upload Dokumen" untuk memulai.</p></div>';
+    return;
+  }
+  
+  cont.innerHTML = docs.map(d => {
+    const icon = getFileIcon(d.file_type || '', d.file_name || d.doc_name);
+    const date = new Date(d.created_at).toLocaleDateString('id-ID', {
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    const hasFile = !!d.file_data;
+    
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:linear-gradient(135deg,#f8fafc,#e0f2fe);border-radius:12px;margin-bottom:12px;border:2px solid #e0f2fe;transition:all 0.3s;">
+        <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;">
+          <div style="font-size:2.5rem;flex-shrink:0;">${icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;color:#1e293b;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${d.doc_name}
+            </div>
+            ${d.file_name ? `<div style="font-size:0.78rem;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📎 ${d.file_name}</div>` : ''}
+            ${d.keterangan ? `<div style="font-size:0.82rem;color:#64748b;margin-top:2px;">${d.keterangan}</div>` : ''}
+            <div style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">
+              📅 ${date} ${d.file_size_text ? `• 💾 ${d.file_size_text}` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;margin-left:10px;">
+          ${hasFile ? `
+            <button class="btn btn-primary btn-sm" data-key="${d.__key}" data-action="download" title="Download">
+              ⬇️ Download
+            </button>
+            <button class="btn btn-warning btn-sm" data-key="${d.__key}" data-action="preview" title="Lihat">
+              👁️ Lihat
+            </button>
+          ` : '<span style="color:#94a3b8;font-size:0.8rem;">No file</span>'}
+          <button class="btn btn-danger btn-sm" data-key="${d.__key}" data-name="${d.doc_name}" data-action="hapusdok" title="Hapus">🗑️</button>
+        </div>
       </div>
-      <button class="btn btn-danger btn-sm" data-key="${d.__key}" data-name="${d.doc_name}" data-action="hapusdok">🗑 Hapus</button>
-    </div>`).join('');
+    `;
+  }).join('');
+  
+  // Event listeners
+  cont.querySelectorAll('[data-action]').forEach(btn => {
+    const action = btn.dataset.action;
+    const key = btn.dataset.key;
+    
+    if(action === 'hapusdok'){
+      btn.onclick = async () => {
+        if(!confirm(`Hapus dokumen "${btn.dataset.name}"?`)) return;
+        try {
+          await ROOT.child(key).remove();
+          toast('✅ Dokumen berhasil dihapus!');
+        } catch(e){
+          toast('❌ Gagal hapus: ' + e.message, 'err');
+        }
+      };
+    }
+    
+    if(action === 'download'){
+      btn.onclick = () => downloadDokumen(key);
+    }
+    
+    if(action === 'preview'){
+      btn.onclick = () => previewDokumen(key);
+    }
+  });
+}
+// ══════════════════════════════════════════════
+//            DOWNLOAD & PREVIEW DOKUMEN
+// ══════════════════════════════════════════════
+function downloadDokumen(key){
+  const doc = allData.find(d => d.__key === key && d.file_data);
+  if(!doc){
+    toast('File tidak ditemukan!','err');
+    return;
+  }
+  
+  try {
+    // Konversi base64 ke blob
+    const blob = base64ToFile(doc.file_data, doc.file_name);
+    
+    // Buat link download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.file_name || doc.doc_name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast('✅ Download dimulai!');
+  } catch(e){
+    console.error(e);
+    toast('❌ Gagal download: ' + e.message, 'err');
+  }
+}
 
-  cont.querySelectorAll('[data-action="hapusdok"]').forEach(btn=>{
-    btn.onclick=async()=>{
-      if(!confirm(`Hapus dokumen "${btn.dataset.name}"?`)) return;
-      await ROOT.child(btn.dataset.key).remove();
-      toast('Dokumen dihapus.');
-    };
+function previewDokumen(key){
+  const doc = allData.find(d => d.__key === key && d.file_data);
+  if(!doc){
+    toast('File tidak ditemukan!','err');
+    return;
+  }
+  
+  try {
+    const blob = base64ToFile(doc.file_data, doc.file_name);
+    const url = URL.createObjectURL(blob);
+    const ext = (doc.file_ext || '').toLowerCase();
+    
+    // Untuk gambar, tampilkan langsung
+    if(['jpg','jpeg','png','gif'].includes(ext)){
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><title>${doc.doc_name}</title></head>
+        <body style="margin:0;background:#1e293b;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+          <img src="${url}" style="max-width:100%;max-height:100vh;">
+        </body></html>
+      `);
+    } 
+    // Untuk PDF, tampilkan di iframe
+    else if(ext === 'pdf'){
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><title>${doc.doc_name}</title></head>
+        <body style="margin:0;">
+          <iframe src="${url}" style="width:100%;height:100vh;border:none;"></iframe>
+        </body></html>
+      `);
+    } 
+    // Untuk file lain, langsung download
+    else {
+      toast('ℹ️ Format ini tidak bisa di-preview. File akan didownload.', 'ok');
+      downloadDokumen(key);
+    }
+  } catch(e){
+    console.error(e);
+    toast('❌ Gagal preview: ' + e.message, 'err');
+  }
+}
+  
+// ══════════════════════════════════════════════
+//            HELPER: FILE TO BASE64
+// ══════════════════════════════════════════════
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+    reader.readAsDataURL(file);
   });
 }
 
+function base64ToFile(base64String, fileName) {
+  const arr = base64String.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(2) + ' MB';
+}
+
+function getFileIcon(mimeType, fileName) {
+  const ext = fileName.split('.').pop().toLowerCase();
+  if (ext === 'pdf') return '📕';
+  if (['doc','docx'].includes(ext)) return '📘';
+  if (['xls','xlsx'].includes(ext)) return '📗';
+  if (['ppt','pptx'].includes(ext)) return '📙';
+  if (['jpg','jpeg','png','gif'].includes(ext)) return '🖼️';
+  return '📄';
+}
 async function simpanDokumen(){
-  const nama=document.getElementById('inputNamaDokumen').value.trim();
-  const ket =document.getElementById('inputKetDokumen').value.trim();
+  const nama = document.getElementById('inputNamaDokumen').value.trim();
+  const ket  = document.getElementById('inputKetDokumen').value.trim();
+  const fileInput = document.getElementById('inputFileDokumen');
+  const file = fileInput.files[0];
+  
   if(!nama){ toast('Nama dokumen tidak boleh kosong!','err'); return; }
-  const btn=document.getElementById('btnSimpanDokumen');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
-  try{
-    await ROOT.push().set({type:'document',doc_name:nama,keterangan:ket,user_name:currentUser,created_at:nowISO()});
-    closeModal('modalDokumen'); toast('Dokumen berhasil ditambahkan!');
-  } catch(e){ toast('Gagal: '+e.message,'err'); }
-  btn.disabled=false; btn.textContent='Simpan';
+  if(!file){ toast('Pilih file dokumen terlebih dahulu!','err'); return; }
+  
+  // Validasi ukuran (max 5 MB)
+  const MAX_SIZE = 5 * 1024 * 1024;
+  if(file.size > MAX_SIZE){
+    toast(`Ukuran file terlalu besar! Maksimal 5 MB. File Anda: ${formatFileSize(file.size)}`,'err');
+    return;
+  }
+  
+  // Validasi tipe file
+  const allowedExt = ['pdf','doc','docx','xls','xlsx','ppt','pptx','jpg','jpeg','png'];
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(!allowedExt.includes(ext)){
+    toast('Format file tidak didukung! Gunakan PDF, Word, Excel, PPT, atau Gambar.','err');
+    return;
+  }
+  
+  const btn = document.getElementById('btnSimpanDokumen');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Mengupload...';
+  
+  try {
+    // Konversi file ke base64
+    const base64Data = await fileToBase64(file);
+    
+    // Simpan ke Realtime Database
+    await ROOT.push().set({
+      type: 'document',
+      doc_name: nama,
+      keterangan: ket || '',
+      file_name: file.name,
+      file_type: file.type,
+      file_ext: ext,
+      file_size: file.size,
+      file_size_text: formatFileSize(file.size),
+      file_data: base64Data,  // ← Base64 disimpan di sini
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+    
+    // Reset form
+    document.getElementById('inputNamaDokumen').value = '';
+    document.getElementById('inputKetDokumen').value = '';
+    fileInput.value = '';
+    document.getElementById('fileInfo').style.display = 'none';
+    closeModal('modalDokumen');
+    toast('✅ Dokumen berhasil diupload!');
+    
+  } catch(e) {
+    console.error('Error upload:', e);
+    if(e.code === 'PERMISSION_DENIED'){
+      toast('Akses ditolak. Periksa aturan database.','err');
+    } else if(e.message && e.message.includes('too large')){
+      toast('Data terlalu besar untuk database. Coba file lebih kecil.','err');
+    } else {
+      toast('❌ Gagal upload: ' + (e.message || 'Unknown error'), 'err');
+    }
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = originalText;
 }
 
 // ══════════════════════════════════════════════
