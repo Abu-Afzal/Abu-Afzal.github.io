@@ -237,7 +237,7 @@
 
             console.log("⏳ Cek Firebase Auth...");
             const authTimeout = setTimeout(() => {
-                window.location.href = '../login.html';
+                window.location.href = '../home.html';
             }, 5000);
 
             onAuthStateChanged(auth, (user) => {
@@ -248,7 +248,7 @@
                     console.log("✅ Login dari Firebase:", user.email);
                     initPage();
                 } else {
-                    window.location.href = '../login.html';
+                    window.location.href = '../home.html';
                 }
             });
         }
@@ -265,7 +265,7 @@
             if (confirm('Yakin ingin keluar dari SICAN?')) {
                 localStorage.removeItem('sipelita_user');
                 await signOut(auth).catch(() => {});
-                window.location.href = '../login.html';
+                window.location.href = '../home.html';
             }
         });
 
