@@ -251,7 +251,25 @@ tr:hover td{background:#fafbff;}
   </div>
 </div>
 
-</div><!-- /app-wrap -->
+<div id="uploadModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-title">Upload Dokumen</div>
+    <form id="uploadForm">
+      <div class="form-row">
+        <label class="form-label">Nama Dokumen</label>
+        <input type="text" id="documentName" class="form-input" placeholder="Nama dokumen" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">File</label>
+        <input type="file" id="documentFile" class="form-input" required>
+      </div>
+      <div class="action-bar">
+        <button type="submit" class="btn btn-primary">Upload</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Batal</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- ══ MODAL: TAMBAH KELAS ══ -->
 <div class="modal" id="modalTambahKelas">
