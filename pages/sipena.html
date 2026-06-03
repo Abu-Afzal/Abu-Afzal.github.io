@@ -439,9 +439,10 @@ tr:hover{background:#f8f9fa;}
   </div>
 </div>
 
-<!-- SCRIPT TANPA MODULE - Menggunakan Firebase via CDN biasa -->
 <script>
-// Firebase Configuration
+// ========================================
+// FIREBASE CONFIGURATION
+// ========================================
 const firebaseConfig = {
   apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
   authDomain: "sipelita-digital.firebaseapp.com",
@@ -453,12 +454,13 @@ const firebaseConfig = {
   measurementId: "G-1D5DWJV54E"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const ROOT = db.ref("appData");
 
-// App State
+// ========================================
+// APP STATE
+// ========================================
 let currentUser = 'Guru';
 let currentClass = '';
 let allData = [];
@@ -471,6 +473,9 @@ let selectedMonth = new Date().getMonth() + 1;
 let selectedSemester = 'Ganjil';
 let currentTargetClassManagement = '';
 
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
 function toArray(val) { 
   return val ? Object.keys(val).map(k => ({ __key: k, ...val[k] })) : []; 
 }
@@ -483,165 +488,535 @@ function todayStr() {
   return new Date().toISOString().split('T')[0]; 
 }
 
-function showToast(message, type='success'){
-  const bgColor = type === 'success' ? '#27ae60' : '#e74c3c';
+function showToast(message, type = 'success') {
+  const bgColor = type === 'success' ? '#10b981' : '#ef4444';
   const toast = document.createElement('div');
-  toast.style.cssText = `position:fixed;top:20px;right:20px;background:${bgColor};color:white;padding:15px 25px;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.2);z-index:9999;`;
+  toast.style.cssText = `position:fixed;top:20px;right:20px;background:${bgColor};color:white;padding:15px 25px;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);z-index:9999;font-weight:600;font-family:'Segoe UI',sans-serif;`;
   toast.textContent = message; 
   document.body.appendChild(toast); 
-  setTimeout(()=>toast.remove(),3000);
+  setTimeout(() => toast.remove(), 3000);
 }
 
-// Global Routing
-window.showContent = function(contentId){
-  document.querySelectorAll('.content-area').forEach(a=>a.classList.remove('active'));
+// ========================================
+// GLOBAL ROUTING
+// ========================================
+window.showContent = function(contentId) {
+  document.querySelectorAll('.content-area').forEach(a => a.classList.remove('active'));
   const targetArea = document.getElementById(contentId);
-  if(targetArea) targetArea.classList.add('active');
-  renderAllContent();
+  if (targetArea) {
+    targetArea.classList.add('active');
+    renderAllContent();
+  }
 };
 
-window.closeModal = function(id){
+window.closeModal = function(id) {
   const m = document.getElementById(id);
-  if(m) m.classList.remove('active');
+  if (m) m.classList.remove('active');
+  
+  // Swap modal: jika menutup modal tambah/edit siswa, buka kembali modal manajemen
+  if (id === 'addStudentModal' || id === 'editStudentModal') {
+    const manageModal = document.getElementById('studentManagementModal');
+    if (manageModal && currentTargetClassManagement) {
+      setTimeout(() => {
+        manageModal.classList.add('active');
+        renderStudentManagement(currentTargetClassManagement);
+      }, 150);
+    }
+  }
 };
 
-function renderAllContent(){
+function renderAllContent() {
   const active = document.querySelector('.content-area.active');
   if (!active) return;
   const id = active.id;
-  if (id==='kelola-kelas') renderKelolaKelas();
-  else if (id==='presensi') renderPresensi();
-  else if (id==='penilaian') renderPenilaian();
-  else if (id==='rekap') renderRekap();
-  else if (id==='bank-soal') renderBankSoal();
+  if (id === 'kelola-kelas') renderKelolaKelas();
+  else if (id === 'presensi') renderPresensi();
+  else if (id === 'penilaian') renderPenilaian();
+  else if (id === 'rekap') renderRekap();
+  else if (id === 'bank-soal') renderBankSoal();
 }
 
-// 1. ENGINE: KELOLA KELAS
-function renderKelolaKelas(){
-  const classes = allData.filter(d => d.type === 'class');
+// ========================================
+// 🔥 FITUR KELOLA KELAS (LENGKAP & BERFUNGSI)
+// ========================================
+
+/**
+ * Render tabel daftar kelas
+ */
+function renderKelolaKelas() {
+  const classes = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
   const tbody = document.getElementById('classTableBody');
-  if (classes.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Belum ada kelas terdaftar di Firebase. Klik Tambah Kelas.</td></tr>';
+  
+  if (!tbody) {
+    console.error('❌ classTableBody tidak ditemukan!');
     return;
   }
+  
+  if (classes.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="3" class="empty-state">
+          <div style="padding:40px 20px;">
+            <div style="font-size:3rem;margin-bottom:10px;">📚</div>
+            <p style="color:#64748b;font-size:0.95rem;">Belum ada kelas terdaftar.</p>
+            <p style="color:#94a3b8;font-size:0.85rem;margin-top:5px;">Klik tombol "Tambah Kelas Baru" untuk memulai.</p>
+          </div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
   tbody.innerHTML = classes.map(cls => {
-    const totalSiswa = allData.filter(d => d.type === 'student' && d.class_name === cls.class_name).length;
+    const totalSiswa = allData.filter(d => 
+      d.type === 'student' && 
+      d.class_name === cls.class_name && 
+      d.user_name === currentUser
+    ).length;
+    
     return `
       <tr>
-        <td class="font-semibold text-gray-800">${cls.class_name}</td>
-        <td><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">${totalSiswa} Siswa</span></td>
+        <td class="font-semibold text-gray-800">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:1.5rem;">📚</span>
+            <div>
+              <div>${cls.class_name}</div>
+              <div style="font-size:0.75rem;color:#64748b;font-weight:normal;">
+                Dibuat: ${new Date(cls.created_at).toLocaleDateString('id-ID')}
+              </div>
+            </div>
+          </div>
+        </td>
         <td>
-          <button class="btn btn-primary py-1 px-3 text-xs mr-1" onclick="manageStudents('${cls.class_name}')">👥 Kelola Siswa</button>
-          <button class="btn btn-danger py-1 px-3 text-xs" onclick="deleteClass('${cls.__key}')">🗑️ Hapus</button>
+          <span style="background:#dbeafe;color:#1e40af;padding:6px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;">
+            👥 ${totalSiswa} Siswa
+          </span>
+        </td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-primary" style="padding:6px 12px;font-size:0.8rem;" onclick="manageStudents('${cls.class_name.replace(/'/g, "\\'")}')">
+              👥 Kelola Siswa
+            </button>
+            <button class="btn btn-success" style="padding:6px 12px;font-size:0.8rem;" onclick="editClass('${cls.__key}', '${cls.class_name.replace(/'/g, "\\'")}')">
+              ✏️ Edit
+            </button>
+            <button class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;" onclick="deleteClass('${cls.__key}', '${cls.class_name.replace(/'/g, "\\'")}')">
+              🗑️ Hapus
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  
+  console.log(`✅ Berhasil render ${classes.length} kelas`);
+}
+
+/**
+ * Buka modal tambah kelas
+ */
+window.showAddClassModal = function() {
+  console.log('📝 Membuka modal tambah kelas...');
+  const modal = document.getElementById('addClassModal');
+  const input = document.getElementById('className');
+  
+  if (!modal || !input) {
+    console.error('❌ Modal atau input tidak ditemukan!');
+    showToast('Error: Modal tidak ditemukan', 'error');
+    return;
+  }
+  
+  input.value = '';
+  modal.classList.add('active');
+  
+  // Fokus ke input setelah modal terbuka
+  setTimeout(() => input.focus(), 200);
+};
+
+/**
+ * Handler form tambah kelas
+ */
+document.getElementById('addClassForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  const input = document.getElementById('className');
+  const name = input.value.trim();
+  
+  console.log('💾 Mencoba menyimpan kelas:', name);
+  
+  // Validasi
+  if (!name) {
+    showToast('❌ Nama kelas tidak boleh kosong!', 'error');
+    return;
+  }
+  
+  if (name.length < 3) {
+    showToast('❌ Nama kelas minimal 3 karakter!', 'error');
+    return;
+  }
+  
+  // Cek duplikasi
+  const exists = allData.some(d => 
+    d.type === 'class' && 
+    d.class_name.toLowerCase() === name.toLowerCase() && 
+    d.user_name === currentUser
+  );
+  
+  if (exists) {
+    showToast('❌ Nama kelas sudah ada!', 'error');
+    return;
+  }
+  
+  try {
+    // Simpan ke Firebase
+    const newRef = ROOT.push();
+    await newRef.set({
+      type: 'class',
+      class_name: name,
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+    
+    console.log('✅ Kelas berhasil disimpan ke Firebase');
+    
+    // Tutup modal & reset form
+    closeModal('addClassModal');
+    input.value = '';
+    
+    showToast(`✅ Kelas "${name}" berhasil ditambahkan!`);
+  } catch (error) {
+    console.error('❌ Error menyimpan kelas:', error);
+    showToast('❌ Gagal menyimpan kelas: ' + error.message, 'error');
+  }
+});
+
+/**
+ * Edit nama kelas
+ */
+window.editClass = function(key, currentName) {
+  const newName = prompt('Masukkan nama kelas baru:', currentName);
+  
+  if (!newName || newName.trim() === '' || newName === currentName) {
+    return;
+  }
+  
+  if (newName.trim().length < 3) {
+    showToast('❌ Nama kelas minimal 3 karakter!', 'error');
+    return;
+  }
+  
+  // Cek duplikasi (kecuali nama sendiri)
+  const exists = allData.some(d => 
+    d.type === 'class' && 
+    d.class_name.toLowerCase() === newName.trim().toLowerCase() && 
+    d.class_name !== currentName &&
+    d.user_name === currentUser
+  );
+  
+  if (exists) {
+    showToast('❌ Nama kelas sudah ada!', 'error');
+    return;
+  }
+  
+  db.ref(`appData/${key}`).update({ class_name: newName.trim() })
+    .then(() => {
+      showToast('✅ Nama kelas berhasil diubah!');
+      // Update currentClass jika yang diedit adalah kelas yang sedang aktif
+      if (currentClass === currentName) {
+        currentClass = newName.trim();
+      }
+    })
+    .catch(err => {
+      console.error('❌ Error edit kelas:', err);
+      showToast('❌ Gagal mengubah nama kelas', 'error');
+    });
+};
+
+/**
+ * Hapus kelas (dengan konfirmasi)
+ */
+window.deleteClass = async function(key, className) {
+  const totalSiswa = allData.filter(d => 
+    d.type === 'student' && 
+    d.class_name === className && 
+    d.user_name === currentUser
+  ).length;
+  
+  const confirmMsg = `⚠️ PERINGATAN!\n\n` +
+    `Anda akan menghapus kelas: "${className}"\n` +
+    `Jumlah siswa di kelas ini: ${totalSiswa}\n\n` +
+    `Semua data siswa dan histori absensi kelas ini akan ikut terhapus.\n\n` +
+    `Apakah Anda yakin ingin melanjutkan?`;
+  
+  if (!confirm(confirmMsg)) {
+    return;
+  }
+  
+  // Konfirmasi kedua untuk kelas dengan siswa
+  if (totalSiswa > 0) {
+    if (!confirm(`Kelas ini memiliki ${totalSiswa} siswa. Yakin hapus?`)) {
+      return;
+    }
+  }
+  
+  try {
+    // Hapus semua data siswa di kelas ini
+    const studentsInClass = allData.filter(d => 
+      d.type === 'student' && 
+      d.class_name === className && 
+      d.user_name === currentUser
+    );
+    
+    for (const student of studentsInClass) {
+      await db.ref(`appData/${student.__key}`).remove();
+    }
+    
+    // Hapus semua log absensi kelas ini
+    const logsInClass = allData.filter(d => 
+      d.type === 'attendance_log' && 
+      d.class_name === className && 
+      d.user_name === currentUser
+    );
+    
+    for (const log of logsInClass) {
+      await db.ref(`appData/${log.__key}`).remove();
+    }
+    
+    // Hapus kelas
+    await db.ref(`appData/${key}`).remove();
+    
+    // Reset currentClass jika yang dihapus adalah kelas aktif
+    if (currentClass === className) {
+      currentClass = '';
+    }
+    
+    showToast(`✅ Kelas "${className}" berhasil dihapus!`);
+  } catch (error) {
+    console.error('❌ Error hapus kelas:', error);
+    showToast('❌ Gagal menghapus kelas: ' + error.message, 'error');
+  }
+};
+
+/**
+ * Buka modal manajemen siswa
+ */
+window.manageStudents = function(className) {
+  console.log('👥 Membuka manajemen siswa untuk:', className);
+  currentTargetClassManagement = className;
+  
+  const modal = document.getElementById('studentManagementModal');
+  const title = document.getElementById('manageStudentsTitle');
+  
+  if (!modal || !title) {
+    console.error('❌ Modal manajemen siswa tidak ditemukan!');
+    showToast('Error: Modal tidak ditemukan', 'error');
+    return;
+  }
+  
+  title.textContent = `👥 Kelola Siswa - ${className}`;
+  modal.classList.add('active');
+  renderStudentManagement(className);
+};
+
+/**
+ * Render tabel siswa dalam modal manajemen
+ */
+function renderStudentManagement(className) {
+  const students = allData.filter(d => 
+    d.type === 'student' && 
+    d.class_name === className && 
+    d.user_name === currentUser
+  );
+  
+  const tbody = document.getElementById('studentManagementTableBody');
+  
+  if (!tbody) {
+    console.error('❌ studentManagementTableBody tidak ditemukan!');
+    return;
+  }
+  
+  if (students.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="3" style="text-align:center;padding:30px;color:#94a3b8;">
+          <div style="font-size:2rem;margin-bottom:10px;">👥</div>
+          Belum ada siswa di kelas ini.<br>
+          <small>Klik "Tambah Siswa Baru" untuk menambahkan.</small>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  tbody.innerHTML = students.map((s, idx) => {
+    const photoHtml = s.student_photo 
+      ? `<img src="${s.student_photo}" style="width:40px;height:40px;object-fit:cover;border-radius:50%;" onerror="this.outerHTML='👤'">`
+      : '<div style="width:40px;height:40px;background:#e0f2fe;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">👤</div>';
+    
+    return `
+      <tr>
+        <td style="width:60px;">${photoHtml}</td>
+        <td class="font-semibold text-gray-800">
+          <div>${idx + 1}. ${s.student_name}</div>
+          <div style="font-size:0.75rem;color:#94a3b8;font-weight:normal;">
+            Bergabung: ${new Date(s.created_at).toLocaleDateString('id-ID')}
+          </div>
+        </td>
+        <td style="width:120px;">
+          <button class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;" onclick="deleteStudent('${s.__key}', '${s.student_name.replace(/'/g, "\\'")}')">
+            🗑️ Keluarkan
+          </button>
         </td>
       </tr>
     `;
   }).join('');
 }
 
-window.showAddClassModal = () => document.getElementById('addClassModal').classList.add('active');
-
-document.getElementById('addClassForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('className').value.trim();
-  if(!name) return;
-  await ROOT.push().set({ 
-    type: 'class', 
-    class_name: name, 
-    user_name: currentUser, 
-    created_at: nowISO() 
-  });
-  closeModal('addClassModal');
-  document.getElementById('className').value = '';
-  showToast("Kelas baru berhasil didaftarkan!");
-};
-
-window.deleteClass = async function(key){
-  if(confirm("Apakah Anda yakin ingin menghapus kelas ini?")){
-    await db.ref(`appData/${key}`).remove();
-    showToast("Kelas berhasil dihapus!");
+/**
+ * Buka modal tambah siswa
+ */
+window.showAddStudentModal = function() {
+  console.log('➕ Membuka modal tambah siswa...');
+  
+  // Tutup modal manajemen (swap modal)
+  const manageModal = document.getElementById('studentManagementModal');
+  if (manageModal) manageModal.classList.remove('active');
+  
+  // Reset form
+  const nameInput = document.getElementById('studentName');
+  const photoInput = document.getElementById('studentPhoto');
+  if (nameInput) nameInput.value = '';
+  if (photoInput) photoInput.value = '';
+  
+  // Buka modal tambah siswa
+  const addModal = document.getElementById('addStudentModal');
+  if (addModal) {
+    addModal.classList.add('active');
+    setTimeout(() => nameInput && nameInput.focus(), 200);
   }
 };
 
-// MANAGEMEN SISWA DI DALAM KELAS
-window.manageStudents = function(className){
-  currentTargetClassManagement = className;
-  document.getElementById('manageStudentsTitle').textContent = `Kelola Anggota Kelas - ${className}`;
-  document.getElementById('studentManagementModal').classList.add('active');
-  renderStudentManagement(className);
-};
-
-function renderStudentManagement(className){
-  const students = allData.filter(d => d.type === 'student' && d.class_name === className);
-  const tbody = document.getElementById('studentManagementTableBody');
-  if(students.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">Belum ada peserta didik di kelas ini.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = students.map(s => `
-    <tr>
-      <td><div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg">${s.student_photo ? `<img src="${s.student_photo}" class="w-full h-full object-cover rounded-full">` : '👤'}</div></td>
-      <td class="font-semibold text-gray-800">${s.student_name}</td>
-      <td><button class="btn btn-danger py-1 px-2 text-xs" onclick="deleteStudent('${s.__key}')">🗑️ Keluarkan</button></td>
-    </tr>
-  `).join('');
-}
-
-window.showAddStudentModal = () => document.getElementById('addStudentModal').classList.add('active');
-
-document.getElementById('addStudentForm').onsubmit = async (e) => {
+/**
+ * Handler form tambah siswa
+ */
+document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  
   const name = document.getElementById('studentName').value.trim();
   const photo = document.getElementById('studentPhoto').value.trim();
-  await ROOT.push().set({
-    type: 'student',
-    class_name: currentTargetClassManagement,
-    student_name: name,
-    student_photo: photo,
-    user_name: currentUser,
-    created_at: nowISO()
-  });
-  closeModal('addStudentModal');
-  document.getElementById('studentName').value = '';
-  document.getElementById('studentPhoto').value = '';
-  showToast("Siswa berhasil ditambahkan!");
-  renderStudentManagement(currentTargetClassManagement);
-};
+  
+  console.log('💾 Mencoba menambahkan siswa:', name, 'ke kelas:', currentTargetClassManagement);
+  
+  if (!name) {
+    showToast('❌ Nama siswa tidak boleh kosong!', 'error');
+    return;
+  }
+  
+  if (!currentTargetClassManagement) {
+    showToast('❌ Kelas tujuan tidak ditemukan!', 'error');
+    return;
+  }
+  
+  try {
+    const newRef = ROOT.push();
+    await newRef.set({
+      type: 'student',
+      class_name: currentTargetClassManagement,
+      student_name: name,
+      student_photo: photo || '',
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+    
+    console.log('✅ Siswa berhasil ditambahkan');
+    
+    // Tutup modal tambah siswa
+    document.getElementById('addStudentModal').classList.remove('active');
+    document.getElementById('studentName').value = '';
+    document.getElementById('studentPhoto').value = '';
+    
+    // Buka kembali modal manajemen & refresh
+    setTimeout(() => {
+      const manageModal = document.getElementById('studentManagementModal');
+      if (manageModal) {
+        manageModal.classList.add('active');
+        renderStudentManagement(currentTargetClassManagement);
+      }
+    }, 150);
+    
+    showToast(`✅ Siswa "${name}" berhasil ditambahkan!`);
+  } catch (error) {
+    console.error('❌ Error tambah siswa:', error);
+    showToast('❌ Gagal menambah siswa: ' + error.message, 'error');
+  }
+});
 
-window.deleteStudent = async function(key){
-  if(confirm("Keluarkan siswa dari kelas ini?")){
+/**
+ * Hapus siswa dari kelas
+ */
+window.deleteStudent = async function(key, studentName) {
+  if (!confirm(`Keluarkan siswa "${studentName}" dari kelas ini?`)) {
+    return;
+  }
+  
+  try {
     await db.ref(`appData/${key}`).remove();
-    showToast("Siswa berhasil dikeluarkan!");
+    showToast(`✅ Siswa "${studentName}" berhasil dikeluarkan!`);
     renderStudentManagement(currentTargetClassManagement);
+  } catch (error) {
+    console.error('❌ Error hapus siswa:', error);
+    showToast('❌ Gagal mengeluarkan siswa', 'error');
   }
 };
 
-// 2. ENGINE: PRESENSI
-function renderPresensi(){
-  const classes = allData.filter(d => d.type === 'class');
+// ========================================
+// FITUR LAINNYA (Presensi, Penilaian, Rekap, Bank Soal)
+// ========================================
+
+// --- PRESENSI ---
+function renderPresensi() {
+  const classes = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
   const tabs = document.getElementById('classTabs');
-  if(classes.length === 0){
-    tabs.innerHTML = '<div class="p-2 text-red-500">Buat kelas terlebih dahulu di menu Kelola Kelas.</div>';
+  
+  if (!tabs) return;
+  
+  if (classes.length === 0) {
+    tabs.innerHTML = '<div style="padding:15px;color:#ef4444;">⚠️ Buat kelas terlebih dahulu di menu Kelola Kelas.</div>';
     document.getElementById('studentListContainer').innerHTML = '';
     return;
   }
-  if(!currentClass) currentClass = classes[0].class_name;
-  tabs.innerHTML = classes.map(c => `<button class="tab ${currentClass===c.class_name?'active':''}" onclick="selectClass('${c.class_name}')">${c.class_name}</button>`).join('');
+  
+  if (!currentClass || !classes.find(c => c.class_name === currentClass)) {
+    currentClass = classes[0].class_name;
+  }
+  
+  tabs.innerHTML = classes.map(c => 
+    `<button class="tab ${currentClass === c.class_name ? 'active' : ''}" onclick="selectClass('${c.class_name.replace(/'/g, "\\'")}')">${c.class_name}</button>`
+  ).join('');
+  
   renderStudentList();
 }
 
-window.selectClass = function(className){
+window.selectClass = function(className) {
   currentClass = className;
   renderPresensi();
 };
 
-function renderStudentList(){
-  const students = allData.filter(d => d.type === 'student' && d.class_name === currentClass);
+function renderStudentList() {
+  const students = allData.filter(d => 
+    d.type === 'student' && 
+    d.class_name === currentClass && 
+    d.user_name === currentUser
+  );
   const container = document.getElementById('studentListContainer');
-  if(students.length === 0){
+  
+  if (!container) return;
+  
+  if (students.length === 0) {
     container.innerHTML = '<div class="empty-state">Tidak ada siswa di kelas ini.</div>';
     return;
   }
+  
   container.innerHTML = students.map(s => {
     const status = attendanceData[s.__key] || '';
     return `
@@ -651,7 +1026,8 @@ function renderStudentList(){
           <div class="student-name">${s.student_name}</div>
           <div class="status-buttons">
             ${['HADIR','IZIN','SAKIT','ALPA','BOLOS'].map(st => `
-              <button class="status-btn ${st.toLowerCase()} ${status===st?'active':''}" onclick="setAttendance('${s.__key}','${st}')">${st}</button>
+              <button class="status-btn ${st.toLowerCase()} ${status === st ? 'active' : ''}" 
+                      onclick="setAttendance('${s.__key}','${st}')">${st}</button>
             `).join('')}
           </div>
         </div>
@@ -660,64 +1036,102 @@ function renderStudentList(){
   }).join('');
 }
 
-window.setAttendance = function(id, status){
+window.setAttendance = function(id, status) {
   attendanceData[id] = status;
   renderStudentList();
 };
 
-window.markAllPresent = function(){
-  allData.filter(d => d.type === 'student' && d.class_name === currentClass).forEach(s => {
-    attendanceData[s.__key] = 'HADIR';
-  });
+window.markAllPresent = function() {
+  allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser)
+    .forEach(s => { attendanceData[s.__key] = 'HADIR'; });
   renderStudentList();
+  showToast('✅ Semua siswa ditandai hadir');
 };
 
-window.submitAttendance = async function(){
-  const students = allData.filter(d => d.type === 'student' && d.class_name === currentClass);
-  if(students.length === 0) return;
+window.submitAttendance = async function() {
+  const students = allData.filter(d => 
+    d.type === 'student' && 
+    d.class_name === currentClass && 
+    d.user_name === currentUser
+  );
+  
+  if (students.length === 0) {
+    showToast('❌ Tidak ada siswa untuk diabsen', 'error');
+    return;
+  }
+  
+  const belumAbsen = students.some(s => !attendanceData[s.__key]);
+  if (belumAbsen) {
+    if (!confirm('Beberapa siswa belum diabsen. Siswa yang belum diabsen akan dianggap ALPA. Lanjutkan?')) {
+      return;
+    }
+  }
+  
   const records = {};
   students.forEach(s => {
-    records[s.__key] = { student_name: s.student_name, status: attendanceData[s.__key] || 'ALPA' };
+    records[s.__key] = { 
+      student_name: s.student_name, 
+      status: attendanceData[s.__key] || 'ALPA' 
+    };
   });
-  await ROOT.push().set({
-    type: 'attendance_log',
-    class_name: currentClass,
-    date: todayStr(),
-    user_name: currentUser,
-    records: records,
-    created_at: nowISO()
-  });
-  showToast("Absensi hari ini berhasil dikirim ke database!");
-  attendanceData = {};
-  renderStudentList();
+  
+  try {
+    await ROOT.push().set({
+      type: 'attendance_log',
+      class_name: currentClass,
+      date: todayStr(),
+      user_name: currentUser,
+      records: records,
+      created_at: nowISO()
+    });
+    
+    showToast('✅ Absensi berhasil disimpan!');
+    attendanceData = {};
+    renderStudentList();
+  } catch (error) {
+    console.error('❌ Error simpan absensi:', error);
+    showToast('❌ Gagal menyimpan absensi', 'error');
+  }
 };
 
-// 3. ENGINE: PENILAIAN
-window.showPenilaianTab = function(tab){
+// --- PENILAIAN ---
+window.showPenilaianTab = function(tab) {
   currentPenilaianTab = tab;
   document.querySelectorAll('#penilaian .tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   renderPenilaian();
 };
 
-function renderPenilaian(){
-  const classes = allData.filter(d => d.type === 'class');
+function renderPenilaian() {
+  const classes = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
   const select = document.getElementById('penilaianClassSelect');
-  if(classes.length === 0) return;
-  if(!currentKnowledgeClass) currentKnowledgeClass = classes[0].class_name;
   
-  select.innerHTML = classes.map(c => `<option value="${c.class_name}" ${currentKnowledgeClass===c.class_name?'selected':''}>${c.class_name}</option>`).join('');
+  if (!select || classes.length === 0) return;
   
-  const students = allData.filter(d => d.type === 'student' && d.class_name === currentKnowledgeClass);
+  if (!currentKnowledgeClass || !classes.find(c => c.class_name === currentKnowledgeClass)) {
+    currentKnowledgeClass = classes[0].class_name;
+  }
+  
+  select.innerHTML = classes.map(c => 
+    `<option value="${c.class_name}" ${currentKnowledgeClass === c.class_name ? 'selected' : ''}>${c.class_name}</option>`
+  ).join('');
+  
+  const students = allData.filter(d => 
+    d.type === 'student' && 
+    d.class_name === currentKnowledgeClass && 
+    d.user_name === currentUser
+  );
   const area = document.getElementById('penilaianContent');
   
-  if(students.length === 0){
-    area.innerHTML = '<div class="p-4 text-center text-gray-500">Tidak ada siswa.</div>';
+  if (!area) return;
+  
+  if (students.length === 0) {
+    area.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Tidak ada siswa.</div>';
     return;
   }
 
   let html = `<table><thead><tr><th>Nama Peserta Didik</th>`;
-  if(currentPenilaianTab === 'pengetahuan'){
+  if (currentPenilaianTab === 'pengetahuan') {
     html += `<th>Tugas 1</th><th>Tugas 2</th><th>UH</th><th>UTS</th><th>UAS</th><th>Rerata</th></tr></thead><tbody>`;
     students.forEach(s => {
       html += `<tr><td class="font-semibold">${s.student_name}</td>
@@ -742,93 +1156,108 @@ function renderPenilaian(){
   area.innerHTML = html;
 }
 
-window.changePenilaianClass = function(val){
+window.changePenilaianClass = function(val) {
   currentKnowledgeClass = val;
   renderPenilaian();
 };
 
-window.exportToExcel = () => showToast("Format Ledger Excel Berhasil Diunduh!");
+window.exportToExcel = () => showToast("📥 Format Ledger Excel Berhasil Diunduh!");
 
-// 4. ENGINE: REKAP ABSEN
-window.showRekapTab = function(tab){
+// --- REKAP ---
+window.showRekapTab = function(tab) {
   currentRekapTab = tab;
   document.querySelectorAll('#rekap .tab').forEach(t => t.classList.remove('active'));
   event.target.classList.add('active');
   renderRekap();
 };
 
-function renderRekap(){
-  const classes = allData.filter(d => d.type === 'class');
-  if(classes.length === 0) return;
-  if(!currentRekapClass) currentRekapClass = classes[0].class_name;
+function renderRekap() {
+  const classes = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+  if (classes.length === 0) return;
+  
+  if (!currentRekapClass || !classes.find(c => c.class_name === currentRekapClass)) {
+    currentRekapClass = classes[0].class_name;
+  }
 
-  let filtersHtml = `<div class="flex gap-4 items-center"><span class="font-semibold">Kelas:</span><select class="p-1 border rounded" onchange="window.changeRekapClass(this.value)">`;
-  filtersHtml += classes.map(c => `<option value="${c.class_name}" ${currentRekapClass===c.class_name?'selected':''}>${c.class_name}</option>`).join('');
+  let filtersHtml = `<div style="display:flex;gap:15px;align-items:center;flex-wrap:wrap;">
+    <span class="font-semibold">Kelas:</span>
+    <select class="p-1 border rounded" onchange="window.changeRekapClass(this.value)">`;
+  filtersHtml += classes.map(c => 
+    `<option value="${c.class_name}" ${currentRekapClass === c.class_name ? 'selected' : ''}>${c.class_name}</option>`
+  ).join('');
   filtersHtml += `</select>`;
 
-  if(currentRekapTab === 'bulanan'){
-    filtersHtml += `<span class="ml-2 font-semibold">Bulan:</span><select class="p-1 border rounded" onchange="window.changeRekapMonth(this.value)">`;
-    for(let i=1; i<=12; i++) filtersHtml += `<option value="${i}" ${selectedMonth==i?'selected':''}>Bulan ${i}</option>`;
+  if (currentRekapTab === 'bulanan') {
+    filtersHtml += `<span class="font-semibold">Bulan:</span>
+      <select class="p-1 border rounded" onchange="window.changeRekapMonth(this.value)">`;
+    for (let i = 1; i <= 12; i++) {
+      filtersHtml += `<option value="${i}" ${selectedMonth == i ? 'selected' : ''}>Bulan ${i}</option>`;
+    }
     filtersHtml += `</select>`;
-  } else if(currentRekapTab === 'semester'){
-    filtersHtml += `<span class="ml-2 font-semibold">Semester:</span><select class="p-1 border rounded" onchange="window.changeRekapSemester(this.value)"><option>Ganjil</option><option>Genap</option></select>`;
+  } else if (currentRekapTab === 'semester') {
+    filtersHtml += `<span class="font-semibold">Semester:</span>
+      <select class="p-1 border rounded" onchange="window.changeRekapSemester(this.value)">
+        <option ${selectedSemester === 'Ganjil' ? 'selected' : ''}>Ganjil</option>
+        <option ${selectedSemester === 'Genap' ? 'selected' : ''}>Genap</option>
+      </select>`;
   }
   filtersHtml += `</div>`;
+  
   document.getElementById('rekapFilters').innerHTML = filtersHtml;
 
-  const students = allData.filter(d => d.type === 'student' && d.class_name === currentRekapClass);
-  const logs = allData.filter(d => d.type === 'attendance_log' && d.class_name === currentRekapClass);
+  const students = allData.filter(d => 
+    d.type === 'student' && 
+    d.class_name === currentRekapClass && 
+    d.user_name === currentUser
+  );
+  const logs = allData.filter(d => 
+    d.type === 'attendance_log' && 
+    d.class_name === currentRekapClass && 
+    d.user_name === currentUser
+  );
   const area = document.getElementById('rekapContent');
 
   let table = `<table>
     <thead>
       <tr>
         <th>Nama Lengkap</th>
-        <th>Hadir</th>
-        <th>Izin</th>
-        <th>Sakit</th>
-        <th>Alpa</th>
-        <th>Bolos</th>
-        <th>Total Absen</th>
-        <th>% Kehadiran</th>
-        <th>Rincian Waktu Ketidakhadiran</th>
+        <th>Hadir</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>Bolos</th>
+        <th>Total</th><th>% Kehadiran</th>
+        <th>Rincian Ketidakhadiran</th>
       </tr>
-    </thead>
-    <tbody>`;
+    </thead><tbody>`;
 
   students.forEach(s => {
-    let stat = { HADIR:0, IZIN:0, SAKIT:0, ALPA:0, BOLOS:0 };
-    let rincianKetidakhadiran = [];
+    let stat = { HADIR: 0, IZIN: 0, SAKIT: 0, ALPA: 0, BOLOS: 0 };
+    let rincian = [];
 
     logs.forEach(log => {
-      if(log.records && log.records[s.__key]){
+      if (log.records && log.records[s.__key]) {
         const st = log.records[s.__key].status;
-        if(stat[st] !== undefined) stat[st]++;
-        
-        if(st !== 'HADIR'){
-          const formatTgl = log.date.split('-').reverse().join('-');
-          rincianKetidakhadiran.push(`<span class="inline-block bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded border border-red-200 m-0.5">📅 ${formatTgl} (${st})</span>`);
+        if (stat[st] !== undefined) stat[st]++;
+        if (st !== 'HADIR') {
+          const tgl = log.date.split('-').reverse().join('-');
+          rincian.push(`<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-size:0.75rem;margin:2px;display:inline-block;">📅 ${tgl} (${st})</span>`);
         }
       }
     });
 
-    const totalHariAbsen = stat.HADIR + stat.IZIN + stat.SAKIT + stat.ALPA + stat.BOLOS;
-    const persentaseKehadiran = totalHariAbsen > 0 ? ((stat.HADIR / totalHariAbsen) * 100).toFixed(1) : 0;
-    
-    let warnaPersen = 'text-green-600 font-bold';
-    if(persentaseKehadiran < 80) warnaPersen = 'text-red-600 font-bold';
-    else if(persentaseKehadiran < 90) warnaPersen = 'text-yellow-600 font-bold';
+    const total = stat.HADIR + stat.IZIN + stat.SAKIT + stat.ALPA + stat.BOLOS;
+    const persen = total > 0 ? ((stat.HADIR / total) * 100).toFixed(1) : 0;
+    let warna = 'color:#10b981;font-weight:bold;';
+    if (persen < 80) warna = 'color:#ef4444;font-weight:bold;';
+    else if (persen < 90) warna = 'color:#f59e0b;font-weight:bold;';
 
     table += `<tr>
-      <td class="font-semibold text-gray-800">${s.student_name}</td>
-      <td class="text-green-600 font-medium">${stat.HADIR}</td>
-      <td class="text-blue-600 font-medium">${stat.IZIN}</td>
-      <td class="text-yellow-600 font-medium">${stat.SAKIT}</td>
-      <td class="text-red-600 font-medium">${stat.ALPA}</td>
-      <td class="text-purple-600 font-medium">${stat.BOLOS}</td>
-      <td class="font-bold text-gray-600">${totalHariAbsen}x</td>
-      <td class="${warnaPersen}">${persentaseKehadiran}%</td>
-      <td class="max-w-xs">${rincianKetidakhadiran.length > 0 ? rincianKetidakhadiran.join(' ') : '<span class="text-green-600 text-xs font-semibold">✨ 100% Efektif Hadir</span>'}</td>
+      <td class="font-semibold">${s.student_name}</td>
+      <td style="color:#10b981;">${stat.HADIR}</td>
+      <td style="color:#3b82f6;">${stat.IZIN}</td>
+      <td style="color:#f59e0b;">${stat.SAKIT}</td>
+      <td style="color:#ef4444;">${stat.ALPA}</td>
+      <td style="color:#8b5cf6;">${stat.BOLOS}</td>
+      <td class="font-bold">${total}x</td>
+      <td style="${warna}">${persen}%</td>
+      <td style="max-width:300px;">${rincian.length > 0 ? rincian.join(' ') : '<span style="color:#10b981;font-size:0.8rem;">✨ 100% Hadir</span>'}</td>
     </tr>`;
   });
 
@@ -840,77 +1269,103 @@ window.changeRekapClass = (v) => { currentRekapClass = v; renderRekap(); };
 window.changeRekapMonth = (v) => { selectedMonth = v; renderRekap(); };
 window.changeRekapSemester = (v) => { selectedSemester = v; renderRekap(); };
 window.printRekap = () => window.print();
-window.exportRekapToExcel = () => showToast("Rekapitulasi Kehadiran diunduh!");
+window.exportRekapToExcel = () => showToast("📥 Rekapitulasi berhasil diunduh!");
 
-// 5. ENGINE: BANK SOAL
-function renderBankSoal(){
-  const docs = allData.filter(d => d.type === 'document');
+// --- BANK SOAL ---
+function renderBankSoal() {
+  const docs = allData.filter(d => d.type === 'document' && d.user_name === currentUser);
   const container = document.getElementById('documentList');
-  if(docs.length === 0){
+  
+  if (!container) return;
+  
+  if (docs.length === 0) {
     container.innerHTML = '<div class="empty-state">Belum ada dokumen bank soal.</div>';
     return;
   }
+  
   container.innerHTML = docs.map(d => `
-    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg mb-2 border">
-      <div><span class="font-semibold text-gray-800">${d.doc_name}</span></div>
-      <button class="btn btn-danger py-1 px-3 text-xs" onclick="deleteDocument('${d.__key}')">🗑️ Hapus</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid #e2e8f0;">
+      <div>
+        <div style="font-weight:600;color:#1e293b;">📄 ${d.doc_name}</div>
+        <div style="font-size:0.75rem;color:#94a3b8;">${new Date(d.created_at).toLocaleString('id-ID')}</div>
+      </div>
+      <button class="btn btn-danger" style="padding:6px 12px;font-size:0.8rem;" onclick="deleteDocument('${d.__key}')">🗑️ Hapus</button>
     </div>
   `).join('');
 }
 
 window.showUploadModal = () => document.getElementById('uploadModal').classList.add('active');
 
-document.getElementById('uploadForm').onsubmit = async (e) => {
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const name = document.getElementById('documentName').value.trim();
-  await ROOT.push().set({ 
-    type: 'document', 
-    doc_name: name, 
-    user_name: currentUser, 
-    created_at: nowISO() 
-  });
-  closeModal('uploadModal');
-  document.getElementById('documentName').value = '';
-  showToast("Dokumen berhasil masuk Bank Soal!");
-};
+  if (!name) return;
+  
+  try {
+    await ROOT.push().set({
+      type: 'document',
+      doc_name: name,
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+    closeModal('uploadModal');
+    document.getElementById('documentName').value = '';
+    showToast("✅ Dokumen berhasil ditambahkan!");
+  } catch (error) {
+    showToast('❌ Gagal mengunggah dokumen', 'error');
+  }
+});
 
-window.deleteDocument = async function(key){
-  if(confirm("Hapus berkas ini?")){
+window.deleteDocument = async function(key) {
+  if (!confirm("Hapus berkas ini?")) return;
+  try {
     await db.ref(`appData/${key}`).remove();
-    showToast("Berkas terhapus!");
+    showToast("✅ Berkas terhapus!");
+  } catch (error) {
+    showToast('❌ Gagal menghapus berkas', 'error');
   }
 };
 
-// 6. ENGINE: RESET ALL DATA
+// --- HAPUS SEMUA DATA ---
 window.showDeleteDataModal = () => document.getElementById('deleteDataModal').classList.add('active');
 
-document.getElementById('deleteDataForm').onsubmit = async (e) => {
+document.getElementById('deleteDataForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  await ROOT.remove();
-  closeModal('deleteDataModal');
-  showToast("Seluruh database Firebase Anda berhasil dibersihkan!", "success");
-};
+  if (!confirm('⚠️ PERINGATAN: Semua data Anda akan dihapus permanen. Lanjutkan?')) return;
+  
+  try {
+    await ROOT.remove();
+    closeModal('deleteDataModal');
+    showToast("✅ Seluruh database berhasil dibersihkan!");
+  } catch (error) {
+    showToast('❌ Gagal membersihkan data', 'error');
+  }
+});
 
-// INITIALIZATION DATA LISTENER
-function initApp(){
+// ========================================
+// INITIALIZATION
+// ========================================
+function initApp() {
+  console.log('🚀 Memulai inisialisasi SIPELITA...');
+  
   ROOT.on('value', (snapshot) => {
     allData = toArray(snapshot.val());
+    console.log(`📊 Data dimuat: ${allData.length} records`);
     renderAllContent();
+  }, (error) => {
+    console.error('❌ Error membaca Firebase:', error);
+    showToast('❌ Gagal terhubung ke database', 'error');
   });
   
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('id-ID', options);
+  const dateEl = document.getElementById('currentDate');
+  if (dateEl) {
+    dateEl.textContent = '📅 ' + new Date().toLocaleDateString('id-ID', options);
+  }
   
   window.showContent('kelola-kelas');
+  console.log('✅ SIPELITA siap digunakan!');
 }
 
-// Load Firebase dan init app
 window.addEventListener('load', initApp);
 </script>
-
-<!-- Firebase SDK (Compatibility version untuk GitHub Pages) -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-</body>
-</html>
