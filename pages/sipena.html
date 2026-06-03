@@ -8,7 +8,8 @@
 
 <!-- Firebase CDN (compat version) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -243,17 +244,29 @@ tr:hover td{background:#fafbff;}
 
   <!-- ══ BANK SOAL ══ -->
   <div id="bank-soal" class="content-area">
-    <div class="content-card">
-      <div class="section-title">📚 Bank Soal</div>
-      <div class="action-bar">
-        <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen</button>
-      </div>
-      <div id="documentList"></div>
+  <div class="content-card">
+    <div class="section-title"> 📚 Bank Soal (E-Dokumen)</div>
+    <div class="action-bar">
+      <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen Baru</button>
+    </div>
+    
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nama Dokumen</th>
+            <th>Keterangan</th>
+            <th>Tanggal Upload</th>
+            <th width="180">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="documentListTable">
+          </tbody>
+      </table>
     </div>
   </div>
-
-</div><!-- /app-wrap -->
-
+</div>
+  
 <!-- ══ MODAL: TAMBAH KELAS ══ -->
 <div class="modal" id="modalTambahKelas">
   <div class="modal-box">
@@ -343,22 +356,155 @@ tr:hover td{background:#fafbff;}
 </div>
 
 <script>
-// ══════════════════════════════════════════════
-//            FIREBASE CONFIG
-// ══════════════════════════════════════════════
+//  ══════════════════════════════════════════════
+//      FIREBASE CONFIG (MENGGUNAKAN FIRESTORE)
+//  ══════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey:"AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-  authDomain:"sipelita-digital.firebaseapp.com",
-  databaseURL:"https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"sipelita-digital",
-  storageBucket:"sipelita-digital.firebasestorage.app",
-  messagingSenderId:"787840817745",
-  appId:"1:787840817745:web:e6b5237cfbb5e51be93670"
+  apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+  authDomain: "sipelita-digital.firebaseapp.com",
+  projectId: "sipelita-digital",
+  storageBucket: "sipelita-digital.firebasestorage.app",
+  messagingSenderId: "787840817745",
+  appId: "1:787840817745:web:e6b5237cfbb5e51be93670"
 };
-firebase.initializeApp(firebaseConfig);
-const db   = firebase.database();
-const ROOT = db.ref("sipena2"); // ← collection terpisah agar tidak bentrok
 
+// Inisialisasi Firebase
+firebase.initializeApp(firebaseConfig);
+
+// Inisialisasi Firestore & Storage instance
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// Ubah fungsi initFirebase lama Anda agar mendengarkan collection Firestore
+function initFirebase() {
+  // Realtime update khusus dokumen milik user login saat ini (interoperabilitas SIPELITA)
+  db.collection("sipena_documents")
+    .where("user_name", "==", currentUser)
+    .orderBy("created_at", "desc")
+    .onSnapshot(snapshot => {
+      let docList = [];
+      snapshot.forEach(doc => {
+        docList.push({ id: doc.id, ...doc.data() });
+      });
+      renderBankSoalTable(docList);
+    }, err => {
+      console.error("Firestore Error:", err);
+      // Jika terjadi error indeks komposit di awal, fallback ambil semua dokumen user tanpa sorting
+      db.collection("sipena_documents")
+        .where("user_name", "==", currentUser)
+        .onSnapshot(snapshot => {
+          let docList = [];
+          snapshot.forEach(doc => docList.push({ id: doc.id, ...doc.data() }));
+          renderBankSoalTable(docList);
+        });
+    });
+}
+
+// override fungsi render lama ke tabel baru
+function renderBankSoal() {
+  // trigger fetch data awal dikendalikan oleh snapshot real-time listener di initFirebase()
+}
+
+//  ══════════════════════════════════════════════
+//         LOGIKA UTAMA E-DOKUMEN (BANK SOAL)
+//  ══════════════════════════════════════════════
+
+// 1. Render data dari Firestore ke dalam bentuk tabel
+function renderBankSoalTable(documents) {
+  const tbody = document.getElementById('documentListTable');
+  if (!tbody) return;
+
+  if (documents.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="ei">📚</div><p>Belum ada dokumen yang diunggah. Silakan klik "Upload Dokumen Baru".</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = documents.map(doc => {
+    const tgl = doc.created_at ? new Date(doc.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}) : '-';
+    return `
+      <tr>
+        <td style="font-weight: 700; color: #334155;">📄 ${doc.doc_name}</td>
+        <td><small style="color: #64748b;">${doc.keterangan || '-'}</small></td>
+        <td><span class="badge badge-amber">${tgl}</span></td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <a href="${doc.file_url}" target="_blank" download="${doc.doc_name}" class="btn btn-success btn-sm" style="text-decoration:none;">📥 Download</a>
+            <button class="btn btn-danger btn-sm" onclick="hapusDokumen('${doc.id}', '${doc.storage_path}')">🗑️ Hapus</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// 2. Proses simpan dokumen (Upload file ke Storage + Tulis record ke Firestore)
+async function simpanDokumen() {
+  const nama = document.getElementById('inputNamaDokumen').value.trim();
+  const ket = document.getElementById('inputKetDokumen').value.trim();
+  const fileInput = document.getElementById('inputFileDokumen');
+  const file = fileInput.files[0];
+
+  // Validasi Inputan
+  if (!nama) { toast('Nama dokumen tidak boleh kosong!', 'err'); return; }
+  if (!file) { toast('Silakan pilih file dokumen terlebih dahulu!', 'err'); return; }
+
+  const btn = document.getElementById('btnSimpanDokumen');
+  btn.disabled = true; 
+  btn.innerHTML = '<span class="spinner"></span> Mengunggah...';
+
+  try {
+    // Buat nama file unik untuk ditaruh di Cloud Storage agar tidak menimpa file lain
+    const fileExtension = file.name.split('.').pop();
+    const timestamp = Date.now();
+    const storagePath = `sipena_files/${currentUser}/${timestamp}_${nama}.${fileExtension}`;
+    const storageRef = storage.ref().child(storagePath);
+
+    // Proses upload berkas biner ke Firebase Storage
+    const uploadTask = await storageRef.put(file);
+    // Dapatkan URL publik unduhan berkas
+    const downloadUrl = await uploadTask.ref.getDownloadURL();
+
+    // Simpan objek data/metadata ke Cloud Firestore
+    await db.collection("sipena_documents").add({
+      doc_name: nama,
+      keterangan: ket,
+      file_url: downloadUrl,
+      storage_path: storagePath,
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+
+    closeModal('modalDokumen');
+    toast('E-Dokumen berhasil diunggah dan disimpan!');
+    fileInput.value = ''; // Reset input file
+  } catch (e) {
+    console.error(e);
+    toast('Gagal mengunggah dokumen: ' + e.message, 'err');
+  }
+  
+  btn.disabled = false; 
+  btn.textContent = 'Simpan';
+}
+
+// 3. Fungsi menghapus dokumen (Hapus file dari Storage + Hapus record di Firestore)
+async function hapusDokumen(id, storagePath) {
+  if (!confirm("Apakah Anda yakin ingin menghapus dokumen ini secara permanen?")) return;
+
+  try {
+    // Hapus file fisik dari Cloud Storage jika path terdefinisi
+    if (storagePath) {
+      const storageRef = storage.ref().child(storagePath);
+      await storageRef.delete().catch(err => console.log("File di storage sudah tidak ada atau gagal dihapus:", err));
+    }
+
+    // Hapus data dokumen dari Firestore berdasarkan ID dokumen
+    await db.collection("sipena_documents").doc(id).delete();
+    toast('Dokumen berhasil dihapus!');
+  } catch (e) {
+    console.error(e);
+    toast('Gagal menghapus dokumen: ' + e.message, 'err');
+  }
+}
 // ══════════════════════════════════════════════
 //                   STATE
 // ══════════════════════════════════════════════
@@ -525,10 +671,27 @@ function bindEvents(){
   document.getElementById('btnSimpanKolom').onclick = tambahKolom;
 
   // ── BANK SOAL ──
-  document.getElementById('btnTambahDokumen').onclick = () => {
-    document.getElementById('inputNamaDokumen').value='';
-    document.getElementById('inputKetDokumen').value='';
-    openModal('modalDokumen');
+  <div class="modal" id="modalDokumen">
+  <div class="modal-box">
+    <div class="modal-title"> 📄 Upload E-Dokumen Baru</div>
+    <div class="fg">
+      <label>Nama Dokumen/Materi *</label>
+      <input type="text" id="inputNamaDokumen" placeholder="Contoh: Modul Ajar Bab 1">
+    </div>
+    <div class="fg">
+      <label>Keterangan Tambahan</label>
+      <input type="text" id="inputKetDokumen" placeholder="Contoh: Kelas X Semester Ganjil">
+    </div>
+    <div class="fg">
+      <label>Pilih File Dokumen (PDF, Word, Excel, Image) *</label>
+      <input type="file" id="inputFileDokumen" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnBatalDokumen">Batal</button>
+      <button class="btn btn-primary" id="btnSimpanDokumen">Mulai Upload</button>
+    </div>
+  </div>
+</div>
   };
   document.getElementById('btnBatalDokumen').onclick = () => closeModal('modalDokumen');
   document.getElementById('btnSimpanDokumen').onclick = simpanDokumen;
