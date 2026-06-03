@@ -140,8 +140,8 @@ tr:hover td{background:#fafbff;}
   <div class="header">
     <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo" onerror="this.style.display='none'">
     <div class="header-info">
-      <div class="header-title">SIPENA</div>
-      <div class="header-subtitle">Sistem Penilaian & Administrasi Kelas</div>
+      <div class="header-title">MAN BANTAENG</div>
+      <div class="header-subtitle">Sistem Penilaian & Absensi Digital</div>
     </div>
     <div class="header-user">
       <div class="user-name" id="userDisplay">–</div>
@@ -243,33 +243,16 @@ tr:hover td{background:#fafbff;}
 
   <!-- ══ BANK SOAL ══ -->
   <div id="bank-soal" class="content-area">
-    <div class="section-title">Bank Soal</div>
-    <div class="action-bar">
-      <button class="btn btn-primary" onclick="showUploadModal()">Upload Dokumen</button>
-    </div>
-    <div id="documentList"></div>
-  </div>
-</div>
-
-<div id="uploadModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-title">Upload Dokumen</div>
-    <form id="uploadForm">
-      <div class="form-row">
-        <label class="form-label">Nama Dokumen</label>
-        <input type="text" id="documentName" class="form-input" placeholder="Nama dokumen" required>
-      </div>
-      <div class="form-row">
-        <label class="form-label">File</label>
-        <input type="file" id="documentFile" class="form-input" required>
-      </div>
+    <div class="content-card">
+      <div class="section-title">📚 Bank Soal</div>
       <div class="action-bar">
-        <button type="submit" class="btn btn-primary">Upload</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Batal</button>
+        <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen</button>
       </div>
-    </form>
+      <div id="documentList"></div>
+    </div>
   </div>
-</div>
+
+</div><!-- /app-wrap -->
 
 <!-- ══ MODAL: TAMBAH KELAS ══ -->
 <div class="modal" id="modalTambahKelas">
@@ -314,11 +297,34 @@ tr:hover td{background:#fafbff;}
 <div class="modal" id="modalDokumen">
   <div class="modal-box">
     <div class="modal-title">📄 Upload Dokumen</div>
-    <div class="fg"><label>Nama Dokumen *</label><input type="text" id="inputNamaDokumen" placeholder="Nama dokumen"></div>
-    <div class="fg"><label>Keterangan</label><input type="text" id="inputKetDokumen" placeholder="Opsional"></div>
+    <div class="fg">
+      <label>Pilih File *</label>
+      <div id="dropZone" style="border:2px dashed #c7d2fe;border-radius:10px;padding:24px;text-align:center;cursor:pointer;background:#f5f3ff;transition:all .2s;">
+        <div style="font-size:2rem;margin-bottom:6px;">📂</div>
+        <div style="font-weight:600;color:#4f46e5;font-size:0.9rem;">Klik atau seret file ke sini</div>
+        <div style="font-size:0.78rem;color:#94a3b8;margin-top:4px;">PDF · Word (.doc/.docx) · Excel (.xls/.xlsx) — Maks. 5 MB</div>
+        <input type="file" id="inputFileDokumen" accept=".pdf,.doc,.docx,.xls,.xlsx" style="display:none;">
+      </div>
+      <div id="filePreview" style="display:none;margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;display:none;align-items:center;gap:10px;">
+        <span id="fileIcon" style="font-size:1.5rem;"></span>
+        <div style="flex:1;">
+          <div id="fileName" style="font-weight:700;font-size:0.88rem;color:#1e293b;"></div>
+          <div id="fileSize" style="font-size:0.75rem;color:#64748b;"></div>
+        </div>
+        <button id="btnHapusFile" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1.1rem;">✕</button>
+      </div>
+    </div>
+    <div class="fg"><label>Nama Dokumen *</label><input type="text" id="inputNamaDokumen" placeholder="Nama dokumen (terisi otomatis)"></div>
+    <div class="fg"><label>Keterangan</label><input type="text" id="inputKetDokumen" placeholder="Opsional — cth: Kelas X, Semester Ganjil"></div>
+    <div id="uploadProgress" style="display:none;margin-top:6px;">
+      <div style="font-size:0.8rem;color:#4f46e5;font-weight:600;margin-bottom:4px;">Mengkonversi file...</div>
+      <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+        <div id="progressBar" style="height:100%;background:#4f46e5;width:0%;transition:width .3s;border-radius:3px;"></div>
+      </div>
+    </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" id="btnBatalDokumen">Batal</button>
-      <button class="btn btn-primary" id="btnSimpanDokumen">Simpan</button>
+      <button class="btn btn-primary" id="btnSimpanDokumen">⬆️ Upload</button>
     </div>
   </div>
 </div>
@@ -541,62 +547,21 @@ function bindEvents(){
   document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
   document.getElementById('btnSimpanKolom').onclick = tambahKolom;
 
-  // ---- BANK SOAL ----
-function renderBankSoal(){
-  const documents = allData.filter(d=>d.type==='document' && d.user_name===currentUser);
-  const container = document.getElementById('documentList');
-  if (documents.length===0){
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📚</div><p>Belum ada dokumen</p></div>';
-    return;
-  }
-  container.innerHTML = documents.map(doc=>`
-    <div class="document-item">
-      <div>
-        <div class="document-name">📄 ${doc.document_name}</div>
-        <div style="font-size:12px;color:#666;margin-top:4px;">${new Date(doc.created_at).toLocaleDateString('id-ID')}</div>
-      </div>
-      <div style="display:flex;gap:10px;">
-        <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;" onclick="downloadDocument('${doc.__key}')">Download</button>
-        <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;" onclick="deleteDocument('${doc.__key}')">Hapus</button>
-      </div>
-    </div>
-  `).join('');
-}
-window.showUploadModal = function(){ document.getElementById('uploadModal').classList.add('active'); };
-
-document.getElementById('uploadForm').addEventListener('submit', async function(e){
-  e.preventDefault();
-  const documentName = document.getElementById('documentName').value;
-  const fileInput = document.getElementById('documentFile');
-  const file = fileInput.files[0];
-  if (!file){ showToast('⚠️ Pilih file terlebih dahulu','error'); return; }
-  if (allData.length >= 9999){ showToast('⚠️ Maksimum 9999 data tercapai','error'); return; }
-  const btn = e.target.querySelector('button[type="submit"]'); btn.disabled=true; btn.innerHTML='<span class="loading"></span> Mengupload...';
-  const reader = new FileReader();
-  reader.onload = async function(ev){
-    await set(push(ROOT), {
-      type:'document', document_name: documentName, document_data: ev.target.result,
-      user_name: currentUser, created_at: nowISO()
-    });
-    btn.disabled=false; btn.textContent='Upload';
-    closeModal('uploadModal'); document.getElementById('documentName').value=''; fileInput.value='';
-    showToast('Dokumen berhasil diupload','success');
+  // ── BANK SOAL ──
+  document.getElementById('btnTambahDokumen').onclick = () => {
+    // Reset semua state
+    selectedFileData=null;
+    document.getElementById('inputNamaDokumen').value='';
+    document.getElementById('inputKetDokumen').value='';
+    document.getElementById('inputFileDokumen').value='';
+    document.getElementById('filePreview').style.display='none';
+    document.getElementById('dropZone').style.display='block';
+    document.getElementById('uploadProgress').style.display='none';
+    openModal('modalDokumen');
+    setTimeout(()=>bindDropZone(), 100);
   };
-  reader.readAsDataURL(file);
-});
-function downloadDocument(docKey){
-  const doc = allData.find(d=>d.__key===docKey);
-  if (!doc) return;
-  const link = document.createElement('a');
-  link.href = doc.document_data; link.download = doc.document_name; link.click();
-}
-window.downloadDocument = downloadDocument;
-async function deleteDocument(docKey){
-  await remove(ref(db, `appData/${docKey}`));
-  showToast('Dokumen berhasil dihapus','success');
-}
-window.deleteDocument = deleteDocument;
-
+  document.getElementById('btnBatalDokumen').onclick = () => { selectedFileData=null; closeModal('modalDokumen'); };
+  document.getElementById('btnSimpanDokumen').onclick = simpanDokumen;
 
   // ── HAPUS DATA ──
   document.getElementById('btnBatalHapus').onclick = () => closeModal('modalHapus');
@@ -1108,40 +1073,206 @@ async function simpanKonfigKolom(){
 // ══════════════════════════════════════════════
 //                BANK SOAL
 // ══════════════════════════════════════════════
-function renderBankSoal(){
-  const docs=allData.filter(d=>d.type==='document' && d.user_name===currentUser);
-  const cont=document.getElementById('documentList');
-  if(!docs.length){ cont.innerHTML='<div class="empty"><div class="ei">📚</div><p>Belum ada dokumen.</p></div>'; return; }
-  cont.innerHTML=docs.map(d=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid #e2e8f0;">
-      <div>
-        <div style="font-weight:700;color:#1e293b;">📄 ${d.doc_name}</div>
-        ${d.keterangan?`<div style="font-size:0.78rem;color:#64748b;">${d.keterangan}</div>`:''}
-        <div style="font-size:0.72rem;color:#94a3b8;">${new Date(d.created_at).toLocaleString('id-ID')}</div>
-      </div>
-      <button class="btn btn-danger btn-sm" data-key="${d.__key}" data-name="${d.doc_name}" data-action="hapusdok">🗑 Hapus</button>
-    </div>`).join('');
+// ── Ikon berdasarkan ekstensi ──
+function getFileIcon(ext){
+  if(!ext) return '📄';
+  ext=ext.toLowerCase();
+  if(ext==='pdf') return '📕';
+  if(['doc','docx'].includes(ext)) return '📘';
+  if(['xls','xlsx'].includes(ext)) return '📗';
+  return '📄';
+}
+function getFileExt(filename){ return filename.split('.').pop()||''; }
+function formatBytes(bytes){ if(bytes<1024) return bytes+' B'; if(bytes<1048576) return (bytes/1024).toFixed(1)+' KB'; return (bytes/1048576).toFixed(1)+' MB'; }
 
+// ── State file yang dipilih ──
+let selectedFileData = null; // { name, ext, size, base64, mime }
+
+// ── Bind event drop zone (dipanggil ulang saat modal dibuka) ──
+function bindDropZone(){
+  const zone  = document.getElementById('dropZone');
+  const input = document.getElementById('inputFileDokumen');
+  const preview = document.getElementById('filePreview');
+
+  zone.onclick = () => input.click();
+  zone.ondragover = e => { e.preventDefault(); zone.style.borderColor='#4f46e5'; zone.style.background='#ede9fe'; };
+  zone.ondragleave= () => { zone.style.borderColor='#c7d2fe'; zone.style.background='#f5f3ff'; };
+  zone.ondrop = e => { e.preventDefault(); zone.style.borderColor='#c7d2fe'; zone.style.background='#f5f3ff'; if(e.dataTransfer.files[0]) prosesFile(e.dataTransfer.files[0]); };
+  input.onchange = () => { if(input.files[0]) prosesFile(input.files[0]); };
+
+  document.getElementById('btnHapusFile').onclick = e => {
+    e.stopPropagation();
+    selectedFileData=null;
+    input.value='';
+    preview.style.display='none';
+    zone.style.display='block';
+  };
+}
+
+function prosesFile(file){
+  const ext = getFileExt(file.name);
+  const allowed = ['pdf','doc','docx','xls','xlsx'];
+  if(!allowed.includes(ext.toLowerCase())){ toast('Format tidak didukung! Gunakan PDF, Word, atau Excel.','err'); return; }
+  if(file.size > 5*1024*1024){ toast('Ukuran file maks 5 MB!','err'); return; }
+
+  // Tampilkan progress
+  const prog = document.getElementById('uploadProgress');
+  const bar  = document.getElementById('progressBar');
+  prog.style.display='block'; bar.style.width='0%';
+
+  const reader = new FileReader();
+  reader.onprogress = e => { if(e.lengthComputable) bar.style.width=(e.loaded/e.total*80)+'%'; };
+  reader.onload = e => {
+    bar.style.width='100%';
+    setTimeout(()=>{ prog.style.display='none'; bar.style.width='0%'; },400);
+
+    const mimeMap = { pdf:'application/pdf', doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      xls:'application/vnd.ms-excel', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+
+    selectedFileData = { name:file.name, ext:ext.toLowerCase(), size:file.size, base64:e.target.result, mime:mimeMap[ext.toLowerCase()]||'application/octet-stream' };
+
+    // Auto-isi nama dokumen
+    const namaInput = document.getElementById('inputNamaDokumen');
+    if(!namaInput.value) namaInput.value = file.name.replace(/\.[^.]+$/,'');
+
+    // Preview
+    document.getElementById('fileIcon').textContent = getFileIcon(ext);
+    document.getElementById('fileName').textContent  = file.name;
+    document.getElementById('fileSize').textContent  = formatBytes(file.size);
+    document.getElementById('filePreview').style.display='flex';
+    document.getElementById('dropZone').style.display='none';
+  };
+  reader.onerror = () => { toast('Gagal membaca file!','err'); prog.style.display='none'; };
+  reader.readAsDataURL(file);
+}
+
+function renderBankSoal(){
+  const docs=allData.filter(d=>d.type==='document' && d.user_name===currentUser)
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const cont=document.getElementById('documentList');
+
+  if(!docs.length){
+    cont.innerHTML='<div class="empty"><div class="ei">📚</div><p>Belum ada dokumen. Klik "+ Upload Dokumen" untuk menambahkan.</p></div>';
+    return;
+  }
+
+  cont.innerHTML = docs.map(d=>{
+    const ext   = d.file_ext||getFileExt(d.doc_name)||'';
+    const icon  = getFileIcon(ext);
+    const size  = d.file_size ? formatBytes(d.file_size) : '';
+    const badge = ext ? `<span style="background:#e0e7ff;color:#3730a3;padding:2px 7px;border-radius:4px;font-size:0.7rem;font-weight:700;text-transform:uppercase;">${ext}</span>` : '';
+    return `
+    <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:12px;margin-bottom:10px;border:1px solid #e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:box-shadow .2s;" class="dok-row">
+      <div style="font-size:2rem;flex-shrink:0;">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.doc_name}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:3px;">
+          ${badge}
+          ${size?`<span style="font-size:0.72rem;color:#94a3b8;">${size}</span>`:''}
+          ${d.keterangan?`<span style="font-size:0.72rem;color:#64748b;">· ${d.keterangan}</span>`:''}
+        </div>
+        <div style="font-size:0.7rem;color:#cbd5e1;margin-top:2px;">${new Date(d.created_at).toLocaleString('id-ID')}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+        ${d.file_data?`<button class="btn btn-primary btn-sm"   data-key="${d.__key}" data-action="lihatdok">👁 Lihat</button>`:''}
+        ${d.file_data?`<button class="btn btn-success btn-sm"   data-key="${d.__key}" data-name="${d.doc_name}" data-ext="${ext}" data-action="downloaddok">⬇ Unduh</button>`:''}
+        <button class="btn btn-danger btn-sm" data-key="${d.__key}" data-name="${d.doc_name}" data-action="hapusdok">🗑 Hapus</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Event: Lihat
+  cont.querySelectorAll('[data-action="lihatdok"]').forEach(btn=>{
+    btn.onclick=()=>{
+      const doc=allData.find(d=>d.__key===btn.dataset.key);
+      if(!doc?.file_data){ toast('File tidak tersedia.','err'); return; }
+
+      if(doc.file_ext==='pdf'){
+        // Buka PDF di tab baru
+        const w=window.open();
+        w.document.write(`<iframe src="${doc.file_data}" style="width:100%;height:100vh;border:none;"></iframe>`);
+      } else {
+        // Untuk Word/Excel — tampilkan info & tawarkan unduh
+        const overlay=document.createElement('div');
+        overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.innerHTML=`<div style="background:#fff;border-radius:16px;padding:32px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+          <div style="font-size:3rem;margin-bottom:12px;">${getFileIcon(doc.file_ext)}</div>
+          <div style="font-weight:700;font-size:1.05rem;color:#1e293b;margin-bottom:6px;">${doc.doc_name}</div>
+          <div style="font-size:0.85rem;color:#64748b;margin-bottom:20px;">File ${doc.file_ext.toUpperCase()} tidak bisa dilihat langsung di browser.<br>Silakan unduh untuk membukanya.</div>
+          <div style="display:flex;gap:10px;justify-content:center;">
+            <button onclick="this.closest('div[style]').remove()" style="padding:9px 18px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;font-weight:600;cursor:pointer;">Tutup</button>
+            <button id="btnUnduhModal" style="padding:9px 18px;background:#10b981;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">⬇ Unduh File</button>
+          </div>
+        </div>`;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#btnUnduhModal').onclick=()=>{ downloadDok(doc); overlay.remove(); };
+        overlay.onclick=e=>{ if(e.target===overlay) overlay.remove(); };
+      }
+    };
+  });
+
+  // Event: Download
+  cont.querySelectorAll('[data-action="downloaddok"]').forEach(btn=>{
+    btn.onclick=()=>{
+      const doc=allData.find(d=>d.__key===btn.dataset.key);
+      if(doc) downloadDok(doc);
+    };
+  });
+
+  // Event: Hapus
   cont.querySelectorAll('[data-action="hapusdok"]').forEach(btn=>{
     btn.onclick=async()=>{
-      if(!confirm(`Hapus dokumen "${btn.dataset.name}"?`)) return;
-      await ROOT.child(btn.dataset.key).remove();
-      toast('Dokumen dihapus.');
+      if(!confirm(`Hapus dokumen "${btn.dataset.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+      btn.disabled=true; btn.textContent='⏳';
+      try{
+        await ROOT.child(btn.dataset.key).remove();
+        toast('Dokumen berhasil dihapus.');
+      } catch(e){ toast('Gagal: '+e.message,'err'); btn.disabled=false; btn.textContent='🗑 Hapus'; }
     };
   });
 }
 
+function downloadDok(doc){
+  if(!doc.file_data){ toast('File tidak tersedia.','err'); return; }
+  const a=document.createElement('a');
+  a.href=doc.file_data;
+  a.download=doc.doc_name+(doc.doc_name.includes('.')?'':'.'+doc.file_ext);
+  a.click();
+  toast('File mulai diunduh!');
+}
+
 async function simpanDokumen(){
-  const nama=document.getElementById('inputNamaDokumen').value.trim();
-  const ket =document.getElementById('inputKetDokumen').value.trim();
+  const nama = document.getElementById('inputNamaDokumen').value.trim();
+  const ket  = document.getElementById('inputKetDokumen').value.trim();
+
+  if(!selectedFileData){ toast('Pilih file terlebih dahulu!','err'); return; }
   if(!nama){ toast('Nama dokumen tidak boleh kosong!','err'); return; }
+
   const btn=document.getElementById('btnSimpanDokumen');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+
   try{
-    await ROOT.push().set({type:'document',doc_name:nama,keterangan:ket,user_name:currentUser,created_at:nowISO()});
-    closeModal('modalDokumen'); toast('Dokumen berhasil ditambahkan!');
-  } catch(e){ toast('Gagal: '+e.message,'err'); }
-  btn.disabled=false; btn.textContent='Simpan';
+    await ROOT.push().set({
+      type       : 'document',
+      doc_name   : nama,
+      keterangan : ket,
+      file_ext   : selectedFileData.ext,
+      file_size  : selectedFileData.size,
+      file_data  : selectedFileData.base64,  // base64 tersimpan di Realtime DB
+      user_name  : currentUser,
+      created_at : nowISO()
+    });
+    // Reset
+    selectedFileData=null;
+    document.getElementById('inputFileDokumen').value='';
+    document.getElementById('filePreview').style.display='none';
+    document.getElementById('dropZone').style.display='block';
+    closeModal('modalDokumen');
+    toast('Dokumen berhasil diupload!');
+  } catch(e){
+    toast('Gagal upload: '+e.message,'err');
+  }
+  btn.disabled=false; btn.innerHTML='⬆️ Upload';
 }
 
 // ══════════════════════════════════════════════
