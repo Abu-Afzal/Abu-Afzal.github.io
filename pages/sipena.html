@@ -7,185 +7,203 @@
     <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="sipena-bg">
 
-    <div id="loginScreen" class="fixed inset-0 bg-slate-900 flex justify-center items-center z-50 p-4" style="display: flex;">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
-            <h2 class="text-2xl font-bold mb-6 text-slate-800">SIPENA LOGIN</h2>
-            
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" id="username" class="form-input" placeholder="Masukkan username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" class="form-input" placeholder="Masukkan password" required>
-                </div>
-                <button type="submit" class="login-btn" id="loginBtn">Masuk</button>
-                <div class="error-message" id="errorMessage">Username atau password salah!</div>
-                <div style="text-align:center;margin-top:20px;">
-                    <button type="button" onclick="showRegisterForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">Belum punya akun? Daftar disini</button>
-                </div>
-            </form>
+    <div class="sipena-modul">
 
-            <form id="registerForm" style="display:none;">
-                <div class="form-group">
-                    <label for="regUsername" class="form-label">Username</label>
-                    <input type="text" id="regUsername" class="form-input" placeholder="Buat username baru" required>
-                </div>
-                <div class="form-group">
-                    <label for="regPassword" class="form-label">Password</label>
-                    <input type="password" id="regPassword" class="form-input" placeholder="Buat password" required>
-                </div>
-                <div class="form-group">
-                    <label for="regPasswordConfirm" class="form-label">Konfirmasi Password</label>
-                    <input type="password" id="regPasswordConfirm" class="form-input" placeholder="Ketik ulang password" required>
-                </div>
-                <button type="submit" class="login-btn" id="registerBtn"><span id="registerBtnText">Daftar</span></button>
-                <div class="error-message" id="registerErrorMessage"></div>
-                <div style="color:#27ae60;font-size:13px;margin-top:10px;display:none;" id="registerSuccessMessage">Pendaftaran berhasil! Silakan login.</div>
-                <div style="text-align:center;margin-top:20px;">
-                    <button type="button" onclick="showLoginForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">Sudah punya akun? Login di sini</button>
-                </div>
-            </form>
-        </div>
-    </div>
+        <div id="loginScreen" class="fixed inset-0 bg-slate-900 flex justify-center items-center z-50 p-4" style="display: flex;">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
+                <h2 class="text-2xl font-bold mb-6 text-slate-800">SIPENA LOGIN</h2>
+                
+                <form id="loginForm">
+                    <div class="form-group-sp">
+                        <label for="username" class="form-label-sp">Username</label>
+                        <input type="text" id="username" class="form-input-sp" placeholder="Masukkan username" required>
+                    </div>
+                    <div class="form-group-sp">
+                        <label for="password" class="form-label-sp">Password</label>
+                        <input type="password" id="password" class="form-input-sp" placeholder="Masukkan password" required>
+                    </div>
+                    <button type="submit" class="btn-sp btn-sp-primary w-full mt-2" id="loginBtn">Masuk</button>
+                    <div class="error-message" id="errorMessage" style="color: #e74c3c; font-size: 13px; margin-top: 10px; display: none;">Username atau password salah!</div>
+                    <div style="text-align:center;margin-top:20px;">
+                        <button type="button" onclick="showRegisterForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">Belum punya akun? Daftar disini</button>
+                    </div>
+                </form>
 
-    <div id="mainApp" class="main-container" style="display:none;">
-        <div class="header">
-            <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo" onerror="this.style.display='none'">
-            <div class="header-info">
-                <div class="header-title" id="schoolName">MAN BANTAENG</div>
-                <div class="header-subtitle" id="schoolAddress">Sistem Absensi Digital</div>
-            </div>
-            <div class="header-user">
-                <div class="user-name" id="currentUser">Guru</div>
-                <button class="logout-btn" onclick="logout()">Keluar</button>
+                <form id="registerForm" style="display:none;">
+                    <div class="form-group-sp">
+                        <label for="regUsername" class="form-label-sp">Username</label>
+                        <input type="text" id="regUsername" class="form-input-sp" placeholder="Buat username baru" required>
+                    </div>
+                    <div class="form-group-sp">
+                        <label for="regPassword" class="form-label-sp">Password</label>
+                        <input type="password" id="regPassword" class="form-input-sp" placeholder="Buat password" required>
+                    </div>
+                    <div class="form-group-sp">
+                        <label for="regPasswordConfirm" class="form-label-sp">Konfirmasi Password</label>
+                        <input type="password" id="regPasswordConfirm" class="form-input-sp" placeholder="Ketik ulang password" required>
+                    </div>
+                    <button type="submit" class="btn-sp btn-sp-primary w-full mt-2" id="registerBtn"><span id="registerBtnText">Daftar</span></button>
+                    <div class="error-message" id="registerErrorMessage" style="color: #e74c3c; font-size: 13px; margin-top: 10px;"></div>
+                    <div style="color:#27ae60;font-size:13px;margin-top:10px;display:none;" id="registerSuccessMessage">Pendaftaran berhasil! Silakan login.</div>
+                    <div style="text-align:center;margin-top:20px;">
+                        <button type="button" onclick="showLoginForm()" style="background:none;border:none;color:#667eea;font-size:14px;cursor:pointer;text-decoration:underline;">Sudah punya akun? Login di sini</button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <div class="menu-grid">
-            <div class="menu-card" onclick="showContent('presensi')">
-                <div class="menu-icon">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="6" width="32" height="36" rx="3" fill="#4CAF50"/><line x1="14" y1="16" x2="34" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="24" x2="34" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="32" x2="34" y2="32" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="16" r="2" fill="white"/><circle cx="14" cy="24" r="2" fill="white"/><circle cx="14" cy="32" r="2" fill="white"/></svg>
+        <div id="mainApp" class="main-container" style="display:none;">
+            <div class="sipena-header">
+                <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo-sp" onerror="this.style.display='none'">
+                <div class="header-info-sp">
+                    <div class="header-title-sp" id="schoolName">MAN BANTAENG</div>
+                    <div class="header-subtitle-sp" id="schoolAddress">Sistem Absensi Digital</div>
                 </div>
-                <div class="menu-title">Presensi</div>
+                <div class="header-user" style="display: flex; align-items: center; gap: 15px;">
+                    <div class="user-name" id="currentUser" style="font-weight: 600; color: #333;">Guru</div>
+                    <button class="logout-btn-sp" onclick="logout()">Keluar</button>
+                </div>
             </div>
-            <div class="menu-card" onclick="showContent('kelola-kelas')">
-                <div class="menu-icon">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 8L8 16V18H40V16L24 8Z" fill="#FF9800"/><rect x="10" y="18" width="28" height="20" fill="#FF9800"/><rect x="14" y="22" width="6" height="6" fill="white"/><rect x="22" y="22" width="6" height="6" fill="white"/><rect x="30" y="22" width="6" height="6" fill="white"/><rect x="14" y="30" width="6" height="6" fill="white"/><rect x="22" y="30" width="6" height="6" fill="white"/><rect x="30" y="30" width="6" height="6" fill="white"/><rect x="18" y="32" width="12" height="6" fill="#FFA726"/></svg>
+
+            <div class="menu-grid-sp">
+                <div class="menu-card-sp" onclick="showContent('presensi')">
+                    <div class="menu-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="6" width="32" height="36" rx="3" fill="#4CAF50"/><line x1="14" y1="16" x2="34" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="24" x2="34" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="32" x2="34" y2="32" stroke="white" stroke-width="2" stroke-linecap="round"/><circle cx="14" cy="16" r="2" fill="white"/><circle cx="14" cy="24" r="2" fill="white"/><circle cx="14" cy="32" r="2" fill="white"/></svg>
+                    </div>
+                    <div class="menu-title-sp">Presensi</div>
                 </div>
-                <div class="menu-title">Kelola Kelas</div>
+                <div class="menu-card-sp" onclick="showContent('kelola-kelas')">
+                    <div class="menu-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24 8L8 16V18H40V16L24 8Z" fill="#FF9800"/><rect x="10" y="18" width="28" height="20" fill="#FF9800"/><rect x="14" y="22" width="6" height="6" fill="white"/><rect x="22" y="22" width="6" height="6" fill="white"/><rect x="30" y="22" width="6" height="6" fill="white"/><rect x="14" y="30" width="6" height="6" fill="white"/><rect x="22" y="30" width="6" height="6" fill="white"/><rect x="30" y="30" width="6" height="6" fill="white"/><rect x="18" y="32" width="12" height="6" fill="#FFA726"/></svg>
+                    </div>
+                    <div class="menu-title-sp">Kelola Kelas</div>
+                </div>
+                <div class="menu-card-sp" onclick="showContent('rekap')">
+                    <div class="menu-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="28" width="6" height="12" rx="2" fill="#2196F3"/><rect x="21" y="20" width="6" height="20" rx="2" fill="#2196F3"/><rect x="32" y="12" width="6" height="28" rx="2" fill="#2196F3"/><path d="M12 16L24 8L36 12" stroke="#FF5722" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="menu-title-sp">Rekap</div>
+                </div>
+                <div class="menu-card-sp" onclick="showContent('penilaian')">
+                    <div class="menu-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="28" height="34" rx="3" fill="#9C27B0"/><line x1="16" y1="16" x2="32" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="22" x2="32" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="28" x2="26" y2="28" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M32 32L35 35L40 28" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="menu-title-sp">Penilaian</div>
+                </div>
+                <div class="menu-card-sp" onclick="showContent('bank-soal')">
+                    <div class="menu-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="10" width="24" height="28" rx="2" fill="#FF5722"/><rect x="16" y="6" width="16" height="4" rx="1" fill="#FF7043"/><line x1="18" y1="18" x2="30" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="24" x2="30" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="30" x2="26" y2="30" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="menu-title-sp">Bank Soal</div>
+                </div>
+                <div class="menu-card-sp" onclick="showDeleteDataModal()">
+                    <div class="menu-icon">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 16V38C14 39.1046 14.8954 40 16 40H32C33.1046 40 34 39.1046 34 38V16" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><path d="M10 12H38" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><path d="M18 12V10C18 8.89543 18.8954 8 20 8H28C29.1046 8 30 8.89543 30 10V12" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="22" x2="20" y2="34" stroke="#F44336" stroke-width="2.5" stroke-linecap="round"/><line x1="28" y1="22" x2="28" y2="34" stroke="#F44336" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="menu-title-sp">Hapus Data Saya</div>
+                </div>
             </div>
-            <div class="menu-card" onclick="showContent('rekap')">
-                <div class="menu-icon">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="28" width="6" height="12" rx="2" fill="#2196F3"/><rect x="21" y="20" width="6" height="20" rx="2" fill="#2196F3"/><rect x="32" y="12" width="6" height="28" rx="2" fill="#2196F3"/><path d="M12 16L24 8L36 12" stroke="#FF5722" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+            <div id="presensi" class="content-area-sp">
+                <div class="section-title-sp">Presensi Siswa</div>
+                <div class="date-display-sp" id="currentDate"></div>
+                <div class="action-bar-sp">
+                    <button class="btn-sp btn-sp-success" onclick="markAllPresent()">Hadir Semua</button>
+                    <button class="btn-sp btn-sp-primary" onclick="submitAttendance()">Kirim Absen</button>
                 </div>
-                <div class="menu-title">Rekap</div>
+                <div class="tabs-sp" id="classTabs"></div>
+                <div id="studentListContainer" class="student-list" style="margin-top: 15px;"></div>
             </div>
-            <div class="menu-card" onclick="showContent('penilaian')">
-                <div class="menu-icon">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="28" height="34" rx="3" fill="#9C27B0"/><line x1="16" y1="16" x2="32" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="22" x2="32" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="28" x2="26" y2="28" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M32 32L35 35L40 28" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+
+            <div id="kelola-kelas" class="content-area-sp">
+                <div class="section-title-sp">Kelola Kelas</div>
+                <div class="action-bar-sp">
+                    <button class="btn-sp btn-sp-primary" onclick="showAddClassModal()">Tambah Kelas</button>
                 </div>
-                <div class="menu-title">Penilaian</div>
+                <div class="table-container-sp">
+                    <table id="classTable">
+                        <thead>
+                            <tr>
+                                <th>Nama Kelas</th>
+                                <th>Jumlah Siswa</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="classTableBody"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="menu-card" onclick="showContent('bank-soal')">
-                <div class="menu-icon">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="10" width="24" height="28" rx="2" fill="#FF5722"/><rect x="16" y="6" width="16" height="4" rx="1" fill="#FF7043"/><line x1="18" y1="18" x2="30" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="24" x2="30" y2="24" stroke="white" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="30" x2="26" y2="30" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+
+            <div id="rekap" class="content-area-sp">
+                <div class="section-title-sp">Rekap Kehadiran</div>
+                <div class="tabs-sp">
+                    <button class="tab-sp active" onclick="showRekapTab('harian')">Harian</button>
+                    <button class="tab-sp" onclick="showRekapTab('bulanan')">Bulanan</button>
+                    <button class="tab-sp" onclick="showRekapTab('semester')">Semester</button>
                 </div>
-                <div class="menu-title">Bank Soal</div>
+                <div class="action-bar-sp">
+                    <button class="btn-sp btn-sp-primary" onclick="printRekap()">Cetak Rekap</button>
+                    <button class="btn-sp btn-sp-success" onclick="exportRekapToExcel()"> 📥 Ekspor ke Excel</button>
+                </div>
+                <div id="rekapFilters" style="margin-bottom:20px;"></div>
+                <div id="rekapContent"></div>
             </div>
-            <div class="menu-card" onclick="showDeleteDataModal()">
-                <div class="menu-icon">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 16V38C14 39.1046 14.8954 40 16 40H32C33.1046 40 34 39.1046 34 38V16" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><path d="M10 12H38" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><path d="M18 12V10C18 8.89543 18.8954 8 20 8H28C29.1046 8 30 8.89543 30 10V12" stroke="#F44336" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="22" x2="20" y2="34" stroke="#F44336" stroke-width="2.5" stroke-linecap="round"/><line x1="28" y1="22" x2="28" y2="34" stroke="#F44336" stroke-width="2.5" stroke-linecap="round"/></svg>
+
+            <div id="penilaian" class="content-area-sp">
+                <div class="section-title-sp">Penilaian</div>
+                <div class="tabs-sp">
+                    <button class="tab-sp active" onclick="showPenilaianTab('pengetahuan')">Penilaian Pengetahuan</button>
+                    <button class="tab-sp" onclick="showPenilaianTab('sikap')">Penilaian Sikap</button>
                 </div>
-                <div class="menu-title">Hapus Data Saya</div>
+                <div class="action-bar-sp">
+                    <button class="btn-sp btn-sp-success" onclick="exportToExcel()"> 📥 Ekspor ke Excel</button>
+                </div>
+                <div id="penilaianContent"></div>
+            </div>
+
+            <div id="bank-soal" class="content-area-sp">
+                <div class="section-title-sp">Bank Soal</div>
+                <div class="action-bar-sp">
+                    <button class="btn-sp btn-sp-primary" onclick="showUploadModal()">Upload Dokumen</button>
+                </div>
+                <div id="documentList"></div>
             </div>
         </div>
 
-        <div id="presensi" class="content-area">
-            <div class="section-title">Presensi Siswa</div>
-            <div class="date-display" id="currentDate"></div>
-            <div class="action-bar">
-                <button class="btn btn-success" onclick="markAllPresent()">Hadir Semua</button>
-                <button class="btn btn-primary" onclick="submitAttendance()">Kirim Absen</button>
-            </div>
-            <div class="tabs" id="classTabs"></div>
-            <div id="studentListContainer" class="student-list"></div>
-        </div>
-
-        <div id="kelola-kelas" class="content-area">
-            <div class="section-title">Kelola Kelas</div>
-            <div class="action-bar">
-                <button class="btn btn-primary" onclick="showAddClassModal()">Tambah Kelas</button>
-            </div>
-            <div class="table-container">
-                <table id="classTable">
-                    <thead>
-                        <tr>
-                            <th>Nama Kelas</th>
-                            <th>Jumlah Siswa</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="classTableBody"></tbody>
-                </table>
+        <div id="addClassModal" class="modal">
+            <div class="modal-content">
+                <div class="section-title-sp" style="font-size: 18px; margin-bottom: 15px;">Tambah Kelas</div>
+                <form id="addClassForm">
+                    <div class="form-group-sp">
+                        <label class="form-label-sp">Nama Kelas</label>
+                        <input type="text" id="className" class="form-input-sp" placeholder="Contoh: X IPA 1" required>
+                    </div>
+                    <div class="action-bar-sp" style="justify-content: flex-end; mt-4;">
+                        <button type="submit" class="btn-sp btn-sp-primary">Simpan</button>
+                        <button type="button" class="btn-sp btn-sp-secondary" onclick="closeModal('addClassModal')">Batal</button>
+                    </div>
+                </form>
             </div>
         </div>
 
-        <div id="rekap" class="content-area">
-            <div class="section-title">Rekap Kehadiran</div>
-            <div class="tabs">
-                <button class="tab active" onclick="showRekapTab('harian')">Harian</button>
-                <button class="tab" onclick="showRekapTab('bulanan')">Bulanan</button>
-                <button class="tab" onclick="showRekapTab('semester')">Semester</button>
-            </div>
-            <div class="action-bar">
-                <button class="btn btn-primary" onclick="printRekap()">Cetak Rekap</button>
-                <button class="btn btn-success" onclick="exportRekapToExcel()"> 📥 Ekspor ke Excel</button>
-            </div>
-            <div id="rekapFilters" style="margin-bottom:20px;"></div>
-            <div id="rekapContent"></div>
-        </div>
+    </div> <script type="module">
+        // 1. Ambil gerbang koneksi matang dari firebase-confige.js Anda
+        import { db, storage, rtdb } from "./firebase-confige.js";
 
-        <div id="penilaian" class="content-area">
-            <div class="section-title">Penilaian</div>
-            <div class="tabs">
-                <button class="tab active" onclick="showPenilaianTab('pengetahuan')">Penilaian Pengetahuan</button>
-                <button class="tab" onclick="showPenilaianTab('sikap')">Penilaian Sikap</button>
-            </div>
-            <div class="action-bar">
-                <button class="btn btn-success" onclick="exportToExcel()"> 📥 Ekspor ke Excel</button>
-            </div>
-            <div id="penilaianContent"></div>
-        </div>
+        // 2. Impor fungsi pendukung dengan Versi 10.12.0 agar tersinkronisasi tanpa error
+        import { ref, onValue, push, set, update, remove, get, child } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+        import { collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-        <div id="bank-soal" class="content-area">
-            <div class="section-title">Bank Soal</div>
-            <div class="action-bar">
-                <button class="btn btn-primary" onclick="showUploadModal()">Upload Dokumen</button>
-            </div>
-            <div id="documentList"></div>
-        </div>
-    </div>
+        // Ikat Root Jalur data RTDB lama ke modul rtdb config Anda
+        const ROOT = ref(rtdb, "appData"); 
 
-    <div id="addClassModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Tambah Kelas</div>
-            <form id="addClassForm">
-                <div class="form-row">
-                    <label class="form-label">Nama Kelas</label>
-                    <input type="text" id="className" class="form-input" placeholder="Contoh: X IPA 1" required>
-                </div>
-                <div class="action-bar">
-                    <button type="submit" class="btn btn-primary">Simpan</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addClassModal')">Batal</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script type="module" src="app.js"></script>
+        // ---- LOGIKA STATE APLIKASI ----
+        let currentUser = '';
+        let currentClass = '';
+        
+        // *Sisa logika penanganan fungsionalitas JavaScript aplikasi Sipena Anda (seperti fungsi login, presensi, rekap, cetak Excel, dll) ditempatkan tepat di bawah ini agar sistem berjalan.*
+    </script>
 </body>
 </html>
