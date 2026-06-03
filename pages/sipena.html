@@ -243,28 +243,16 @@ tr:hover td{background:#fafbff;}
 
   <!-- ══ BANK SOAL ══ -->
   <div id="bank-soal" class="content-area">
-  <div class="content-card">
-    <div class="section-title"> 📚 Bank Soal (E-Dokumen)</div>
-    <div class="action-bar">
-      <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen Baru</button>
-    </div>
-    
-    <div class="tbl-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Nama Dokumen</th>
-            <th>Keterangan</th>
-            <th>Tanggal Upload</th>
-            <th width="180">Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="documentListTable">
-          </tbody>
-      </table>
+    <div class="content-card">
+      <div class="section-title">📚 Bank Soal</div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen</button>
+      </div>
+      <div id="documentList"></div>
     </div>
   </div>
-</div>
+
+</div><!-- /app-wrap -->
 
 <!-- ══ MODAL: TAMBAH KELAS ══ -->
 <div class="modal" id="modalTambahKelas">
@@ -537,27 +525,10 @@ function bindEvents(){
   document.getElementById('btnSimpanKolom').onclick = tambahKolom;
 
   // ── BANK SOAL ──
-  <div class="modal" id="modalDokumen">
-  <div class="modal-box">
-    <div class="modal-title"> 📄 Upload E-Dokumen Baru</div>
-    <div class="fg">
-      <label>Nama Dokumen/Materi *</label>
-      <input type="text" id="inputNamaDokumen" placeholder="Contoh: Modul Ajar Bab 1">
-    </div>
-    <div class="fg">
-      <label>Keterangan Tambahan</label>
-      <input type="text" id="inputKetDokumen" placeholder="Contoh: Kelas X Semester Ganjil">
-    </div>
-    <div class="fg">
-      <label>Pilih File Dokumen (PDF, Word, Excel, Image) *</label>
-      <input type="file" id="inputFileDokumen" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg">
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" id="btnBatalDokumen">Batal</button>
-      <button class="btn btn-primary" id="btnSimpanDokumen">Mulai Upload</button>
-    </div>
-  </div>
-</div>
+  document.getElementById('btnTambahDokumen').onclick = () => {
+    document.getElementById('inputNamaDokumen').value='';
+    document.getElementById('inputKetDokumen').value='';
+    openModal('modalDokumen');
   };
   document.getElementById('btnBatalDokumen').onclick = () => closeModal('modalDokumen');
   document.getElementById('btnSimpanDokumen').onclick = simpanDokumen;
