@@ -1,213 +1,1105 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sipena - Sistem Penilaian & Absensi Digital</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="sipena.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIPENA - Sistem Penilaian & Absensi</title>
+<link rel="icon" href="assets/images/sipelita-app.png">
+
+<!-- Firebase CDN (compat version) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;}
+
+/* ── HEADER ── */
+.header{background:#fff;padding:16px 24px;border-radius:14px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:18px;display:flex;align-items:center;gap:16px;}
+.header-logo{width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #667eea;}
+.header-info{flex:1;}
+.header-title{font-size:1.5rem;font-weight:800;color:#086d22;margin-bottom:2px;}
+.header-subtitle{font-size:0.85rem;color:#64748b;}
+.header-user{text-align:right;}
+.user-name{font-size:0.95rem;font-weight:700;color:#334155;margin-bottom:6px;}
+.btn-dashboard{padding:8px 16px;background:#e74c3c;color:#fff;border:none;border-radius:8px;font-size:0.85rem;cursor:pointer;font-weight:600;transition:background .2s;}
+.btn-dashboard:hover{background:#c0392b;}
+
+/* ── CONTAINER ── */
+.app-wrap{max-width:1400px;margin:0 auto;padding:20px;}
+
+/* ── MENU GRID ── */
+.menu-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px;}
+.menu-card{background:#fff;padding:18px 8px;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.08);cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:all .25s;min-height:100px;border:2px solid transparent;}
+.menu-card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.14);border-color:#667eea;}
+.menu-card.active-menu{border-color:#667eea;background:#f0f4ff;}
+.menu-icon{font-size:1.8rem;line-height:1;}
+.menu-title{font-size:0.75rem;font-weight:700;color:#334155;line-height:1.2;}
+
+/* ── CONTENT ── */
+.content-area{display:none;}
+.content-area.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.content-card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,0.07);margin-bottom:18px;}
+.section-title{font-size:1.2rem;font-weight:800;color:#1e293b;margin-bottom:18px;padding-bottom:10px;border-bottom:3px solid #667eea;display:flex;align-items:center;gap:8px;}
+.date-bar{background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 16px;font-weight:700;color:#854d0e;margin-bottom:16px;text-align:center;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;}
+.btn-primary{background:#4f46e5;color:#fff;} .btn-primary:hover{background:#3730a3;}
+.btn-success{background:#10b981;color:#fff;} .btn-success:hover{background:#059669;}
+.btn-danger{background:#ef4444;color:#fff;}  .btn-danger:hover{background:#dc2626;}
+.btn-warning{background:#f59e0b;color:#fff;} .btn-warning:hover{background:#d97706;}
+.btn-secondary{background:#94a3b8;color:#fff;}.btn-secondary:hover{background:#64748b;}
+.btn-sm{padding:5px 11px;font-size:0.78rem;}
+.action-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:2px solid #e2e8f0;overflow-x:auto;}
+.tab{padding:10px 18px;border:none;background:transparent;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:0.88rem;font-weight:600;color:#64748b;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.tab.active{color:#4f46e5;border-bottom-color:#4f46e5;}
+.tab:hover:not(.active){color:#334155;}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;margin-top:10px;}
+table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+th{background:#f8fafc;color:#334155;font-weight:700;padding:11px 13px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;}
+td{padding:11px 13px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+tr:hover td{background:#fafbff;}
+
+/* ── STUDENT LIST ── */
+.student-list{display:flex;flex-direction:column;gap:10px;}
+.student-card{display:flex;align-items:center;gap:14px;padding:13px 16px;background:#f8fafc;border-radius:10px;border:2px solid #e2e8f0;transition:border-color .2s;}
+.student-card:hover{border-color:#667eea;}
+.student-photo{width:48px;height:48px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;overflow:hidden;}
+.student-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.student-name{font-weight:700;color:#1e293b;margin-bottom:6px;}
+.status-buttons{display:flex;gap:5px;flex-wrap:wrap;}
+.status-btn{padding:5px 10px;border:2px solid #e2e8f0;background:#fff;border-radius:6px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .18s;}
+.status-btn.hadir.active{background:#10b981;border-color:#10b981;color:#fff;}
+.status-btn.izin.active{background:#3b82f6;border-color:#3b82f6;color:#fff;}
+.status-btn.sakit.active{background:#f59e0b;border-color:#f59e0b;color:#fff;}
+.status-btn.alpa.active{background:#ef4444;border-color:#ef4444;color:#fff;}
+.status-btn.bolos.active{background:#8b5cf6;border-color:#8b5cf6;color:#fff;}
+
+/* ── MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal.active{display:flex;animation:fadeIn .2s ease;}
+.modal-box{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+.modal-box.wide{max-width:820px;}
+.modal-title{font-size:1.1rem;font-weight:800;color:#1e293b;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #f1f5f9;}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid #f1f5f9;}
+
+/* ── FORM ── */
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:0.82rem;font-weight:600;color:#475569;margin-bottom:5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;font-family:inherit;outline:none;transition:border-color .2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1);}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;color:#94a3b8;}
+.empty .ei{font-size:2.5rem;margin-bottom:10px;}
+
+/* ── STATS ── */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:18px;}
+.stat-box{border-radius:10px;padding:14px;text-align:center;border-left:4px solid;}
+.stat-box h4{font-size:1.6rem;font-weight:800;margin-bottom:3px;}
+.stat-box p{font-size:0.8rem;font-weight:600;}
+.sb-h{background:#dcfce7;border-color:#10b981;color:#065f46;}
+.sb-i{background:#dbeafe;border-color:#3b82f6;color:#1e40af;}
+.sb-s{background:#fef3c7;border-color:#f59e0b;color:#78350f;}
+.sb-a{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
+.sb-b{background:#ede9fe;border-color:#8b5cf6;color:#4c1d95;}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;}
+.badge-green{background:#dcfce7;color:#065f46;}
+.badge-red{background:#fee2e2;color:#991b1b;}
+.badge-amber{background:#fef3c7;color:#78350f;}
+
+/* ── PENILAIAN INPUT ── */
+.nilai-input{width:60px;padding:5px;text-align:center;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.85rem;}
+.nilai-input:focus{border-color:#667eea;outline:none;}
+
+/* ── LOADING ── */
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:768px){
+  .menu-grid{grid-template-columns:repeat(3,1fr);}
+  .header{flex-wrap:wrap;}
+  .header-user{width:100%;text-align:left;}
+}
+</style>
 </head>
-<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 min-h-screen text-white font-['Plus_Jakarta_Sans']">
+<body>
+<div class="app-wrap">
 
-  <div class="max-w-7xl mx-auto p-4 md:p-6 lg:p-8">
-    
-    <header class="glass-panel p-6 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
-      <div class="flex items-center gap-4">
-        <div class="p-3 bg-white/10 rounded-xl border border-white/20 shadow-inner">
-          <i class="fa-solid fa-graduation-cap text-3xl text-pink-400 animate-pulse"></i>
-        </div>
-        <div>
-          <h1 class="text-2xl font-bold tracking-wide">SIPENA DIGITAL</h1>
-          <p class="text-xs text-white/60">Modul Kelola Kelas, Presensi, Penilaian, & Bank Soal</p>
-        </div>
-      </div>
-      
-      <div class="flex items-center gap-4 bg-white/5 border border-white/10 py-2 px-4 rounded-xl">
-        <div class="text-right">
-          <span class="block text-xs text-white/50">Selamat Datang,</span>
-          <span id="sipenaUserActive" class="font-semibold text-sm text-pink-300">Memuat nama...</span>
-        </div>
-        <div class="w-10 height-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-md border border-white/20" id="userInitial">
-          G
-        </div>
-      </div>
-    </header>
-
-    <nav class="grid grid-columns-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <button onclick="switchSipenaFolder('kelola-kelas')" id="nav-kelola-kelas" class="folder-card active p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300">
-        <div class="icon-box bg-blue-500/20 text-blue-300"><i class="fa-solid fa-chalkboard-user text-xl"></i></div>
-        <div class="text-left">
-          <span class="block font-bold text-sm tracking-wide">Kelola Kelas</span>
-          <span class="text-[10px] text-white/60">Atur rombel & data siswa</span>
-        </div>
-      </button>
-
-      <button onclick="switchSipenaFolder('absensi')" id="nav-absensi" class="folder-card p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300">
-        <div class="icon-box bg-emerald-500/20 text-emerald-300"><i class="fa-solid fa-calendar-check text-xl"></i></div>
-        <div class="text-left">
-          <span class="block font-bold text-sm tracking-wide">Absensi Siswa</span>
-          <span class="text-[10px] text-white/60">Input kehadiran harian</span>
-        </div>
-      </button>
-
-      <button onclick="switchSipenaFolder('rekap-penilaian')" id="nav-rekap-penilaian" class="folder-card p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300">
-        <div class="icon-box bg-purple-500/20 text-purple-300"><i class="fa-solid fa-chart-line text-xl"></i></div>
-        <div class="text-left">
-          <span class="block font-bold text-sm tracking-wide">Rekap & Nilai</span>
-          <span class="text-[10px] text-white/60">Kombinasi rekap & nilai siswa</span>
-        </div>
-      </button>
-
-      <button onclick="switchSipenaFolder('bank-soal')" id="nav-bank-soal" class="folder-card p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300">
-        <div class="icon-box bg-amber-500/20 text-amber-300"><i class="fa-solid fa-folder-open text-xl"></i></div>
-        <div class="text-left">
-          <span class="block font-bold text-sm tracking-wide">Bank Soal</span>
-          <span class="text-[10px] text-white/60">Penyimpanan berkas ujian</span>
-        </div>
-      </button>
-    </nav>
-
-    <main class="glass-panel p-6 rounded-2xl min-h-[450px]">
-      
-      <section id="folder-kelola-kelas" class="sipena-section active">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-folder text-blue-400"></i> Folder Kelola Kelas</h3>
-          <button onclick="openSipenaModal('modalTambahKelas')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all">
-            <i class="fa-solid fa-plus"></i> Tambah Kelas
-          </button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="sipena-table w-100 min-w-full">
-            <thead>
-              <tr>
-                <th>Nama Kelas</th>
-                <th>Jumlah Siswa</th>
-                <th class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="sipenaClassTableBody">
-              </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="folder-absensi" class="sipena-section hidden">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div>
-            <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-folder text-emerald-400"></i> Folder Absensi Siswa</h3>
-            <p id="sipenaDateDisplay" class="text-xs text-white/60 mt-1"></p>
-          </div>
-          <div class="flex gap-2 w-full md:w-auto">
-            <select id="selectAbsensiClass" onchange="loadSipenaAttendanceList()" class="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-xs text-white outline-none focus:border-pink-500 w-full md:w-48"></select>
-            <button onclick="saveSipenaAttendance()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 shrink-0 transition-all">
-              <i class="fa-solid fa-floppy-disk"></i> Simpan Absen
-            </button>
-          </div>
-        </div>
-        <div id="sipenaAttendanceContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          </div>
-      </section>
-
-      <section id="folder-rekap-penilaian" class="sipena-section hidden">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-folder text-purple-400"></i> Folder Rekap & Penilaian</h3>
-          <div class="flex gap-2 w-full sm:w-auto">
-            <select id="selectRekapClass" onchange="renderRekapSipenaTable()" class="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white outline-none w-full sm:w-40"></select>
-            <button onclick="exportSipenaToExcel()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 shrink-0 transition-all">
-              <i class="fa-solid fa-file-excel"></i> Ekspor Excel
-            </button>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="sipena-table w-full">
-            <thead>
-              <tr>
-                <th>Nama Siswa</th>
-                <th class="text-center">Hadir</th>
-                <th class="text-center">Sakit</th>
-                <th class="text-center">Izin</th>
-                <th class="text-center">Alpa</th>
-                <th class="text-center" style="width: 150px;">Nilai Pengetahuan</th>
-                <th class="text-center" style="width: 150px;">Nilai Sikap</th>
-              </tr>
-            </thead>
-            <tbody id="sipenaRekapTableBody">
-              </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section id="folder-bank-soal" class="sipena-section hidden">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-folder text-amber-400"></i> Folder Bank Soal</h3>
-          <button onclick="openSipenaModal('modalUploadSoal')" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Upload Soal
-          </button>
-        </div>
-        <div id="sipenaBankSoalGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          </div>
-      </section>
-
-    </main>
-  </div>
-
-  <div id="modalTambahKelas" class="sipena-modal">
-    <div class="modal-body glass-panel">
-      <h3 class="text-lg font-bold mb-4">Tambah Kelas Baru</h3>
-      <form id="sipenaAddClassForm" onsubmit="handleCreateClass(event)">
-        <div class="mb-4">
-          <label class="block text-xs font-semibold mb-2 text-white/70">Nama Rombel / Kelas</label>
-          <input type="text" id="sipenaInputClassName" class="modal-input" placeholder="Contoh: XII IPA 1" required>
-        </div>
-        <div class="flex justify-end gap-2 mt-6">
-          <button type="button" onclick="closeSipenaModal('modalTambahKelas')" class="btn-cancel">Batal</button>
-          <button type="submit" class="btn-submit bg-blue-600 hover:bg-blue-500">Simpan Kelas</button>
-        </div>
-      </form>
+  <!-- ── HEADER ── -->
+  <div class="header">
+    <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+    <div class="header-info">
+      <div class="header-title">MAN BANTAENG</div>
+      <div class="header-subtitle">Sistem Penilaian & Absensi Digital</div>
+    </div>
+    <div class="header-user">
+      <div class="user-name" id="userDisplay">–</div>
+      <button class="btn-dashboard" id="btnDashboard">← Dashboard</button>
     </div>
   </div>
 
-  <div id="modalKelolaSiswa" class="sipena-modal">
-    <div class="modal-body glass-panel max-w-2xl">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold" id="titleKelolaSiswa">Kelola Siswa</h3>
-        <button onclick="closeSipenaModal('modalKelolaSiswa')" class="text-white/60 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+  <!-- ── MENU ── -->
+  <div class="menu-grid" id="menuGrid">
+    <div class="menu-card" data-target="kelola-kelas">
+      <div class="menu-icon">🏫</div><div class="menu-title">Kelola Kelas</div>
+    </div>
+    <div class="menu-card" data-target="presensi">
+      <div class="menu-icon">✅</div><div class="menu-title">Presensi</div>
+    </div>
+    <div class="menu-card" data-target="rekap">
+      <div class="menu-icon">📊</div><div class="menu-title">Rekap</div>
+    </div>
+    <div class="menu-card" data-target="penilaian">
+      <div class="menu-icon">📝</div><div class="menu-title">Penilaian</div>
+    </div>
+    <div class="menu-card" data-target="bank-soal">
+      <div class="menu-icon">📚</div><div class="menu-title">Bank Soal</div>
+    </div>
+    <div class="menu-card" id="menuHapus">
+      <div class="menu-icon">🗑️</div><div class="menu-title">Hapus Data Saya</div>
+    </div>
+  </div>
+
+  <!-- ══ KELOLA KELAS ══ -->
+  <div id="kelola-kelas" class="content-area">
+    <div class="content-card">
+      <div class="section-title">🏫 Kelola Kelas</div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btnTambahKelas">+ Tambah Kelas Baru</button>
       </div>
-      <form id="sipenaAddStudentForm" onsubmit="handleCreateStudent(event)" class="flex gap-2 mb-6">
-        <input type="text" id="sipenaInputStudentName" class="modal-input" placeholder="Ketik nama lengkap siswa baru..." required>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-4 rounded-xl text-xs font-semibold shrink-0">Tambah</button>
-      </form>
-      <div class="max-h-64 overflow-y-auto pr-2">
-        <ul id="sipenaStudentListUnderClass" class="divide-y divide-white/10">
-          </ul>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Nama Kelas</th><th>Jumlah Siswa</th><th>Aksi</th></tr></thead>
+          <tbody id="classTableBody">
+            <tr><td colspan="3"><div class="empty"><div class="ei">🏫</div><p>Memuat data...</p></div></td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <div id="modalUploadSoal" class="sipena-modal">
-    <div class="modal-body glass-panel">
-      <h3 class="text-lg font-bold mb-4">Upload Berkas Bank Soal</h3>
-      <form id="sipenaUploadSoalForm" onsubmit="handleUploadBankSoal(event)">
-        <div class="mb-4">
-          <label class="block text-xs font-semibold mb-2 text-white/70">Nama Mata Pelajaran / Ujian</label>
-          <input type="text" id="sipenaInputSoalName" class="modal-input" placeholder="Contoh: PAS Matematika Peminatan" required>
-        </div>
-        <div class="mb-4">
-          <label class="block text-xs font-semibold mb-2 text-white/70">Pilih Berkas (PDF/DOCX)</label>
-          <input type="file" id="sipenaInputSoalFile" class="modal-input pt-2" required accept=".pdf,.doc,.docx">
-        </div>
-        <div class="flex justify-end gap-2 mt-6">
-          <button type="button" onclick="closeSipenaModal('modalUploadSoal')" class="btn-cancel">Batal</button>
-          <button type="submit" class="btn-submit bg-amber-600 hover:bg-amber-500">Mulai Upload</button>
-        </div>
-      </form>
+  <!-- ══ PRESENSI ══ -->
+  <div id="presensi" class="content-area">
+    <div class="content-card">
+      <div class="section-title">✅ Presensi Siswa</div>
+      <div class="date-bar" id="currentDate"></div>
+      <div class="action-bar">
+        <button class="btn btn-success" id="btnHadirSemua">✅ Hadir Semua</button>
+        <button class="btn btn-primary" id="btnKirimAbsen">💾 Simpan Absensi</button>
+      </div>
+      <div class="tabs" id="classTabs"></div>
+      <div class="student-list" id="studentListContainer"></div>
     </div>
   </div>
 
-  <script type="module" src="sipena.js"></script>
+  <!-- ══ REKAP ══ -->
+  <div id="rekap" class="content-area">
+    <div class="content-card">
+      <div class="section-title">📊 Rekap Kehadiran</div>
+      <div class="tabs" id="rekapTabs">
+        <button class="tab active" data-rtab="harian">Harian</button>
+        <button class="tab" data-rtab="bulanan">Bulanan</button>
+        <button class="tab" data-rtab="semester">Semester</button>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btnCetakRekap">🖨️ Cetak</button>
+        <button class="btn btn-success" id="btnExportRekap">📥 Export CSV</button>
+      </div>
+      <div id="rekapFilters" style="margin-bottom:14px;"></div>
+      <div id="rekapContent"></div>
+    </div>
+  </div>
+
+  <!-- ══ PENILAIAN ══ -->
+  <div id="penilaian" class="content-area">
+    <div class="content-card">
+      <div class="section-title">📝 Penilaian</div>
+      <div class="tabs" id="nilaiTabs">
+        <button class="tab active" data-ntab="pengetahuan">Pengetahuan</button>
+        <button class="tab" data-ntab="sikap">Sikap</button>
+      </div>
+      <div class="fg" style="max-width:260px;margin-bottom:16px;">
+        <label>Pilih Kelas</label>
+        <select id="nilaiKelasSelect"></select>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-success" id="btnSimpanNilai">💾 Simpan Nilai</button>
+        <button class="btn btn-primary" id="btnAddKolom" style="display:none;">+ Tambah Kolom</button>
+      </div>
+      <div id="penilaianContent"></div>
+    </div>
+  </div>
+
+  <!-- ══ BANK SOAL ══ -->
+  <div id="bank-soal" class="content-area">
+    <div class="content-card">
+      <div class="section-title">📚 Bank Soal</div>
+      <div class="action-bar">
+        <button class="btn btn-primary" id="btnTambahDokumen">+ Upload Dokumen</button>
+      </div>
+      <div id="documentList"></div>
+    </div>
+  </div>
+
+</div><!-- /app-wrap -->
+
+<!-- ══ MODAL: TAMBAH KELAS ══ -->
+<div class="modal" id="modalTambahKelas">
+  <div class="modal-box">
+    <div class="modal-title">🏫 Tambah Kelas Baru</div>
+    <div class="fg"><label>Nama Kelas *</label><input type="text" id="inputNamaKelas" placeholder="Contoh: X IPA 1"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnBatalTambahKelas">Batal</button>
+      <button class="btn btn-primary" id="btnSimpanKelas">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: KELOLA SISWA ══ -->
+<div class="modal" id="modalKelolaSwiswa">
+  <div class="modal-box wide">
+    <div class="modal-title" id="titleKelolaSwiswa">👥 Kelola Siswa</div>
+    <!-- Form tambah siswa inline -->
+    <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:18px;">
+      <div style="font-weight:700;color:#334155;margin-bottom:12px;">➕ Tambah Siswa Baru</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="fg" style="margin:0;"><label>Nama Siswa *</label><input type="text" id="inputNamaSiswa" placeholder="Nama lengkap"></div>
+        <div class="fg" style="margin:0;"><label>URL Foto (opsional)</label><input type="text" id="inputFotoSiswa" placeholder="https://..."></div>
+      </div>
+      <div style="margin-top:10px;">
+        <button class="btn btn-success" id="btnSimpanSiswa">+ Tambah Siswa</button>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th width="50">Foto</th><th>Nama Siswa</th><th width="120">Aksi</th></tr></thead>
+        <tbody id="siswaTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnTutupKelolaSwiswa">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: TAMBAH DOKUMEN ══ -->
+<div class="modal" id="modalDokumen">
+  <div class="modal-box">
+    <div class="modal-title">📄 Upload Dokumen</div>
+    <div class="fg"><label>Nama Dokumen *</label><input type="text" id="inputNamaDokumen" placeholder="Nama dokumen"></div>
+    <div class="fg"><label>Keterangan</label><input type="text" id="inputKetDokumen" placeholder="Opsional"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnBatalDokumen">Batal</button>
+      <button class="btn btn-primary" id="btnSimpanDokumen">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: HAPUS DATA ══ -->
+<div class="modal" id="modalHapus">
+  <div class="modal-box">
+    <div class="modal-title" style="color:#ef4444;">⚠️ Hapus Semua Data Saya</div>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;margin-bottom:16px;font-size:0.88rem;color:#991b1b;">
+      Semua kelas, siswa, absensi, dan nilai yang Anda buat akan dihapus permanen. Data guru lain tidak terpengaruh.
+    </div>
+    <div class="fg"><label>Ketik <strong>HAPUS</strong> untuk konfirmasi</label><input type="text" id="inputKonfirmasiHapus" placeholder="Ketik HAPUS"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnBatalHapus">Batal</button>
+      <button class="btn btn-danger" id="btnKonfirmasiHapus">Hapus Semua Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: TAMBAH KOLOM NILAI ══ -->
+<div class="modal" id="modalKolom">
+  <div class="modal-box">
+    <div class="modal-title">➕ Tambah Kolom Penilaian</div>
+    <div class="fg">
+      <label>Jenis Kolom</label>
+      <select id="inputJenisKolom">
+        <option value="PH">PH (Penilaian Harian)</option>
+        <option value="UH">UH (Ulangan Harian)</option>
+        <option value="UTS">UTS</option>
+        <option value="UAS">UAS / SAS</option>
+      </select>
+    </div>
+    <div class="fg"><label>Label Kolom</label><input type="text" id="inputLabelKolom" placeholder="cth: PH 1"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnBatalKolom">Batal</button>
+      <button class="btn btn-primary" id="btnSimpanKolom">Tambah</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//            FIREBASE CONFIG
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:"AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+  authDomain:"sipelita-digital.firebaseapp.com",
+  databaseURL:"https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"sipelita-digital",
+  storageBucket:"sipelita-digital.firebasestorage.app",
+  messagingSenderId:"787840817745",
+  appId:"1:787840817745:web:e6b5237cfbb5e51be93670"
+};
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const ROOT = db.ref("sipena2"); // ← collection terpisah agar tidak bentrok
+
+// ══════════════════════════════════════════════
+//                   STATE
+// ══════════════════════════════════════════════
+let currentUser         = '';
+let allData             = [];
+let currentClass        = '';
+let currentRekapClass   = '';
+let currentNilaiClass   = '';
+let currentManajeKelas  = '';
+let currentRekapTab     = 'harian';
+let currentNilaiTab     = 'pengetahuan';
+let attendanceData      = {};  // { studentKey: 'HADIR'|'IZIN'|... }
+let selectedMonth       = new Date().getMonth() + 1;
+let selectedYear        = new Date().getFullYear();
+let selectedSemester    = 'ganjil';
+let nilaiKolom          = [];  // kolom penilaian pengetahuan yg dinamis
+
+// ══════════════════════════════════════════════
+//                  HELPERS
+// ══════════════════════════════════════════════
+function toArr(val){ return val ? Object.keys(val).map(k=>({__key:k,...val[k]})) : []; }
+function nowISO(){ return new Date().toISOString(); }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+
+function toast(msg, type='ok'){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;
+    background:${type==='ok'?'#10b981':'#ef4444'};color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);`;
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.style.opacity='0',2500);
+  setTimeout(()=>t.remove(),2900);
+}
+
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+
+function setMenuActive(target){
+  document.querySelectorAll('.menu-card').forEach(c=>c.classList.remove('active-menu'));
+  const card = document.querySelector(`.menu-card[data-target="${target}"]`);
+  if(card) card.classList.add('active-menu');
+}
+
+// ══════════════════════════════════════════════
+//              FIREBASE LISTENER
+// ══════════════════════════════════════════════
+function initFirebase(){
+  ROOT.on('value', snap => {
+    allData = toArr(snap.val());
+    renderActive();
+    // refresh modal kelola siswa jika terbuka
+    if(document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas){
+      renderSiswaModal(currentManajeKelas);
+    }
+  }, err => {
+    console.error(err);
+    toast('Gagal terhubung ke database','err');
+  });
+}
+
+function renderActive(){
+  const a=document.querySelector('.content-area.active');
+  if(!a) return;
+  switch(a.id){
+    case 'kelola-kelas': renderKelolaKelas(); break;
+    case 'presensi':     renderPresensi();    break;
+    case 'rekap':        renderRekap();       break;
+    case 'penilaian':    renderPenilaian();   break;
+    case 'bank-soal':    renderBankSoal();    break;
+  }
+}
+
+function showContent(id){
+  document.querySelectorAll('.content-area').forEach(a=>a.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  setMenuActive(id);
+  renderActive();
+}
+
+// ══════════════════════════════════════════════
+//               INIT APP
+// ══════════════════════════════════════════════
+function initApp(){
+  // Ambil user dari localStorage SIPELITA
+  try{
+    const s = localStorage.getItem('sipelita_user');
+    currentUser = s ? (JSON.parse(s).email||JSON.parse(s).nama||'guru') : 'guru';
+  } catch(e){ currentUser='guru'; }
+
+  document.getElementById('userDisplay').textContent = currentUser;
+  document.getElementById('currentDate').textContent =
+    '📅 ' + new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  initFirebase();
+  bindEvents();
+  showContent('kelola-kelas');
+}
+
+// ══════════════════════════════════════════════
+//               BIND ALL EVENTS
+// ══════════════════════════════════════════════
+function bindEvents(){
+
+  // Dashboard
+  document.getElementById('btnDashboard').onclick = () => window.location.href='../index.html';
+
+  // Menu cards
+  document.querySelectorAll('.menu-card[data-target]').forEach(c=>{
+    c.onclick = () => showContent(c.dataset.target);
+  });
+  document.getElementById('menuHapus').onclick = () => {
+    document.getElementById('inputKonfirmasiHapus').value='';
+    openModal('modalHapus');
+  };
+
+  // ── KELOLA KELAS ──
+  document.getElementById('btnTambahKelas').onclick = () => {
+    document.getElementById('inputNamaKelas').value='';
+    openModal('modalTambahKelas');
+    setTimeout(()=>document.getElementById('inputNamaKelas').focus(),200);
+  };
+  document.getElementById('btnBatalTambahKelas').onclick = () => closeModal('modalTambahKelas');
+  document.getElementById('btnSimpanKelas').onclick = simpanKelas;
+  document.getElementById('inputNamaKelas').addEventListener('keydown', e=>{ if(e.key==='Enter') simpanKelas(); });
+
+  // ── MODAL KELOLA SISWA ──
+  document.getElementById('btnTutupKelolaSwiswa').onclick = () => closeModal('modalKelolaSwiswa');
+  document.getElementById('btnSimpanSiswa').onclick = simpanSiswa;
+  document.getElementById('inputNamaSiswa').addEventListener('keydown', e=>{ if(e.key==='Enter') simpanSiswa(); });
+
+  // ── PRESENSI ──
+  document.getElementById('btnHadirSemua').onclick = hadirSemua;
+  document.getElementById('btnKirimAbsen').onclick = simpanAbsensi;
+
+  // ── REKAP TABS ──
+  document.querySelectorAll('#rekapTabs .tab').forEach(t=>{
+    t.onclick = () => {
+      document.querySelectorAll('#rekapTabs .tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      currentRekapTab = t.dataset.rtab;
+      renderRekap();
+    };
+  });
+  document.getElementById('btnCetakRekap').onclick = () => window.print();
+  document.getElementById('btnExportRekap').onclick = exportRekap;
+
+  // ── PENILAIAN TABS ──
+  document.querySelectorAll('#nilaiTabs .tab').forEach(t=>{
+    t.onclick = () => {
+      document.querySelectorAll('#nilaiTabs .tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      currentNilaiTab = t.dataset.ntab;
+      document.getElementById('btnAddKolom').style.display = currentNilaiTab==='pengetahuan'?'inline-flex':'none';
+      renderPenilaian();
+    };
+  });
+  document.getElementById('nilaiKelasSelect').onchange = e => { currentNilaiClass=e.target.value; renderPenilaian(); };
+  document.getElementById('btnSimpanNilai').onclick = simpanNilai;
+  document.getElementById('btnAddKolom').onclick = () => {
+    document.getElementById('inputJenisKolom').value='PH';
+    document.getElementById('inputLabelKolom').value='';
+    openModal('modalKolom');
+  };
+  document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
+  document.getElementById('btnSimpanKolom').onclick = tambahKolom;
+
+  // ── BANK SOAL ──
+  document.getElementById('btnTambahDokumen').onclick = () => {
+    document.getElementById('inputNamaDokumen').value='';
+    document.getElementById('inputKetDokumen').value='';
+    openModal('modalDokumen');
+  };
+  document.getElementById('btnBatalDokumen').onclick = () => closeModal('modalDokumen');
+  document.getElementById('btnSimpanDokumen').onclick = simpanDokumen;
+
+  // ── HAPUS DATA ──
+  document.getElementById('btnBatalHapus').onclick = () => closeModal('modalHapus');
+  document.getElementById('btnKonfirmasiHapus').onclick = hapusSemuaData;
+
+  // Klik luar modal untuk tutup
+  document.querySelectorAll('.modal').forEach(m=>{
+    m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('active'); });
+  });
+}
+
+// ══════════════════════════════════════════════
+//             KELOLA KELAS
+// ══════════════════════════════════════════════
+function renderKelolaKelas(){
+  const kelas = allData.filter(d=>d.type==='class' && d.user_name===currentUser);
+  const tbody = document.getElementById('classTableBody');
+
+  if(!kelas.length){
+    tbody.innerHTML=`<tr><td colspan="3"><div class="empty"><div class="ei">🏫</div><p>Belum ada kelas. Klik "+ Tambah Kelas Baru".</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = kelas.map(k=>{
+    const cnt = allData.filter(d=>d.type==='student' && d.class_name===k.class_name && d.user_name===currentUser).length;
+    return `<tr>
+      <td style="font-weight:700;">${k.class_name}<br><small style="color:#94a3b8;font-weight:400;">${new Date(k.created_at).toLocaleDateString('id-ID')}</small></td>
+      <td><span class="badge badge-green">👥 ${cnt} Siswa</span></td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" data-action="kelola" data-key="${k.__key}" data-class="${k.class_name}">👥 Kelola Siswa</button>
+          <button class="btn btn-danger btn-sm"  data-action="hapuskelas" data-key="${k.__key}" data-class="${k.class_name}">🗑 Hapus</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('button[data-action]').forEach(btn=>{
+    if(btn.dataset.action==='kelola'){
+      btn.onclick=()=>bukaKelolaSwiswa(btn.dataset.class);
+    }
+    if(btn.dataset.action==='hapuskelas'){
+      btn.onclick=()=>hapusKelas(btn.dataset.key, btn.dataset.class);
+    }
+  });
+}
+
+async function simpanKelas(){
+  const nama = document.getElementById('inputNamaKelas').value.trim();
+  if(!nama){ toast('Nama kelas tidak boleh kosong!','err'); return; }
+  const duplikat = allData.some(d=>d.type==='class' && d.user_name===currentUser && d.class_name.toLowerCase()===nama.toLowerCase());
+  if(duplikat){ toast('Nama kelas sudah ada!','err'); return; }
+
+  const btn = document.getElementById('btnSimpanKelas');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+  try{
+    await ROOT.push().set({ type:'class', class_name:nama, user_name:currentUser, created_at:nowISO() });
+    closeModal('modalTambahKelas');
+    toast(`Kelas "${nama}" berhasil ditambahkan!`);
+  } catch(e){ toast('Gagal menyimpan: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='Simpan';
+}
+
+async function hapusKelas(key, className){
+  const cnt = allData.filter(d=>d.type==='student' && d.class_name===className && d.user_name===currentUser).length;
+  if(!confirm(`Hapus kelas "${className}"${cnt>0?` dan ${cnt} siswanya`:''}? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+  const batch = [];
+  batch.push(ROOT.child(key).remove());
+  allData.filter(d=>(d.type==='student'||d.type==='attendance_log'||d.type==='nilai_pengetahuan'||d.type==='nilai_sikap'||d.type==='nilai_kolom') && d.class_name===className && d.user_name===currentUser)
+    .forEach(d=> batch.push(ROOT.child(d.__key).remove()));
+  try{
+    await Promise.all(batch);
+    if(currentClass===className) currentClass='';
+    toast(`Kelas "${className}" dihapus!`);
+  } catch(e){ toast('Gagal hapus: '+e.message,'err'); }
+}
+
+// ══════════════════════════════════════════════
+//             KELOLA SISWA (MODAL)
+// ══════════════════════════════════════════════
+function bukaKelolaSwiswa(className){
+  currentManajeKelas = className;
+  document.getElementById('titleKelolaSwiswa').textContent = `👥 Kelola Siswa — ${className}`;
+  document.getElementById('inputNamaSiswa').value='';
+  document.getElementById('inputFotoSiswa').value='';
+  openModal('modalKelolaSwiswa');
+  renderSiswaModal(className);
+}
+
+function renderSiswaModal(className){
+  const siswa = allData.filter(d=>d.type==='student' && d.class_name===className && d.user_name===currentUser);
+  const tbody = document.getElementById('siswaTableBody');
+  if(!siswa.length){
+    tbody.innerHTML=`<tr><td colspan="3"><div class="empty"><div class="ei">👥</div><p>Belum ada siswa. Tambahkan di atas.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = siswa.map((s,i)=>{
+    const foto = s.student_photo
+      ? `<img src="${s.student_photo}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='👤'">`
+      : '👤';
+    return `<tr>
+      <td>${foto}</td>
+      <td style="font-weight:600;">${i+1}. ${s.student_name}</td>
+      <td><button class="btn btn-danger btn-sm" data-key="${s.__key}" data-name="${s.student_name}" data-action="hapussiswa">🗑 Hapus</button></td>
+    </tr>`;
+  }).join('');
+  tbody.querySelectorAll('[data-action="hapussiswa"]').forEach(btn=>{
+    btn.onclick=()=>hapusSiswa(btn.dataset.key, btn.dataset.name);
+  });
+}
+
+async function simpanSiswa(){
+  const nama = document.getElementById('inputNamaSiswa').value.trim();
+  const foto = document.getElementById('inputFotoSiswa').value.trim();
+  if(!nama){ toast('Nama siswa tidak boleh kosong!','err'); return; }
+  if(!currentManajeKelas){ toast('Pilih kelas terlebih dahulu!','err'); return; }
+
+  const btn=document.getElementById('btnSimpanSiswa');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  try{
+    await ROOT.push().set({ type:'student', class_name:currentManajeKelas, student_name:nama, student_photo:foto||'', user_name:currentUser, created_at:nowISO() });
+    document.getElementById('inputNamaSiswa').value='';
+    document.getElementById('inputFotoSiswa').value='';
+    toast(`Siswa "${nama}" ditambahkan!`);
+    setTimeout(()=>document.getElementById('inputNamaSiswa').focus(),100);
+  } catch(e){ toast('Gagal: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='+ Tambah Siswa';
+}
+
+async function hapusSiswa(key, nama){
+  if(!confirm(`Hapus siswa "${nama}"?`)) return;
+  try{
+    await ROOT.child(key).remove();
+    toast(`Siswa "${nama}" dihapus.`);
+  } catch(e){ toast('Gagal: '+e.message,'err'); }
+}
+
+// ══════════════════════════════════════════════
+//               PRESENSI
+// ══════════════════════════════════════════════
+function renderPresensi(){
+  const kelas = allData.filter(d=>d.type==='class' && d.user_name===currentUser);
+  const tabs  = document.getElementById('classTabs');
+
+  if(!kelas.length){
+    tabs.innerHTML='<div style="color:#ef4444;padding:10px;">⚠️ Buat kelas dulu di Kelola Kelas.</div>';
+    document.getElementById('studentListContainer').innerHTML='';
+    return;
+  }
+  if(!currentClass || !kelas.find(k=>k.class_name===currentClass)) currentClass=kelas[0].class_name;
+
+  tabs.innerHTML = kelas.map(k=>
+    `<button class="tab ${currentClass===k.class_name?'active':''}" data-kelas="${k.class_name}">${k.class_name}</button>`
+  ).join('');
+  tabs.querySelectorAll('.tab').forEach(t=>{ t.onclick=()=>{ currentClass=t.dataset.kelas; renderPresensi(); }; });
+
+  renderDaftarSiswa();
+}
+
+function renderDaftarSiswa(){
+  const siswa = allData.filter(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser);
+  const cont  = document.getElementById('studentListContainer');
+
+  if(!siswa.length){ cont.innerHTML='<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
+
+  cont.innerHTML = siswa.map(s=>{
+    const st = attendanceData[s.__key]||'';
+    const foto = s.student_photo
+      ? `<img src="${s.student_photo}" onerror="this.outerHTML='👤'">`
+      : '👤';
+    return `<div class="student-card">
+      <div class="student-photo">${foto}</div>
+      <div style="flex:1;">
+        <div class="student-name">${s.student_name}</div>
+        <div class="status-buttons">
+          ${['HADIR','IZIN','SAKIT','ALPA','BOLOS'].map(x=>
+            `<button class="status-btn ${x.toLowerCase()} ${st===x?'active':''}" data-sid="${s.__key}" data-st="${x}">${x}</button>`
+          ).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  cont.querySelectorAll('.status-btn').forEach(btn=>{
+    btn.onclick=()=>{ attendanceData[btn.dataset.sid]=btn.dataset.st; renderDaftarSiswa(); };
+  });
+}
+
+function hadirSemua(){
+  allData.filter(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser)
+    .forEach(s=>{ attendanceData[s.__key]='HADIR'; });
+  renderDaftarSiswa();
+  toast('Semua siswa ditandai Hadir.');
+}
+
+async function simpanAbsensi(){
+  const siswa = allData.filter(d=>d.type==='student' && d.class_name===currentClass && d.user_name===currentUser);
+  if(!siswa.length){ toast('Tidak ada siswa!','err'); return; }
+
+  const belum = siswa.filter(s=>!attendanceData[s.__key]);
+  if(belum.length && !confirm(`${belum.length} siswa belum diisi status → akan dianggap ALPA. Lanjutkan?`)) return;
+
+  const btn=document.getElementById('btnKirimAbsen');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+
+  const records={};
+  siswa.forEach(s=>{ records[s.__key]={ student_name:s.student_name, status:attendanceData[s.__key]||'ALPA' }; });
+
+  // Cek apakah sudah ada log hari ini
+  const today=todayStr();
+  const existing=allData.find(d=>d.type==='attendance_log' && d.class_name===currentClass && d.date===today && d.user_name===currentUser);
+  try{
+    if(existing){
+      await ROOT.child(existing.__key).update({ records, updated_at:nowISO() });
+    } else {
+      await ROOT.push().set({ type:'attendance_log', class_name:currentClass, date:today, user_name:currentUser, records, created_at:nowISO() });
+    }
+    attendanceData={};
+    toast('Absensi berhasil disimpan!');
+  } catch(e){ toast('Gagal: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='💾 Simpan Absensi';
+}
+
+// ══════════════════════════════════════════════
+//                  REKAP
+// ══════════════════════════════════════════════
+function renderRekap(){
+  const kelas = allData.filter(d=>d.type==='class' && d.user_name===currentUser);
+  if(!kelas.length){ document.getElementById('rekapContent').innerHTML='<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; return; }
+  if(!currentRekapClass || !kelas.find(k=>k.class_name===currentRekapClass)) currentRekapClass=kelas[0].class_name;
+
+  // Filter bar
+  const monthNames=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  let filterHtml=`<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+    <div class="fg" style="margin:0;min-width:160px;"><label>Kelas</label>
+      <select id="rekapKelasSelect">
+        ${kelas.map(k=>`<option value="${k.class_name}" ${currentRekapClass===k.class_name?'selected':''}>${k.class_name}</option>`).join('')}
+      </select>
+    </div>`;
+
+  if(currentRekapTab==='bulanan'){
+    const years=Array.from({length:5},(_,i)=>new Date().getFullYear()-2+i);
+    filterHtml+=`
+    <div class="fg" style="margin:0;min-width:130px;"><label>Bulan</label>
+      <select id="rekapBulanSelect">
+        ${monthNames.map((m,i)=>`<option value="${i+1}" ${selectedMonth===i+1?'selected':''}>${m}</option>`).join('')}
+      </select>
+    </div>
+    <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label>
+      <select id="rekapTahunSelect">
+        ${years.map(y=>`<option value="${y}" ${selectedYear===y?'selected':''}>${y}</option>`).join('')}
+      </select>
+    </div>`;
+  } else if(currentRekapTab==='semester'){
+    filterHtml+=`<div class="fg" style="margin:0;min-width:160px;"><label>Semester</label>
+      <select id="rekapSemSelect">
+        <option value="ganjil" ${selectedSemester==='ganjil'?'selected':''}>Ganjil (Jul–Des)</option>
+        <option value="genap"  ${selectedSemester==='genap'?'selected':''}>Genap (Jan–Jun)</option>
+      </select>
+    </div>
+    <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label>
+      <input type="number" id="rekapTahunSem" value="${selectedYear}" style="width:90px;">
+    </div>`;
+  }
+  filterHtml+=`<div class="fg" style="margin:0;align-self:flex-end;"><button class="btn btn-primary" id="btnTampilRekap">🔍 Tampilkan</button></div></div>`;
+  document.getElementById('rekapFilters').innerHTML=filterHtml;
+
+  document.getElementById('rekapKelasSelect').onchange=e=>{ currentRekapClass=e.target.value; };
+  document.getElementById('btnTampilRekap').onclick=()=>{
+    currentRekapClass=document.getElementById('rekapKelasSelect').value;
+    if(currentRekapTab==='bulanan'){
+      selectedMonth=parseInt(document.getElementById('rekapBulanSelect').value);
+      selectedYear=parseInt(document.getElementById('rekapTahunSelect').value);
+    } else if(currentRekapTab==='semester'){
+      selectedSemester=document.getElementById('rekapSemSelect').value;
+      selectedYear=parseInt(document.getElementById('rekapTahunSem').value);
+    }
+    generateRekap();
+  };
+  generateRekap();
+}
+
+function filterLog(log){
+  const d=new Date(log.date), m=d.getMonth()+1, y=d.getFullYear();
+  if(currentRekapTab==='harian')   return log.date===todayStr();
+  if(currentRekapTab==='bulanan')  return m===selectedMonth && y===selectedYear;
+  if(currentRekapTab==='semester'){
+    if(selectedSemester==='ganjil') return [7,8,9,10,11,12].includes(m) && y===selectedYear;
+    else return [1,2,3,4,5,6].includes(m) && y===selectedYear;
+  }
+  return true;
+}
+
+function generateRekap(){
+  const siswa = allData.filter(d=>d.type==='student' && d.class_name===currentRekapClass && d.user_name===currentUser);
+  const logs  = allData.filter(d=>d.type==='attendance_log' && d.class_name===currentRekapClass && d.user_name===currentUser && filterLog(d));
+  const cont  = document.getElementById('rekapContent');
+
+  if(!siswa.length){ cont.innerHTML='<div class="empty"><div class="ei">👥</div><p>Tidak ada siswa di kelas ini.</p></div>'; return; }
+
+  const stat={};
+  siswa.forEach(s=>{ stat[s.__key]={nama:s.student_name, H:0,I:0,S:0,A:0,B:0,detail:[]}; });
+
+  logs.forEach(log=>{
+    if(!log.records) return;
+    Object.keys(log.records).forEach(sid=>{
+      if(!stat[sid]) return;
+      const st=log.records[sid].status||'ALPA';
+      const map={HADIR:'H',IZIN:'I',SAKIT:'S',ALPA:'A',BOLOS:'B'};
+      if(map[st]) stat[sid][map[st]]++;
+      if(st!=='HADIR') stat[sid].detail.push(log.date.split('-').reverse().join('/')+`(${st})`);
+    });
+  });
+
+  const totalH=Object.values(stat).reduce((a,s)=>a+s.H,0);
+  const totalI=Object.values(stat).reduce((a,s)=>a+s.I,0);
+  const totalS=Object.values(stat).reduce((a,s)=>a+s.S,0);
+  const totalA=Object.values(stat).reduce((a,s)=>a+s.A,0);
+  const totalB=Object.values(stat).reduce((a,s)=>a+s.B,0);
+
+  let html=`
+  <div class="stat-row">
+    <div class="stat-box sb-h"><h4>${totalH}</h4><p>Hadir</p></div>
+    <div class="stat-box sb-i"><h4>${totalI}</h4><p>Izin</p></div>
+    <div class="stat-box sb-s"><h4>${totalS}</h4><p>Sakit</p></div>
+    <div class="stat-box sb-a"><h4>${totalA}</h4><p>Alpa</p></div>
+    <div class="stat-box sb-b"><h4>${totalB}</h4><p>Bolos</p></div>
+  </div>
+  <div class="tbl-wrap"><table id="rekapTable">
+    <thead><tr><th>No</th><th>Nama Siswa</th><th>H</th><th>I</th><th>S</th><th>A</th><th>B</th><th>Total</th><th>% Hadir</th><th>Rincian</th></tr></thead>
+    <tbody>`;
+
+  Object.values(stat).forEach((s,i)=>{
+    const total=s.H+s.I+s.S+s.A+s.B;
+    const pct=total>0?((s.H/total)*100).toFixed(1):'0.0';
+    const col=parseFloat(pct)>=80?'#10b981':(parseFloat(pct)>=60?'#f59e0b':'#ef4444');
+    html+=`<tr>
+      <td>${i+1}</td><td style="font-weight:600;">${s.nama}</td>
+      <td style="color:#10b981;font-weight:700;">${s.H}</td>
+      <td style="color:#3b82f6;font-weight:700;">${s.I}</td>
+      <td style="color:#f59e0b;font-weight:700;">${s.S}</td>
+      <td style="color:#ef4444;font-weight:700;">${s.A}</td>
+      <td style="color:#8b5cf6;font-weight:700;">${s.B}</td>
+      <td><strong>${total}</strong></td>
+      <td><strong style="color:${col};">${pct}%</strong></td>
+      <td style="font-size:0.78rem;color:#64748b;">${s.detail.length?s.detail.join(', '):'–'}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  cont.innerHTML=html;
+}
+
+function exportRekap(){
+  const table=document.getElementById('rekapTable');
+  if(!table){ toast('Tampilkan rekap terlebih dahulu.','err'); return; }
+  let csv='';
+  table.querySelectorAll('tr').forEach(row=>{
+    const cols=[...row.querySelectorAll('th,td')].map(c=>`"${c.textContent.trim()}"`);
+    csv+=cols.join(',')+'\n';
+  });
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`Rekap_${currentRekapClass}_${currentRekapTab}.csv`; a.click();
+  toast('File CSV diekspor!');
+}
+
+// ══════════════════════════════════════════════
+//               PENILAIAN
+// ══════════════════════════════════════════════
+function renderPenilaian(){
+  const kelas = allData.filter(d=>d.type==='class' && d.user_name===currentUser);
+  const sel   = document.getElementById('nilaiKelasSelect');
+  const cont  = document.getElementById('penilaianContent');
+  document.getElementById('btnAddKolom').style.display = currentNilaiTab==='pengetahuan'?'inline-flex':'none';
+
+  if(!kelas.length){ cont.innerHTML='<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; return; }
+  if(!currentNilaiClass || !kelas.find(k=>k.class_name===currentNilaiClass)) currentNilaiClass=kelas[0].class_name;
+
+  sel.innerHTML=kelas.map(k=>`<option value="${k.class_name}" ${currentNilaiClass===k.class_name?'selected':''}>${k.class_name}</option>`).join('');
+
+  const siswa=allData.filter(d=>d.type==='student' && d.class_name===currentNilaiClass && d.user_name===currentUser);
+  if(!siswa.length){ cont.innerHTML='<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
+
+  if(currentNilaiTab==='pengetahuan'){
+    renderNilaiPengetahuan(siswa);
+  } else {
+    renderNilaiSikap(siswa);
+  }
+}
+
+function renderNilaiPengetahuan(siswa){
+  // Ambil konfigurasi kolom dari Firebase
+  const kolomData = allData.find(d=>d.type==='nilai_kolom' && d.class_name===currentNilaiClass && d.user_name===currentUser);
+  nilaiKolom = kolomData?.kolom ? JSON.parse(kolomData.kolom) : [];
+
+  const cont=document.getElementById('penilaianContent');
+
+  if(!nilaiKolom.length){
+    cont.innerHTML=`<div class="empty"><div class="ei">📊</div><p>Belum ada kolom penilaian.<br>Klik "+ Tambah Kolom" untuk memulai.</p></div>`;
+    return;
+  }
+
+  let html=`<div class="tbl-wrap"><table id="nilaiTable">
+    <thead><tr>
+      <th>No</th><th>Nama Siswa</th>
+      ${nilaiKolom.map((k,i)=>`<th>${k.label}<br><small style="font-weight:400;color:#64748b;">${k.jenis}</small>
+        <button data-kidx="${i}" data-action="hapuskolom" title="Hapus kolom" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.85rem;margin-left:4px;">×</button>
+      </th>`).join('')}
+      <th>Rerata</th>
+    </tr></thead><tbody>`;
+
+  siswa.forEach((s,idx)=>{
+    const nilaiData = allData.find(d=>d.type==='nilai_pengetahuan' && d.student_key===s.__key && d.class_name===currentNilaiClass && d.user_name===currentUser);
+    const nilai = nilaiData?.nilai ? JSON.parse(nilaiData.nilai) : {};
+
+    const inputs = nilaiKolom.map(k=>`<td><input type="number" class="nilai-input" data-sid="${s.__key}" data-kid="${k.id}" value="${nilai[k.id]||''}" min="0" max="100"></td>`).join('');
+
+    const vals = nilaiKolom.map(k=>parseFloat(nilai[k.id])).filter(v=>!isNaN(v));
+    const avg  = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '–';
+
+    html+=`<tr><td>${idx+1}</td><td style="font-weight:600;">${s.student_name}</td>${inputs}<td><strong>${avg}</strong></td></tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  cont.innerHTML=html;
+
+  // Event hapus kolom
+  cont.querySelectorAll('[data-action="hapuskolom"]').forEach(btn=>{
+    btn.onclick=async()=>{
+      if(!confirm('Hapus kolom ini?')) return;
+      nilaiKolom.splice(parseInt(btn.dataset.kidx),1);
+      await simpanKonfigKolom();
+      renderPenilaian();
+    };
+  });
+}
+
+function renderNilaiSikap(siswa){
+  const cont=document.getElementById('penilaianContent');
+  let html=`<div class="tbl-wrap"><table id="nilaiSikapTable">
+    <thead><tr><th>No</th><th>Nama Siswa</th><th>Nilai Sikap</th><th>Catatan</th></tr></thead><tbody>`;
+
+  const sikapOpts=['Sangat Baik','Baik','Cukup','Kurang'];
+  siswa.forEach((s,i)=>{
+    const sd=allData.find(d=>d.type==='nilai_sikap' && d.student_key===s.__key && d.class_name===currentNilaiClass && d.user_name===currentUser);
+    html+=`<tr>
+      <td>${i+1}</td><td style="font-weight:600;">${s.student_name}</td>
+      <td><select class="sikap-select" style="padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.85rem;" data-sid="${s.__key}">
+        ${sikapOpts.map(o=>`<option ${sd?.sikap===o?'selected':''}>${o}</option>`).join('')}
+      </select></td>
+      <td><input type="text" class="sikap-catatan" style="width:100%;padding:6px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.85rem;" data-sid="${s.__key}" value="${sd?.catatan||''}" placeholder="Catatan opsional..."></td>
+    </tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  cont.innerHTML=html;
+}
+
+async function simpanNilai(){
+  const btn=document.getElementById('btnSimpanNilai');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+
+  try{
+    if(currentNilaiTab==='pengetahuan'){
+      const inputs=document.querySelectorAll('.nilai-input');
+      const dataPerSiswa={};
+      inputs.forEach(inp=>{
+        if(!dataPerSiswa[inp.dataset.sid]) dataPerSiswa[inp.dataset.sid]={};
+        if(inp.value!=='') dataPerSiswa[inp.dataset.sid][inp.dataset.kid]=parseFloat(inp.value);
+      });
+      for(const [sid,nilai] of Object.entries(dataPerSiswa)){
+        const existing=allData.find(d=>d.type==='nilai_pengetahuan' && d.student_key===sid && d.class_name===currentNilaiClass && d.user_name===currentUser);
+        const payload={type:'nilai_pengetahuan',student_key:sid,class_name:currentNilaiClass,user_name:currentUser,nilai:JSON.stringify(nilai),updated_at:nowISO()};
+        if(existing) await ROOT.child(existing.__key).update(payload);
+        else await ROOT.push().set({...payload,created_at:nowISO()});
+      }
+    } else {
+      const selects=document.querySelectorAll('.sikap-select');
+      const catatan=document.querySelectorAll('.sikap-catatan');
+      for(let i=0;i<selects.length;i++){
+        const sid=selects[i].dataset.sid;
+        const sikap=selects[i].value;
+        const cat=catatan[i]?.value||'';
+        const existing=allData.find(d=>d.type==='nilai_sikap' && d.student_key===sid && d.class_name===currentNilaiClass && d.user_name===currentUser);
+        const payload={type:'nilai_sikap',student_key:sid,class_name:currentNilaiClass,user_name:currentUser,sikap,catatan:cat,updated_at:nowISO()};
+        if(existing) await ROOT.child(existing.__key).update(payload);
+        else await ROOT.push().set({...payload,created_at:nowISO()});
+      }
+    }
+    toast('Nilai berhasil disimpan!');
+  } catch(e){ toast('Gagal: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='💾 Simpan Nilai';
+}
+
+async function tambahKolom(){
+  const jenis=document.getElementById('inputJenisKolom').value;
+  const label=document.getElementById('inputLabelKolom').value.trim() || jenis+' '+(nilaiKolom.filter(k=>k.jenis===jenis).length+1);
+  nilaiKolom.push({ id:'k_'+Date.now(), jenis, label });
+  await simpanKonfigKolom();
+  closeModal('modalKolom');
+  renderPenilaian();
+}
+
+async function simpanKonfigKolom(){
+  const existing=allData.find(d=>d.type==='nilai_kolom' && d.class_name===currentNilaiClass && d.user_name===currentUser);
+  const payload={type:'nilai_kolom',class_name:currentNilaiClass,user_name:currentUser,kolom:JSON.stringify(nilaiKolom),updated_at:nowISO()};
+  if(existing) await ROOT.child(existing.__key).update(payload);
+  else await ROOT.push().set({...payload,created_at:nowISO()});
+}
+
+// ══════════════════════════════════════════════
+//                BANK SOAL
+// ══════════════════════════════════════════════
+function renderBankSoal(){
+  const docs=allData.filter(d=>d.type==='document' && d.user_name===currentUser);
+  const cont=document.getElementById('documentList');
+  if(!docs.length){ cont.innerHTML='<div class="empty"><div class="ei">📚</div><p>Belum ada dokumen.</p></div>'; return; }
+  cont.innerHTML=docs.map(d=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid #e2e8f0;">
+      <div>
+        <div style="font-weight:700;color:#1e293b;">📄 ${d.doc_name}</div>
+        ${d.keterangan?`<div style="font-size:0.78rem;color:#64748b;">${d.keterangan}</div>`:''}
+        <div style="font-size:0.72rem;color:#94a3b8;">${new Date(d.created_at).toLocaleString('id-ID')}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" data-key="${d.__key}" data-name="${d.doc_name}" data-action="hapusdok">🗑 Hapus</button>
+    </div>`).join('');
+
+  cont.querySelectorAll('[data-action="hapusdok"]').forEach(btn=>{
+    btn.onclick=async()=>{
+      if(!confirm(`Hapus dokumen "${btn.dataset.name}"?`)) return;
+      await ROOT.child(btn.dataset.key).remove();
+      toast('Dokumen dihapus.');
+    };
+  });
+}
+
+async function simpanDokumen(){
+  const nama=document.getElementById('inputNamaDokumen').value.trim();
+  const ket =document.getElementById('inputKetDokumen').value.trim();
+  if(!nama){ toast('Nama dokumen tidak boleh kosong!','err'); return; }
+  const btn=document.getElementById('btnSimpanDokumen');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>';
+  try{
+    await ROOT.push().set({type:'document',doc_name:nama,keterangan:ket,user_name:currentUser,created_at:nowISO()});
+    closeModal('modalDokumen'); toast('Dokumen berhasil ditambahkan!');
+  } catch(e){ toast('Gagal: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='Simpan';
+}
+
+// ══════════════════════════════════════════════
+//               HAPUS SEMUA DATA
+// ══════════════════════════════════════════════
+async function hapusSemuaData(){
+  if(document.getElementById('inputKonfirmasiHapus').value!=='HAPUS'){
+    toast('Ketik HAPUS untuk konfirmasi!','err'); return;
+  }
+  const btn=document.getElementById('btnKonfirmasiHapus');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menghapus...';
+  const toDelete=allData.filter(d=>d.user_name===currentUser && d.type!=='user');
+  try{
+    await Promise.all(toDelete.map(d=>ROOT.child(d.__key).remove()));
+    closeModal('modalHapus'); toast('Semua data berhasil dihapus!');
+  } catch(e){ toast('Gagal: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent='Hapus Semua Data';
+}
+
+// ══════════════════════════════════════════════
+//                   START
+// ══════════════════════════════════════════════
+window.addEventListener('load', initApp);
+</script>
 </body>
 </html>
