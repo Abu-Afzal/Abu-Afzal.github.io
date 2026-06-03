@@ -517,105 +517,261 @@ function renderAllContent(){
 }
 
 // 1. ENGINE: KELOLA KELAS
-function renderKelolaKelas(){
-  const classes = allData.filter(d => d.type === 'class');
-  const tbody = document.getElementById('classTableBody');
-  if (classes.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Belum ada kelas terdaftar di Firebase. Klik Tambah Kelas.</td></tr>';
+// ==========================================
+//          LOGIKA KELOLA KELAS
+// ==========================================
+
+// Fungsi Utama: Menampilkan Daftar Kelas
+function renderKelolaKelas() {
+  const tableBody = document.getElementById('classTableBody');
+  if (!tableBody) return;
+
+  // Filter kelas berdasarkan user yang sedang login
+  const myClasses = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+
+  if (myClasses.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="3" class="empty-state">
+          <div class="empty-icon">🏫</div>
+          <p>Belum ada kelas. Silakan tambah kelas baru.</p>
+        </td>
+      </tr>`;
     return;
   }
-  tbody.innerHTML = classes.map(cls => {
-    const totalSiswa = allData.filter(d => d.type === 'student' && d.class_name === cls.class_name).length;
+
+  tableBody.innerHTML = myClasses.map(cls => {
+    // Hitung jumlah siswa di kelas ini
+    const studentCount = allData.filter(d => d.type === 'student' && d.class_name === cls.class_name && d.user_name === currentUser).length;
+    const cid = cls.__key;
+
     return `
       <tr>
         <td class="font-semibold text-gray-800">${cls.class_name}</td>
-        <td><span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">${totalSiswa} Siswa</span></td>
+        <td><span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-bold">${studentCount} Siswa</span></td>
         <td>
-          <button class="btn btn-primary py-1 px-3 text-xs mr-1" onclick="manageStudents('${cls.class_name}')">👥 Kelola Siswa</button>
-          <button class="btn btn-danger py-1 px-3 text-xs" onclick="deleteClass('${cls.__key}')">🗑️ Hapus</button>
+          <div class="action-bar !margin-none">
+            <button class="btn btn-primary !py-1 !px-3 text-xs" onclick="openStudentManagement('${cls.class_name}')">👥 Kelola Siswa</button>
+            <button class="btn btn-success !py-1 !px-3 text-xs" onclick="openEditClassModal('${cid}', '${cls.class_name}')">✏️ Edit</button>
+            <button class="btn btn-danger !py-1 !px-3 text-xs" onclick="deleteClass('${cid}', '${cls.class_name}')">🗑️ Hapus</button>
+          </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   }).join('');
 }
 
-window.showAddClassModal = () => document.getElementById('addClassModal').classList.add('active');
-
-document.getElementById('addClassForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('className').value.trim();
-  if(!name) return;
-  await ROOT.push().set({ 
-    type: 'class', 
-    class_name: name, 
-    user_name: currentUser, 
-    created_at: nowISO() 
-  });
-  closeModal('addClassModal');
+// Buka Modal Tambah Kelas
+window.showAddClassModal = function() {
   document.getElementById('className').value = '';
-  showToast("Kelas baru berhasil didaftarkan!");
+  document.getElementById('addClassModal').classList.add('active');
 };
 
-window.deleteClass = async function(key){
-  if(confirm("Apakah Anda yakin ingin menghapus kelas ini?")){
-    await db.ref(`appData/${key}`).remove();
-    showToast("Kelas berhasil dihapus!");
-  }
-};
+// Form Handler Tambah Kelas
+document.getElementById('addClassForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const className = document.getElementById('className').value.trim();
 
-// MANAGEMEN SISWA DI DALAM KELAS
-window.manageStudents = function(className){
-  currentTargetClassManagement = className;
-  document.getElementById('manageStudentsTitle').textContent = `Kelola Anggota Kelas - ${className}`;
-  document.getElementById('studentManagementModal').classList.add('active');
-  renderStudentManagement(className);
-};
-
-function renderStudentManagement(className){
-  const students = allData.filter(d => d.type === 'student' && d.class_name === className);
-  const tbody = document.getElementById('studentManagementTableBody');
-  if(students.length === 0){
-    tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">Belum ada peserta didik di kelas ini.</td></tr>';
+  // Validasi jika kelas sudah ada
+  const isExist = allData.find(d => d.type === 'class' && d.class_name.toLowerCase() === className.toLowerCase() && d.user_name === currentUser);
+  if (isExist) {
+    showToast('Nama kelas sudah ada!', 'danger');
     return;
   }
-  tbody.innerHTML = students.map(s => `
-    <tr>
-      <td><div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lg">${s.student_photo ? `<img src="${s.student_photo}" class="w-full h-full object-cover rounded-full">` : '👤'}</div></td>
-      <td class="font-semibold text-gray-800">${s.student_name}</td>
-      <td><button class="btn btn-danger py-1 px-2 text-xs" onclick="deleteStudent('${s.__key}')">🗑️ Keluarkan</button></td>
-    </tr>
-  `).join('');
-}
 
-window.showAddStudentModal = () => document.getElementById('addStudentModal').classList.add('active');
+  try {
+    await set(push(ROOT), {
+      type: 'class',
+      class_name: className,
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+    closeModal('addClassModal');
+    showToast('Kelas berhasil ditambahkan!');
+  } catch (error) {
+    showToast('Gagal menambahkan kelas', 'danger');
+  }
+});
 
-document.getElementById('addStudentForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const name = document.getElementById('studentName').value.trim();
-  const photo = document.getElementById('studentPhoto').value.trim();
-  await ROOT.push().set({
-    type: 'student',
-    class_name: currentTargetClassManagement,
-    student_name: name,
-    student_photo: photo,
-    user_name: currentUser,
-    created_at: nowISO()
-  });
-  closeModal('addStudentModal');
-  document.getElementById('studentName').value = '';
-  document.getElementById('studentPhoto').value = '';
-  showToast("Siswa berhasil ditambahkan!");
-  renderStudentManagement(currentTargetClassManagement);
+// Buka Modal Edit Kelas
+window.openEditClassModal = function(id, currentName) {
+  currentEditingClass = id;
+  document.getElementById('editClassName').value = currentName;
+  document.getElementById('editClassModal').classList.add('active');
 };
 
-window.deleteStudent = async function(key){
-  if(confirm("Keluarkan siswa dari kelas ini?")){
-    await db.ref(`appData/${key}`).remove();
-    showToast("Siswa berhasil dikeluarkan!");
-    renderStudentManagement(currentTargetClassManagement);
+// Form Handler Edit Kelas
+document.getElementById('editClassForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const newClassName = document.getElementById('editClassName').value.trim();
+  
+  if (!currentEditingClass) return;
+
+  try {
+    // Ambil data kelas lama untuk referensi update nama kelas di data siswa
+    const oldClassSnap = allData.find(d => d.__key === currentEditingClass);
+    const oldClassName = oldClassSnap ? oldClassSnap.class_name : null;
+
+    // Update nama kelas
+    await update(child(ROOT, currentEditingClass), {
+      class_name: newClassName
+    });
+
+    // Jika nama kelas berubah, update juga nama kelas pada siswa-siswa terkait
+    if (oldClassName && oldClassName !== newClassName) {
+      const relatedStudents = allData.filter(d => d.type === 'student' && d.class_name === oldClassName && d.user_name === currentUser);
+      for (let student of relatedStudents) {
+        await update(child(ROOT, student.__key), { class_name: newClassName });
+      }
+    }
+
+    closeModal('editClassModal');
+    currentEditingClass = null;
+    showToast('Nama kelas berhasil diperbarui!');
+  } catch (error) {
+    showToast('Gagal memperbarui kelas', 'danger');
+  }
+});
+
+// Hapus Kelas beserta Siswa di dalamnya
+window.deleteClass = async function(id, className) {
+  if (confirm(`Apakah Anda yakin ingin menghapus kelas "${className}"? Semua data siswa & absensi di kelas ini juga akan terhapus secara permanen.`)) {
+    try {
+      // Hapus data kelas utama
+      await remove(child(ROOT, id));
+
+      // Hapus semua data siswa yang berada di kelas tersebut
+      const relatedStudents = allData.filter(d => d.type === 'student' && d.class_name === className && d.user_name === currentUser);
+      for (let student of relatedStudents) {
+        await remove(child(ROOT, student.__key));
+      }
+
+      showToast(`Kelas "${className}" berhasil dihapus.`);
+    } catch (error) {
+      showToast('Gagal menghapus kelas', 'danger');
+    }
   }
 };
 
+
+// ==========================================
+//        LOGIKA MANAJEMEN SISWA PER KELAS
+// ==========================================
+
+let activeStudentClass = ''; // Menyimpan kelas yang sedang dikelola siswanya
+
+// Fungsi dinamis membuat struktur modal Kelola Siswa secara runtime (karena tidak ada di HTML dasar)
+function createStudentManagementModal() {
+  if (document.getElementById('studentManagementModal')) return;
+
+  const modalHtml = `
+    <div id="studentManagementModal" class="modal">
+      <div class="modal-content !max-w-2xl">
+        <div class="modal-title" id="studentModalTitle">Kelola Siswa</div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="showAddStudentModal()">＋ Tambah Siswa</button>
+          <button class="btn btn-secondary" onclick="closeModal('studentManagementModal')">Kembali</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Nama Siswa</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Menampilkan modal manajemen siswa
+window.openStudentManagement = function(className) {
+  createStudentManagementModal();
+  activeStudentClass = className;
+  document.getElementById('studentModalTitle').textContent = `Kelola Siswa - ${className}`;
+  renderStudentManagement(className);
+  document.getElementById('studentManagementModal').classList.add('active');
+};
+
+// Render tabel daftar siswa di dalam modal
+function renderStudentManagement(className) {
+  const tbody = document.getElementById('studentTableBody');
+  if (!tbody) return;
+
+  const students = allData.filter(d => d.type === 'student' && d.class_name === className && d.user_name === currentUser);
+
+  if (students.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="empty-state">Belum ada siswa di kelas ini.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = students.map(student => {
+    const sid = student.__key;
+    const photoHtml = student.student_photo ? 
+      `<img src="${student.student_photo}" style="width:40px;height:40px;object-fit:cover;border-radius:50%;">` : 
+      `<div class="w-10.h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-lg">👤</div>`;
+    
+    return `
+      <tr>
+        <td style="width: 60px;">${photoHtml}</td>
+        <td class="font-medium">${student.student_name}</td>
+        <td>
+          <button class="btn btn-danger !py-1 !px-2 text-xs" onclick="deleteStudent('${sid}')">🗑️ Hapus</button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// Trigger modal tambah siswa bawaan HTML
+window.showAddStudentModal = function() {
+  document.getElementById('studentName').value = '';
+  document.getElementById('studentPhoto').value = '';
+  document.getElementById('addStudentModal').classList.add('active');
+};
+
+// Form Handler Tambah Siswa
+document.getElementById('addStudentForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const studentName = document.getElementById('studentName').value.trim();
+  const studentPhoto = document.getElementById('studentPhoto').value.trim();
+
+  try {
+    await set(push(ROOT), {
+      type: 'student',
+      class_name: activeStudentClass,
+      student_name: studentName,
+      student_photo: studentPhoto || null,
+      user_name: currentUser,
+      created_at: nowISO()
+    });
+    closeModal('addStudentModal');
+    showToast('Siswa berhasil ditambahkan!');
+    renderStudentManagement(activeStudentClass);
+  } catch (error) {
+    showToast('Gagal menambahkan siswa', 'danger');
+  }
+});
+
+// Hapus Data Siswa
+window.deleteStudent = async function(studentId) {
+  if (confirm('Apakah Anda yakin ingin menghapus siswa ini? Data absensi siswa ini juga akan ikut terhapus.')) {
+    try {
+      await remove(child(ROOT, studentId));
+      showToast('Data siswa berhasil dihapus.');
+      renderStudentManagement(activeStudentClass);
+    } catch (error) {
+      showToast('Gagal menghapus siswa', 'danger');
+    }
+  }
+};
+
+// Ekspos fungsi ke objek global window agar inline onclick HTML dapat memanggilnya
+window.renderKelolaKelas = renderKelolaKelas;
+window.renderStudentManagement = renderStudentManagement;
 // 2. ENGINE: PRESENSI
 function renderPresensi(){
   const classes = allData.filter(d => d.type === 'class');
