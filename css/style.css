@@ -1,3 +1,6 @@
+/* ==========================================================================
+   SECTION 1: CSS LANDING PAGE UTAMA (PORTAL SIPELITA) - DIPERTAHANKAN ASLI
+   ========================================================================== */
 :root {
     --bg: #f4f6f9;
     --text: #2c3e50;
@@ -140,7 +143,7 @@ header p {
     background: rgba(255,255,255,0.2);
 }
 
-/* Modal */
+/* Modal Landing Page */
 .modal {
     display: none;
     position: fixed;
@@ -170,14 +173,8 @@ header p {
 }
 
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .modal-header {
@@ -236,14 +233,8 @@ header p {
     transition: background 0.2s;
 }
 
-.btn:hover {
-    background: #283593;
-}
-
-.btn:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-}
+.btn:hover { background: #283593; }
+.btn:disabled { background: #94a3b8; cursor: not-allowed; }
 
 footer {
     text-align: center;
@@ -251,41 +242,266 @@ footer {
     color: var(--text-light);
     font-size: 0.85rem;
 }
-/* ✅ TARUH DI LUAR @media - untuk semua layar */
+
 .header-logo {
     height: 60px !important;
     width: auto;
     object-fit: contain;
 }
+
 @media (max-width: 640px) {
-    .grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    /* ✅ TAMBAHKAN INI - Ukuran khusus untuk HP */
-    .header-logo {
-        height: 25px !important;  /* Sedikit lebih besar untuk HP */
-        width: auto;
-    }
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    #userPanel {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .header-logo { height: 25px !important; width: auto; }
+    header { flex-direction: column; align-items: flex-start; }
+    #userPanel { display: flex; align-items: center; gap: 12px; }
+    #btnLogout:hover { background: #d32f2f; transform: translateY(-2px); transition: 0.2s; }
+    #userRole { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+}
+
+
+/* ==========================================================================
+   SECTION 2: CSS KHUSUS MODUL SIPENA (MENGGUNAKAN SCOPED CLASS .sipena-modul)
+   ========================================================================== */
+
+/* Background khusus aplikasi SIPENA */
+body.sipena-bg {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    min-height: 100vh;
+}
+
+.sipena-modul .main-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* SIPENA Header */
+.sipena-modul .sipena-header {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 20px;
 }
-#btnLogout:hover {
-    background: #d32f2f;
-    transform: translateY(-2px);
-    transition: 0.2s;
+
+.sipena-modul .header-logo-sp {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #667eea;
 }
-#userRole {
-    animation: pulse 2s infinite;
+
+.sipena-modul .header-info-sp {
+    flex: 1;
 }
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
+
+.sipena-modul .header-title-sp {
+    font-size: 28px;
+    font-weight: bold;
+    color: #086d22;
+    margin-bottom: 5px;
 }
+
+.sipena-modul .header-subtitle-sp {
+    font-size: 14px;
+    color: #333333;
+}
+
+.sipena-modul .logout-btn-sp {
+    padding: 8px 20px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.sipena-modul .logout-btn-sp:hover { background: #c0392b; }
+
+/* SIPENA Menu Grid Dashboard */
+.sipena-modul .menu-grid-sp {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sipena-modul .menu-card-sp {
+    background: rgb(255, 255, 255);
+    padding: 20px 10px;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 110px;
+}
+
+.sipena-modul .menu-card-sp:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.sipena-modul .menu-title-sp {
+    font-size: 11px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.2;
+    margin-top: 6px;
+}
+
+/* SIPENA Konten Area */
+.sipena-modul .content-area-sp {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: none;
+}
+
+.sipena-modul .content-area-sp.active {
+    display: block;
+}
+
+.sipena-modul .section-title-sp {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #667eea;
+}
+
+.sipena-modul .date-display-sp {
+    font-size: 18px;
+    font-weight: bold;
+    color: #e74c3c;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* SIPENA Form & Input */
+.sipena-modul .form-group-sp {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.sipena-modul .form-label-sp {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 8px;
+}
+
+.sipena-modul .form-input-sp {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.sipena-modul .form-input-sp:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+}
+
+/* SIPENA Tombol & Tabs */
+.sipena-modul .action-bar-sp {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.sipena-modul .btn-sp {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.sipena-modul .btn-sp-primary { background: #0a55f7; color: white; }
+.sipena-modul .btn-sp-primary:hover { background: #3b74f3; }
+.sipena-modul .btn-sp-success { background: #27ae60; color: white; }
+.sipena-modul .btn-sp-success:hover { background: #219954; }
+.sipena-modul .btn-sp-secondary { background: #a6a395; color: white; }
+
+.sipena-modul .tabs-sp {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+    overflow-x: auto;
+}
+
+.sipena-modul .tab-sp {
+    padding: 12px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+}
+
+.sipena-modul .tab-sp.active {
+    color: #0a55f7;
+    border-bottom-color: #0a55f7;
+}
+
+/* SIPENA Tables */
+.sipena-modul .table-container-sp {
+    overflow-x: auto;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+}
+
+.sipena-modul table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.sipena-modul th, .sipena-modul td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.sipena-modul th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Responsif khusus SIPENA */
+@media(max-width: 768px) {
+    .sipena-modul .sipena-header { flex-direction: column; text-align: center; }
+    .sipena-modul .menu-grid-sp { grid-template-columns: repeat(3, 1fr); gap: 8px; }
 }
