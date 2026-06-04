@@ -45,6 +45,13 @@ const CONFIG = {
     
     layananMadrasah: [
         { 
+            icon: '📢', 
+            title: 'Kelola Berita', 
+            desc: '', 
+            color: '#37474f', 
+            url: 'pages/kelola-berita.html' 
+        },
+        { 
             icon: '🌐', 
             title: 'Website', 
             desc: '', 
