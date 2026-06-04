@@ -62,7 +62,7 @@ async function muatBeritaBeranda() {
             <p style="color: #475569; font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
               ${ringkasanIsi}
             </p>
-            <a href="pages/bacaberita.html?id=${b.id}" class="btn-more" style="background: #2e7d32; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-align: center; text-decoration: none; transition: background 0.2s; width: 100%; box-sizing: border-box; display: inline-block;">
+            <a href="pages/baca-berita.html?id=${b.id}" class="btn-more" style="background: #2e7d32; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; text-align: center; text-decoration: none; transition: background 0.2s; width: 100%; box-sizing: border-box; display: inline-block;">
               Lihat Selengkapnya →
             </a>
           </div>
