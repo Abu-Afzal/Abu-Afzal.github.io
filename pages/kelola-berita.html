@@ -160,60 +160,64 @@
 
     // Simpan Berita Baru + Upload Gambar
     btnSimpan.addEventListener('click', async () => {
-      errorMsg.classList.remove('show');
-      if (!judulBerita.value || !kategoriBerita.value || !isiBerita.value) {
-        errorMsg.textContent = '⚠️ Harap isi seluruh kolom input berita!';
-        errorMsg.classList.add('show');
-        return;
+  errorMsg.classList.remove('show');
+  if (!judulBerita.value || !kategoriBerita.value || !isiBerita.value) {
+    errorMsg.textContent = '⚠️ Harap isi seluruh kolom input berita!';
+    errorMsg.classList.add('show');
+    return;
+  }
+
+  btnSimpan.disabled = true;
+  btnSimpan.textContent = '⏳ Memproses Gambar...';
+
+  const fileGambar = fotoBerita.files[0];
+  let base64Image = "";
+
+  // Fungsi helper untuk mengubah file gambar menjadi teks Base64
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  try {
+    // Jika ada file yang dipilih, ubah ke teks terlebih dahulu
+    if (fileGambar) {
+      // Pastikan ukuran gambar tidak terlalu besar (Rekomendasi di bawah 1MB)
+      if (fileGambar.size > 1048576) { 
+        throw new Error("Ukuran foto terlalu besar! Maksimal beralih ke 1MB agar database tidak penuh.");
       }
+      base64Image = await convertToBase64(fileGambar);
+    }
 
-      btnSimpan.disabled = true;
-      btnSimpan.textContent = '⏳ Memproses & Mengunggah...';
+    btnSimpan.textContent = '⏳ Menerbitkan...';
 
-      let imageUrl = "";
-      let savedStoragePath = "";
-      const fileGambar = fotoBerita.files[0];
-
-      try {
-        // Jika user memilih file gambar, jalankan modul Firebase Storage
-        if (fileGambar) {
-          const fileExtension = fileGambar.name.split('.').pop();
-          const timestamp = Date.now();
-          // Buat path unik file di storage
-          savedStoragePath = `berita_images/${timestamp}_berita.${fileExtension}`;
-          const storageRef = ref(storage, savedStoragePath);
-          
-          // Proses unggah file fisik
-          await uploadBytes(storageRef, fileGambar);
-          // Ambil URL publik unduhan
-          imageUrl = await getDownloadURL(storageRef);
-        }
-
-        // Tulis record data komplit ke Firestore
-        await addDoc(collection(db, "berita"), {
-          judul: judulBerita.value.trim(),
-          kategori: kategoriBerita.value,
-          isi: isiBerita.value.trim(),
-          fotoUrl: imageUrl,               // Berisi tautan gambar publik
-          storagePath: savedStoragePath,   // Disimpan untuk kebutuhan rujukan hapus file nanti
-          createdAt: new Date().toISOString()
-        });
-
-        alert('✅ Berita Berhasil Diterbitkan!');
-        judulBerita.value = '';
-        kategoriBerita.value = '';
-        fotoBerita.value = ''; // Reset input file gambar
-        isiBerita.value = '';
-        loadBeritaAdmin();
-      } catch (err) {
-        errorMsg.textContent = '❌ Gagal menerbitkan: ' + err.message;
-        errorMsg.classList.add('show');
-      } finally {
-        btnSimpan.disabled = false;
-        btnSimpan.textContent = 'Terbitkan Berita';
-      }
+    // Simpan teks Base64 tersebut langsung ke Cloud Firestore
+    await addDoc(collection(db, "berita"), {
+      judul: judulBerita.value.trim(),
+      kategori: kategoriBerita.value,
+      isi: isiBerita.value.trim(),
+      fotoUrl: base64Image, // Menyimpan teks string gambar langsung di Firestore
+      createdAt: new Date().toISOString()
     });
 
+    alert('✅ Berita Berhasil Diterbitkan!');
+    judulBerita.value = '';
+    kategoriBerita.value = '';
+    fotoBerita.value = ''; 
+    isiBerita.value = '';
+    loadBeritaAdmin();
+  } catch (err) {
+    errorMsg.textContent = '❌ Gagal: ' + err.message;
+    errorMsg.classList.add('show');
+  } finally {
+    btnSimpan.disabled = false;
+    btnSimpan.textContent = 'Terbitkan Berita';
+  }
+});
     // Fungsi Global Hapus Berita + Hapus File Foto di Storage
     window.hapusBerita = async (id, pathFoto) => {
       if (!confirm('Apakah Anda yakin ingin menghapus berita ini dari dashboard depan?')) return;
