@@ -69,14 +69,17 @@ async function muatBeritaBeranda() {
 
         </div>
       `;
-    });
+    }); // <--- Batas akhir perulangan kartu berita
 
-    // Tambahkan logika agar tombol utama "Lihat Semua Berita" mengarah ke berita terbaru
-const btnLihatSemua = document.querySelector('.berita-section .btn-more');
-if (btnLihatSemua && listBerita.length > 0) {
-  // Otomatis mengarahkan ke ID berita paling atas/terbaru
-  btnLihatSemua.href = `pages/baca-berita.html?id=${listBerita[0].id}`;
-}
+    // =========================================================================
+    // POSISI YANG TEPAT: Taruh potongan kode di bawah ini 
+    // =========================================================================
+    const btnLihatSemua = document.querySelector('.berita-section .btn-more');
+    if (btnLihatSemua && listBerita.length > 0) {
+      // Mengubah link tombol besar di bawah agar langsung mengambil ID berita terbaru
+      btnLihatSemua.href = `pages/baca-berita.html?id=${listBerita[0].id}`;
+    }
+    // =========================================================================
 
     // Menambahkan efek hover transisi gambar card menggunakan penanganan CSS dinamis
     tambahkanStyleEfekHover();
