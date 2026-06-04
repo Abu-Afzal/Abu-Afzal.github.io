@@ -69,12 +69,12 @@ async function muatBeritaBeranda() {
 
         </div>
       `;
-    }); // <--- Batas akhir perulangan kartu berita
+    }); // <--- Batas akhir perulangan kartu berita yang lama
 
     // =========================================================================
-    // POSISI YANG TEPAT: Taruh potongan kode di bawah ini 
+    // BERIKUT PERUBAHANNYA (Menggunakan ID agar langsung tepat sasaran):
     // =========================================================================
-    const btnLihatSemua = document.querySelector('.berita-section .btn-more');
+    const btnLihatSemua = document.getElementById('btnLihatSemuaBerita');
     if (btnLihatSemua && listBerita.length > 0) {
       // Mengubah link tombol besar di bawah agar langsung mengambil ID berita terbaru
       btnLihatSemua.href = `pages/baca-berita.html?id=${listBerita[0].id}`;
