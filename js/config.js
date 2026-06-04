@@ -48,7 +48,7 @@ const CONFIG = {
             icon: '📢', 
             title: 'Kelola Berita', 
             desc: '', 
-            color: '#37474f', 
+            color: '#673ab7', 
             url: 'pages/kelola-berita.html' 
         },
         { 
