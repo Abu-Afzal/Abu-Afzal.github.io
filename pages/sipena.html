@@ -370,10 +370,6 @@ tr:hover td{background:#fafbff;}
         <option value="Presentasi">Presentasi</option>
       </select>
     </div>
-    <div class="fg">
-      <label>Label Kolom <span style="color:#94a3b8;font-weight:400;">(opsional — diisi otomatis jika kosong)</span></label>
-      <input type="text" id="inputLabelKolom" placeholder="cth: PH 1, Proyek Kelompok...">
-    </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" id="btnBatalKolom">Batal</button>
       <button class="btn btn-primary" id="btnSimpanKolom">Tambah Kolom</button>
@@ -1330,21 +1326,24 @@ async function simpanNilai(){
 // ── TAMBAH KOLOM (pengetahuan & keterampilan) ──
 async function tambahKolom(jenisNilai='pengetahuan'){
   const jenis = document.getElementById('inputJenisKolom').value;
-  const label = document.getElementById('inputLabelKolom').value.trim();
-
+  
+  // Hitung jumlah kolom dengan jenis yang sama untuk penomoran otomatis
   if(jenisNilai==='pengetahuan'){
-    const finalLabel = label || `${jenis} ${nilaiKolom.filter(k=>k.jenis===jenis).length+1}`;
-    nilaiKolom.push({id:'k_'+Date.now(), jenis, label:finalLabel});
+    const jumlahKolomSama = nilaiKolom.filter(k=>k.jenis===jenis).length;
+    const label = `${jenis} ${jumlahKolomSama + 1}`;
+    
+    nilaiKolom.push({id:'k_'+Date.now(), jenis, label});
     await simpanKonfigKolom('nilai_kolom', nilaiKolom);
   } else {
-    const finalLabel = label || `${jenis} ${nilaiKolomKet.filter(k=>k.jenis===jenis).length+1}`;
-    nilaiKolomKet.push({id:'kk_'+Date.now(), jenis, label:finalLabel});
+    const jumlahKolomSama = nilaiKolomKet.filter(k=>k.jenis===jenis).length;
+    const label = `${jenis} ${jumlahKolomSama + 1}`;
+    
+    nilaiKolomKet.push({id:'kk_'+Date.now(), jenis, label});
     await simpanKonfigKolom('nilai_kolom_ket', nilaiKolomKet);
   }
   closeModal('modalKolom');
   renderPenilaian();
 }
-
 async function simpanKonfigKolom(tipe, kolom){
   const ex=allData.find(d=>d.type===tipe && d.class_name===currentNilaiClass && d.user_name===currentUser);
   const pl={type:tipe,class_name:currentNilaiClass,user_name:currentUser,kolom:JSON.stringify(kolom),updated_at:nowISO()};
