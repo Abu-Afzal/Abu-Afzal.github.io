@@ -243,9 +243,12 @@ tr:hover td{background:#fafbff;}
       </div>
 
       <div class="action-bar">
+        <div class="action-bar">
         <button class="btn btn-success" id="btnSimpanNilai">💾 Simpan Nilai</button>
         <button class="btn btn-primary" id="btnAddKolom" style="display:none;">+ Tambah Kolom</button>
         <button class="btn btn-primary" id="btnAddKolomKet" style="display:none;">+ Tambah Kolom</button>
+        <button class="btn btn-warning" id="btnExportNilai">📥 Export Excel</button>
+      </div>
       </div>
       <div id="penilaianContent"></div>
     </div>
@@ -553,6 +556,7 @@ function bindEvents(){
     renderPenilaian();
   };
   document.getElementById('btnSimpanNilai').onclick = simpanNilai;
+  document.getElementById('btnExportNilai').onclick = eksporNilai;
 
   // Tombol tambah kolom Pengetahuan
 document.getElementById('btnAddKolom').onclick = () => {
@@ -1365,6 +1369,97 @@ async function tambahKolom(jenisNilai='pengetahuan'){
   const pl={type:tipe,class_name:currentNilaiClass,user_name:currentUser,kolom:JSON.stringify(kolom),updated_at:nowISO()};
   if(ex) await ROOT.child(ex.__key).update(pl);
   else await ROOT.push().set({...pl,created_at:nowISO()});
+}
+
+  // ══════════════════════════════════════════════
+//            EKSPOR NILAI KE CSV/EXCEL
+// ══════════════════════════════════════════════
+function eksporNilai(){
+  const kelas = currentNilaiClass || '–';
+  let rows = [];
+  let filename = '';
+
+  if(currentNilaiTab === 'pengetahuan'){
+    if(!nilaiKolom.length){ toast('Tambahkan kolom penilaian terlebih dahulu.','err'); return; }
+
+    const siswa = allData.filter(d=>d.type==='student' && d.class_name===currentNilaiClass && d.user_name===currentUser);
+    if(!siswa.length){ toast('Tidak ada siswa.','err'); return; }
+
+    // Header
+    rows.push(['No', 'Nama Siswa', ...nilaiKolom.map(k=>k.label), 'Rerata']);
+
+    siswa.forEach((s,i)=>{
+      const nd    = allData.find(d=>d.type==='nilai_pengetahuan' && d.student_key===s.__key && d.class_name===currentNilaiClass && d.user_name===currentUser);
+      const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
+      const vals  = nilaiKolom.map(k=>parseFloat(nilai[k.id])).filter(v=>!isNaN(v));
+      const avg   = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '';
+      rows.push([
+        i+1,
+        s.student_name,
+        ...nilaiKolom.map(k=> nilai[k.id] ?? ''),
+        avg
+      ]);
+    });
+    filename = `Nilai_Pengetahuan_${kelas}.csv`;
+
+  } else if(currentNilaiTab === 'sikap'){
+    const aspek = ['Beriman & Bertakwa','Gotong Royong','Mandiri','Bernalar Kritis','Kreatif'];
+    const siswa = allData.filter(d=>d.type==='student' && d.class_name===currentNilaiClass && d.user_name===currentUser);
+    if(!siswa.length){ toast('Tidak ada siswa.','err'); return; }
+
+    // Header
+    rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
+
+    siswa.forEach((s,i)=>{
+      const sd = allData.find(d=>d.type==='nilai_sikap' && d.student_key===s.__key && d.class_name===currentNilaiClass && d.user_name===currentUser);
+      let sikapVal = {};
+      try{ sikapVal = sd?.sikap_detail ? JSON.parse(sd.sikap_detail) : {}; } catch(e){}
+      rows.push([
+        i+1,
+        s.student_name,
+        ...aspek.map(a => sikapVal[a] || ''),
+        sd?.catatan || ''
+      ]);
+    });
+    filename = `Nilai_Sikap_${kelas}.csv`;
+
+  } else if(currentNilaiTab === 'keterampilan'){
+    if(!nilaiKolomKet.length){ toast('Tambahkan kolom penilaian terlebih dahulu.','err'); return; }
+
+    const siswa = allData.filter(d=>d.type==='student' && d.class_name===currentNilaiClass && d.user_name===currentUser);
+    if(!siswa.length){ toast('Tidak ada siswa.','err'); return; }
+
+    // Header
+    rows.push(['No', 'Nama Siswa', ...nilaiKolomKet.map(k=>k.label), 'Rerata']);
+
+    siswa.forEach((s,i)=>{
+      const nd    = allData.find(d=>d.type==='nilai_keterampilan' && d.student_key===s.__key && d.class_name===currentNilaiClass && d.user_name===currentUser);
+      const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
+      const vals  = nilaiKolomKet.map(k=>parseFloat(nilai[k.id])).filter(v=>!isNaN(v));
+      const avg   = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '';
+      rows.push([
+        i+1,
+        s.student_name,
+        ...nilaiKolomKet.map(k=> nilai[k.id] ?? ''),
+        avg
+      ]);
+    });
+    filename = `Nilai_Keterampilan_${kelas}.csv`;
+  }
+
+  if(!rows.length){ toast('Tidak ada data untuk diekspor.','err'); return; }
+
+  // Konversi ke CSV
+  const csv = rows.map(row =>
+    row.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(',')
+  ).join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  toast(`File ${filename} berhasil diekspor!`);
 }
 // ══════════════════════════════════════════════
 //                BANK SOAL
