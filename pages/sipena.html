@@ -376,7 +376,7 @@ tr:hover td{background:#fafbff;}
     </div>
   </div>
 </div>
-
+  
 <script>
 // ══════════════════════════════════════════════
 //            FIREBASE CONFIG
@@ -1324,33 +1324,38 @@ async function simpanNilai(){
 }
 
 // ── TAMBAH KOLOM (pengetahuan & keterampilan) ──
-async function tambahKolom(jenisNilai='pengetahuan'){
-  const jenis = document.getElementById('inputJenisKolom').value;
-  
-  // Hitung jumlah kolom dengan jenis yang sama untuk penomoran otomatis
-  if(jenisNilai==='pengetahuan'){
-    const jumlahKolomSama = nilaiKolom.filter(k=>k.jenis===jenis).length;
-    const label = `${jenis} ${jumlahKolomSama + 1}`;
+// Tombol tambah kolom Pengetahuan
+document.getElementById('btnAddKolom').onclick = () => {
+    const jenisSelect = document.getElementById('inputJenisKolom');
+    if(jenisSelect) jenisSelect.value = 'PH';
     
-    nilaiKolom.push({id:'k_'+Date.now(), jenis, label});
-    await simpanKonfigKolom('nilai_kolom', nilaiKolom);
-  } else {
-    const jumlahKolomSama = nilaiKolomKet.filter(k=>k.jenis===jenis).length;
-    const label = `${jenis} ${jumlahKolomSama + 1}`;
-    
-    nilaiKolomKet.push({id:'kk_'+Date.now(), jenis, label});
-    await simpanKonfigKolom('nilai_kolom_ket', nilaiKolomKet);
-  }
-  closeModal('modalKolom');
-  renderPenilaian();
-}
-async function simpanKonfigKolom(tipe, kolom){
-  const ex=allData.find(d=>d.type===tipe && d.class_name===currentNilaiClass && d.user_name===currentUser);
-  const pl={type:tipe,class_name:currentNilaiClass,user_name:currentUser,kolom:JSON.stringify(kolom),updated_at:nowISO()};
-  if(ex) await ROOT.child(ex.__key).update(pl);
-  else await ROOT.push().set({...pl,created_at:nowISO()});
-}
+    const modal = document.getElementById('modalKolom');
+    if(modal) {
+        modal.dataset.target = 'pengetahuan';
+        openModal('modalKolom');
+    }
+};
 
+// Tombol tambah kolom Keterampilan  
+document.getElementById('btnAddKolomKet').onclick = () => {
+    const jenisSelect = document.getElementById('inputJenisKolom');
+    if(jenisSelect) jenisSelect.value = 'Praktik';
+    
+    const modal = document.getElementById('modalKolom');
+    if(modal) {
+        modal.dataset.target = 'keterampilan';
+        openModal('modalKolom');
+    }
+};
+
+// Tombol batal
+document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
+
+// Tombol simpan kolom
+document.getElementById('btnSimpanKolom').onclick = () => {
+    const target = document.getElementById('modalKolom')?.dataset?.target || 'pengetahuan';
+    tambahKolom(target);
+};
 // ══════════════════════════════════════════════
 //                BANK SOAL
 // ══════════════════════════════════════════════
