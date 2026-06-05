@@ -204,11 +204,26 @@
 </div>
 
 <script type="module">
-import { initializeApp }       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// ══════════════════════════════════════════════
+//        GLOBAL ERROR HANDLER
+// ══════════════════════════════════════════════
+window.addEventListener('error', (e) => {
+    console.error('❌ Global Error:', e.message, e.filename, e.lineno);
+    alert('⚠️ Error terdeteksi: ' + e.message + '\n\nSilakan buka Console (F12) untuk detail.');
+});
+
+try {
+
+// ══════════════════════════════════════════════
+//            FIREBASE IMPORTS
+// ══════════════════════════════════════════════
+const { initializeApp }       = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword }
+    = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+const { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc }
+    = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+console.log('✅ Firebase modules loaded');
 
 // ══════════════════════════════════════════════
 //            FIREBASE CONFIG
@@ -230,25 +245,37 @@ const authUtama   = getAuth(appUtama);
 const db          = getFirestore(appUtama);
 
 // ✅ App SEKUNDER — khusus untuk createUserWithEmailAndPassword
-// Tidak akan mengganggu sesi admin
 const appSekunder = initializeApp(firebaseConfig, 'sekunder');
 const authSekunder= getAuth(appSekunder);
+
+console.log('✅ Firebase initialized');
 
 // ══════════════════════════════════════════════
 //           CEK SESI ADMIN
 // ══════════════════════════════════════════════
 const userStr     = localStorage.getItem('sipelita_user');
-const currentUser = userStr ? JSON.parse(userStr) : null;
+let currentUser = null;
+
+try {
+    currentUser = userStr ? JSON.parse(userStr) : null;
+} catch(e) {
+    console.error('❌ Error parsing user data:', e);
+    alert('⛔ Data user corrupt. Silakan login ulang.');
+    window.location.href = 'index.html';
+}
 
 if (!currentUser || currentUser.role !== 'admin') {
     alert('⛔ Akses ditolak! Hanya Admin yang bisa mengakses halaman ini.');
     window.location.href = 'index.html';
 }
 
-// Re-login admin ke appUtama supaya sesi tetap valid
-// (hanya dijalankan sekali saat halaman pertama dibuka)
+console.log('✅ Admin check passed:', currentUser.email);
+
+// Re-login admin ke appUtama (optional, tidak blocking)
 if (currentUser?.email && currentUser?.password_cached) {
-    signInWithEmailAndPassword(authUtama, currentUser.email, currentUser.password_cached).catch(()=>{});
+    signInWithEmailAndPassword(authUtama, currentUser.email, currentUser.password_cached)
+        .then(() => console.log('✅ Admin re-authenticated'))
+        .catch(err => console.warn('⚠️ Admin re-auth failed:', err.message));
 }
 
 // ══════════════════════════════════════════════
@@ -264,10 +291,15 @@ const SEMUA_FITUR = [
     { id:'berita',      label:'📰 Berita/Pengumuman' },
 ];
 
-// Render checkbox fitur di form tambah
+// ══════════════════════════════════════════════
+//           HELPER FUNCTIONS
+// ══════════════════════════════════════════════
 function renderCheckboxFitur(containerId, selectedIds=[]){
     const wrap = document.getElementById(containerId);
-    if(!wrap) return;
+    if(!wrap) {
+        console.warn('⚠️ Container not found:', containerId);
+        return;
+    }
     wrap.innerHTML = SEMUA_FITUR.map(f=>`
         <div class="fitur-item">
             <input type="checkbox" id="${containerId}_${f.id}" value="${f.id}"
@@ -276,14 +308,12 @@ function renderCheckboxFitur(containerId, selectedIds=[]){
         </div>`).join('');
 }
 
-// Ambil fitur yang dicentang dari container
 function getSelectedFitur(containerId){
     return SEMUA_FITUR
         .filter(f=>document.getElementById(`${containerId}_${f.id}`)?.checked)
         .map(f=>f.id);
 }
 
-// Tampilkan fitur sebagai label ringkas
 function labelFitur(ids=[]){
     if(!ids.length) return '<span style="color:#94a3b8;font-size:0.78rem;">–</span>';
     return ids.map(id=>{
@@ -292,69 +322,131 @@ function labelFitur(ids=[]){
     }).join('');
 }
 
-// Isi checkbox fitur saat halaman load
+function showToast(msg, type='ok'){
+    const t=document.createElement('div');
+    t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:9px;font-weight:700;font-size:0.88rem;background:${type==='ok'?'#10b981':'#ef4444'};color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);`;
+    t.textContent=msg; 
+    document.body.appendChild(t);
+    setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .4s'; },2500);
+    setTimeout(()=>t.remove(),3000);
+}
+
+// ══════════════════════════════════════════════
+//           INITIALIZE UI
+// ══════════════════════════════════════════════
 renderCheckboxFitur('checkboxFitur');
+
 // Admin default: centang semua fitur
 document.getElementById('role').addEventListener('change', e=>{
     if(e.target.value==='admin'){
-        SEMUA_FITUR.forEach(f=>{ const el=document.getElementById(`checkboxFitur_${f.id}`); if(el) el.checked=true; });
+        SEMUA_FITUR.forEach(f=>{ 
+            const el=document.getElementById(`checkboxFitur_${f.id}`); 
+            if(el) el.checked=true; 
+        });
     }
 });
+
+console.log('✅ UI initialized');
 
 // ══════════════════════════════════════════════
 //           TAMBAH USER BARU
 // ══════════════════════════════════════════════
-document.getElementById('formTambahUser').addEventListener('submit', async e=>{
-    e.preventDefault();
-    const alertEl = document.getElementById('alertTambah');
-    const btn     = document.getElementById('btnTambah');
+const formTambah = document.getElementById('formTambahUser');
+const btnTambah = document.getElementById('btnTambah');
 
-    const email    = document.getElementById('email').value.trim();
-    const nama     = document.getElementById('nama').value.trim();
-    const password = document.getElementById('password').value;
-    const role     = document.getElementById('role').value;
-    const fitur    = getSelectedFitur('checkboxFitur');
-
-    alertEl.className='alert'; alertEl.style.display='none';
-    btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Membuat akun...';
-
-    try {
-        // ✅ Gunakan authSEKUNDER — sesi admin di authUtama tidak terganggu
-        const cred = await createUserWithEmailAndPassword(authSekunder, email, password);
-        const uid  = cred.user.uid;
-
-        // Logout user baru dari app sekunder (clean up)
-        await authSekunder.signOut();
-
-        // Simpan profil ke Firestore (doc ID = email, untuk kompatibilitas dengan sistem login lama)
-        await setDoc(doc(db, 'users', email), {
-            uid,
-            email,
-            nama,
-            role,
-            fitur,          // ← array fitur yang boleh diakses
-            createdAt: new Date().toISOString(),
-            createdBy: currentUser.email
-        });
-
-        alertEl.textContent = `✅ User "${nama}" berhasil dibuat! Akun sudah aktif dan bisa login.`;
-        alertEl.className   = 'alert alert-success show';
-        document.getElementById('formTambahUser').reset();
-        renderCheckboxFitur('checkboxFitur');
-        loadUsers();
-
-    } catch(err) {
-        const pesan = {
-            'auth/email-already-in-use' : 'Email sudah terdaftar di sistem.',
-            'auth/invalid-email'        : 'Format email tidak valid.',
-            'auth/weak-password'        : 'Password terlalu lemah (minimal 6 karakter).',
-        }[err.code] || err.message;
-        alertEl.textContent = '❌ Gagal: ' + pesan;
-        alertEl.className   = 'alert alert-error show';
-    }
-
-    btn.disabled=false; btn.innerHTML='💾 Simpan User';
-});
+if (!formTambah) {
+    console.error('❌ Form tidak ditemukan!');
+    alert('⚠️ Form tidak ditemukan. Halaman mungkin error.');
+} else {
+    console.log('✅ Form found, attaching event listener...');
+    
+    // ✅ Event listener dengan validasi
+    formTambah.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('🚀 Form submitted');
+        
+        const alertEl = document.getElementById('alertTambah');
+        
+        // Validasi client-side
+        const email    = document.getElementById('email').value.trim();
+        const nama     = document.getElementById('nama').value.trim();
+        const password = document.getElementById('password').value;
+        const role     = document.getElementById('role').value;
+        const fitur    = getSelectedFitur('checkboxFitur');
+        
+        console.log('📝 Data:', { email, nama, role, fiturCount: fitur.length });
+        
+        if (!email || !nama || !password) {
+            alertEl.textContent = '❌ Semua field wajib diisi!';
+            alertEl.className = 'alert alert-error show';
+            return;
+        }
+        
+        if (password.length < 6) {
+            alertEl.textContent = '❌ Password minimal 6 karakter!';
+            alertEl.className = 'alert alert-error show';
+            return;
+        }
+        
+        alertEl.className='alert'; 
+        alertEl.style.display='none';
+        btnTambah.disabled=true; 
+        btnTambah.innerHTML='<span class="spinner"></span> Membuat akun...';
+        
+        try {
+            console.log('🔥 Creating user in Firebase Auth...');
+            
+            // ✅ Gunakan authSEKUNDER
+            const cred = await createUserWithEmailAndPassword(authSekunder, email, password);
+            const uid  = cred.user.uid;
+            
+            console.log('✅ User created in Auth, UID:', uid);
+            
+            // Logout user baru dari app sekunder
+            await authSekunder.signOut();
+            console.log('✅ Signed out from secondary app');
+            
+            // Simpan profil ke Firestore
+            console.log('💾 Saving to Firestore...');
+            await setDoc(doc(db, 'users', email), {
+                uid,
+                email,
+                nama,
+                role,
+                fitur,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.email
+            });
+            
+            console.log('✅ User saved to Firestore');
+            
+            alertEl.textContent = `✅ User "${nama}" berhasil dibuat! Akun sudah aktif dan bisa login.`;
+            alertEl.className   = 'alert alert-success show';
+            document.getElementById('formTambahUser').reset();
+            renderCheckboxFitur('checkboxFitur');
+            loadUsers();
+            
+        } catch(err) {
+            console.error('❌ Error creating user:', err);
+            
+            const pesan = {
+                'auth/email-already-in-use' : 'Email sudah terdaftar di sistem.',
+                'auth/invalid-email'        : 'Format email tidak valid.',
+                'auth/weak-password'        : 'Password terlalu lemah (minimal 6 karakter).',
+                'auth/operation-not-allowed' : 'Operasi tidak diizinkan. Cek Firebase Console.',
+                'auth/network-request-failed': 'Koneksi internet bermasalah.',
+            }[err.code] || err.message;
+            
+            alertEl.textContent = '❌ Gagal: ' + pesan;
+            alertEl.className   = 'alert alert-error show';
+        }
+        
+        btnTambah.disabled=false; 
+        btnTambah.innerHTML='💾 Simpan User';
+    });
+    
+    console.log('✅ Event listener attached');
+}
 
 // ══════════════════════════════════════════════
 //           LOAD DAFTAR USER
@@ -362,131 +454,5 @@ document.getElementById('formTambahUser').addEventListener('submit', async e=>{
 async function loadUsers(){
     const loadEl = document.getElementById('loadingUsers');
     const tblEl  = document.getElementById('tableUsers');
-    const tbody  = document.getElementById('userTableBody');
-
-    loadEl.innerHTML='<span class="spinner"></span> Memuat data...';
-    loadEl.style.display='block'; tblEl.style.display='none';
-
-    try{
-        const snap  = await getDocs(collection(db,'users'));
-        const users = [];
-        snap.forEach(d=>users.push({id:d.id,...d.data()}));
-
-        if(!users.length){
-            loadEl.textContent='📭 Belum ada user terdaftar.';
-            return;
-        }
-
-        loadEl.style.display='none'; tblEl.style.display='block';
-
-        tbody.innerHTML = users.map(u=>`
-            <tr>
-                <td style="font-weight:700;">${u.nama||'–'}</td>
-                <td style="font-size:0.85rem;color:#475569;">${u.email||u.id}</td>
-                <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-guru'}">${u.role==='admin'?'👑 Admin':'👤 Guru'}</span></td>
-                <td style="max-width:280px;">${labelFitur(u.fitur||[])}</td>
-                <td>
-                    <span class="status-dot ${u.uid?'dot-ok':'dot-err'}"></span>
-                    <span style="font-size:0.78rem;color:${u.uid?'#059669':'#dc2626'};">
-                        ${u.uid?'Aktif':'Belum sinkron'}
-                    </span>
-                </td>
-                <td>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                        <button class="btn btn-warning btn-sm" data-action="edit"
-                            data-id="${u.id}" data-email="${u.email||u.id}"
-                            data-nama="${u.nama||''}" data-role="${u.role||'guru'}"
-                            data-fitur='${JSON.stringify(u.fitur||[])}'>✏️ Edit</button>
-                        <button class="btn btn-danger btn-sm" data-action="hapus"
-                            data-id="${u.id}" data-email="${u.email||u.id}"
-                            data-nama="${u.nama||''}">🗑 Hapus</button>
-                    </div>
-                </td>
-            </tr>`).join('');
-
-        // Bind tombol edit & hapus
-        tbody.querySelectorAll('button[data-action]').forEach(btn=>{
-            if(btn.dataset.action==='edit')  btn.onclick=()=>bukaModalEdit(btn.dataset);
-            if(btn.dataset.action==='hapus') btn.onclick=()=>hapusUser(btn.dataset.id, btn.dataset.nama);
-        });
-
-    } catch(err){
-        loadEl.textContent='❌ Gagal memuat: '+err.message;
-    }
-}
-
-// ══════════════════════════════════════════════
-//           EDIT USER
-// ══════════════════════════════════════════════
-function bukaModalEdit(data){
-    document.getElementById('editDocId').value        = data.id;
-    document.getElementById('editEmail').value        = data.email;
-    document.getElementById('editEmailDisplay').value = data.email;
-    document.getElementById('editNama').value         = data.nama;
-    document.getElementById('editRole').value         = data.role||'guru';
-    document.getElementById('alertEdit').className    = 'alert';
-    document.getElementById('alertEdit').style.display='none';
-
-    let fiturAwal = [];
-    try{ fiturAwal = JSON.parse(data.fitur||'[]'); }catch(e){}
-    renderCheckboxFitur('editCheckboxFitur', fiturAwal);
-
-    document.getElementById('modalEdit').classList.add('show');
-}
-window.tutupModalEdit = ()=> document.getElementById('modalEdit').classList.remove('show');
-
-document.getElementById('formEditUser').addEventListener('submit', async e=>{
-    e.preventDefault();
-    const alertEl = document.getElementById('alertEdit');
-    const btn     = document.getElementById('btnEditSimpan');
-    const docId   = document.getElementById('editDocId').value;
-    const nama    = document.getElementById('editNama').value.trim();
-    const role    = document.getElementById('editRole').value;
-    const fitur   = getSelectedFitur('editCheckboxFitur');
-
-    alertEl.className='alert'; alertEl.style.display='none';
-    btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
-
-    try{
-        await updateDoc(doc(db,'users',docId),{ nama, role, fitur, updatedAt:new Date().toISOString() });
-        alertEl.textContent='✅ User berhasil diperbarui!';
-        alertEl.className='alert alert-success show';
-        setTimeout(()=>{ tutupModalEdit(); loadUsers(); }, 1200);
-    }catch(err){
-        alertEl.textContent='❌ Gagal: '+err.message;
-        alertEl.className='alert alert-error show';
-    }
-    btn.disabled=false; btn.innerHTML='💾 Simpan Perubahan';
-});
-
-// ══════════════════════════════════════════════
-//           HAPUS USER
-// ══════════════════════════════════════════════
-async function hapusUser(docId, nama){
-    if(!confirm(`Hapus user "${nama}"?\n\nData profil akan dihapus dari Firestore.\nAkun login di Firebase Auth perlu dihapus manual di Firebase Console.`)) return;
-    try{
-        await deleteDoc(doc(db,'users',docId));
-        loadUsers();
-        showToast(`User "${nama}" berhasil dihapus.`);
-    }catch(err){
-        alert('❌ Gagal hapus: '+err.message);
-    }
-}
-
-// ── Toast ──
-function showToast(msg, type='ok'){
-    const t=document.createElement('div');
-    t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:9px;font-weight:700;font-size:0.88rem;background:${type==='ok'?'#10b981':'#ef4444'};color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);`;
-    t.textContent=msg; document.body.appendChild(t);
-    setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .4s'; },2500);
-    setTimeout(()=>t.remove(),3000);
-}
-
-// Klik luar modal untuk tutup
-document.getElementById('modalEdit').addEventListener('click',e=>{ if(e.target===document.getElementById('modalEdit')) tutupModalEdit(); });
-
-// Muat data awal
-loadUsers();
-</script>
-</body>
+    const tbody  = document.getElementById('userTableBody</body>
 </html>
