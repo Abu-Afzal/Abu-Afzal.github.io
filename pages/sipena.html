@@ -1358,6 +1358,12 @@ async function tambahKolom(jenisNilai='pengetahuan'){
     closeModal('modalKolom');
     renderPenilaian();
 }
+  async function simpanKonfigKolom(tipe, kolom){
+  const ex=allData.find(d=>d.type===tipe && d.class_name===currentNilaiClass && d.user_name===currentUser);
+  const pl={type:tipe,class_name:currentNilaiClass,user_name:currentUser,kolom:JSON.stringify(kolom),updated_at:nowISO()};
+  if(ex) await ROOT.child(ex.__key).update(pl);
+  else await ROOT.push().set({...pl,created_at:nowISO()});
+}
 // ══════════════════════════════════════════════
 //                BANK SOAL
 // ══════════════════════════════════════════════
