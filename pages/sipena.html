@@ -1008,14 +1008,16 @@ function renderNilaiPengetahuan(siswa){
   nilaiKolom = kolomData?.kolom ? JSON.parse(kolomData.kolom) : [];
   const cont = document.getElementById('penilaianContent');
 
-  // Banner info jika belum ada kolom — tapi tabel siswa tetap muncul
-  const bannerKolom = !nilaiKolom.length
-    ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.85rem;color:#1d4ed8;">
-        💡 Belum ada kolom nilai. Klik <strong>"+ Tambah Kolom"</strong> untuk menambahkan PH, UH, UTS, atau UAS. Daftar siswa sudah siap di bawah.
-       </div>`
-    : '';
+  if(!nilaiKolom.length){
+    cont.innerHTML=`
+      <div class="empty">
+        <div class="ei">📊</div>
+        <p>Belum ada kolom penilaian pengetahuan.<br>Klik <strong>"+ Tambah Kolom"</strong> untuk menambahkan kolom seperti PH, UH, UTS, atau UAS.</p>
+      </div>`;
+    return;
+  }
 
-  let html = bannerKolom + `<div class="tbl-wrap"><table id="nilaiTable">
+  let html=`<div class="tbl-wrap"><table id="nilaiTable">
     <thead><tr>
       <th width="40">No</th>
       <th>Nama Siswa</th>
@@ -1029,7 +1031,7 @@ function renderNilaiPengetahuan(siswa){
           </div>
           <div style="font-size:0.7rem;font-weight:400;color:#94a3b8;">${k.jenis}</div>
         </th>`).join('')}
-      ${nilaiKolom.length ? '<th width="80">Rerata</th>' : ''}
+      <th width="80">Rerata</th>
     </tr></thead>
     <tbody>`;
 
@@ -1050,15 +1052,18 @@ function renderNilaiPengetahuan(siswa){
             value="${nilai[k.id]??''}" min="0" max="100"
             style="width:70px;padding:6px;text-align:center;border:1.5px solid #e2e8f0;border-radius:7px;font-size:0.9rem;">
         </td>`).join('')}
-      ${nilaiKolom.length ? `<td style="text-align:center;font-weight:800;color:${avgColor};">${avg}</td>` : ''}
+      <td style="text-align:center;font-weight:800;color:${avgColor};">${avg}</td>
     </tr>`;
   });
   html+=`</tbody></table></div>`;
   cont.innerHTML=html;
 
+  // Live update rerata saat input berubah
   cont.querySelectorAll('.nilai-input').forEach(inp=>{
     inp.oninput=()=> updateRerataRow(inp, siswa);
   });
+
+  // Hapus kolom
   cont.querySelectorAll('[data-action="hapuskolom"]').forEach(btn=>{
     btn.onclick=async()=>{
       if(!confirm(`Hapus kolom "${nilaiKolom[btn.dataset.kidx]?.label}"?`)) return;
@@ -1067,6 +1072,20 @@ function renderNilaiPengetahuan(siswa){
       renderPenilaian();
     };
   });
+}
+
+function updateRerataRow(changedInput, siswa){
+  const sid  = changedInput.dataset.sid;
+  const row  = changedInput.closest('tr');
+  const inputs = row.querySelectorAll('.nilai-input');
+  const vals = [...inputs].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+  const avg  = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '–';
+  const lastTd = row.querySelector('td:last-child');
+  if(lastTd){
+    const col = vals.length ? (parseFloat(avg)>=75?'#10b981':(parseFloat(avg)>=60?'#f59e0b':'#ef4444')) : '#94a3b8';
+    lastTd.textContent=avg;
+    lastTd.style.color=col;
+  }
 }
 
 // ── SIKAP ──
@@ -1125,13 +1144,16 @@ function renderNilaiKeterampilan(siswa){
   nilaiKolomKet = kolomData?.kolom ? JSON.parse(kolomData.kolom) : [];
   const cont = document.getElementById('penilaianContent');
 
-  const bannerKolom = !nilaiKolomKet.length
-    ? `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.85rem;color:#15803d;">
-        💡 Belum ada kolom nilai keterampilan. Klik <strong>"+ Tambah Kolom"</strong> untuk menambahkan Praktik, Proyek, Portofolio, atau Presentasi.
-       </div>`
-    : '';
+  if(!nilaiKolomKet.length){
+    cont.innerHTML=`
+      <div class="empty">
+        <div class="ei">🛠️</div>
+        <p>Belum ada kolom penilaian keterampilan.<br>Klik <strong>"+ Tambah Kolom"</strong> untuk menambahkan, misalnya Praktik, Proyek, atau Portofolio.</p>
+      </div>`;
+    return;
+  }
 
-  let html = bannerKolom + `<div class="tbl-wrap"><table id="nilaiKetTable">
+  let html=`<div class="tbl-wrap"><table id="nilaiKetTable">
     <thead><tr>
       <th width="40">No</th>
       <th>Nama Siswa</th>
@@ -1145,7 +1167,7 @@ function renderNilaiKeterampilan(siswa){
           </div>
           <div style="font-size:0.7rem;font-weight:400;color:#94a3b8;">${k.jenis}</div>
         </th>`).join('')}
-      ${nilaiKolomKet.length ? '<th width="80">Rerata</th>' : ''}
+      <th width="80">Rerata</th>
     </tr></thead>
     <tbody>`;
 
@@ -1166,12 +1188,13 @@ function renderNilaiKeterampilan(siswa){
             value="${nilai[k.id]??''}" min="0" max="100"
             style="width:70px;padding:6px;text-align:center;border:1.5px solid #e2e8f0;border-radius:7px;font-size:0.9rem;">
         </td>`).join('')}
-      ${nilaiKolomKet.length ? `<td style="text-align:center;font-weight:800;color:${avgColor};">${avg}</td>` : ''}
+      <td style="text-align:center;font-weight:800;color:${avgColor};">${avg}</td>
     </tr>`;
   });
   html+=`</tbody></table></div>`;
   cont.innerHTML=html;
 
+  // Live update rerata keterampilan
   cont.querySelectorAll('.nilai-ket-input').forEach(inp=>{
     inp.oninput=()=>{
       const row=inp.closest('tr');
@@ -1185,15 +1208,6 @@ function renderNilaiKeterampilan(siswa){
       }
     };
   });
-  cont.querySelectorAll('[data-action="hapuskolomket"]').forEach(btn=>{
-    btn.onclick=async()=>{
-      if(!confirm(`Hapus kolom "${nilaiKolomKet[btn.dataset.kidx]?.label}"?`)) return;
-      nilaiKolomKet.splice(parseInt(btn.dataset.kidx),1);
-      await simpanKonfigKolom('nilai_kolom_ket', nilaiKolomKet);
-      renderPenilaian();
-    };
-  });
-}
 
   // Hapus kolom keterampilan
   cont.querySelectorAll('[data-action="hapuskolomket"]').forEach(btn=>{
