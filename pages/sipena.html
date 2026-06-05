@@ -555,24 +555,37 @@ function bindEvents(){
   document.getElementById('btnSimpanNilai').onclick = simpanNilai;
 
   // Tombol tambah kolom Pengetahuan
-  document.getElementById('btnAddKolom').onclick = () => {
-    document.getElementById('inputJenisKolom').value='PH';
-    document.getElementById('inputLabelKolom').value='';
-    document.getElementById('modalKolom').dataset.target='pengetahuan';
-    openModal('modalKolom');
-  };
-  // Tombol tambah kolom Keterampilan
-  document.getElementById('btnAddKolomKet').onclick = () => {
-    document.getElementById('inputJenisKolom').value='Praktik';
-    document.getElementById('inputLabelKolom').value='';
-    document.getElementById('modalKolom').dataset.target='keterampilan';
-    openModal('modalKolom');
-  };
-  document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
-  document.getElementById('btnSimpanKolom').onclick = () => {
-    const target = document.getElementById('modalKolom').dataset.target || 'pengetahuan';
+document.getElementById('btnAddKolom').onclick = () => {
+    const jenisSelect = document.getElementById('inputJenisKolom');
+    if(jenisSelect) jenisSelect.value = 'PH';
+    
+    const modal = document.getElementById('modalKolom');
+    if(modal) {
+        modal.dataset.target = 'pengetahuan';
+        openModal('modalKolom');
+    }
+};
+
+// Tombol tambah kolom Keterampilan  
+document.getElementById('btnAddKolomKet').onclick = () => {
+    const jenisSelect = document.getElementById('inputJenisKolom');
+    if(jenisSelect) jenisSelect.value = 'Praktik';
+    
+    const modal = document.getElementById('modalKolom');
+    if(modal) {
+        modal.dataset.target = 'keterampilan';
+        openModal('modalKolom');
+    }
+};
+
+// Tombol batal
+document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
+
+// Tombol simpan kolom
+document.getElementById('btnSimpanKolom').onclick = () => {
+    const target = document.getElementById('modalKolom')?.dataset?.target || 'pengetahuan';
     tambahKolom(target);
-  };
+};
 
   // ── BANK SOAL ──
   document.getElementById('btnTambahDokumen').onclick = () => {
@@ -1324,38 +1337,27 @@ async function simpanNilai(){
 }
 
 // ── TAMBAH KOLOM (pengetahuan & keterampilan) ──
-// Tombol tambah kolom Pengetahuan
-document.getElementById('btnAddKolom').onclick = () => {
-    const jenisSelect = document.getElementById('inputJenisKolom');
-    if(jenisSelect) jenisSelect.value = 'PH';
+async function tambahKolom(jenisNilai='pengetahuan'){
+    const jenis = document.getElementById('inputJenisKolom')?.value || 'PH';
     
-    const modal = document.getElementById('modalKolom');
-    if(modal) {
-        modal.dataset.target = 'pengetahuan';
-        openModal('modalKolom');
+    // Auto-generate label berdasarkan jenis dan urutan
+    if(jenisNilai === 'pengetahuan'){
+        const jumlahKolomSama = nilaiKolom.filter(k => k.jenis === jenis).length;
+        const label = `${jenis} ${jumlahKolomSama + 1}`;
+        
+        nilaiKolom.push({ id: 'k_' + Date.now(), jenis, label });
+        await simpanKonfigKolom('nilai_kolom', nilaiKolom);
+    } else {
+        const jumlahKolomSama = nilaiKolomKet.filter(k => k.jenis === jenis).length;
+        const label = `${jenis} ${jumlahKolomSama + 1}`;
+        
+        nilaiKolomKet.push({ id: 'kk_' + Date.now(), jenis, label });
+        await simpanKonfigKolom('nilai_kolom_ket', nilaiKolomKet);
     }
-};
-
-// Tombol tambah kolom Keterampilan  
-document.getElementById('btnAddKolomKet').onclick = () => {
-    const jenisSelect = document.getElementById('inputJenisKolom');
-    if(jenisSelect) jenisSelect.value = 'Praktik';
     
-    const modal = document.getElementById('modalKolom');
-    if(modal) {
-        modal.dataset.target = 'keterampilan';
-        openModal('modalKolom');
-    }
-};
-
-// Tombol batal
-document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
-
-// Tombol simpan kolom
-document.getElementById('btnSimpanKolom').onclick = () => {
-    const target = document.getElementById('modalKolom')?.dataset?.target || 'pengetahuan';
-    tambahKolom(target);
-};
+    closeModal('modalKolom');
+    renderPenilaian();
+}
 // ══════════════════════════════════════════════
 //                BANK SOAL
 // ══════════════════════════════════════════════
