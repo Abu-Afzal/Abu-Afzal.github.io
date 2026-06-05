@@ -579,12 +579,16 @@ document.getElementById('btnAddKolomKet').onclick = () => {
 };
 
 // Tombol batal
-document.getElementById('btnBatalKolom').onclick = () => closeModal('modalKolom');
-
 // Tombol simpan kolom
-document.getElementById('btnSimpanKolom').onclick = () => {
-    const target = document.getElementById('modalKolom')?.dataset?.target || 'pengetahuan';
-    tambahKolom(target);
+document.getElementById('btnSimpanKolom').onclick = async () => {
+    try {
+        const modal = document.getElementById('modalKolom');
+        const target = modal?.dataset?.target || 'pengetahuan';
+        await tambahKolom(target);
+    } catch (error) {
+        console.error('Error menambah kolom:', error);
+        toast('❌ Gagal menambah kolom: ' + error.message, 'err');
+    }
 };
 
   // ── BANK SOAL ──
