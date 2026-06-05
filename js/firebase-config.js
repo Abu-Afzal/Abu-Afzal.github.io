@@ -21,4 +21,4 @@ const app = initializeApp(firebaseConfig);
 // 2. KITA EKSPOR DUA-DUANYA AGAR AMAN
 export const rtdb = getDatabase(app);      // RTDB lama tetap bisa diakses dengan nama rtdb jika dibutuhkan
 export const db = getFirestore(app);        // Variabel db SEKARANG MENJADI FIRESTORE
-export const storage = getStorage(app); ini firebase-config saya
+export const storage = getStorage(app);
