@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-// 1. TAMBAHKAN IMPORT FIRESTORE DI SINI
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -16,9 +15,11 @@ const firebaseConfig = {
   measurementId: "G-1D5DWJV54E"
 };
 
+// 1. Inisialisasi Firebase App
 const app = initializeApp(firebaseConfig);
 
-// 2. KITA EKSPOR DUA-DUANYA AGAR AMAN
-export const rtdb = getDatabase(app);      // RTDB lama tetap bisa diakses dengan nama rtdb jika dibutuhkan
-export const db = getFirestore(app);        // Variabel db SEKARANG MENJADI FIRESTORE
+// 2. EKSPOR SEMUA SERVICE (Pastikan kata 'export const' tertulis dengan benar)
+export const auth = getAuth(app);        // Ini yang dicari oleh tambah-user.js!
+export const db = getFirestore(app);      // Menggunakan Firestore sesuai kebutuhan modul Anda
+export const rtdb = getDatabase(app);    
 export const storage = getStorage(app);
