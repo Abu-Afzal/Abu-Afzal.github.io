@@ -64,25 +64,21 @@ window.tutupModalEdit = function() {
  * =================================================================
  */
 formEdit?.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Mencegah halaman reload otomatis
+    e.preventDefault(); 
 
-    const docId = document.getElementById('editDocId').value; // Mengambil email/ID dokumen
+    const docId = document.getElementById('editDocId').value;
     const nama  = document.getElementById('editNama').value.trim();
     const role  = document.getElementById('editRole').value;
     
-    // Ambil daftar checkbox fitur yang dicentang di dalam modal edit
     let fitur = [];
     if (typeof getSelectedFitur === 'function') {
         fitur = getSelectedFitur('editCheckboxFitur');
     }
 
-    const alertEdit = document.getElementById('alertEdit');
-
     try {
-        // Acuan dokumen di Firestore
         const docRef = doc(db, 'users', docId);
 
-        // Lakukan pembaharuan parsial menggunakan updateDoc (Aman, tidak menghapus password/uid)
+        // 1. Kirim data ke Firestore
         await updateDoc(docRef, {
             nama: nama,
             role: role,
@@ -90,26 +86,18 @@ formEdit?.addEventListener('submit', async (e) => {
             updatedAt: new Date().toISOString()
         });
 
-        // Tampilkan notifikasi berhasil di elemen #alertEdit HTML
-        if (alertEdit) {
-            alertEdit.style.display = 'block';
-            alertEdit.style.background = '#dcfce7';
-            alertEdit.style.color = '#14532d';
-            alertEdit.innerText = '✅ Perubahan berhasil disimpan!';
+        // 2. TUTUP MODAL SECARA OTOMATIS DAN INSTAN
+        window.tutupModalEdit();
+        alert('✅ Perubahan berhasil disimpan!');
+
+        // 3. Refresh tabel di latar belakang halaman utama
+        if (typeof window.loadUsers === 'function') {
+            window.loadUsers();
         }
 
-        // Berikan jeda 1.2 detik agar user melihat alert sukses, lalu tutup modal
-        setTimeout(() => {
-            window.tutupModalEdit();
-            
-            // Picu muat ulang tabel secara asinkron agar data terbaru langsung tampil
-            if (typeof window.loadUsers === 'function') {
-                window.loadUsers();
-            }
-        }, 1200);
-
     } catch (err) {
-        console.error("Gagal memperbarui data user:", err);
+        console.error("Gagal mengupdate data user:", err);
+        const alertEdit = document.getElementById('alertEdit');
         if (alertEdit) {
             alertEdit.style.display = 'block';
             alertEdit.style.background = '#fee2e2';
