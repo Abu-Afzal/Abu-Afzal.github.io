@@ -409,73 +409,39 @@
 
 <!-- MODAL EDIT -->
 <div id="modalEdit" class="modal">
-
     <div class="modal-content">
-
         <div class="modal-header">
-
             <h3>✏️ Edit User</h3>
-
-            <button
-                class="close-btn"
-                onclick="tutupModalEdit()">
-
-                &times;
-
-            </button>
-
-        </div>
-
+            </div>
         <div id="alertEdit" class="alert"></div>
-
         <form id="formEditUser">
-
             <input type="hidden" id="editDocId">
-
             <div class="form-group">
                 <label>Nama Lengkap</label>
-
-                <input
-                    type="text"
-                    id="editNama"
-                    required
-                >
+                <input type="text" id="editNama" required>
             </div>
-
             <div class="form-group">
-
                 <label>Role</label>
-
                 <select id="editRole">
                     <option value="guru">👤 Guru</option>
                     <option value="admin">👑 Admin</option>
                 </select>
-
             </div>
-
             <div class="form-group">
-
                 <label>Akses Fitur</label>
-
-                <div
-                    class="fitur-grid"
-                    id="editCheckboxFitur">
-                </div>
-
+                <div class="fitur-grid" id="editCheckboxFitur"></div>
             </div>
-
-            <button
-                type="submit"
-                class="btn btn-primary">
-
-                💾 Simpan Perubahan
-
-            </button>
-
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    💾 Simpan Perubahan
+                </button>
+                <button type="button" class="btn btn-danger" onclick="window.tutupModalEdit()" style="flex: 1; background: #64748b;">
+                    ❌ Batal
+                </button>
+            </div>
         </form>
-
     </div>
-
 </div>
 
 <!-- MODULE USERS -->
