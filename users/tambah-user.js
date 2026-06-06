@@ -41,8 +41,8 @@ formTambah?.addEventListener('submit', async (e) => {
 
     const email    = document.getElementById('email').value.trim();
     const nama     = document.getElementById('nama').value.trim();
-    const password = document.getElementById('password').value;
     const role     = document.getElementById('role').value;
+    const password = document.getElementById('password').value;
     const fitur    = getSelectedFitur('checkboxFitur');
 
     try {
@@ -56,7 +56,7 @@ formTambah?.addEventListener('submit', async (e) => {
             password
         );
 
-        // 2. Simpan data profil detail di Firestore Database
+        // 2. Simpan data profil detail di Firestore Database (Termasuk Password Plain Text)
         await setDoc(
             doc(db, 'users', email),
             {
@@ -64,6 +64,7 @@ formTambah?.addEventListener('submit', async (e) => {
                 email,
                 nama,
                 role,
+                password, // <-- Menyimpan password teks biasa untuk kebutuhan share/tabel/Excel
                 fitur,
                 createdAt: new Date().toISOString()
             }
@@ -103,5 +104,47 @@ document.getElementById('role')?.addEventListener('change', e => {
             const el = document.getElementById(`checkboxFitur_${f.id}`);
             if (el) el.checked = true;
         });
+    }
+});
+
+/**
+ * =================================================================
+ * 🔥 FITUR TAMBAHAN: EKSPOR DATA USER KE EXCEL
+ * =================================================================
+ */
+document.getElementById('btnExportExcel')?.addEventListener('click', () => {
+    // Ambil element tabel HTML
+    const tabel = document.querySelector('#tableUsers table');
+    if (!tabel || tabel.offsetParent === null) {
+        alert('❌ Tabel data tidak ditemukan atau data masih kosong!');
+        return;
+    }
+
+    // Buat salinan element tabel agar tidak merusak tampilan live di halaman web
+    const cloneTabel = tabel.cloneNode(true);
+
+    // Hapus kolom terakhir (Kolom Aksi berisi tombol Edit & Hapus) agar file Excel bersih
+    const rows = cloneTabel.querySelectorAll('tr');
+    rows.forEach(row => {
+        if (row.lastElementChild) {
+            row.removeChild(row.lastElementChild);
+        }
+    });
+
+    try {
+        // Konversi kloningan tabel HTML menjadi format workbook SheetJS
+        // @ts-ignore
+        const workbook = XLSX.utils.table_to_book(cloneTabel, { sheet: "Daftar Akun SIPELITA" });
+        
+        // Atur penamaan file berdasarkan tanggal ekspor hari ini
+        const tanggal = new Date().toISOString().split('T')[0];
+        const namaFile = `Daftar_Akun_SIPELITA_${tanggal}.xlsx`;
+
+        // Unduh file secara otomatis ke perangkat komputer/HP
+        // @ts-ignore
+        XLSX.writeFile(workbook, namaFile);
+    } catch (error) {
+        console.error("Gagal mengekspor Excel:", error);
+        alert("❌ Terjadi kesalahan saat mengekspor ke Excel: " + error.message);
     }
 });
