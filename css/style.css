@@ -505,3 +505,85 @@ body.sipena-bg {
     .sipena-modul .sipena-header { flex-direction: column; text-align: center; }
     .sipena-modul .menu-grid-sp { grid-template-columns: repeat(3, 1fr); gap: 8px; }
 }
+
+/* Container Utama Grid Galeri */
+.galeri-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Kartu Utama Berbasis Glassmorphism */
+.galeri-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Efek Hover saat Kartu Disorot */
+.galeri-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Pembungkus Gambar */
+.card-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px; /* Tinggi seragam untuk semua sampul */
+    overflow: hidden;
+    background-color: #f1f5f9;
+}
+
+/* Pengaturan Foto Sampul Asli */
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Memotong gambar secara proporsional agar pas di kotak */
+    transition: transform 0.5s ease;
+}
+
+.galeri-card:hover .card-img {
+    transform: scale(1.08); /* Efek zoom-in halus saat dihover */
+}
+
+.card-image-placeholder {
+    width: 100%;
+    height: 100%;
+}
+
+/* Area Judul Kegiatan */
+.card-body {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.card-title {
+    font-size: 1.05rem;
+    color: #1e293b;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+    transition: color 0.3s ease;
+}
+
+.galeri-card:hover .card-title {
+    color: #4f46e5; /* Judul berubah warna ke ungu saat dihover */
+}
