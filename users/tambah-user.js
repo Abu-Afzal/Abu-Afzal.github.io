@@ -41,8 +41,8 @@ formTambah?.addEventListener('submit', async (e) => {
 
     const email    = document.getElementById('email').value.trim();
     const nama     = document.getElementById('nama').value.trim();
-    const role     = document.getElementById('role').value;
     const password = document.getElementById('password').value;
+    const role     = document.getElementById('role').value;
     const fitur    = getSelectedFitur('checkboxFitur');
 
     try {
@@ -63,8 +63,8 @@ formTambah?.addEventListener('submit', async (e) => {
                 uid: cred.user.uid,
                 email,
                 nama,
+                password,
                 role,
-                password, // <-- Menyimpan password teks biasa untuk kebutuhan share/tabel/Excel
                 fitur,
                 createdAt: new Date().toISOString()
             }
