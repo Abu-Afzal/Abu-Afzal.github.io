@@ -4,5 +4,5 @@ export const DRIVE_CONFIG = {
     API_KEY: "AIzaSyDTvl_73qc1hdVlmidAqQfmfPTWTRhBmKA", 
     
     // 2. Tempelkan ID Folder Induk/Utama Google Drive Anda
-    FOLDER_ID_UTAMA: "Galeri Kegiatan MAN Bantaeng" 
+    FOLDER_ID_UTAMA: "https://drive.google.com/drive/folders/1Zr0uve2vQBumi75aloZUk5t8JkHjAtpx?usp=sharing" 
 };
