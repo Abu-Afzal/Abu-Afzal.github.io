@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Scan Pembiasaan</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:#f1f5f9;
+    text-align:center;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    max-width:700px;
+    margin:auto;
+    padding:25px;
+    border-radius:14px;
+    box-shadow:0 4px 15px rgba(0,0,0,.06);
+}
+
+#reader{
+    width:100%;
+    margin-top:20px;
+}
+
+select{
+    width:100%;
+    padding:12px;
+    border-radius:8px;
+    margin-top:10px;
+}
+
+.hasil{
+    margin-top:20px;
+    padding:20px;
+    border-radius:10px;
+    background:#dcfce7;
+    color:#166534;
+    font-size:1.2rem;
+    font-weight:700;
+}
+
+</style>
+</head>
+<body>
+
+<div class="card">
+
+    <h1>📷 Scan Pembiasaan</h1>
+
+    <select id="pilihKegiatan">
+        <option>Memuat kegiatan...</option>
+    </select>
+
+    <div id="reader"></div>
+
+    <div id="hasilScan" class="hasil">
+        Menunggu scan...
+    </div>
+
+</div>
+
+<script type="module">
+
+import { db } from "../js/firebase-config.js";
+
+import {
+    collection,
+    getDocs,
+    addDoc
+}
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+// ==========================
+// LOAD KEGIATAN
+// ==========================
+
+const pilihKegiatan =
+    document.getElementById('pilihKegiatan');
+
+async function loadKegiatan(){
+
+    const snapshot =
+        await getDocs(collection(db,'master_kegiatan'));
+
+    pilihKegiatan.innerHTML='';
+
+    snapshot.forEach(doc=>{
+
+        const data = doc.data();
+
+        if(data.status==='aktif'){
+
+            pilihKegiatan.innerHTML += `
+                <option value="${data.nama}">
+                    ${data.nama}
+                </option>
+            `;
+
+        }
+
+    });
+
+}
+
+loadKegiatan();
+
+
+// ==========================
+// SUARA BEEP
+// ==========================
+
+function bunyiScan(){
+
+    const audio = new Audio(
+        'https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg'
+    );
+
+    audio.play();
+
+}
+
+
+// ==========================
+// SCAN QR
+// ==========================
+
+const hasilScan =
+    document.getElementById('hasilScan');
+
+const html5QrCode =
+    new Html5Qrcode("reader");
+
+Html5Qrcode.getCameras()
+.then(devices=>{
+
+    if(devices && devices.length){
+
+        html5QrCode.start(
+            devices[0].id,
+            {
+                fps:10,
+                qrbox:250
+            },
+
+            async(qrCodeMessage)=>{
+
+                try{
+
+                    const pecah =
+                        qrCodeMessage.split(':');
+
+                    const nis   = pecah[0];
+                    const nama  = pecah[1];
+                    const kelas = pecah[2];
+
+                    const kegiatan =
+                        pilihKegiatan.value;
+
+                    const sekarang = new Date();
+
+                    const tanggal =
+                        sekarang.toISOString().split('T')[0];
+
+                    const jam =
+                        sekarang.toLocaleTimeString('id-ID');
+
+                    await addDoc(
+                        collection(db,'absensi_kegiatan'),
+                        {
+                            kegiatan,
+                            siswa_nis:nis,
+                            siswa_nama:nama,
+                            siswa_kelas:kelas,
+                            tanggal,
+                            jam,
+                            createdAt:new Date().toISOString()
+                        }
+                    );
+
+                    bunyiScan();
+
+                    hasilScan.innerHTML = `
+                        ✅ ${nama}<br>
+                        <small>
+                            ${kelas} | ${kegiatan}
+                        </small>
+                    `;
+
+                }catch(err){
+
+                    console.error(err);
+
+                }
+
+            }
+
+        );
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
