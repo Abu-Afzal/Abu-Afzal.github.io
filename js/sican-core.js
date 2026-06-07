@@ -1,4 +1,4 @@
-import { db } from './firebase-config.js'; // Pastikan file ini ada di folder js/
+import { db } from './firebase-config.js';
 import { loadKegiatan } from './sican-kegiatan.js';
 import { simpanAbsensi } from './sican-save.js';
 import { tampilkanHasil } from './sican-ui.js';
@@ -15,8 +15,7 @@ async function init(){
     }
 }
 
-// PERBAIKAN JALUR AUDIO: Karena sican.html berada di folder sican/, 
-// jalur relatif audio diambil dari posisi file HTML yang membukanya, yaitu 'assets/...'
+// Jalur audio yang sudah sinkron dengan folder GitHub assets/audio/
 const successAudio = new Audio('assets/audio/success.mp3');
 const failedAudio = new Audio('assets/audio/failed.mp3');
 
@@ -32,49 +31,73 @@ function jamSekarang(){
 }
 
 async function onScanSuccess(decodedText){
-    try{
-        const dataQR = JSON.parse(decodedText);
+    try {
         const kegiatan = document.getElementById('kegiatanSelect').value;
 
-        // Validasi jika data kegiatan belum termuat atau gagal memuat
-        if (!kegiatan || kegiatan.includes("Gagal") || kegiatan.includes("Memuat")) {
-            throw new Error("Silakan pilih kegiatan yang valid terlebih dahulu!");
+        // Validasi awal agar user memilih kegiatan dulu di dropdown
+        if (!kegiatan || kegiatan.trim() === "") {
+            throw new Error("Silakan pilih kegiatan terlebih dahulu!");
         }
 
-        const payload = {
-            siswa_nis: dataQR.nis,
-            siswa_nama: dataQR.nama,
-            siswa_kelas: dataQR.kelas,
-            kegiatan: kegiatan,
-            tanggal: tanggalHariIni(),
-            jam: jamSekarang()
-        };
+        let payload = {};
 
-        // Simpan ke Firestore Database
+        // OPTI 1: JIKA QR CODE MENGGUNAKAN FORMAT BARU (Contoh: NIS#NAMA#KELAS)
+        if (decodedText.includes('#')) {
+            const bagianData = decodedText.split('#');
+            
+            // Validasi kelengkapan data hasil split
+            if (bagianData.length < 3) {
+                throw new Error("Format QR Code string kurang lengkap (Harus: NIS#NAMA#KELAS)");
+            }
+
+            payload = {
+                siswa_nis: bagianData[0].trim(),
+                siswa_nama: bagianData[1].trim(),
+                siswa_kelas: bagianData[2].trim(),
+                kegiatan: kegiatan,
+                tanggal: tanggalHariIni(),
+                jam: jamSekarang()
+            };
+        } 
+        // OPTI 2: JIKA ADA YANG SCAN MENGGUNAKAN FORMAT JSON LAMA (CADANGAN)
+        else {
+            const dataQR = JSON.parse(decodedText);
+            payload = {
+                siswa_nis: dataQR.nis,
+                siswa_nama: dataQR.nama,
+                siswa_kelas: dataQR.kelas,
+                kegiatan: kegiatan,
+                tanggal: tanggalHariIni(),
+                jam: jamSekarang()
+            };
+        }
+
+        // 1. Simpan data ke Firestore Database
         await simpanAbsensi(payload);
 
-        // Update UI secara visual melalui modul UI
+        // 2. Perbarui Tampilan UI Kartu Hasil Scan
         tampilkanHasil({
             nama: payload.siswa_nama,
             kelas: payload.siswa_kelas,
             kegiatan: payload.kegiatan
         });
 
-        // Mainkan audio sukses
-        successAudio.play().catch(e => console.log("Audio diblokir browser sebelum ada interaksi:", e));
+        // 3. Bunyikan suara sukses
+        successAudio.play().catch(e => console.log("Audio play diblokir browser sebelum ada interaksi"));
 
     } catch(err) {
-        alert(err.message);
-        // Mainkan audio gagal
-        failedAudio.play().catch(e => console.log("Audio diblokir browser:", e));
+        // Tampilkan pesan error yang ramah di layar jika scan gagal/salah format
+        alert("Gagal Memproses Scan: " + err.message);
+        
+        // Bunyikan suara gagal
+        failedAudio.play().catch(e => console.log("Audio play diblokir browser"));
         console.error(err);
     }
 }
 
 function startScanner(){
-    // Memastikan library Html5Qrcode dari CDN unpkg sudah siap di halaman HTML
     if (typeof Html5Qrcode === 'undefined') {
-        console.error("Library Html5Qrcode belum termuat sempurna di HTML.");
+        console.error("Library Html5Qrcode belum termuat di HTML.");
         return;
     }
 
@@ -82,7 +105,7 @@ function startScanner(){
 
     Html5Qrcode.getCameras().then(devices => {
         if(devices.length){
-            // Menggunakan kamera belakang jika tersedia (indeks terakhir biasanya kamera belakang pada HP)
+            // Otomatis pakai kamera belakang jika mendeteksi lebih dari 1 kamera (di HP)
             const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
             
             html5QrCode.start(
@@ -96,9 +119,9 @@ function startScanner(){
                 console.error("Gagal menjalankan kamera:", err);
             });
         } else {
-            console.error("Kamera tidak ditemukan di perangkat ini.");
+            console.error("Kamera tidak ditemukan.");
         }
     }).catch(err => {
-        console.error("Gagal mendapatkan daftar kamera:", err);
+        console.error("Gagal mendeteksi kamera:", err);
     });
 }
