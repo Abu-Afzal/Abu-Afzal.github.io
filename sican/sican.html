@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>SICAN Multi Kegiatan</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+    font-family:Segoe UI;
+    background:#f5f7fa;
+    margin:0;
+}
+
+.header{
+    background:#1565c0;
+    color:white;
+    padding:20px;
+    text-align:center;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+#reader{
+    width:100%;
+}
+
+.hasil-scan{
+    text-align:center;
+    padding:25px;
+}
+
+.nama{
+    font-size:2rem;
+    font-weight:bold;
+    color:#1565c0;
+}
+
+.kelas{
+    color:#555;
+    margin-top:10px;
+}
+
+.kegiatan{
+    margin-top:15px;
+    font-weight:bold;
+    color:#2e7d32;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>📷 SICAN MULTI KEGIATAN</h1>
+</div>
+
+<div class="container">
+
+    <div class="card">
+
+        <label>Pilih Kegiatan</label>
+
+        <select id="kegiatanSelect">
+            <option>Memuat kegiatan...</option>
+        </select>
+
+    </div>
+
+    <div class="card">
+        <div id="reader"></div>
+    </div>
+
+    <div class="card hasil-scan">
+
+        <div class="nama" id="namaSiswa">
+            -
+        </div>
+
+        <div class="kelas" id="kelasSiswa">
+            -
+        </div>
+
+        <div class="kegiatan" id="kegiatanAktif">
+            -
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module" src="js/sican-core.js"></script>
+
+</body>
+</html>
