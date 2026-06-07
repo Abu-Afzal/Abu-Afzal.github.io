@@ -67,7 +67,7 @@ const CONFIG = {
             title: 'SICAN', 
             desc: 'Scan Absensi Siswa', 
             color: '#0d47a1', 
-            url: 'sican.html'
+            url: 'sican/sican.html'
         },
         { icon: '🎓', title: 'E-Learning', desc: '', color: '#d32f2f', page: 'pages/elearning.html' },
         { icon: '📁', title: 'E-Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
