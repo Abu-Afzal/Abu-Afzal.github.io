@@ -19,7 +19,7 @@ export async function loadKegiatan(){
 
         const snapshot =
             await getDocs(
-                collection(db, 'kegiatan_pembiasaan')
+                collection(db, 'kegiatan_absensi')
             );
 
         snapshot.forEach(doc => {
