@@ -26,22 +26,22 @@ export async function loadKegiatan(){
 
             const data = doc.data();
 
-            select.innerHTML += `
+            if(data.aktif){
 
-                <option value="${data.nama}">
-                    ${data.nama}
-                </option>
+                select.innerHTML += `
 
-            `;
+                    <option value="${data.nama}">
+                        ${data.nama}
+                    </option>
+
+                `;
+            }
         });
 
     }
     catch(err){
 
-        console.error(
-            'Gagal memuat kegiatan:',
-            err
-        );
+        console.error(err);
 
         select.innerHTML =
             '<option>Gagal memuat</option>';
