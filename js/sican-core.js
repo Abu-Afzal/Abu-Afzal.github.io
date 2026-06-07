@@ -1,10 +1,18 @@
+import { db } from './firebase-config.js';
 import { loadKegiatan } from './sican-kegiatan.js';
 
 import { simpanAbsensi } from './sican-save.js';
 
 import { tampilkanHasil } from './sican-ui.js';
 
-await loadKegiatan();
+init();
+
+async function init(){
+
+    await loadKegiatan();
+
+    startScanner();
+}
 
 const successAudio = new Audio(
     'assets/audio/success.mp3'
@@ -69,22 +77,25 @@ async function onScanSuccess(decodedText){
     }
 }
 
-const html5QrCode = new Html5Qrcode("reader");
+function startScanner(){
 
-Html5Qrcode.getCameras().then(devices => {
+    const html5QrCode = new Html5Qrcode("reader");
 
-    if(devices.length){
+    Html5Qrcode.getCameras().then(devices => {
 
-        html5QrCode.start(
+        if(devices.length){
 
-            devices[0].id,
+            html5QrCode.start(
 
-            {
-                fps:10,
-                qrbox:250
-            },
+                devices[0].id,
 
-            onScanSuccess
-        );
-    }
-});
+                {
+                    fps:10,
+                    qrbox:250
+                },
+
+                onScanSuccess
+            );
+        }
+    });
+}
