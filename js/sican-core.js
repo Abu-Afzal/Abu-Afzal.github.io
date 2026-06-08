@@ -82,12 +82,21 @@ async function onScanSuccess(decodedText){
         // JALUR 3: DINAMIS & AMAN - QR CODE HANYA TEKS BIASA / ANGKA NIS SAJA
         // =========================================================================
         else {
-            // A. Ambil data asli siswa dari database master pusat sican_siswa
-            const qMaster = query(collection(db, "sican_siswa"), where("nis", "==", teksScan));
-            const snapMaster = await getDocs(qMaster);
+            const nisBersih = teksScan.trim(); // Bersihkan spasi di awal/akhir
 
+            // KANDIDAT 1: Cari dengan anggapan NIS di Firestore berbentuk STRING (Teks)
+            let qMaster = query(collection(db, "sican_siswa"), where("nis", "==", nisBersih));
+            let snapMaster = await getDocs(qMaster);
+
+            // KANDIDAT 2: Jika tidak ketemu, coba cari dengan anggapan NIS di Firestore berbentuk NUMBER (Angka)
+            if (snapMaster.empty && !isNaN(nisBersih)) {
+                qMaster = query(collection(db, "sican_siswa"), where("nis", "==", Number(nisBersih)));
+                snapMaster = await getDocs(qMaster);
+            }
+
+            // Jika kedua cara di atas tetap tidak menemukan data, baru lemparkan error
             if (snapMaster.empty) {
-                throw new Error(`NIS [${teksScan}] tidak terdaftar di Database Master Admin!`);
+                throw new Error(`NIS [${nisBersih}] tidak terdaftar di Database Master Admin!`);
             }
 
             let dataSiswa = {};
@@ -95,9 +104,10 @@ async function onScanSuccess(decodedText){
                 dataSiswa = docSnap.data();
             });
 
-            // B. Set payload berdasarkan hasil data master asli sekolah
+            // Set payload berdasarkan data asli sekolah yang berhasil ditemukan
             payload = {
-                siswa_nis: dataSiswa.nis,
+                // Pastikan dikonversi ke String agar seragam saat disimpan ke riwayat presensi
+                siswa_nis: String(dataSiswa.nis).trim(), 
                 siswa_nama: dataSiswa.nama,
                 siswa_kelas: dataSiswa.kelas,
                 kegiatan: kegiatan,
@@ -105,66 +115,3 @@ async function onScanSuccess(decodedText){
                 jam: jamSekarang()
             };
         }
-
-        // =========================================================================
-        // VALIDASI GLOBAL: CEK APAKAH SISWA SUDAH ABSEN UNTUK KEGIATAN INI HARI INI
-        // =========================================================================
-        const qCekAbsen = query(
-            collection(db, "presensi_sican"),
-            where("nis", "==", payload.siswa_nis),
-            where("tanggal", "==", payload.tanggal),
-            where("kegiatan", "==", payload.kegiatan)
-        );
-        const snapAbsen = await getDocs(qCekAbsen);
-
-        // Jika data pencarian ditemukan (!snapAbsen.empty), lempar error agar ditangkap blok catch
-        if (!snapAbsen.empty) {
-            throw new Error(`${payload.siswa_nama} sudah melakukan absensi ${payload.kegiatan} hari ini!`);
-        }
-
-        // 1. Simpan data ke Firestore Database (Hanya jika lolos cek double-absen)
-        await simpanAbsensi(payload);
-
-        // 2. Perbarui Tampilan UI Kartu Hasil Scan di Layar
-        tampilkanHasil({
-            nama: payload.siswa_nama,
-            kelas: payload.siswa_kelas,
-            kegiatan: payload.kegiatan
-        });
-
-        // 3. Bunyikan suara sukses
-        successAudio.play().catch(e => console.log("Audio play diblokir kebijakan browser"));
-
-    } catch(err) {
-        // Mengarahkan suara gagal dan alert ramah ke layar jika terdeteksi double absen / NIS salah
-        failedAudio.play().catch(e => console.log("Audio play diblokir browser"));
-        alert("Gagal Memproses Scan:\n" + err.message);
-        console.error(err);
-    }
-}
-
-function startScanner(){
-    if (typeof Html5Qrcode === 'undefined') {
-        console.error("Library Html5Qrcode belum termuat di HTML.");
-        return;
-    }
-
-    const html5QrCode = new Html5Qrcode("reader");
-
-    Html5Qrcode.getCameras().then(devices => {
-        if(devices.length){
-            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
-            html5QrCode.start(
-                cameraId,
-                { fps: 10, qrbox: 250 },
-                onScanSuccess
-            ).catch(err => {
-                console.error("Gagal menjalankan kamera:", err);
-            });
-        } else {
-            console.error("Kamera tidak ditemukan.");
-        }
-    }).catch(err => {
-        console.error("Gagal mendeteksi kamera:", err);
-    });
-}
