@@ -66,6 +66,9 @@ async function AmbilDaftarKegiatanPusat() {
 // LOGIKA SCANNER UTAMA DENGAN DUAL-VALIDASI (MASTER & DOUBLE ABSEN)
 // =========================================================================
 async function onScanSuccess(decodedText){
+    // JIKA KAMERA SEDANG DALAM MASA JEDA/PROSES, REJECT SCAN SELANJUTNYA
+    if (sedangMemprosesScan) return; 
+
     try {
         const kegiatan = document.getElementById('kegiatanSelect').value;
 
@@ -73,9 +76,12 @@ async function onScanSuccess(decodedText){
             throw new Error("Silakan pilih kegiatan terlebih dahulu!");
         }
 
+        // Kunci sistem segera setelah QR terdeteksi pertama kali
+        sedangMemprosesScan = true; 
+
         const teksScan = decodedText.trim(); 
         let nisSiswa = "";
-
+        
         // TAHAP 1: EKSTRAKSI NIS
         if (teksScan.includes('#')) {
             const bagianData = teksScan.split('#');
@@ -136,49 +142,31 @@ async function onScanSuccess(decodedText){
             throw new Error(`${payload.siswa_nama} sudah melakukan absensi ${payload.kegiatan} hari ini!`);
         }
 
-        // TAHAP 4: EKSEKUSI PENYIMPANAN DAN UI SECARA PARALEL
-        // Kita panggil UI terlebih dahulu agar layar user langsung merespon "BERHASIL" tanpa delay database
+        // =========================================================================
+        // TAHAP 4: TAMPILKAN UI DAN SIMPAN DATA (SAAT SUKSES ABSEN)
+        // =========================================================================
         tampilkanHasil({
             nama: payload.siswa_nama,
             kelas: payload.siswa_kelas,
             kegiatan: payload.kegiatan
         });
 
-        // Simpan data ke database di latar belakang (background process)
         await simpanAbsensi(payload);
-
-        // Putar audio sukses
         successAudio.play().catch(e => console.log("Audio diblokir browser"));
+
+        // JEDA SUKSES: Beri waktu 3 detik bagi operator/siswa untuk menarik kartunya
+        setTimeout(() => {
+            sedangMemprosesScan = false; // Buka kembali kunci kamera
+        }, 3000); 
 
     } catch(err) {
         failedAudio.play().catch(e => console.log("Audio diblokir browser"));
         alert("Gagal Memproses Scan:\n" + err.message);
         console.error(err);
+
+        // JEDA GAGAL: Jika gagal (misal salah kartu), beri jeda 2 detik sebelum scan ulang
+        setTimeout(() => {
+            sedangMemprosesScan = false;
+        }, 2000);
     }
-}
-
-function startScanner(){
-    if (typeof Html5Qrcode === 'undefined') {
-        console.error("Library Html5Qrcode belum termuat di HTML.");
-        return;
-    }
-
-    const html5QrCode = new Html5Qrcode("reader");
-
-    Html5Qrcode.getCameras().then(devices => {
-        if(devices.length){
-            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
-            html5QrCode.start(
-                cameraId,
-                { fps: 10, qrbox: 250 },
-                onScanSuccess
-            ).catch(err => {
-                console.error("Gagal menjalankan kamera:", err);
-            });
-        } else {
-            console.error("Kamera tidak ditemukan.");
-        }
-    }).catch(err => {
-        console.error("Gagal mendeteksi kamera:", err);
-    });
 }
