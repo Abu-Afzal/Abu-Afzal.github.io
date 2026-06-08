@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SICAN - Master Data Siswa</title>
+    <title>SICAN - Admin Master Siswa</title>
     <link rel="icon" type="image/png" href="../assets/images/sipelita-app.png">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,19 +33,19 @@
 <body>
 
 <div class="header">
-    <h1>🗃️ Master Data Siswa (sican-siswa)</h1>
-    <p>Kelola dan Unggah Basis Data Murid Sistem Absensi Digital</p>
+    <h1>🛡️ Panel Admin: Master Data Siswa SICAN</h1>
+    <p>Database Pusat Presensi dan Pembiasaan Digital</p>
     <div style="margin-top:15px;">
-        <a href="../index.html" style="color:white; text-decoration:none; border:1px solid rgba(255,255,255,.4); padding:8px 15px; border-radius:8px;">🏠 Dashboard</a>
+        <a href="../index.html" style="color:white; text-decoration:none; border:1px solid rgba(255,255,255,.4); padding:8px 15px; border-radius:8px;">🏠 Dashboard Admin</a>
     </div>
 </div>
 
 <div class="container">
 
     <div class="card">
-        <h3>📤 Import Data Siswa via Excel / CSV</h3>
+        <h3>📤 Import Data Siswa Baru (Global)</h3>
         <p style="color: #64748b; font-size: 0.85rem; margin: 5px 0 15px;">
-            Format kolom Excel harus tepat: <b>nis</b> | <b>nama</b> | <b>kelas</b> (Gunakan huruf kecil pada judul kolom).
+            Unggah data master siswa untuk referensi scanner. Kolom Excel wajib huruf kecil semua: <b>nis</b> | <b>nama</b> | <b>kelas</b>.
         </p>
         
         <div class="grid-input">
@@ -55,13 +55,13 @@
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <button class="btn btn-primary" id="btnUpload">🚀 Proses & Simpan ke Firebase</button>
-            <a href="#" id="downloadTemplate" class="template-link">📥 Download Contoh Format Excel</a>
+            <button class="btn btn-primary" id="btnUpload">🚀 Unggah Data Master</button>
+            <a href="#" id="downloadTemplate" class="template-link">📥 Download Format Excel</a>
         </div>
     </div>
 
     <div class="card">
-        <h3>👥 Daftar Murid Terdaftar (<span id="totalSiswa">0</span> Siswa)</h3>
+        <h3>👥 Total Database Murid Terdaftar (<span id="totalSiswa">0</span> Siswa)</h3>
         
         <div class="table-wrap">
             <table>
@@ -71,12 +71,12 @@
                         <th>NIS / NISN</th>
                         <th>Nama Lengkap</th>
                         <th>Kelas</th>
-                        <th class="text-center">Aksi</th>
+                        <th class="text-center">Tindakan</th>
                     </tr>
                 </thead>
                 <tbody id="siswaTableBody">
                     <tr>
-                        <td colspan="5" class="text-center">Memuat basis data siswa...</td>
+                        <td colspan="5" class="text-center">Memuat database sican_siswa...</td>
                     </tr>
                 </tbody>
             </table>
@@ -87,99 +87,99 @@
 
 <script type="module">
     import { auth, db } from "../js/firebase-config.js";
-    import { collection, addDoc, getDocs, deleteDoc, doc, writeBatch, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { collection, getDocs, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // Proteksi halaman admin
+    // Proteksi halaman: Wajib login
     onAuthStateChanged(auth, (user) => {
-        if (!user) window.location.href = '../login.html';
+        if (!user) {
+            window.location.href = '../login.html';
+        } else {
+            loadMasterSiswaSICAN();
+        }
     });
 
     const btnUpload = document.getElementById('btnUpload');
     const excelFileInput = document.getElementById('excelFile');
 
     // =========================================================================
-    // 1. FUNGSI JALUR PROSES IMPORT EXCEL KE FIRESTORE
+    // JALUR SAVE: BATCH WRITE LANGSUNG KE KOLEKSI 'sican_siswa' (GLOBAL)
     // =========================================================================
     btnUpload.addEventListener('click', () => {
         const file = excelFileInput.files[0];
         if (!file) {
-            alert('Silakan pilih file Excel (.xlsx) atau CSV terlebih dahulu!');
+            alert('Pilih file Excel terlebih dahulu!');
             return;
         }
 
         btnUpload.disabled = true;
-        btnUpload.textContent = 'Sedang Menyimpan... ⏳';
+        btnUpload.textContent = 'Menyimpan ke Sistem... ⏳';
 
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Konversi data excel menjadi objek JSON array
                 const jsonSiswa = XLSX.utils.sheet_to_json(worksheet);
 
-                if (jsonSiswa.length === 0) {
-                    throw new Error("File Excel kosong atau format tidak sesuai.");
-                }
+                if (jsonSiswa.length === 0) throw new Error("File kosong.");
 
-                // Gunakan fitur Batch Write Firebase agar upload massal cepat dan hemat kuota request
                 const batch = writeBatch(db);
-                const collectionRef = collection(db, "sipena_siswa");
+                // Diarahkan langsung ke koleksi global sican_siswa
+                const collectionRef = collection(db, "sican_siswa");
 
-                let barisBerhasil = 0;
+                let totalData = 0;
                 jsonSiswa.forEach((item) => {
-                    // Validasi pastikan kolom nama & nis tidak kosong di excel
                     const nisSiswa = item.nis ? String(item.nis).trim() : null;
                     const namaSiswa = item.nama ? String(item.nama).trim() : null;
                     const kelasSiswa = item.kelas ? String(item.kelas).trim() : '-';
 
                     if (nisSiswa && namaSiswa) {
-                        const newDocRef = doc(collectionRef); // Generate auto ID baru
+                        const newDocRef = doc(collectionRef);
+                        // Tidak perlu field guru_email karena ini data global admin sekolah
                         batch.set(newDocRef, {
                             nis: nisSiswa,
                             nama: namaSiswa,
                             kelas: kelasSiswa,
-                            uploadedAt: new Date().toISOString()
+                            createdAt: new Date().toISOString()
                         });
-                        barisBerhasil++;
+                        totalData++;
                     }
                 });
 
-                // Eksekusi batch write ke Firestore
                 await batch.commit();
-                alert(`Berhasil mengimpor ${barisBerhasil} data siswa ke database!`);
-                excelFileInput.value = ''; // Reset input file
-                loadMasterSiswa(); // Refresh tampilan tabel
+                alert(`Sukses! ${totalData} siswa telah ditambahkan ke database master SICAN.`);
+                excelFileInput.value = ''; 
+                loadMasterSiswaSICAN(); 
 
             } catch (err) {
                 console.error(err);
-                alert("Gagal membaca file excel: " + err.message);
+                alert("Gagal memproses berkas Excel: " + err.message);
             } finally {
                 btnUpload.disabled = false;
-                btnUpload.textContent = '🚀 Proses & Simpan ke Firebase';
+                btnUpload.textContent = '🚀 Unggah Data Master';
             }
         };
         reader.readAsArrayBuffer(file);
     });
 
     // =========================================================================
-    // 2. LOAD DATA MASTER SISWA DARI FIRESTORE
+    // JALUR LOAD: TAMPILKAN SEMUA DATA DARI 'sican_siswa' TANPA FILTER GURU
     // =========================================================================
-    async function loadMasterSiswa() {
+    async function loadMasterSiswaSICAN() {
         const tbody = document.getElementById('siswaTableBody');
         const totalSpan = document.getElementById('totalSiswa');
         if (!tbody) return;
 
         try {
-            const snapshot = await getDocs(collection(db, 'sipena_siswa'));
+            // Mengambil seluruh isi dokumen secara kolektif (Global Read)
+            const snapshot = await getDocs(collection(db, 'sican_siswa'));
             tbody.innerHTML = '';
             
             if (snapshot.empty) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada data siswa. Silakan upload file Excel di atas.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center">Belum ada master data siswa di database SICAN.</td></tr>`;
                 totalSpan.textContent = "0";
                 return;
             }
@@ -189,7 +189,6 @@
                 listSiswa.push({ id: docSnap.id, ...docSnap.data() });
             });
 
-            // Urutkan alfabetis berdasarkan nama siswa
             listSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
             totalSpan.textContent = listSiswa.length;
 
@@ -208,41 +207,35 @@
                 tbody.appendChild(tr);
             });
 
-            // Daftarkan event handler klik tombol hapus secara dinamis
+            // Handler Hapus Dokumen
             document.querySelectorAll('.btn-hapus').forEach(button => {
                 button.addEventListener('click', async (e) => {
                     const idDoc = e.target.getAttribute('data-id');
-                    if (confirm("Apakah Anda yakin ingin menghapus siswa ini dari database master?")) {
-                        await deleteDoc(doc(db, 'sipena_siswa', idDoc));
-                        loadMasterSiswa();
+                    if (confirm("Hapus siswa ini dari database master SICAN? (Tindakan ini tidak memengaruhi data nilai di SIPENA)")) {
+                        await deleteDoc(doc(db, 'sican_siswa', idDoc));
+                        loadMasterSiswaSICAN();
                     }
                 });
             });
 
         } catch (err) {
-            console.error("Gagal memuat master data siswa:", err);
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Gagal memuat database siswa.</td></tr>`;
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Error otorisasi: ${err.message}</td></tr>`;
         }
     }
 
-    // =========================================================================
-    // 3. FITUR KREATIF: TRICK MEMBUAT DOWNLOAD TEMPLATE EXCEL OTOMATIS
-    // =========================================================================
+    // Pembuat Template Excel Otomatis
     document.getElementById('downloadTemplate').addEventListener('click', (e) => {
         e.preventDefault();
-        const templateData = [
-            { nis: "212210001", nama: "Ahmad Afzal", kelas: "XI MIPA 1" },
-            { nis: "212210002", nama: "Siti Aminah", kelas: "XI MIPA 2" },
-            { nis: "212210003", nama: "Budi Santoso", kelas: "XII IPS 1" }
+        const demo = [
+            { nis: "1001", nama: "Siswa Contoh A", kelas: "X MIPA 1" },
+            { nis: "1002", nama: "Siswa Contoh B", kelas: "XI IPS 2" }
         ];
-        const ws = XLSX.utils.json_to_sheet(templateData);
+        const ws = XLSX.utils.json_to_sheet(demo);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template Siswa");
-        XLSX.writeFile(wb, "Template_Master_Siswa_SICAN.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "Master");
+        XLSX.writeFile(wb, "Template_Master_SICAN.xlsx");
     });
-
-    // Jalankan pemanggilan data pertama kali halaman dibuka
-    loadMasterSiswa();
 </script>
 </body>
 </html>
