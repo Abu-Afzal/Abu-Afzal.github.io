@@ -10,7 +10,7 @@ init();
 
 async function init(){
     try {
-        await AmbilDaftarKegiatanPusat(); // Menggunakan fungsi internal yang bebas konflik
+        await AmbilDaftarKegiatanPusat(); 
         startScanner();
     } catch (error) {
         console.error("Gagal menginisialisasi aplikasi:", error);
@@ -29,14 +29,13 @@ function jamSekarang(){
 }
 
 // =========================================================================
-// FUNGSI PRODUSEN DROPDOWN - MANDIRI & BEBAS TABRAKAN MODULE
+// FUNGSI PRODUSEN DROPDOWN - DIKUNCI SESUAI DATA PEMBIASAAN.JS
 // =========================================================================
 async function AmbilDaftarKegiatanPusat() {
     const kegiatanSelect = document.getElementById('kegiatanSelect');
     if (!kegiatanSelect) return;
 
     try {
-        // Mengambil langsung menggunakan instance impor satu pintu
         const snapshot = await getDocs(collection(db, "Kegiatan Absensi"));
         kegiatanSelect.innerHTML = '<option value="">-- Pilih Kegiatan --</option>';
         
@@ -47,7 +46,8 @@ async function AmbilDaftarKegiatanPusat() {
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            const namaKegiatan = data.kegiatan || data.nama || doc.id; 
+            // Mengunci prioritas pada data.nama sesuai dengan pembiasaan.js
+            const namaKegiatan = data.nama || data.kegiatan || doc.id; 
             
             const opt = document.createElement('option');
             opt.value = namaKegiatan;
@@ -61,36 +61,30 @@ async function AmbilDaftarKegiatanPusat() {
 }
 
 // =========================================================================
-// LOGIKA SCANNER UTAMA DENGAN VALIDASI DATA MASTER UNTUK SEMUA JALUR
+// LOGIKA SCANNER UTAMA DENGAN DUAL-VALIDASI (MASTER & DOUBLE ABSEN)
 // =========================================================================
 async function onScanSuccess(decodedText){
     try {
         const kegiatan = document.getElementById('kegiatanSelect').value;
 
-        // Validasi awal agar user memilih kegiatan dulu di dropdown
         if (!kegiatan || kegiatan.trim() === "") {
             throw new Error("Silakan pilih kegiatan terlebih dahulu!");
         }
 
-        const teksScan = decodedText.trim(); // Bersihkan spasi tak terlihat
+        const teksScan = decodedText.trim(); 
         let nisSiswa = "";
 
-        // =========================================================================
-        // TAHAP 1: EKSTRAKSI NILAI NIS BERDASARKAN FORMAT QR CODE YANG MASUK
-        // =========================================================================
+        // TAHAP 1: EKSTRAKSI NIS
         if (teksScan.includes('#')) {
             const bagianData = teksScan.split('#');
-            if (bagianData.length < 1) {
-                throw new Error("Format QR Code Hashtag rusak atau tidak terbaca!");
-            }
-            nisSiswa = bagianData[0].trim(); // Ambil bagian NIS (Contoh: "240992")
+            nisSiswa = bagianData[0].trim(); 
         } 
         else if (teksScan.startsWith('{') && teksScan.endsWith('}')) {
             try {
                 const dataQR = JSON.parse(teksScan);
                 nisSiswa = String(dataQR.nis || dataQR.nisn || "").trim();
             } catch (e) {
-                throw new Error("Isi Barcode berupa JSON rusak / tidak valid!");
+                throw new Error("Isi Barcode berupa JSON rusak!");
             }
         }
         else {
@@ -98,34 +92,26 @@ async function onScanSuccess(decodedText){
         }
 
         if (!nisSiswa) {
-            throw new Error("Nomor NIS gagal diekstrak dari kode QR ini!");
+            throw new Error("Nomor NIS gagal diekstrak!");
         }
 
-        // =========================================================================
-        // TAHAP 2: VALIDASI NIS KE DATABASE MASTER PUSAT (sican_siswa)
-        // Menggunakan pencarian string langsung sesuai gambar Firebase Console Anda
-        // =========================================================================
-        
-        // Cari dengan asumsi NIS bertipe STRING (Sesuai tipe data di screenshot console Anda)
+        // TAHAP 2: VALIDASI NIS KE MASTER DATA (sican_siswa)
         let qMaster = query(collection(db, "sican_siswa"), where("nis", "==", nisSiswa));
         let snapMaster = await getDocs(qMaster);
 
-        // Cadangan: Jika tidak ketemu, cari sebagai tipe data NUMBER (Angka)
         if (snapMaster.empty && !isNaN(nisSiswa)) {
             qMaster = query(collection(db, "sican_siswa"), where("nis", "==", Number(nisSiswa)));
             snapMaster = await getDocs(qMaster);
         }
 
-        // Jika di kedua tipe tetap kosong, lemparkan error ke layar
         if (snapMaster.empty) {
-            throw new Error(`NIS [${nisSiswa}] tidak ditemukan di Database Master Admin!`);
+            throw new Error(`NIS [${nisSiswa}] tidak terdaftar di Database Master Admin!`);
         }
 
-        // AMBIL DATA SECARA LANGSUNG (Bebas dari Bug Delay forEach)
-        const docSiswa = snapMaster.docs[0];
-        const dataSiswaAsli = docSiswa.data();
+        // Ambil data dokumen pertama secara sinkron
+        const dataSiswaAsli = snapMaster.docs[0].data();
 
-        // Racik payload absensi menggunakan identitas resmi dari database master
+        // Susun payload presensi resmi
         let payload = {
             siswa_nis: String(dataSiswaAsli.nis).trim(), 
             siswa_nama: dataSiswaAsli.nama,
@@ -135,9 +121,7 @@ async function onScanSuccess(decodedText){
             jam: jamSekarang()
         };
 
-        // =========================================================================
-        // TAHAP 3: VALIDASI GLOBAL ANTI DOUBLE-ABSEN HARI INI
-        // =========================================================================
+        // TAHAP 3: VALIDASI DOUBLE ABSEN HARI INI
         const qCekAbsen = query(
             collection(db, "presensi_sican"),
             where("nis", "==", payload.siswa_nis),
@@ -150,22 +134,49 @@ async function onScanSuccess(decodedText){
             throw new Error(`${payload.siswa_nama} sudah melakukan absensi ${payload.kegiatan} hari ini!`);
         }
 
-        // 1. Simpan data log absensi ke Firestore Database via sican-save.js
-        await simpanAbsensi(payload);
-
-        // 2. Perbarui Tampilan UI Kartu Hasil Scan di Layar via sican-ui.js
+        // TAHAP 4: EKSEKUSI PENYIMPANAN DAN UI SECARA PARALEL
+        // Kita panggil UI terlebih dahulu agar layar user langsung merespon "BERHASIL" tanpa delay database
         tampilkanHasil({
             nama: payload.siswa_nama,
             kelas: payload.siswa_kelas,
             kegiatan: payload.kegiatan
         });
 
-        // 3. Bunyikan suara sukses
-        successAudio.play().catch(e => console.log("Audio play diblokir kebijakan browser"));
+        // Simpan data ke database di latar belakang (background process)
+        await simpanAbsensi(payload);
+
+        // Putar audio sukses
+        successAudio.play().catch(e => console.log("Audio diblokir browser"));
 
     } catch(err) {
-        failedAudio.play().catch(e => console.log("Audio play diblokir browser"));
+        failedAudio.play().catch(e => console.log("Audio diblokir browser"));
         alert("Gagal Memproses Scan:\n" + err.message);
         console.error(err);
     }
+}
+
+function startScanner(){
+    if (typeof Html5Qrcode === 'undefined') {
+        console.error("Library Html5Qrcode belum termuat di HTML.");
+        return;
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    Html5Qrcode.getCameras().then(devices => {
+        if(devices.length){
+            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
+            html5QrCode.start(
+                cameraId,
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            ).catch(err => {
+                console.error("Gagal menjalankan kamera:", err);
+            });
+        } else {
+            console.error("Kamera tidak ditemukan.");
+        }
+    }).catch(err => {
+        console.error("Gagal mendeteksi kamera:", err);
+    });
 }
