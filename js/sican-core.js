@@ -204,12 +204,36 @@ function startScanner(){
 
     const html5QrCode = new Html5Qrcode("reader");
 
+    // Fungsi dinamis untuk menghitung area kotak scan (qrbox) secara responsif
+    const konfigurasiQrbox = (viewfinderWidth, viewfinderHeight) => {
+        // Ambil dimensi terkecil dari layar kamera untuk dijadikan acuan kotak persegi
+        const dimensiTerkecil = Math.min(viewfinderWidth, viewfinderHeight);
+        
+        // Kita set ukuran kotak scan sebesar 70% dari dimensi terkecil layar kamera
+        // Ini membuat wilayah scan jauh lebih besar dan lega di layar full screen
+        const ukuranKotak = Math.floor(dimensiTerkecil * 0.7);
+        
+        // Batasi batas minimum kotak scan di 250px dan maksimum di 600px agar tetap proporsional
+        const ukuranFinal = Math.max(250, Math.min(600, ukuranKotak));
+        
+        return {
+            width: ukuranFinal,
+            height: ukuranFinal
+        };
+    };
+
     Html5Qrcode.getCameras().then(devices => {
         if(devices.length){
+            // Memilih kamera belakang jika ada lebih dari 1 kamera (biasanya di HP)
             const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
+            
             html5QrCode.start(
                 cameraId,
-                { fps: 10, qrbox: 250 },
+                { 
+                    fps: 15,          // Naikkan ke 15 fps agar pembacaan kamera lebih mulus dan cepat
+                    qrbox: konfigurasiQrbox, // Menggunakan fungsi responsif di atas
+                    aspectRatio: 1.777778   // Memaksa rasio kamera ke format 16:9 widescreen/full screen
+                },
                 onScanSuccess
             ).catch(err => {
                 console.error("Gagal menjalankan kamera:", err);
