@@ -4,14 +4,15 @@ import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/
 export async function loadKegiatan(){
     const select = document.getElementById('kegiatanSelect');
     
+    if (!select) return;
+    
     // Set teks awal saat loading data
     select.innerHTML = '<option value="">Pilih Kegiatan</option>';
 
     try {
-        // SINKRONISASI: Nama koleksi disamakan menjadi 'Kegiatan Absensi'
+        // Membaca dari koleksi 'Kegiatan Absensi' sesuai di Firebase Console
         const snapshot = await getDocs(collection(db, 'Kegiatan Absensi'));
 
-        // Flag untuk menandai apakah ada kegiatan aktif yang berhasil dimasukkan
         let adaKegiatan = false;
 
         snapshot.forEach(doc => {
@@ -20,21 +21,27 @@ export async function loadKegiatan(){
             // Pengecekan field 'aktif' (boolean) dan 'nama' (string)
             if (data.aktif === true && data.nama) {
                 adaKegiatan = true;
+                
+                // Membuat teks tampilan di dropdown menjadi huruf kapital di awal (Capital Case)
+                // Contoh: "kehadiran" menjadi "Kehadiran"
+                const namaBersih = data.nama.trim();
+                const namaTampilan = namaBersih.charAt(0).toUpperCase() + namaBersih.slice(1);
+
                 select.innerHTML += `
-                    <option value="${data.nama}">
-                        ${data.nama}
+                    <option value="${namaBersih}">
+                        ${namaTampilan}
                     </option>
                 `;
             }
         });
 
-        // Jika setelah di-loop ternyata tidak ada satu pun kegiatan dengan status aktif: true
+        // Jika setelah di-loop ternyata tidak ada kegiatan yang aktif
         if (!adaKegiatan) {
             select.innerHTML = '<option value="">Tidak ada kegiatan aktif</option>';
         }
 
     } catch(err) {
         console.error("Gagal memuat dokumen kegiatan:", err);
-        select.innerHTML = '<option>Gagal memuat</option>';
+        select.innerHTML = '<option value="">Gagal memuat kegiatan</option>';
     }
 }
