@@ -1,5 +1,4 @@
 import { db } from './firebase-config.js';
-import { loadKegiatan } from './sican-kegiatan.js';
 import { simpanAbsensi } from './sican-save.js';
 import { tampilkanHasil } from './sican-ui.js';
 
