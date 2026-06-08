@@ -91,7 +91,7 @@ const CONFIG = {
             title: 'Rekap Absensi', 
             desc: '', 
             color: '#37474f', 
-            url: 'pages/rekap.absensi.html' 
+            url: 'sican/rekap-sican.html' 
         }
     ]
 };
