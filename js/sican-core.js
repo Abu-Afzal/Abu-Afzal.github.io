@@ -2,6 +2,8 @@ import { db } from './firebase-config.js';
 import { simpanAbsensi } from './sican-save.js';
 import { tampilkanHasil } from './sican-ui.js';
 
+// Variabel pengunci agar kamera tidak menscan bertubi-tubi
+let sedangMemprosesScan = false;
 // Satu Pintu Impor Firebase untuk Keperluan Dropdown & Validasi Dual-Database
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
