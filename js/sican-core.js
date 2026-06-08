@@ -3,6 +3,9 @@ import { loadKegiatan } from './sican-kegiatan.js';
 import { simpanAbsensi } from './sican-save.js';
 import { tampilkanHasil } from './sican-ui.js';
 
+// TAMBAHKAN IMPOR INI untuk keperluan query validasi ke Firestore
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 // Inisialisasi Aplikasi saat file dimuat
 init();
 
@@ -76,20 +79,50 @@ async function onScanSuccess(decodedText){
             }
         }
         // =========================================================================
-        // JALUR 3: KEBAL ERROR - JIKA BARCODE HANYA BERISI TEKS BIASA (Contoh: Hanya NISN)
+        // JALUR 3: DINAMIS & AMAN - QR CODE HANYA TEKS BIASA / ANGKA NIS SAJA
         // =========================================================================
         else {
+            // A. Ambil data asli siswa dari database master pusat sican_siswa
+            const qMaster = query(collection(db, "sican_siswa"), where("nis", "==", teksScan));
+            const snapMaster = await getDocs(qMaster);
+
+            if (snapMaster.empty) {
+                throw new Error(`NIS [${teksScan}] tidak terdaftar di Database Master Admin!`);
+            }
+
+            let dataSiswa = {};
+            snapMaster.forEach(docSnap => {
+                dataSiswa = docSnap.data();
+            });
+
+            // B. Set payload berdasarkan hasil data master asli sekolah
             payload = {
-                siswa_nis: teksScan,              // Isi angka barcode dianggap sebagai nomor NIS/NISN
-                siswa_nama: "Siswa Terdaftar",    // Nama cadangan (Aman di-save ke database)
-                siswa_kelas: "-",
+                siswa_nis: dataSiswa.nis,
+                siswa_nama: dataSiswa.nama,
+                siswa_kelas: dataSiswa.kelas,
                 kegiatan: kegiatan,
                 tanggal: tanggalHariIni(),
                 jam: jamSekarang()
             };
         }
 
-        // 1. Simpan data ke Firestore Database (Koleksi: presensi_sican)
+        // =========================================================================
+        // VALIDASI GLOBAL: CEK APAKAH SISWA SUDAH ABSEN UNTUK KEGIATAN INI HARI INI
+        // =========================================================================
+        const qCekAbsen = query(
+            collection(db, "presensi_sican"),
+            where("nis", "==", payload.siswa_nis),
+            where("tanggal", "==", payload.tanggal),
+            where("kegiatan", "==", payload.kegiatan)
+        );
+        const snapAbsen = await getDocs(qCekAbsen);
+
+        // Jika data pencarian ditemukan (!snapAbsen.empty), lempar error agar ditangkap blok catch
+        if (!snapAbsen.empty) {
+            throw new Error(`${payload.siswa_nama} sudah melakukan absensi ${payload.kegiatan} hari ini!`);
+        }
+
+        // 1. Simpan data ke Firestore Database (Hanya jika lolos cek double-absen)
         await simpanAbsensi(payload);
 
         // 2. Perbarui Tampilan UI Kartu Hasil Scan di Layar
@@ -103,9 +136,9 @@ async function onScanSuccess(decodedText){
         successAudio.play().catch(e => console.log("Audio play diblokir kebijakan browser"));
 
     } catch(err) {
-        // Tampilkan pesan error yang ramah di layar jika scan gagal
-        alert("Gagal Memproses Scan: " + err.message);
+        // Mengarahkan suara gagal dan alert ramah ke layar jika terdeteksi double absen / NIS salah
         failedAudio.play().catch(e => console.log("Audio play diblokir browser"));
+        alert("Gagal Memproses Scan:\n" + err.message);
         console.error(err);
     }
 }
