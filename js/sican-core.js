@@ -2,17 +2,18 @@ import { db } from './firebase-config.js';
 import { simpanAbsensi } from './sican-save.js';
 import { tampilkanHasil } from './sican-ui.js';
 
-// Variabel pengunci agar kamera tidak menscan bertubi-tubi
-let sedangMemprosesScan = false;
 // Satu Pintu Impor Firebase untuk Keperluan Dropdown & Validasi Dual-Database
 import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Variabel pengunci global agar kamera tidak melakukan scan bertubi-tubi (efek gema)
+let sedangMemprosesScan = false;
 
 // Inisialisasi Aplikasi saat file dimuat
 init();
 
 async function init(){
     try {
-        await AmbilDaftarKegiatanPusat(); 
+        await AmbilDaftarKegiatanPusat(); // Menggunakan fungsi internal yang bebas konflik
         startScanner();
     } catch (error) {
         console.error("Gagal menginisialisasi aplikasi:", error);
@@ -63,11 +64,11 @@ async function AmbilDaftarKegiatanPusat() {
 }
 
 // =========================================================================
-// LOGIKA SCANNER UTAMA DENGAN DUAL-VALIDASI (MASTER & DOUBLE ABSEN)
+// LOGIKA SCANNER UTAMA DENGAN FILTER URL & PROTEKSI JEDA KAMERA (COOLDOWN)
 // =========================================================================
 async function onScanSuccess(decodedText){
-    // JIKA KAMERA SEDANG DALAM MASA JEDA/PROSES, REJECT SCAN SELANJUTNYA
-    if (sedangMemprosesScan) return; 
+    // JALUR PENGAMAN: Jika kamera dalam masa jeda pemrosesan, abaikan scan frame ini!
+    if (sedangMemprosesScan) return;
 
     try {
         const kegiatan = document.getElementById('kegiatanSelect').value;
@@ -76,17 +77,31 @@ async function onScanSuccess(decodedText){
             throw new Error("Silakan pilih kegiatan terlebih dahulu!");
         }
 
-        // Kunci sistem segera setelah QR terdeteksi pertama kali
-        sedangMemprosesScan = true; 
+        // KUNCI SCANNER: Amankan status agar frame video selanjutnya tidak menerobos masuk
+        sedangMemprosesScan = true;
 
-        const teksScan = decodedText.trim(); 
+        let teksScan = decodedText.trim(); 
         let nisSiswa = "";
-        
-        // TAHAP 1: EKSTRAKSI NIS
-        if (teksScan.includes('#')) {
+
+        // =========================================================================
+        // ANTISIPASI OTOMATIS: JIKA QR CODE TERNYATA BERISI LINK/URL (ME-QR, DLL)
+        // =========================================================================
+        if (teksScan.includes('http://') || teksScan.includes('https://')) {
+            const bagianUrl = teksScan.split('/');
+            const bagianUjung = bagianUrl[bagianUrl.length - 1].trim();
+            
+            if (bagianUjung.includes('#')) {
+                nisSiswa = bagianUjung.split('#')[0].trim();
+            } else {
+                nisSiswa = bagianUjung;
+            }
+        }
+        // JALUR 1: Jika QR berisi format hashtag biasa (Tanpa Link bawaan generator)
+        else if (teksScan.includes('#')) {
             const bagianData = teksScan.split('#');
             nisSiswa = bagianData[0].trim(); 
         } 
+        // JALUR 2: Jika QR berbentuk JSON
         else if (teksScan.startsWith('{') && teksScan.endsWith('}')) {
             try {
                 const dataQR = JSON.parse(teksScan);
@@ -95,15 +110,18 @@ async function onScanSuccess(decodedText){
                 throw new Error("Isi Barcode berupa JSON rusak!");
             }
         }
+        // JALUR 3: Jika QR murni berisi teks biasa / angka NIS saja (Rekomendasi)
         else {
             nisSiswa = teksScan;
         }
 
         if (!nisSiswa) {
-            throw new Error("Nomor NIS gagal diekstrak!");
+            throw new Error("Nomor NIS gagal diekstrak dari kode QR ini!");
         }
 
+        // =========================================================================
         // TAHAP 2: VALIDASI NIS KE MASTER DATA (sican_siswa)
+        // =========================================================================
         let qMaster = query(collection(db, "sican_siswa"), where("nis", "==", nisSiswa));
         let snapMaster = await getDocs(qMaster);
 
@@ -116,7 +134,7 @@ async function onScanSuccess(decodedText){
             throw new Error(`NIS [${nisSiswa}] tidak terdaftar di Database Master Admin!`);
         }
 
-        // Ambil data dokumen pertama secara sinkron
+        // Ambil data dokumen pertama secara sinkron (Bebas Delay asinkronus)
         const dataSiswaAsli = snapMaster.docs[0].data();
 
         // Susun payload presensi resmi
@@ -129,7 +147,9 @@ async function onScanSuccess(decodedText){
             jam: jamSekarang()
         };
 
+        // =========================================================================
         // TAHAP 3: VALIDASI DOUBLE ABSEN HARI INI
+        // =========================================================================
         const qCekAbsen = query(
             collection(db, "presensi_sican"),
             where("nis", "==", payload.siswa_nis),
@@ -143,30 +163,61 @@ async function onScanSuccess(decodedText){
         }
 
         // =========================================================================
-        // TAHAP 4: TAMPILKAN UI DAN SIMPAN DATA (SAAT SUKSES ABSEN)
+        // TAHAP 4: EKSEKUSI PENYIMPANAN DAN TAMPILAN UI
         // =========================================================================
+        
+        // Munculkan hasil ke UI terlebih dahulu agar terasa instan bagi user
         tampilkanHasil({
             nama: payload.siswa_nama,
             kelas: payload.siswa_kelas,
             kegiatan: payload.kegiatan
         });
 
+        // Simpan data log logis ke Firestore
         await simpanAbsensi(payload);
+        
+        // Bunyikan suara sukses
         successAudio.play().catch(e => console.log("Audio diblokir browser"));
 
-        // JEDA SUKSES: Beri waktu 3 detik bagi operator/siswa untuk menarik kartunya
+        // JEDA SUKSES: Beri waktu 3 detik bagi siswa untuk menarik kartunya dari kamera
         setTimeout(() => {
-            sedangMemprosesScan = false; // Buka kembali kunci kamera
-        }, 3000); 
+            sedangMemprosesScan = false; // Buka kembali kunci kamera untuk siswa selanjutnya
+        }, 3000);
 
     } catch(err) {
         failedAudio.play().catch(e => console.log("Audio diblokir browser"));
         alert("Gagal Memproses Scan:\n" + err.message);
         console.error(err);
 
-        // JEDA GAGAL: Jika gagal (misal salah kartu), beri jeda 2 detik sebelum scan ulang
+        // JEDA ERROR: Jika gagal/salah kartu, beri jeda 2 detik sebelum bisa scan kartu lain
         setTimeout(() => {
             sedangMemprosesScan = false;
         }, 2000);
     }
+}
+
+function startScanner(){
+    if (typeof Html5Qrcode === 'undefined') {
+        console.error("Library Html5Qrcode belum termuat di HTML.");
+        return;
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    Html5Qrcode.getCameras().then(devices => {
+        if(devices.length){
+            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
+            html5QrCode.start(
+                cameraId,
+                { fps: 10, qrbox: 250 },
+                onScanSuccess
+            ).catch(err => {
+                console.error("Gagal menjalankan kamera:", err);
+            });
+        } else {
+            console.error("Kamera tidak ditemukan.");
+        }
+    }).catch(err => {
+        console.error("Gagal mendeteksi kamera:", err);
+    });
 }
