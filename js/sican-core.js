@@ -76,41 +76,13 @@ async function onScanSuccess(decodedText){
             }
         }
         // =========================================================================
-        // JALUR 3: JIKA BARCODE HANYA BERISI TEKS BIASA (Hanya NIS / NISN)
+        // JALUR 3: KEBAL ERROR - JIKA BARCODE HANYA BERISI TEKS BIASA (Contoh: Hanya NISN)
         // =========================================================================
         else {
-            const nisSiswa = teksScan;
-            let namaDitemukan = "Siswa Tidak Dikenal";
-            let kelasDitemukan = "-";
-
-            try {
-                // Ambil data master siswa dari Firestore untuk mencari tahu nama pemilik NIS ini
-                // SINKRONISASI: Menghubungkan ke koleksi 'sipena_siswa' sesuai Firebase Rules Anda
-                const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-                
-                // Cari dokumen siswa yang field 'nis' atau 'nisn'-nya cocok dengan barcode
-                const qSiswa = query(collection(db, "sipena_siswa"), where("nis", "==", nisSiswa));
-                const querySnapshot = await getDocs(qSiswa);
-
-                if (!querySnapshot.empty) {
-                    // Jika data siswa ditemukan di database master
-                    querySnapshot.forEach((docSiswa) => {
-                        const dataSiswa = docSiswa.data();
-                        namaDitemukan = dataSiswa.nama || dataSiswa.siswa_nama;
-                        kelasDitemukan = dataSiswa.kelas || dataSiswa.siswa_kelas || "-";
-                    });
-                } else {
-                    console.warn(`NIS ${nisSiswa} tidak terdaftar di database master sipena_siswa.`);
-                }
-            } catch (errMaster) {
-                console.error("Gagal mengambil data master siswa:", errMaster);
-            }
-
-            // Susun data absensi menggunakan nama asli yang berhasil ditarik dari database
             payload = {
-                siswa_nis: nisSiswa,
-                siswa_nama: namaDitemukan, 
-                siswa_kelas: kelasDitemukan,
+                siswa_nis: teksScan,              // Isi angka barcode dianggap sebagai nomor NIS/NISN
+                siswa_nama: "Siswa Terdaftar",    // Nama cadangan (Aman di-save ke database)
+                siswa_kelas: "-",
                 kegiatan: kegiatan,
                 tanggal: tanggalHariIni(),
                 jam: jamSekarang()
