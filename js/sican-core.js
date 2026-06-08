@@ -78,16 +78,13 @@ async function onScanSuccess(decodedText){
         // =========================================================================
         // TAHAP 1: EKSTRAKSI NILAI NIS BERDASARKAN FORMAT QR CODE YANG MASUK
         // =========================================================================
-        
-        // JALUR 1: Jika menggunakan Format Hashtag (Contoh: 240992#A.Aldy Al Mansyah#XII.1)
         if (teksScan.includes('#')) {
             const bagianData = teksScan.split('#');
             if (bagianData.length < 1) {
                 throw new Error("Format QR Code Hashtag rusak atau tidak terbaca!");
             }
-            nisSiswa = bagianData[0].trim(); // Ambil bagian pertamanya saja yaitu nomor NIS
+            nisSiswa = bagianData[0].trim(); // Ambil bagian NIS (Contoh: "240992")
         } 
-        // JALUR 2: Jika menggunakan Format JSON
         else if (teksScan.startsWith('{') && teksScan.endsWith('}')) {
             try {
                 const dataQR = JSON.parse(teksScan);
@@ -96,42 +93,39 @@ async function onScanSuccess(decodedText){
                 throw new Error("Isi Barcode berupa JSON rusak / tidak valid!");
             }
         }
-        // JALUR 3: Jika QR Code murni berisi Teks Biasa / Angka NIS Saja (Contoh: 240992)
         else {
             nisSiswa = teksScan;
         }
 
-        // Antisipasi jika hasil ekstraksi NIS ternyata kosong
         if (!nisSiswa) {
             throw new Error("Nomor NIS gagal diekstrak dari kode QR ini!");
         }
 
         // =========================================================================
         // TAHAP 2: VALIDASI NIS KE DATABASE MASTER PUSAT (sican_siswa)
+        // Menggunakan pencarian string langsung sesuai gambar Firebase Console Anda
         // =========================================================================
         
-        // KANDIDAT A: Cari dengan asumsi field 'nis' di Firestore bertipe STRING (Teks)
+        // Cari dengan asumsi NIS bertipe STRING (Sesuai tipe data di screenshot console Anda)
         let qMaster = query(collection(db, "sican_siswa"), where("nis", "==", nisSiswa));
         let snapMaster = await getDocs(qMaster);
 
-        // KANDIDAT B: Jika tidak ketemu, cari dengan asumsi field 'nis' bertipe NUMBER (Angka)
+        // Cadangan: Jika tidak ketemu, cari sebagai tipe data NUMBER (Angka)
         if (snapMaster.empty && !isNaN(nisSiswa)) {
             qMaster = query(collection(db, "sican_siswa"), where("nis", "==", Number(nisSiswa)));
             snapMaster = await getDocs(qMaster);
         }
 
-        // Jika kedua tipe data di atas tetap menghasilkan data kosong, blokir akses!
+        // Jika di kedua tipe tetap kosong, lemparkan error ke layar
         if (snapMaster.empty) {
-            throw new Error(`NIS [${nisSiswa}] tidak terdaftar di Database Master Admin!`);
+            throw new Error(`NIS [${nisSiswa}] tidak ditemukan di Database Master Admin!`);
         }
 
-        // Ekstrak data profil resmi siswa dari database master hasil upload Excel Anda
-        let dataSiswaAsli = {};
-        snapMaster.forEach(docSnap => {
-            dataSiswaAsli = docSnap.data();
-        });
+        // AMBIL DATA SECARA LANGSUNG (Bebas dari Bug Delay forEach)
+        const docSiswa = snapMaster.docs[0];
+        const dataSiswaAsli = docSiswa.data();
 
-        // Racik payload absensi menggunakan identitas asli dari database admin sekolah
+        // Racik payload absensi menggunakan identitas resmi dari database master
         let payload = {
             siswa_nis: String(dataSiswaAsli.nis).trim(), 
             siswa_nama: dataSiswaAsli.nama,
@@ -170,35 +164,8 @@ async function onScanSuccess(decodedText){
         successAudio.play().catch(e => console.log("Audio play diblokir kebijakan browser"));
 
     } catch(err) {
-        // Mengarahkan suara gagal dan melemparkan alert jika terjadi error di atas
         failedAudio.play().catch(e => console.log("Audio play diblokir browser"));
         alert("Gagal Memproses Scan:\n" + err.message);
         console.error(err);
     }
-}
-
-function startScanner(){
-    if (typeof Html5Qrcode === 'undefined') {
-        console.error("Library Html5Qrcode belum termuat di HTML.");
-        return;
-    }
-
-    const html5QrCode = new Html5Qrcode("reader");
-
-    Html5Qrcode.getCameras().then(devices => {
-        if(devices.length){
-            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
-            html5QrCode.start(
-                cameraId,
-                { fps: 10, qrbox: 250 },
-                onScanSuccess
-            ).catch(err => {
-                console.error("Gagal menjalankan kamera:", err);
-            });
-        } else {
-            console.error("Kamera tidak ditemukan.");
-        }
-    }).catch(err => {
-        console.error("Gagal mendeteksi kamera:", err);
-    });
 }
