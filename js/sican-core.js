@@ -62,7 +62,7 @@ async function AmbilDaftarKegiatanPusat() {
 }
 
 // =========================================================================
-// LOGIKA SCANNER UTAMA DENGAN DUAL-VALIDASI (MASTER & DOUBLE ABSEN)
+// LOGIKA SCANNER UTAMA DENGAN VALIDASI DATA MASTER UNTUK SEMUA JALUR
 // =========================================================================
 async function onScanSuccess(decodedText){
     try {
@@ -73,81 +73,77 @@ async function onScanSuccess(decodedText){
             throw new Error("Silakan pilih kegiatan terlebih dahulu!");
         }
 
-        let payload = {};
-        const teksScan = decodedText.trim(); 
+        const teksScan = decodedText.trim(); // Bersihkan spasi tak terlihat
+        let nisSiswa = "";
 
         // =========================================================================
-        // JALUR 1: JIKA QR CODE MENGGUNAKAN FORMAT HASHTAG (Contoh: NIS#NAMA#KELAS)
+        // TAHAP 1: EKSTRAKSI NILAI NIS BERDASARKAN FORMAT QR CODE YANG MASUK
         // =========================================================================
+        
+        // JALUR 1: Jika menggunakan Format Hashtag (Contoh: 240992#A.Aldy Al Mansyah#XII.1)
         if (teksScan.includes('#')) {
             const bagianData = teksScan.split('#');
-            
-            if (bagianData.length < 3) {
-                throw new Error("Format QR Code kurang lengkap (Harus: NIS#NAMA#KELAS)");
+            if (bagianData.length < 1) {
+                throw new Error("Format QR Code Hashtag rusak atau tidak terbaca!");
             }
-
-            payload = {
-                siswa_nis: bagianData[0].trim(),
-                siswa_nama: bagianData[1].trim(),
-                siswa_kelas: bagianData[2].trim(),
-                kegiatan: kegiatan,
-                tanggal: tanggalHariIni(),
-                jam: jamSekarang()
-            };
+            nisSiswa = bagianData[0].trim(); // Ambil bagian pertamanya saja yaitu nomor NIS
         } 
-        // =========================================================================
-        // JALUR 2: JIKA QR CODE ADALAH FORMAT STRUKTUR JSON YANG VALID
-        // =========================================================================
+        // JALUR 2: Jika menggunakan Format JSON
         else if (teksScan.startsWith('{') && teksScan.endsWith('}')) {
             try {
                 const dataQR = JSON.parse(teksScan);
-                payload = {
-                    siswa_nis: dataQR.nis || dataQR.nisn || "Tidak Ada NIS",
-                    siswa_nama: dataQR.nama || "Siswa Tanpa Nama",
-                    siswa_kelas: dataQR.kelas || "-",
-                    kegiatan: kegiatan,
-                    tanggal: tanggalHariIni(),
-                    jam: jamSekarang()
-                };
+                nisSiswa = String(dataQR.nis || dataQR.nisn || "").trim();
             } catch (e) {
                 throw new Error("Isi Barcode berupa JSON rusak / tidak valid!");
             }
         }
-        // =========================================================================
-        // JALUR 3: DINAMIS & AMAN - QR CODE HANYA TEKS BIASA / ANGKA NIS SAJA
-        // =========================================================================
+        // JALUR 3: Jika QR Code murni berisi Teks Biasa / Angka NIS Saja (Contoh: 240992)
         else {
-            const nisBersih = teksScan.trim();
+            nisSiswa = teksScan;
+        }
 
-            let qMaster = query(collection(db, "sican_siswa"), where("nis", "==", nisBersih));
-            let snapMaster = await getDocs(qMaster);
-
-            if (snapMaster.empty && !isNaN(nisBersih)) {
-                qMaster = query(collection(db, "sican_siswa"), where("nis", "==", Number(nisBersih)));
-                snapMaster = await getDocs(qMaster);
-            }
-
-            if (snapMaster.empty) {
-                throw new Error(`NIS [${nisBersih}] tidak terdaftar di Database Master Admin!`);
-            }
-
-            let dataSiswa = {};
-            snapMaster.forEach(docSnap => {
-                dataSiswa = docSnap.data();
-            });
-
-            payload = {
-                siswa_nis: String(dataSiswa.nis).trim(), 
-                siswa_nama: dataSiswa.nama,
-                siswa_kelas: dataSiswa.kelas,
-                kegiatan: kegiatan,
-                tanggal: tanggalHariIni(),
-                jam: jamSekarang()
-            };
+        // Antisipasi jika hasil ekstraksi NIS ternyata kosong
+        if (!nisSiswa) {
+            throw new Error("Nomor NIS gagal diekstrak dari kode QR ini!");
         }
 
         // =========================================================================
-        // VALIDASI GLOBAL: CEK DOUBLE ABSEN HARI INI
+        // TAHAP 2: VALIDASI NIS KE DATABASE MASTER PUSAT (sican_siswa)
+        // =========================================================================
+        
+        // KANDIDAT A: Cari dengan asumsi field 'nis' di Firestore bertipe STRING (Teks)
+        let qMaster = query(collection(db, "sican_siswa"), where("nis", "==", nisSiswa));
+        let snapMaster = await getDocs(qMaster);
+
+        // KANDIDAT B: Jika tidak ketemu, cari dengan asumsi field 'nis' bertipe NUMBER (Angka)
+        if (snapMaster.empty && !isNaN(nisSiswa)) {
+            qMaster = query(collection(db, "sican_siswa"), where("nis", "==", Number(nisSiswa)));
+            snapMaster = await getDocs(qMaster);
+        }
+
+        // Jika kedua tipe data di atas tetap menghasilkan data kosong, blokir akses!
+        if (snapMaster.empty) {
+            throw new Error(`NIS [${nisSiswa}] tidak terdaftar di Database Master Admin!`);
+        }
+
+        // Ekstrak data profil resmi siswa dari database master hasil upload Excel Anda
+        let dataSiswaAsli = {};
+        snapMaster.forEach(docSnap => {
+            dataSiswaAsli = docSnap.data();
+        });
+
+        // Racik payload absensi menggunakan identitas asli dari database admin sekolah
+        let payload = {
+            siswa_nis: String(dataSiswaAsli.nis).trim(), 
+            siswa_nama: dataSiswaAsli.nama,
+            siswa_kelas: dataSiswaAsli.kelas,
+            kegiatan: kegiatan,
+            tanggal: tanggalHariIni(),
+            jam: jamSekarang()
+        };
+
+        // =========================================================================
+        // TAHAP 3: VALIDASI GLOBAL ANTI DOUBLE-ABSEN HARI INI
         // =========================================================================
         const qCekAbsen = query(
             collection(db, "presensi_sican"),
@@ -161,10 +157,10 @@ async function onScanSuccess(decodedText){
             throw new Error(`${payload.siswa_nama} sudah melakukan absensi ${payload.kegiatan} hari ini!`);
         }
 
-        // 1. Simpan data ke Firestore Database
+        // 1. Simpan data log absensi ke Firestore Database via sican-save.js
         await simpanAbsensi(payload);
 
-        // 2. Perbarui Tampilan UI Kartu Hasil Scan di Layar
+        // 2. Perbarui Tampilan UI Kartu Hasil Scan di Layar via sican-ui.js
         tampilkanHasil({
             nama: payload.siswa_nama,
             kelas: payload.siswa_kelas,
@@ -175,6 +171,7 @@ async function onScanSuccess(decodedText){
         successAudio.play().catch(e => console.log("Audio play diblokir kebijakan browser"));
 
     } catch(err) {
+        // Mengarahkan suara gagal dan melemparkan alert jika terjadi error di atas
         failedAudio.play().catch(e => console.log("Audio play diblokir browser"));
         alert("Gagal Memproses Scan:\n" + err.message);
         console.error(err);
