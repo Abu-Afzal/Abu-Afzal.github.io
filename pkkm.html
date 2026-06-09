@@ -5,19 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PKKM - Portal SIPELITA</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/pkkm-style.css">
 </head>
 <body class="sipena-bg">
 
-<div class="sipena-modul main-container">
+<div class="sipena-modul main-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
     <div class="sipena-header">
         <div class="header-info-sp">
-            <div class="header-title-sp">Modul PKKM</div>
+            <div class="header-title-sp" style="color: #1a237e;">Modul PKKM</div>
             <div class="header-subtitle-sp">Penilaian Kinerja Kepala Madrasah — Portal SIPELITA</div>
         </div>
     </div>
 
-    <div class="content-area-sp active" style="margin-bottom: 24px;">
-        <div class="section-title-sp">Form Unggah Bukti Fisik PKKM</div>
+    <div class="pkkm-wrapper">
+        <div class="section-title-sp" style="font-size: 1.2rem; margin-bottom: 15px;">📤 Upload Dokumen Baru</div>
         <form id="formUploadPkkm">
             <div class="form-group-sp">
                 <label class="form-label-sp">Pilih Indikator Instrumen</label>
@@ -37,37 +39,26 @@
 
             <div class="form-group-sp">
                 <label class="form-label-sp">Nama Label Dokumen</label>
-                <input type="text" id="inputNamaDokumen" class="form-input-sp" placeholder="Contoh: SK Tim Penjamin Mutu 2026" required>
+                <input type="text" id="inputNamaDokumen" class="form-input-sp" placeholder="Contoh: SK Kepala Sekolah 2026" required>
             </div>
 
             <div class="form-group-sp">
                 <label class="form-label-sp">Pilih File Berkas (PDF, Excel, Word)</label>
                 <input type="file" id="inputFilePkkm" class="form-input-sp" accept=".pdf,.xlsx,.xls,.docx,.doc" required>
-                <small style="color: #e74c3c; display: block; margin-top: 4px; font-weight: 600;">* Batas rekomendasi file terkompresi: Maksimal 1 MB</small>
+                <small style="color: #e74c3c; display: block; margin-top: 6px; font-weight: 600;">* Maksimal Ukuran File: 1 MB</small>
             </div>
 
-            <button type="submit" id="btnSimpanPkkm" class="btn-sp btn-sp-primary" style="width: 100%; padding: 12px;">
-                💾 Simpan Dokumen PKKM
+            <button type="submit" id="btnSimpanPkkm" class="btn-sp btn-sp-primary" style="width: 100%; padding: 12px; background: #0a55f7;">
+                Simpan Dokumen
             </button>
         </form>
     </div>
 
-    <div class="content-area-sp active">
-        <div class="section-title-sp">Monitoring & Bukti Fisik Terkumpul</div>
-        <div class="table-container-sp">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 10%;">Kode</th>
-                        <th style="width: 25%;">Komponen</th>
-                        <th style="width: 35%;">Nama Dokumen Terupload</th>
-                        <th style="width: 30%; text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelBodyPkkm">
-                    </tbody>
-            </table>
-        </div>
+    <div class="pkkm-wrapper">
+        <div class="section-title-sp" style="font-size: 1.2rem; margin-bottom: 15px;">📚 Dokumen Tersimpan</div>
+        
+        <div id="containerKartuPkkm" class="pkkm-grid-dokumen">
+            </div>
     </div>
 </div>
 
