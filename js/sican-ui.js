@@ -1,41 +1,33 @@
 export function tampilkanHasil(data){
-    // 1. Masukkan data teks ke elemen HTML masing-masing
+    // 1. Ambil seluruh elemen komponen kartu UI
     const elNama = document.getElementById('namaSiswa');
     const elKelas = document.getElementById('kelasSiswa');
     const elKegiatan = document.getElementById('kegiatanAktif');
+    const elJam = document.getElementById('jamAbsen');
+    const resultCard = document.getElementById('resultContainer');
 
-    if(elNama) elNama.innerText = data.nama;
-    if(elKelas) elKelas.innerText = data.kelas;
-    if(elKegiatan) elKegiatan.innerText = data.kegiatan;
-
-    // =========================================================================
-    // 2. FORCE SHOW: Memaksa elemen penampung hasil scan agar muncul di layar
-    // =========================================================================
+    // 2. Isi data teks ke elemen masing-masing secara aman
+    if (elNama) elNama.innerText = data.nama;
+    if (elKelas) elKelas.innerText = data.kelas;
+    if (elKegiatan) elKegiatan.innerText = data.kegiatan;
     
-    // Cari tahu apa ID kontainer kartu hasil scan Anda di sican.html
-    // Umumnya bernama 'resultContainer', 'scanResult', atau 'cardResult'
-    const resultCard = document.getElementById('resultContainer') || 
-                       document.getElementById('scanResult') || 
-                       document.getElementById('hasilScan');
+    // 3. Tambahkan catatan jam log absensi detik ini secara real-time
+    if (elJam) {
+        elJam.innerText = new Date().toLocaleTimeString('id-ID');
+    }
 
+    // 4. Munculkan kartu hasil scan dengan transisi animasi CSS
     if (resultCard) {
-        // Tampilkan kontainer jika sebelumnya tersembunyi
         resultCard.style.display = 'block'; 
         
-        // Opsional: Beri animasi kedip hijau instan sebagai penanda sukses absen
-        resultCard.style.animation = 'none';
-        setTimeout(() => {
-            resultCard.style.border = '3px solid #2e7d32';
-            resultCard.style.background = '#e8f5e9';
-        }, 10);
+        // Opsional: Beri efek kilatan hijau penanda data sukses tersimpan di Firestore
+        resultCard.style.borderColor = '#2e7d32';
+        resultCard.style.boxShadow = '0 10px 30px rgba(46, 125, 50, 0.15)';
         
-        // Kembalikan ke warna normal setelah 3 detik jika diinginkan
+        // Kembalikan ke bayangan normal setelah 2.5 detik
         setTimeout(() => {
-            resultCard.style.border = '';
-            resultCard.style.background = '';
-        }, 3000);
-    } else {
-        // Jika tidak ada kontainer tersembunyi, gunakan alert bawaan yang rapi sebagai fallback
-        console.log("Kontainer UI hasil scan tidak ditemukan di HTML, memicu pemberitahuan alternatif.");
+            resultCard.style.borderColor = '#e0e0e0';
+            resultCard.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.08)';
+        }, 2500);
     }
 }
