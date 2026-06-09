@@ -203,45 +203,70 @@ function startScanner(){
     }
 
     const html5QrCode = new Html5Qrcode("reader");
+    let daftarKamera = [];
+    let indeksKameraAktif = 0;
 
-    // Fungsi dinamis untuk menghitung area kotak scan (qrbox) secara responsif
+    // Fungsi dinamis pembesar kotak scan (tetap dipertahankan agar tidak mengecil)
     const konfigurasiQrbox = (viewfinderWidth, viewfinderHeight) => {
-        // Ambil dimensi terkecil dari layar kamera untuk dijadikan acuan kotak persegi
         const dimensiTerkecil = Math.min(viewfinderWidth, viewfinderHeight);
-        
-        // Kita set ukuran kotak scan sebesar 70% dari dimensi terkecil layar kamera
-        // Ini membuat wilayah scan jauh lebih besar dan lega di layar full screen
         const ukuranKotak = Math.floor(dimensiTerkecil * 0.7);
-        
-        // Batasi batas minimum kotak scan di 250px dan maksimum di 600px agar tetap proporsional
         const ukuranFinal = Math.max(250, Math.min(600, ukuranKotak));
-        
-        return {
-            width: ukuranFinal,
-            height: ukuranFinal
-        };
+        return { width: ukuranFinal, height: ukuranFinal };
     };
 
-    Html5Qrcode.getCameras().then(devices => {
-        if(devices.length){
-            // Memilih kamera belakang jika ada lebih dari 1 kamera (biasanya di HP)
-            const cameraId = devices.length > 1 ? devices[1].id : devices[0].id;
+    // Fungsi internal untuk menyalakan/memindahkan kamera
+    async function jalankanLensaKamera(cameraId) {
+        try {
+            // Jika kamera sedang berjalan, hentikan dulu sebelum diganti
+            if (html5QrCode.isScanning) {
+                await html5QrCode.stop();
+            }
             
-            html5QrCode.start(
+            await html5QrCode.start(
                 cameraId,
                 { 
-                    fps: 15,          // Naikkan ke 15 fps agar pembacaan kamera lebih mulus dan cepat
-                    qrbox: konfigurasiQrbox, // Menggunakan fungsi responsif di atas
-                    aspectRatio: 1.777778   // Memaksa rasio kamera ke format 16:9 widescreen/full screen
+                    fps: 15, 
+                    qrbox: konfigurasiQrbox,
+                    aspectRatio: 1.777778
                 },
                 onScanSuccess
-            ).catch(err => {
-                console.error("Gagal menjalankan kamera:", err);
-            });
+            );
+        } catch (err) {
+            console.error("Gagal memindahkan lensa kamera:", err);
+        }
+    }
+
+    // Ambil daftar kamera yang tersedia di perangkat
+    Html5Qrcode.getCameras().then(devices => {
+        daftarKamera = devices;
+
+        if (daftarKamera.length > 0) {
+            // Default awal: Pilih kamera belakang jika di HP (biasanya indeks terakhir atau ke-1)
+            indeksKameraAktif = daftarKamera.length > 1 ? 1 : 0;
+            
+            // Jalankan kamera pertama kali saat aplikasi dibuka
+            jalankanLensaKamera(daftarKamera[indeksKameraAktif].id);
+
+            // Pasang logika klik pada tombol ganti kamera
+            const btnSwitch = document.getElementById('btnSwitchCamera');
+            if (btnSwitch) {
+                btnSwitch.addEventListener('click', () => {
+                    if (daftarKamera.length <= 1) {
+                        alert("Perangkat Anda hanya memiliki 1 kamera aktif.");
+                        return;
+                    }
+                    
+                    // Putar indeks kamera (jika sudah di ujung, kembali ke 0)
+                    indeksKameraAktif = (indeksKameraAktif + 1) % daftarKamera.length;
+                    
+                    // Alihkan lensa kamera secara instan
+                    jalankanLensaKamera(daftarKamera[indeksKameraAktif].id);
+                });
+            }
         } else {
-            console.error("Kamera tidak ditemukan.");
+            console.error("Kamera fisik tidak ditemukan.");
         }
     }).catch(err => {
-        console.error("Gagal mendeteksi kamera:", err);
+        console.error("Gagal mendapatkan izin kamera perangkat:", err);
     });
 }
