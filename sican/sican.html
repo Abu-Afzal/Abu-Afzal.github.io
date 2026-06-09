@@ -84,24 +84,24 @@ body{
 
     <div class="card">
         <div id="reader"></div>
+    <div id="resultContainer" class="scan-result-card" style="display: none;">
+    <div class="card-badge">
+        <span class="badge-icon">✓</span> ABSENSI BERHASIL
     </div>
-
-    <div class="card hasil-scan">
-
-        <div class="nama" id="namaSiswa">
-            -
-        </div>
-
-        <div class="kelas" id="kelasSiswa">
-            -
-        </div>
-
-        <div class="kegiatan" id="kegiatanAktif">
-            -
-        </div>
-
+    
+    <h2 id="namaSiswa" class="student-name">Nama Siswa</h2>
+    <p id="kelasSiswa" class="student-class">Kelas XX</p>
+    
+    <div class="divider"></div>
+    
+    <div class="info-row">
+        <span class="info-label">Kegiatan:</span>
+        <span id="kegiatanAktif" class="info-value">Nama Kegiatan</span>
     </div>
-
+    
+    <div class="time-badge">
+        <span id="jamAbsen">00:00:00</span>
+    </div>
 </div>
 
 <script type="module" src="../js/sican-core.js"></script>
