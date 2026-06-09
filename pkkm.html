@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PKKM - Portal SIPELITA</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="sipena-bg">
+
+<div class="sipena-modul main-container" style="max-width: 1300px; margin: 0 auto; padding: 20px;">
+    
+    <div style="text-align: center; margin-bottom: 24px;">
+        <a href="../index.html" class="btn-sp" style="
+            display: inline-flex; 
+            align-items: center; 
+            gap: 10px; 
+            text-decoration: none; 
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); 
+            color: white; 
+            padding: 12px 30px; 
+            border-radius: 30px; 
+            font-weight: 600; 
+            box-shadow: 0 6px 20px rgba(30, 60, 114, 0.3);
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+            ⬅️ Kembali ke Dashboard
+        </a>
+    </div>
+
+    <div class="pkkm-wrapper" style="background: #ffffff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 24px;">
+        <div class="section-title-sp" style="font-size: 1.25rem; font-weight: bold; margin-bottom: 15px; color: #1e293b;">Form Unggah Bukti Fisik PKKM</div>
+        <form id="formUploadPkkm">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div class="form-group-sp" style="margin-bottom: 0;">
+                    <label class="form-label-sp">Pilih Indikator Instrumen</label>
+                    <select id="selectIndikator" class="form-input-sp" required>
+                        <option value="">-- Pilih Kode Indikator Penilaian --</option>
+                        <option value="1907">1907 — Kompetensi Supervisi Pilihan 1</option>
+                        <option value="1303">1303 — Kompetensi Supervisi Pilihan 2</option>
+                        <option value="100">100 — Usaha Pengembangan Madrasah</option>
+                        <option value="a">a — Peraturan & Tata Tertib</option>
+                        <option value="1077">1077 — Pelaksanaan Ekstrakurikuler</option>
+                        <option value="2004">2004 — Peraturan & Tata Tertib Guru</option>
+                        <option value="130">130 — Hasil Supervisi Akademik</option>
+                        <option value="2238">2238 — Usaha Berita Madrasah</option>
+                    </select>
+                </div>
+
+                <div class="form-group-sp" style="margin-bottom: 0;">
+                    <label class="form-label-sp">Nama Komponen Utama</label>
+                    <input type="text" id="inputKomponen" class="form-input-sp" placeholder="Contoh: Usaha Pengembangan" required>
+                </div>
+
+                <div class="form-group-sp" style="margin-bottom: 0;">
+                    <label class="form-label-sp">Nama Label Dokumen</label>
+                    <input type="text" id="inputNamaDokumen" class="form-input-sp" placeholder="Contoh: SK Kepala Sekolah 2026" required>
+                </div>
+            </div>
+
+            <div class="form-group-sp" style="margin-bottom: 16px;">
+                <label class="form-label-sp">Pilih File Berkas (PDF, Excel, Word)</label>
+                <input type="file" id="inputFilePkkm" class="form-input-sp" accept=".pdf,.xlsx,.xls,.docx,.doc" required>
+                <small style="color: #e74c3c; display: block; margin-top: 6px; font-weight: 600;">* Batas rekomendasi file terkomprest: Maksiimal 1 MB</small>
+            </div>
+
+            <button type="submit" id="btnSimpanPkkm" class="btn-sp btn-sp-primary" style="width: 100%; padding: 14px; font-size: 1rem; font-weight: 600; background: #2582dc; border-radius: 8px;">
+                Simpan Dokumen PKKM
+            </button>
+        </form>
+    </div>
+
+    <div class="pkkm-wrapper" style="background: #ffffff; padding: 24px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div class="section-title-sp" style="font-size: 1.25rem; font-weight: bold; margin-bottom: 20px; color: #1e293b;">Monitoring & Bukti Fisik Terkumpul</div>
+        
+        <div id="containerKartuPkkm" class="pkkm-grid-dokumen">
+            </div>
+    </div>
+</div>
+
+<script type="module" src="js/pkkm-core.js"></script>
+</body>
+</html>
