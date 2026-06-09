@@ -76,7 +76,7 @@ const CONFIG = {
         { icon: '🎯', title: 'Ekskul', desc: '', color: '#009688', page: 'pages/ekskul.html' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
-        { icon: '📊', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pages/pkkm.html' },
+        { icon: '📊', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pkkm.html' },
         { 
             icon: '📗',  // ← Tetap tambahkan icon sebagai fallback
             title: 'RDM', 
