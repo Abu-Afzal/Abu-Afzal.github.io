@@ -587,3 +587,100 @@ body.sipena-bg {
 .galeri-card:hover .card-title {
     color: #4f46e5; /* Judul berubah warna ke ungu saat dihover */
 }
+/* Gaya Kartu Hasil Scan Modern */
+.scan-result-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    padding: 24px;
+    margin: 20px auto;
+    max-width: 360px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Badge Berhasil Datang */
+.card-badge {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+}
+
+.badge-icon {
+    font-weight: 900;
+}
+
+/* Informasi Profil Siswa */
+.student-name {
+    color: #1a1a1a;
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+}
+
+.student-class {
+    color: #666666;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0 0 16px 0;
+}
+
+.divider {
+    height: 1px;
+    background: #eeeeee;
+    margin: 16px 0;
+}
+
+/* Detail Kegiatan */
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.info-label {
+    color: #888888;
+}
+
+.info-value {
+    color: #333333;
+    font-weight: 600;
+}
+
+/* Badge Jam Analog Digital */
+.time-badge {
+    background: #f5f5f5;
+    color: #222222;
+    display: inline-block;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: monospace;
+    letter-spacing: 1px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Animasi Muncul Lembut */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
