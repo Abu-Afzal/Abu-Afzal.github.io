@@ -1,8 +1,7 @@
 import { uploadDokumenPKKM, ambilSemuaBerkasPKKM, hapusDokumenPKKM } from './pkkm-db.js';
 
-// Inisialisasi awal saat halaman dibuka
 document.addEventListener("DOMContentLoaded", () => {
-    muatTabelMonitoring();
+    muatKartuMonitoring();
     
     const form = document.getElementById("formUploadPkkm");
     if(form) {
@@ -10,7 +9,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Proses Upload Berkas
 async function tanganiProsesSimpan(e) {
     e.preventDefault();
     const btn = document.getElementById("btnSimpanPkkm");
@@ -22,79 +20,84 @@ async function tanganiProsesSimpan(e) {
 
     if (!fileFisik) return;
 
-    // Batasi file agar tidak meledakkan kuota Firestore (Maksimal 1.5 MB)
-    if (fileFisik.size > 1.5 * 1024 * 1024) {
-        alert("Ukuran berkas terlalu besar! Kompres file Anda di bawah 1.5 MB.");
+    if (fileFisik.size > 1.0 * 1024 * 1024) {
+        alert("Ukuran berkas melebihi batas 1 MB! Mohon kompres terlebih dahulu.");
         return;
     }
 
     try {
         btn.disabled = true;
-        btn.innerText = "⏳ Sedang Menyimpan Berkas...";
+        btn.innerText = "Memproses Penyimpanan...";
 
         await uploadDokumenPKKM(idIndikator, fileFisik, {
             komponen: komponen,
             namaDokumen: namaDokumen,
-            user: "Guru Madrasah" 
+            user: "Guru Madrasah"
         });
 
-        alert("Alhamdulillah, berkas PKKM berhasil disimpan!");
+        alert("Dokumen PKKM Berhasil Disimpan!");
         document.getElementById("formUploadPkkm").reset();
-        muatTabelMonitoring(); // Refresh tabel otomatis
+        muatKartuMonitoring();
 
     } catch (err) {
-        alert("Gagal menyimpan berkas: " + err.message);
+        alert("Gagal menyimpan dokumen: " + err.message);
     } finally {
         btn.disabled = false;
-        btn.innerText = "💾 Simpan Dokumen PKKM";
+        btn.innerText = "Simpan Dokumen";
     }
 }
 
-// Membaca database dan membangun baris tabel secara dinamis
-async function muatTabelMonitoring() {
-    const tbody = document.getElementById("tabelBodyPkkm");
-    if (!tbody) return;
+async function muatKartuMonitoring() {
+    const container = document.getElementById("containerKartuPkkm");
+    if (!container) return;
 
     try {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Memuat berkas...</td></tr>';
+        container.innerHTML = '<div class="status-empty-box">Memuat data dokumen...</div>';
         const masterBerkas = await ambilSemuaBerkasPKKM();
-        tbody.innerHTML = "";
+        container.innerHTML = "";
 
-        if (Object.keys(masterBerkas).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#7f8c8d;">Belum ada dokumen bukti fisik yang diupload.</td></tr>';
+        if (!masterBerkas || Object.keys(masterBerkas).length === 0) {
+            container.innerHTML = '<div class="status-empty-box">Belum ada dokumen yang disimpan untuk PKKM.</div>';
             return;
         }
 
         for (const key in masterBerkas) {
             const data = masterBerkas[key];
-            const tr = document.createElement("tr");
+            const card = document.createElement("div");
+            card.className = "pkkm-card-box";
 
-            tr.innerHTML = `
-                <td><strong>${data.id_indikator}</strong></td>
-                <td><small>${data.komponen}</small></td>
-                <td><span style="font-weight:600; color:#1a237e;">📄 ${data.nama_dokumen}</span></td>
-                <td>
-                    <div style="display:flex; gap:6px; justify-content:center;">
-                        <button class="btn-sp btn-sp-success btn-view" style="padding:4px 8px; font-size:11px;">Lihat</button>
-                        <button class="btn-sp btn-download" style="background:#1a237e; color:white; padding:4px 8px; font-size:11px;">Unduh</button>
-                        <button class="btn-sp btn-hapus" style="background:#e74c3c; color:white; padding:4px 8px; font-size:11px;">Hapus</button>
+            // Format tanggal lokal sederhana
+            const tglSaja = data.uploadedAt ? data.uploadedAt.substring(0, 10) : "-";
+
+            card.innerHTML = `
+                <div>
+                    <h3 style="font-size: 1.1rem; color: #1e293b; margin: 0;">${data.nama_dokumen}</h3>
+                    <div class="pkkm-card-meta">
+                        <span>📁 Indikator: <strong>${data.id_indikator}</strong></span>
+                        <span>📝 Keterangan: ${data.komponen}</span>
+                        <span>📅 Tanggal: ${tglSaja}</span>
                     </div>
-                </td>
+                </div>
+                <div class="pkkm-card-action">
+                    <button class="btn-action-mini btn-mini-lihat">🖥️ Lihat</button>
+                    <button class="btn-action-mini btn-mini-unduh">⬇️ Unduh</button>
+                    <button class="btn-action-mini btn-mini-hapus">🗑️ Hapus</button>
+                </div>
             `;
 
-            // Pasang Event Listener Tombol Aksi secara Terisolasi
-            tr.querySelector(".btn-view").addEventListener("click", () => pratinjauBerkasPDF(data.file_base64, data.tipe_file));
-            tr.querySelector(".btn-download").addEventListener("click", () => unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
-            tr.querySelector(".btn-hapus").addEventListener("click", () => tanganiHapus(data.id_indikator));
+            // Hubungkan fungsi klik tombol aksi
+            card.querySelector(".btn-mini-lihat").addEventListener("click", () => pratinjauBerkasPDF(data.file_base64, data.tipe_file));
+            card.querySelector(".btn-mini-unduh").addEventListener("click", () => unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
+            card.querySelector(".btn-mini-hapus").addEventListener("click", () => tanganiHapus(data.id_indikator));
 
-            tbody.appendChild(tr);
+            container.appendChild(card);
         }
     } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Gagal memuat data monitoring.</td></tr>';
+        console.error(err);
+        container.innerHTML = '<div class="status-empty-box" style="color:red; border-color:red;">Gagal memuat koneksi database Firestore. Pastikan aturan Read/Write Firestore Anda sudah diaktifkan.</div>';
     }
 }
 
-// Fungsi Unduh/Download File fisik
 function unduhBerkasDariBase64(stringBase64, namaFileAsli) {
     const link = document.createElement("a");
     link.href = stringBase64;
@@ -104,28 +107,26 @@ function unduhBerkasDariBase64(stringBase64, namaFileAsli) {
     document.body.removeChild(link);
 }
 
-// Fungsi Buka Pratinjau PDF di Tab Baru
 function pratinjauBerkasPDF(stringBase64, tipeFile) {
     if (!tipeFile.includes("pdf")) {
-        alert("Fitur 'Lihat' langsung hanya mendukung format PDF. Untuk Excel/Word silakan klik tombol 'Unduh'.");
+        alert("Pratinjau langsung hanya mendukung PDF. File Excel/Word otomatis terunduh saat Anda klik 'Unduh'.");
         return;
     }
     const win = window.open();
     if (win) {
         win.document.write(`<iframe src="${stringBase64}" frameborder="0" style="border:0; width:100%; height:100%;" allowfullscreen></iframe>`);
     } else {
-        alert("Pop-up diblokir oleh browser! Mohon izinkan pop-up.");
+        alert("Pop-up diblokir! Izinkan pop-up pada pengaturan browser Anda.");
     }
 }
 
-// Fungsi Hapus Berkas
 async function tanganiHapus(idIndikator) {
-    if (!confirm(`Apakah Anda yakin ingin menghapus dokumen indikator ${idIndikator}?`)) return;
+    if (!confirm(`Hapus berkas pada indikator ${idIndikator}?`)) return;
     try {
         await hapusDokumenPKKM(idIndikator);
-        alert("Berkas berhasil dihapus dari sistem!");
-        muatTabelMonitoring();
+        alert("Berkas berhasil dihapus!");
+        muatKartuMonitoring();
     } catch (err) {
-        alert("Gagal menghapus berkas: " + err.message);
+        alert("Gagal menghapus: " + err.message);
     }
 }
