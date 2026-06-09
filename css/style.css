@@ -735,9 +735,9 @@ body.sipena-bg {
 /* Desain Kartu Grid Seperti E-Dokumen */
 .pkkm-grid-dokumen {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 15px;
 }
 
 .pkkm-card-box {
