@@ -587,100 +587,135 @@ body.sipena-bg {
 .galeri-card:hover .card-title {
     color: #4f46e5; /* Judul berubah warna ke ungu saat dihover */
 }
-/* Gaya Kartu Hasil Scan Modern */
+
+/* ==========================================================================
+   SECTION 3: CSS KHUSUS MODUL SCANNER & KARTU HASIL ABSENSI (SICAN MODERN)
+   ========================================================================== */
+
+/* Kontainer Utama Hasil Scan Berbasis Glassmorphism Lembut */
 .scan-result-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-    padding: 24px;
-    margin: 20px auto;
-    max-width: 360px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    padding: 26px;
+    margin: 24px auto;
+    max-width: 400px;
     text-align: center;
-    border: 1px solid #e0e0e0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: slideUpSican 0.4s ease forwards;
 }
 
-/* Badge Berhasil Datang */
+/* Efek Sorot saat Kartu Sukses Berhasil Ditampilkan */
+.scan-result-card:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(46, 125, 50, 0.4);
+}
+
+/* Badge "ABSENSI BERHASIL" yang Segar */
 .card-badge {
     background-color: #e8f5e9;
     color: #2e7d32;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 14px;
+    padding: 6px 16px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(46, 125, 50, 0.15);
 }
 
 .badge-icon {
     font-weight: 900;
 }
 
-/* Informasi Profil Siswa */
+/* Penataan Data Profil Siswa */
 .student-name {
-    color: #1a1a1a;
-    font-size: 22px;
+    color: var(--text);
+    font-size: 1.4rem;
     font-weight: 700;
-    margin: 0 0 4px 0;
+    margin: 0 0 6px 0;
+    line-height: 1.3;
 }
 
 .student-class {
-    color: #666666;
-    font-size: 14px;
-    font-weight: 500;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 600;
     margin: 0 0 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.divider {
+/* Pembatas Garis Transparan Halus */
+.scan-result-card .divider {
     height: 1px;
-    background: #eeeeee;
-    margin: 16px 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01));
+    margin: 18px 0;
 }
 
-/* Detail Kegiatan */
+/* Baris Detail Informasi Kegiatan */
 .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-    font-size: 14px;
+    margin-bottom: 18px;
+    font-size: 0.9rem;
 }
 
 .info-label {
-    color: #888888;
+    color: var(--text-light);
+    font-weight: 500;
 }
 
 .info-value {
-    color: #333333;
+    color: var(--text);
     font-weight: 600;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-/* Badge Jam Analog Digital */
+/* Indikator Penanda Jam Log Absensi Real-Time */
 .time-badge {
-    background: #f5f5f5;
-    color: #222222;
+    background: #1a237e;
+    color: #ffffff;
     display: inline-block;
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-size: 18px;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-size: 1.1rem;
     font-weight: 700;
     font-family: monospace;
     letter-spacing: 1px;
-    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(26, 35, 126, 0.2);
 }
 
-/* Animasi Muncul Lembut */
-@keyframes slideUp {
+/* Animasi Muncul Halus Mengikuti Logika CSS Utama */
+@keyframes slideUpSican {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(15px);
     }
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Responsivitas untuk Layar Ponsel Pintar */
+@media (max-width: 640px) {
+    .scan-result-card {
+        width: 95%;
+        padding: 20px 16px;
+        margin: 16px auto;
+    }
+    .student-name {
+        font-size: 1.25rem;
     }
 }
