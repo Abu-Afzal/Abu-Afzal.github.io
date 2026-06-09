@@ -266,7 +266,7 @@ footer {
 
 /* Background khusus aplikasi SIPENA */
 body.sipena-bg {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    background: linear-gradient(135deg, #115e59 0%, #047857 50%, #065f46 100%);
     min-height: 100vh;
 }
 
