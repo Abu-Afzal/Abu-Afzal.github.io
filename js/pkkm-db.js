@@ -1,69 +1,86 @@
+// ==========================================
+// ISI UTUH FILE: js/pkkm-db.js
+// ==========================================
 import { db } from './firebase-config.js';
 import { 
+    collection, 
     doc, 
     setDoc, 
-    collection, 
-    getDocs,
-    deleteDoc 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    getDocs, 
+    deleteDoc, 
+    query, 
+    orderBy 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Mengubah file fisik kiriman user menjadi Teks Base64 (Trik E-Dokumen Bebas Biaya)
-export function konversiFileKeBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
+/** ==========================================
+ * A. SUB-SISTEM MASTER INSTRUMEN (ADMIN)
+ * ========================================== */
+
+// 1. Ambil data master komponen untuk konfigurasi kartu & indikator
+export async function ambilMasterKomponen() {
+    try {
+        const q = query(collection(db, "pkkm_master"), orderBy("id", "asc"));
+        const querySnapshot = await getDocs(q);
+        let data = [];
+        querySnapshot.forEach((doc) => {
+            data.push({ docId: doc.id, ...doc.data() });
+        });
+        return data;
+    } catch (error) {
+        console.error("Gagal mengambil master komponen:", error);
+        return [];
+    }
 }
 
-// Menyimpan atau menimpa berkas lama di Firestore
-export async function uploadDokumenPKKM(idIndikator, fileFisik, metadata) {
+// 2. Simpan atau perbarui master komponen baru dari panel admin
+export async function simpanMasterKomponenBaru(id, payload) {
     try {
-        const stringBase64 = await konversiFileKeBase64(fileFisik);
-        const docRef = doc(db, "pkkm_berkas", idIndikator);
-        
-        const payload = {
-            id_indikator: idIndikator,
-            komponen: metadata.komponen,
-            nama_dokumen: metadata.namaDokumen,
-            tipe_file: fileFisik.type,
-            nama_file_asli: fileFisik.name,
-            file_base64: stringBase64,
-            diupload_oleh: metadata.user || "Staf Madrasah",
-            uploadedAt: new Date().toISOString()
-        };
-
-        await setDoc(docRef, payload, { merge: true });
+        await setDoc(doc(db, "pkkm_master", id), payload);
         return { success: true };
     } catch (error) {
-        console.error("Gagal simpan ke Firestore:", error);
+        console.error("Gagal menyimpan master komponen:", error);
         throw error;
     }
 }
 
-// Mengambil seluruh database berkas PKKM
+
+/** ==========================================
+ * B. SUB-SISTEM BERKAS BUKTI FISIK (GURU)
+ * ========================================== */
+
+// 3. Upload atau simpan dokumen e-file berbasis Base64
+export async function uploadDokumenPKKM(idIndikator, payload) {
+    try {
+        await setDoc(doc(db, "pkkm_berkas", idIndikator), payload);
+        return { success: true };
+    } catch (error) {
+        console.error("Gagal upload dokumen PKKM:", error);
+        throw error;
+    }
+}
+
+// 4. Ambil semua berkas bukti fisik yang sudah berhasil dikumpulkan guru
 export async function ambilSemuaBerkasPKKM() {
     try {
         const querySnapshot = await getDocs(collection(db, "pkkm_berkas"));
-        const dataMaster = {};
+        let data = [];
         querySnapshot.forEach((doc) => {
-            dataMaster[doc.id] = doc.data();
+            data.push({ id: doc.id, ...doc.data() });
         });
-        return dataMaster;
+        return data;
     } catch (error) {
-        console.error("Gagal ambil data PKKM:", error);
-        throw error;
+        console.error("Gagal mengambil semua berkas PKKM:", error);
+        return [];
     }
 }
 
-// Menghapus data dokumen dari Firestore
+// 5. Menghapus data berkas dari Firestore
 export async function hapusDokumenPKKM(idIndikator) {
     try {
         await deleteDoc(doc(db, "pkkm_berkas", idIndikator));
         return { success: true };
     } catch (error) {
-        console.error("Gagal hapus berkas:", error);
+        console.error("Gagal menghapus dokumen PKKM:", error);
         throw error;
     }
 }
