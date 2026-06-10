@@ -193,7 +193,7 @@
 
         .action-area {
             display: flex;
-            gap: 5px;
+            gap: 8px;
         }
         .btn-edit-tool {
             background: rgba(255, 255, 255, 0.2);
@@ -207,6 +207,23 @@
         }
         .btn-edit-tool:hover {
             background: rgba(255, 255, 255, 0.35);
+        }
+
+        /* STYLE TAMBAHAN UNTUK TOMBOL HAPUS GLASSMORPHISM */
+        .btn-delete-tool {
+            background: rgba(220, 38, 38, 0.25);
+            color: #fca5a5;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-delete-tool:hover {
+            background: rgba(220, 38, 38, 0.45);
+            color: #ffffff;
         }
     </style>
 </head>
@@ -271,7 +288,8 @@
     </div>
 
     <script type="module">
-        import { ambilMasterKomponen, simpanMasterKomponenBaru } from '../js/pkkm-db.js';
+        // SUDAH DITAMBAHKAN IMPORT hapusMasterKomponen DI SINI PAK 👍
+        import { ambilMasterKomponen, simpanMasterKomponenBaru, hapusMasterKomponen } from '../js/pkkm-db.js';
 
         let DATA_MASTER_LOKAL = [];
         let modeEditAktif = false;
@@ -326,6 +344,7 @@
                     });
                 }
 
+                // DI SINI TOMBOL HAPUS SUDAH DISINKRONKAN BERBENTUK MODERN GLASS RED 💥
                 card.innerHTML = `
                     <div class="comp-info">
                         <h3>Komponen ${komp.id}: ${komp.nama}</h3>
@@ -334,12 +353,18 @@
                     </div>
                     <div class="action-area">
                         <button type="button" class="btn-edit-tool btn-pemicu-edit">✏️ Edit</button>
+                        <button type="button" class="btn-delete-tool btn-pemicu-hapus">🗑️ Hapus</button>
                     </div>
                 `;
 
                 // Event listener tombol edit per baris komponen
                 card.querySelector(".btn-pemicu-edit").addEventListener("click", () => {
                     persiapkanModeEdit(komp);
+                });
+
+                // Event listener tombol hapus per baris komponen
+                card.querySelector(".btn-pemicu-hapus").addEventListener("click", () => {
+                    tanganiHapusMaster(komp.id);
                 });
 
                 container.appendChild(card);
@@ -366,6 +391,30 @@
 
             document.getElementById("btnBatalEdit").style.display = "block";
             document.getElementById("btnSimpanMaster").innerText = "Simpan Perubahan";
+        }
+
+        // FUNGSI UTAMA UNTUK MENGAPUS MASTER DATA DARI FIRESTORE
+        async function tanganiHapusMaster(id) {
+            const konfirmasi = confirm(`Apakah Bapak yakin ingin menghapus Komponen ID [ ${id} ]?\n\nTindakan ini permanen dan akan menghapus struktur penampung indikator komponen ini.`);
+            if (!konfirmasi) return;
+
+            try {
+                // Eksekusi hapus di database layer
+                await hapusMasterKomponen(id);
+                
+                alert(`Alhamdulillah, Parameter Komponen ${id} sukses dibersihkan dari sistem!`);
+                
+                // Jika sedang mengedit id yang barusan dihapus, kembalikan formulir ke default
+                if (modeEditAktif && document.getElementById("compId").value === id) {
+                    resetKondisiFormFormulir();
+                }
+
+                // Refresh daftar visual komponen
+                await muatHalamanMasterAdmin();
+
+            } catch (error) {
+                alert("Gagal menghapus komponen instrumen: " + error.message);
+            }
         }
 
         // Membatalkan skema edit dan mereset form ke kondisi input baru
