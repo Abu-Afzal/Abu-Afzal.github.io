@@ -1,6 +1,3 @@
-// ==========================================
-// ISI UTUH FILE: js/pkkm-db.js
-// ==========================================
 import { db } from './firebase-config.js';
 import { 
     collection, 
@@ -10,7 +7,7 @@ import {
     deleteDoc, 
     query, 
     orderBy 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 /** ==========================================
  * A. SUB-SISTEM MASTER INSTRUMEN (ADMIN)
