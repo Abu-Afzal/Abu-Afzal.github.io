@@ -333,8 +333,9 @@
                         <div style="margin-top: 5px;">${stringIndikatorHtml}</div>
                     </div>
                     <div class="action-area">
-                        <button type="button" class="btn-edit-tool btn-pemicu-edit">✏️ Edit</button>
-                    </div>
+                        <button type="button" class="btn-edit" onclick="window.tanganiEditMaster('${komp.docId || komp.id}')">✏️ Edit</button>
+        <button type="button" style="background: #ffe4e6; color: #9f1239; border: none; border-radius: 6px; padding: 6px 10px; font-weight: bold; cursor: pointer;" onclick="window.tanganiHapusMaster('${komp.docId || komp.id}')">🗑️ Hapus</button>
+    </div>
                 `;
 
                 // Event listener tombol edit per baris komponen
