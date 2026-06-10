@@ -152,64 +152,73 @@ function bukaDetailKomponen(komp) {
     muatGridKartuBawah();
 }
 
+// Contoh fungsi untuk menggambar/merender daftar indikator dan berkasnya di halaman aplikasi
 function muatGridKartuBawah() {
-    const container = document.getElementById("containerKartuPkkm");
+    // Pastikan container visual di HTML Anda sudah disesuaikan namanya (misal: 'containerIndikator')
+    const container = document.getElementById("containerIndikator") || document.getElementById("monitoring-container"); 
     if (!container) return;
-    container.innerHTML = "";
 
-    const kompAktif = MASTER_KOMPONEN.find(k => k.id === komponenTerpilihId);
-    if (!kompAktif) return;
+    container.innerHTML = ""; // Bersihkan tampilan lama
 
-    // Filter berkas global agar hanya menampilkan data yang sesuai dengan komponen terpilih dan guru yang login
-    const dataTerfilter = Object.values(dataBerkasGlobal).filter(berkas => {
-        const matchesIndikator = kompAktif.indikator.includes(berkas.id_indikator);
-        const matchesUser = emailGuruLogin ? (berkas.uploader_email === emailGuruLogin) : true;
-        return matchesIndikator && matchesUser;
-    });
-
-    if (dataTerfilter.length === 0) {
-        container.innerHTML = `<div class="status-empty-box">Belum ada bukti fisik yang diunggah untuk Komponen ${komponenTerpilihId}.</div>`;
+    // Ambil komponen aktif saat ini berdasarkan pilihan user
+    const komponenAktif = MASTER_KOMPONEN.find(k => k.id === komponenTerpilihId);
+    if (!komponenAktif || !komponenAktif.indikator) {
+        container.innerHTML = "<p style='color: white; text-align: center;'>Pilih komponen terlebih dahulu untuk melihat indikator.</p>";
         return;
     }
 
-    // Palet warna estetik untuk kartu hasil upload
-    const paletTema = [
-        { bg: '#0f766e', teks: '#ffffff', border: '#0f766e', btnLihat: '#ffffff', btnLihatTeks: '#0f766e' },
-        { bg: '#1e40af', teks: '#ffffff', border: '#1e40af', btnLihat: '#ffffff', btnLihatTeks: '#1e40af' },
-        { bg: '#f8fafc', teks: '#1e293b', border: '#cbd5e1', btnLihat: '#e2e8f0', btnLihatTeks: '#334155' }
-    ];
+    // Looping semua daftar indikator (misal: ["1.1.1", "1.1.2"])
+    komponenAktif.indikator.forEach(idIndikator => {
+        // COCOKKAN DATA: Cek apakah ID Indikator ini memiliki berkas di dalam database global kita
+        // dataBerkasGlobal didapat dari hasil: dataBerkasGlobal = await ambilSemuaBerkasPKKM();
+        const berkasTerunggah = dataBerkasGlobal && dataBerkasGlobal[idIndikator];
 
-    dataTerfilter.forEach((data, index) => {
-        const card = document.createElement("div");
-        card.className = "pkkm-card-box";
-        const tema = paletTema[index % paletTema.length];
+        const kartuIndikator = document.createElement("div");
+        kartuIndikator.className = "card-indikator"; // Gunakan kelas CSS Anda
+        kartuIndikator.style.cssText = "background: rgba(255,255,255,0.9); padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);";
 
-        card.style.cssText = `
-            background-color: ${tema.bg}; color: ${tema.teks}; border: 1px solid ${tema.border};
-            border-radius: 12px; padding: 16px; display: flex; flex-direction: column;
-        `;
+        if (berkasTerunggah) {
+            // JIKA ADA FILE: Tampilkan detail nama dokumen dan tombol download/lihat
+            kartuIndikator.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <span style="background: ${komponenAktif.warna || '#115e59'}; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${idIndikator}</span>
+                        <strong style="margin-left: 10px; color: #1e293b;">${berkasTerunggah.nama_dokumen || 'Dokumen Bukti Fisik'}</strong>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 5px;">📄 File: ${berkasTerunggah.nama_file_asli} (${berkasTerunggah.tipe_file.split('/')[1].toUpperCase()})</div>
+                    </div>
+                    <div>
+                        <button onclick="bukaPreviewBerkas('${idIndikator}')" style="background: #0f766e; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem;">👁️ Lihat Berkas</button>
+                        <button onclick="prosesHapusBerkas('${idIndikator}')" style="background: #dc2626; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; margin-left: 5px;">🗑️</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            // JIKA BELUM ADA FILE: Tampilkan status kosong agar guru bisa tahu indikator mana yang belum diisi
+            kartuIndikator.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="background: #64748b; color: white; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85rem;">${idIndikator}</span>
+                        <span style="margin-left: 10px; color: #64748b; font-style: italic;">Belum ada bukti fisik yang diunggah untuk indikator ini.</span>
+                    </div>
+                    <span style="font-size: 0.85rem; color: #94a3b8; font-weight: 600;">⚠️ Kosong</span>
+                </div>
+            `;
+        }
 
-        card.innerHTML = `
-            <div style="line-height: 1.6;">
-                <div style="font-size: 0.9rem; font-weight: bold; margin-bottom: 2px;">Kode Indikator: ${data.id_indikator}</div>
-                <div style="font-size: 0.95rem; font-weight: bold; margin-bottom: 6px;">📌 ${data.nama_dokumen}</div>
-                <div style="font-size: 0.8rem; opacity: 0.85; margin-bottom: 12px;">📁 Berkas: ${data.nama_file_asli || 'Dokumen'}</div>
-            </div>
-            <div style="display: flex; gap: 6px; margin-top: auto; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2);">
-                <button class="btn-action-mini btn-mini-lihat" style="background: ${tema.btnLihat}; color: ${tema.btnLihatTeks}; border-radius: 6px; padding: 6px; font-weight: bold; flex: 1;">💻 Lihat</button>
-                <button class="btn-action-mini btn-mini-unduh" style="background: #e0f2fe; color: #0369a1; border-radius: 6px; padding: 6px; font-weight: bold; flex: 1;">ℹ️ Download</button>
-                <button class="btn-action-mini btn-mini-hapus" style="background: #ffe4e6; color: #9f1239; border-radius: 6px; padding: 6px; font-weight: bold; flex: 1;">🗑️ Hapus</button>
-            </div>
-        `;
-
-        card.querySelector(".btn-mini-lihat").addEventListener("click", () => pratinjauBerkasPDF(data.file_base64, data.tipe_file));
-        card.querySelector(".btn-mini-unduh").addEventListener("click", () => unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
-        card.querySelector(".btn-mini-hapus").addEventListener("click", () => tanganiHapus(data.id_indikator));
-
-        container.appendChild(card);
+        container.appendChild(kartuIndikator);
     });
 }
 
+// Tambahkan fungsi preview global agar file Base64 bisa dibuka langsung di tab baru browser
+window.bukaPreviewBerkas = function(idIndikator) {
+    const berkas = dataBerkasGlobal[idIndikator];
+    if (!berkas || !berkas.file_base64) {
+        alert("Berkas gagal dimuat!");
+        return;
+    }
+    const win = window.open();
+    win.document.write(`<iframe src="${berkas.file_base64}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+};
 // ==========================================================================
 // LOGIKA AKSI SIMPAN DATA KE FIRESTORE (AMAN DENGAN EMAIL USER LOGGED IN)
 // ==========================================================================
