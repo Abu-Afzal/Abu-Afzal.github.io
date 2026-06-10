@@ -48,63 +48,21 @@ export async function uploadDokumenPKKM(idIndikator, fileFisik, metadata) {
     }
 }
 
-// Mengambil seluruh database berkas PKKM
+// Mengambil seluruh database berkas PKKM dari Firestore
 export async function ambilSemuaBerkasPKKM() {
     try {
         const querySnapshot = await getDocs(collection(db, "pkkm_berkas"));
         const dataMaster = {};
+        
         querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            // Kembalikan key-nya menggunakan id_indikator aslinya (misal 1.1.1) agar grid bawah tidak patah
-            if (data.id_indikator) {
-                dataMaster[data.id_indikator] = data;
-            } else {
-                dataMaster[doc.id] = data;
-            }
+            // doc.id di sini bernilai "1.1.1", "2.1.1", dll sesuai Screenshot (160)
+            dataMaster[doc.id] = doc.data();
         });
-        return dataMaster;
+        
+        console.log("Data Berkas PKKM berhasil dimuat ke lokal:", dataMaster);
+        return dataMaster; // Mengembalikan object dengan key berupa ID Indikator (e.g. dataMaster["1.1.1"])
     } catch (error) {
-        console.error("Gagal ambil data PKKM:", error);
-        throw error;
-    }
-}
-
-// Menghapus data dokumen dari Firestore
-export async function hapusDokumenPKKM(idIndikator) {
-    try {
-        const namaDocAman = `indikator_${idIndikator.replace(/\./g, '_')}`;
-        await deleteDoc(doc(db, "pkkm_berkas", namaDocAman));
-        return { success: true };
-    } catch (error) {
-        console.error("Gagal hapus berkas:", error);
-        throw error;
-    }
-}
-
-// ==========================================================================
-// MASTER DATA DARI HALAMAN ADMIN PKKM
-// ==========================================================================
-export async function ambilMasterKomponen() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "pkkm_master"));
-        let daftarKomponen = [];
-        querySnapshot.forEach((doc) => {
-            daftarKomponen.push(doc.data());
-        });
-        return daftarKomponen.sort((a, b) => a.id.localeCompare(b.id));
-    } catch (error) {
-        console.error("Gagal mengambil master komponen:", error);
-        return [];
-    }
-}
-
-export async function simpanMasterKomponenBaru(id, dataPayload) {
-    try {
-        const docRef = doc(db, "pkkm_master", `komponen_${id}`);
-        await setDoc(docRef, dataPayload);
-        return true;
-    } catch (error) {
-        console.error("Gagal mendaftarkan komponen baru:", error);
+        console.error("Gagal ambil data berkas PKKM dari database:", error);
         throw error;
     }
 }
