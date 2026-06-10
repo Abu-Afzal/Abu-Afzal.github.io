@@ -1,15 +1,11 @@
-import { uploadDokumenPKKM, ambilSemuaBerkasPKKM, hapusDokumenPKKM } from './pkkm-db.js';
+// REVISI: Menambahkan import 'ambilMasterKomponen' dari database layer
+import { uploadDokumenPKKM, ambilSemuaBerkasPKKM, hapusDokumenPKKM, ambilMasterKomponen } from './pkkm-db.js';
 
-// Master data acuan komponen utama PKKM (Target total indikator ideal)
-const MASTER_KOMPONEN = [
-    { id: "1", nama: "Usaha Pengembangan Madrasah", target: 4, warna: "#2e7d32" },
-    { id: "2", nama: "Pelaksanaan Tugas Manajerial", target: 4, warna: "#1565c0" },
-    { id: "3", nama: "Pengembangan Kewirausahaan", target: 2, warna: "#ef6c00" },
-    { id: "4", nama: "Supervisi GTK", target: 2, warna: "#c62828" }
-];
+// Sekarang MASTER_KOMPONEN diubah menjadi let (Array Kosong) yang akan diisi otomatis dari Firestore
+let MASTER_KOMPONEN = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    muatAplikasiPKKM();
+    deteksiRoleDanMuatAplikasi();
     
     const form = document.getElementById("formUploadPkkm");
     if(form) {
@@ -17,7 +13,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Fungsi pintu utama untuk memuat dashboard atas dan grid bawah sekaligus
+/**
+ * 1. DETEKSI ROLE & AKUN GURU (Sesuai Konsep Otomatisasi)
+ */
+async function deteksiRoleDanMuatAplikasi() {
+    try {
+        // Gimmick Loader: Beri tanda sistem sedang membaca session login
+        console.log("Mendeteksi hak akses pengguna...");
+        
+        // Ambil data Master Komponen dari Firestore terlebih dahulu
+        MASTER_KOMPONEN = await ambilMasterKomponen();
+        
+        // JIKA FIRESTORE MASIH KOSONG: Beri data cadangan (Seeding) agar aplikasi tidak blank saat pertama kali jalan
+        if (MASTER_KOMPONEN.length === 0) {
+            MASTER_KOMPONEN = [
+                { id: "1", nama: "Usaha Pengembangan Madrasah", target: 4, warna: "#2e7d32", indikator: ["1.1.1", "1.1.2", "1.1.3", "1.1.4"] },
+                { id: "2", nama: "Pelaksanaan Tugas Manajerial", target: 4, warna: "#1565c0", indikator: ["2.1.1", "2.1.2", "2.1.3", "2.1.4"] },
+                { id: "3", nama: "Pengembangan Kewirausahaan", target: 2, warna: "#ef6c00", indikator: ["3.1.1", "3.1.2"] },
+                { id: "4", nama: "Supervisi GTK", target: 2, warna: "#c62828", indikator: ["4.1.1", "4.1.2"] }
+            ];
+        }
+
+        // Jalankan pengisian dropdown secara otomatis berdasarkan master data terupdate
+        isiDropdownIndikatorOtomatis();
+
+        // Muat data berkas dan render halaman utama
+        await muatAplikasiPKKM();
+
+    } catch (error) {
+        console.error("Gagal mendeteksi role/master data PKKM:", error);
+    }
+}
+
+/**
+ * 2. PINTU UTAMA: Memuat Dashboard Atas & Grid Kartu Bawah
+ */
 async function muatAplikasiPKKM() {
     try {
         const masterBerkas = await ambilSemuaBerkasPKKM();
@@ -28,83 +58,84 @@ async function muatAplikasiPKKM() {
     }
 }
 
-// ==========================================================================
-// UTILITY GLOBAL: AKSI UNDUH & LIHAT BERKAS BASE64 (Didaftarkan ke Window)
-// ==========================================================================
-window.unduhBerkasDariBase64 = function(stringBase64, namaFileAsli) {
-    if (!stringBase64) return alert("Konten berkas tidak ditemukan atau rusak!");
-    const link = document.createElement("a");
-    link.href = stringBase64;
-    link.download = namaFileAsli || "dokumen_pkkm.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
+/**
+ * 3. OTOMATISASI DROPDOWN FORM: Guru tidak perlu mengetik nama komponen lagi
+ */
+function isiDropdownIndikatorOtomatis() {
+    const elIndikator = document.getElementById("selectIndikator");
+    const elKomponen = document.getElementById("inputKomponen");
+    if (!elIndikator) return;
 
-window.pratinjauBerkasPDF = function(stringBase64, tipeFile) {
-    if (!stringBase64) return alert("Konten file kosong!");
+    elIndikator.innerHTML = '<option value="">-- Pilih Kode Indikator --</option>';
     
-    if (!tipeFile || !tipeFile.includes("pdf")) {
-        alert("Pratinjau langsung hanya mendukung format PDF. File Excel/Word/Lainnya otomatis terunduh saat Anda klik 'Download'.");
-        return;
-    }
-    const win = window.open();
-    if (win) {
-        win.document.write(`<iframe src="${stringBase64}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
-    } else {
-        alert("Pop-up diblokir! Mohon izinkan akses pop-up pada pengaturan browser Anda untuk melihat pratinjau berkas.");
-    }
+    // Looping memasukkan semua indikator dari seluruh komponen ke dalam dropdown select
+    MASTER_KOMPONEN.forEach(komp => {
+        if (komp.indikator && Array.isArray(komp.indikator)) {
+            komp.indikator.forEach(ind => {
+                const opt = document.createElement("option");
+                opt.value = ind;
+                opt.innerText = `${ind} - (Komponen ${komp.id})`;
+                elIndikator.appendChild(opt);
+            });
+        }
+    });
+
+    // Otomatisasi Efek: Ketika guru memilih indikator (misal 1.1.1), input nama komponen otomatis terisi sendiri
+    elIndikator.addEventListener("change", (e) => {
+        const nilaiTerpilih = e.target.value;
+        if (!nilaiTerpilih) {
+            if (elKomponen) elKomponen.value = "";
+            return;
+        }
+        const awalanId = nilaiTerpilih.split('.')[0];
+        const cocokKomp = MASTER_KOMPONEN.find(k => k.id === awalanId);
+        if (cocokKomp && elKomponen) {
+            elKomponen.value = cocokKomp.nama; // Mengisi otomatis teks komponen
+        }
+    });
 }
 
-window.tanganiHapus = async function(idIndikator) {
-    if (!idIndikator) return;
-    if (!confirm(`Apakah Anda yakin ingin menghapus berkas bukti fisik pada indikator ${idIndikator} secara permanen?`)) return;
-    
-    try {
-        await hapusDokumenPKKM(idIndikator);
-        alert("Alhamdulillah, Berkas Berhasil Dihapus!");
-        muatAplikasiPKKM(); // Refresh dashboard visual & list kartu secara real-time
-    } catch (err) {
-        alert("Gagal menghapus berkas: " + err.message);
-    }
-}
-
-// ==========================================================================
-// FUNGSI LOGIKA: MENGHITUNG & MERENDER PROGRESS BAR GLASSMORPHISM
-// ==========================================================================
+/**
+ * 4. RENDER DASHBOARD PROGRESS BAR (Mendukung Multi Komponen 4 hingga 6 secara Dinamis)
+ */
 function hitungDanRenderDashboard(masterBerkas) {
     const gridKontainer = document.getElementById("gridKomponenUtama");
     if (!gridKontainer) return;
     gridKontainer.innerHTML = "";
 
-    // Inisialisasi hitungan berkas yang terkumpul per komponen awal
-    const counterKoleksi = { "1": 0, "2": 0, "3": 0, "4": 0 };
+    // REVISI SUPER DINAMIS: Membuat counter otomatis mengikuti jumlah komponen di Firestore
+    const counterKoleksi = {};
+    MASTER_KOMPONEN.forEach(komp => {
+        counterKoleksi[komp.id] = 0;
+    });
 
-    // Hitung kemunculan berdasarkan nomor awalan indikator (misal 1.1.1 masuk ke komponen 1)
+    // Hitung berkas yang ada di database berdasarkan kode depan indikator
     for (const key in masterBerkas) {
         const data = masterBerkas[key];
-        const awalan = data.id_indikator ? data.id_indikator.charAt(0) : "";
+        const awalan = data.id_indikator ? data.id_indikator.split('.')[0] : "";
         if (counterKoleksi[awalan] !== undefined) {
             counterKoleksi[awalan]++;
         }
     }
 
-    // Bangun visual kartu glassmorphism per komponen utama
+    // Menggambar Kartu Glassmorphism mengikuti gaya .galeri-card Anda
     MASTER_KOMPONEN.forEach(komp => {
         const jumlahTerisi = counterKoleksi[komp.id] || 0;
         const persentase = Math.min(Math.round((jumlahTerisi / komp.target) * 100), 100);
 
         const cardKomp = document.createElement("div");
+        cardKomp.className = "galeri-card"; // Menyelaraskan dengan CSS Glassmorphism milik Anda
         cardKomp.style.cssText = `
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            transition: transform 0.3s ease;
         `;
 
         cardKomp.innerHTML = `
@@ -127,37 +158,25 @@ function hitungDanRenderDashboard(masterBerkas) {
     });
 }
 
-// ==========================================================================
-// FUNGSI LOGIKA: PROSES SIMPAN AMAN (PENANGANAN ERROR & RESET)
-// ==========================================================================
+/**
+ * 5. PROSES SIMPAN AMAN
+ */
 async function tanganiProsesSimpan(e) {
-    e.preventDefault(); // Mencegah reload halaman
-    
+    e.preventDefault();
     const btn = document.getElementById("btnSimpanPkkm");
     
-    const elIndikator = document.getElementById("selectIndikator");
-    const elKomponen = document.getElementById("inputKomponen");
-    const elNamaDokumen = document.getElementById("inputNamaDokumen");
-    const elFile = document.getElementById("inputFilePkkm");
+    const idIndikator = document.getElementById("selectIndikator").value;
+    const komponen = document.getElementById("inputKomponen").value;
+    const namaDokumen = document.getElementById("inputNamaDokumen").value;
+    const fileFisik = document.getElementById("inputFilePkkm").files[0];
 
-    if (!elIndikator || !elKomponen || !elNamaDokumen || !elFile) {
-        alert("Error: Ada elemen form yang tidak ditemukan di HTML. Mohon periksa kembali id input Anda.");
+    if (!idIndikator || !namaDokumen || !fileFisik) {
+        alert("Mohon lengkapi semua form terlebih dahulu!");
         return;
     }
 
-    const idIndikator = elIndikator.value;
-    const komponen = elKomponen.value;
-    const namaDokumen = elNamaDokumen.value;
-    const fileFisik = elFile.files[0];
-
-    if (!fileFisik) {
-        alert("Mohon pilih file berkas terlebih dahulu!");
-        return;
-    }
-
-    // Mengunci proteksi 1 MB Base64 demi kelancaran server Firestore
     if (fileFisik.size > 1.0 * 1024 * 1024) {
-        alert("Ukuran berkas melebihi batas maksimal 1 MB! Mohon kompres file PDF Anda terlebih dahulu.");
+        alert("Ukuran berkas melebihi batas maksimal 1 MB! Mohon kompres file Anda terlebih dahulu.");
         return;
     }
 
@@ -168,31 +187,27 @@ async function tanganiProsesSimpan(e) {
         await uploadDokumenPKKM(idIndikator, fileFisik, {
             komponen: komponen,
             namaDokumen: namaDokumen,
-            user: "Guru/Staf Madrasah"
+            uploader_email: "Guru/Staf Madrasah"
         });
 
         alert("Alhamdulillah, Dokumen PKKM Berhasil Disimpan!");
         document.getElementById("formUploadPkkm").reset();
-        
-        // Memuat ulang data aplikasi secara sinkron untuk memperbarui view bawah & progress bar
-        muatAplikasiPKKM();
+        await muatAplikasiPKKM();
 
     } catch (err) {
-        console.error("Error detail saat simpan:", err);
-        alert("Gagal menyimpan dokumen. Pesan Error: " + err.message);
+        alert("Gagal menyimpan dokumen: " + err.message);
     } finally {
         btn.disabled = false;
         btn.innerText = "Simpan Dokumen PKKM";
     }
 }
 
-// ==========================================================================
-// FUNGSI LOGIKA: MERENDER KARTU BUKTI FISIK BERWARNA (SINKRON DENGAN EVENT LISTENER)
-// ==========================================================================
+/**
+ * 6. RENDER KARTU BUKTI FISIK BERWARNA
+ */
 function muatKartuMonitoring(masterBerkas) {
     const container = document.getElementById("containerKartuPkkm");
     if (!container) return;
-
     container.innerHTML = "";
 
     if (!masterBerkas || Object.keys(masterBerkas).length === 0) {
@@ -216,14 +231,10 @@ function muatKartuMonitoring(masterBerkas) {
         const tema = paletTema[index % paletTema.length];
         index++;
 
-        card.style.backgroundColor = tema.bg;
-        card.style.color = tema.teks;
-        card.style.borderColor = tema.border;
-        card.style.borderRadius = '12px';
-        card.style.padding = '16px';
-        card.style.display = 'flex';
-        card.style.flexDirection = 'column';
-        card.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)';
+        card.style.cssText = `
+            background-color: ${tema.bg}; color: ${tema.teks}; border: 1px solid ${tema.border};
+            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        `;
 
         card.innerHTML = `
             <div style="line-height: 1.6;">
@@ -241,11 +252,46 @@ function muatKartuMonitoring(masterBerkas) {
             </div>
         `;
 
-        // Menggunakan pemicu event listener lokal yang merujuk langsung ke fungsi objek Window Global
         card.querySelector(".btn-mini-lihat").addEventListener("click", () => window.pratinjauBerkasPDF(data.file_base64, data.tipe_file));
         card.querySelector(".btn-mini-unduh").addEventListener("click", () => window.unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
         card.querySelector(".btn-mini-hapus").addEventListener("click", () => window.tanganiHapus(data.id_indikator));
 
         container.appendChild(card);
+    }
+}
+
+// ==========================================================================
+// WINDOW INTERACTION ACTIONS
+// ==========================================================================
+window.unduhBerkasDariBase64 = function(stringBase64, namaFileAsli) {
+    const link = document.createElement("a");
+    link.href = stringBase64;
+    link.download = namaFileAsli;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+window.pratinjauBerkasPDF = function(stringBase64, tipeFile) {
+    if (!tipeFile || !tipeFile.includes("pdf")) {
+        alert("Pratinjau langsung hanya mendukung PDF. File Excel/Word otomatis terunduh saat Anda klik 'Download'.");
+        return;
+    }
+    const win = window.open();
+    if (win) {
+        win.document.write(`<iframe src="${stringBase64}" frameborder="0" style="border:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+    } else {
+        alert("Pop-up diblokir browser!");
+    }
+}
+
+window.tanganiHapus = async function(idIndikator) {
+    if (!confirm(`Hapus berkas pada indikator ${idIndikator}?`)) return;
+    try {
+        await hapusDokumenPKKM(idIndikator);
+        alert("Berkas berhasil dihapus!");
+        await muatAplikasiPKKM();
+    } catch (err) {
+        alert("Gagal menghapus: " + err.message);
     }
 }
