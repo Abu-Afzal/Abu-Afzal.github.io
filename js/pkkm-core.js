@@ -221,10 +221,7 @@ async function tanganiProsesSimpan(e) {
     const namaDokumen = document.getElementById("inputNamaDokumen").value;
     const fileFisik = document.getElementById("inputFilePkkm").files[0];
 
-    if (!idIndikator || !namaDokumen || !fileFisik) {
-        alert("Mohon lengkapi semua data form sebelum menyimpan!");
-        return;
-    }
+    if (!idIndikator || !namaDokumen || !fileFisik) return;
 
     try {
         btn.disabled = true;
@@ -232,32 +229,59 @@ async function tanganiProsesSimpan(e) {
 
         const kompAktif = MASTER_KOMPONEN.find(k => k.id === komponenTerpilihId);
 
-        // 1. Jalankan upload ke database
+        // Upload berkas dengan menyertakan metadata email guru agar bisa diisolasi privat
         await uploadDokumenPKKM(idIndikator, fileFisik, {
             komponen: kompAktif ? kompAktif.nama : "Umum",
             namaDokumen: namaDokumen,
             uploader_email: emailGuruLogin || "publik@madrasah.id"
         });
 
-        // 2. Alert dipindahkan setelah data lokal dipastikan sukses diperbarui
-        try {
-            dataBerkasGlobal = await ambilSemuaBerkasPKKM();
-        } catch (errDb) {
-            console.warn("Data tersimpan, namun gagal merefresh visual secara real-time:", errDb);
-        }
-
         alert("Alhamdulillah, Dokumen Bukti Fisik Berhasil Disimpan!");
         document.getElementById("formUploadPkkm").reset();
         
-        // 3. Render ulang tampilan bawah secara aman
+        // Perbarui data lokal dan render ulang komponen agar progress bar langsung naik otomatis
+        dataBerkasGlobal = await ambilSemuaBerkasPKKM();
         muatGridKartuBawah();
 
     } catch (err) {
-        console.error(err);
         alert("Gagal menyimpan dokumen: " + err.message);
     } finally {
-        // Mengembalikan status tombol agar tidak tertahan di "Memproses Upload..."
         btn.disabled = false;
         btn.innerText = "Simpan Dokumen PKKM";
+    }
+}
+
+// ==========================================================================
+// UTILITY: HANDLER AKSI FILE
+// ==========================================================================
+function unduhBerkasDariBase64(stringBase64, namaFileAsli) {
+    const link = document.createElement("a");
+    link.href = stringBase64;
+    link.download = namaFileAsli;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function pratinjauBerkasPDF(stringBase64, tipeFile) {
+    if (!tipeFile || !tipeFile.includes("pdf")) {
+        alert("Pratinjau langsung hanya mendukung PDF. Ekstensi lain otomatis terunduh.");
+        return;
+    }
+    const win = window.open();
+    if (win) {
+        win.document.write(`<iframe src="${stringBase64}" frameborder="0" style="border:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+    }
+}
+
+async function tanganiHapus(idIndikator) {
+    if (!confirm(`Hapus berkas pada indikator ${idIndikator}?`)) return;
+    try {
+        await hapusDokumenPKKM(idIndikator);
+        alert("Berkas berhasil dihapus!");
+        dataBerkasGlobal = await ambilSemuaBerkasPKKM();
+        muatGridKartuBawah();
+    } catch (err) {
+        alert("Gagal menghapus: " + err.message);
     }
 }
