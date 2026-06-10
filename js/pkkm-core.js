@@ -1,4 +1,6 @@
-// REVISI: Menambahkan import 'ambilMasterKomponen' dari database layer
+// ==========================================================================
+// KODE UTUH REVISI: pkkm-core.js
+// ==========================================================================
 import { uploadDokumenPKKM, ambilSemuaBerkasPKKM, hapusDokumenPKKM, ambilMasterKomponen } from './pkkm-db.js';
 
 // Sekarang MASTER_KOMPONEN diubah menjadi let (Array Kosong) yang akan diisi otomatis dari Firestore
@@ -18,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
  */
 async function deteksiRoleDanMuatAplikasi() {
     try {
-        // Gimmick Loader: Beri tanda sistem sedang membaca session login
         console.log("Mendeteksi hak akses pengguna...");
         
         // Ambil data Master Komponen dari Firestore terlebih dahulu
@@ -159,7 +160,7 @@ function hitungDanRenderDashboard(masterBerkas) {
 }
 
 /**
- * 5. PROSES SIMPAN AMAN
+ * 5. PROSES SIMPAN AMAN (REVISI: Integrasi Objek Base64 yang Benar untuk Firestore)
  */
 async function tanganiProsesSimpan(e) {
     e.preventDefault();
@@ -184,19 +185,49 @@ async function tanganiProsesSimpan(e) {
         btn.disabled = true;
         btn.innerText = "⏳ Memproses Penyimpanan...";
 
-        await uploadDokumenPKKM(idIndikator, fileFisik, {
-            komponen: komponen,
-            namaDokumen: namaDokumen,
-            uploader_email: "Guru/Staf Madrasah"
-        });
+        // 1. Jalankan pembacaan file fisik menjadi String Base64
+        const reader = new FileReader();
+        reader.readAsDataURL(fileFisik);
+        
+        reader.onload = async function () {
+            const base64String = reader.result;
 
-        alert("Alhamdulillah, Dokumen PKKM Berhasil Disimpan!");
-        document.getElementById("formUploadPkkm").reset();
-        await muatAplikasiPKKM();
+            // 2. Susun payload JSON murni yang sesuai dengan kebutuhan fungsi muatKartuMonitoring()
+            const payloadData = {
+                id_indikator: idIndikator,
+                komponen: komponen,
+                nama_dokumen: namaDokumen,
+                nama_file_asli: fileFisik.name,
+                tipe_file: fileFisik.type,
+                file_base64: base64String, // String Base64 disimpan di sini
+                uploader_email: "Guru/Staf Madrasah",
+                waktu_upload: new Date().toISOString()
+            };
+
+            try {
+                // 3. Kirim ke fungsi db layer hanya membawa 2 parameter utama
+                await uploadDokumenPKKM(idIndikator, payloadData);
+
+                alert("Alhamdulillah, Dokumen PKKM Berhasil Disimpan!");
+                document.getElementById("formUploadPkkm").reset();
+                await muatAplikasiPKKM();
+
+            } catch (err) {
+                alert("Gagal menyimpan ke database: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Simpan Dokumen PKKM";
+            }
+        };
+
+        reader.onerror = function() {
+            alert("Gagal membaca enkripsi file fisik komputer.");
+            btn.disabled = false;
+            btn.innerText = "Simpan Dokumen PKKM";
+        };
 
     } catch (err) {
-        alert("Gagal menyimpan dokumen: " + err.message);
-    } finally {
+        alert("Gagal memproses dokumen: " + err.message);
         btn.disabled = false;
         btn.innerText = "Simpan Dokumen PKKM";
     }
