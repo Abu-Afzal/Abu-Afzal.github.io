@@ -40,7 +40,16 @@ export async function simpanMasterKomponenBaru(id, payload) {
     }
 }
 
-
+// 3. Menghapus data master komponen dari Firestore
+export async function hapusMasterKomponen(id) {
+    try {
+        await deleteDoc(doc(db, "pkkm_master", id));
+        return { success: true };
+    } catch (error) {
+        console.error("Gagal menghapus master komponen:", error);
+        throw error;
+    }
+}
 /** ==========================================
  * B. SUB-SISTEM BERKAS BUKTI FISIK (GURU)
  * ========================================== */
