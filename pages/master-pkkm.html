@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Konfigurasi PKKM - Panel Admin</title>
+    <style>
+        /* BASE STYLE & GRADIENT BACKGROUND */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #115e59 100%);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .admin-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header-title h1 {
+            margin: 0;
+            font-size: 2rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .header-title p {
+            margin: 5px 0 0 0;
+            color: #2dd4bf;
+            font-size: 0.95rem;
+        }
+
+        /* UTILITY LINK BUTTON */
+        .btn-kembali {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-kembali:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-3px);
+        }
+
+        /* TWO COLUMN LAYOUT */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        @media (min-width: 850px) {
+            .admin-grid {
+                grid-template-columns: 400px 1fr;
+            }
+        }
+
+        /* GLASSMORPHISM CARD STYLE */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+            color: #2dd4bf;
+        }
+
+        /* FORM MANAGEMENT STYLE */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #e2e8f0;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(15, 23, 42, 0.6);
+            color: #ffffff;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #2dd4bf;
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25);
+        }
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .row-flex {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #0d9488;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background: #0f766e;
+            transform: translateY(-2px);
+        }
+        .btn-submit:disabled {
+            background: #64748b;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* DYNAMIC LIST TABLES/CARDS */
+        .master-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comp-item-card {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            border-left: 6px solid #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s ease;
+        }
+        .comp-item-card:hover {
+            transform: scale(1.01);
+        }
+
+        .comp-info h3 {
+            margin: 0 0 4px 0;
+            font-size: 1.05rem;
+        }
+        .comp-info p {
+            margin: 0 0 8px 0;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        .tag-indikator {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-family: monospace;
+        }
+
+        .action-area {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-edit-tool {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .btn-edit-tool:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-container">
+        <a href="pkkm.html" class="btn-kembali">← Kembali ke Dashboard Utama</a>
+
+        <div class="header-title">
+            <h1>⚙️ MASTER DATA INSTRUMEN PKKM</h1>
+            <p>Kelola Komponen, Target Berkas, & Indikator Penilaian Secara Real-Time</p>
+        </div>
+
+        <div class="admin-grid">
+            <div class="glass-panel">
+                <h2 class="panel-title" id="formActionTitle">Tambah Komponen Baru</h2>
+                <form id="formMasterKomponen">
+                    <div class="row-flex">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="compId">ID Komponen *</label>
+                            <input type="text" id="compId" class="form-control" placeholder="Contoh: 5" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="compTarget">Target Berkas *</label>
+                            <input type="number" id="compTarget" class="form-control" placeholder="Misal: 4" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="compNama">Nama Komponen Utama *</label>
+                        <input type="text" id="compNama" class="form-control" placeholder="Masukkan nama ruang lingkup tugas..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="compWarna">Warna Identitas Kartu *</label>
+                        <div class="row-flex">
+                            <input type="color" id="compWarna" class="form-control" style="width: 60px; padding: 2px; height: 38px;" value="#1565c0">
+                            <input type="text" id="compWarnaTeks" class="form-control" placeholder="#1565c0" value="#1565c0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="compIndikator">Daftar Kode Indikator (Pisahkan dengan Koma) *</label>
+                        <textarea id="compIndikator" class="form-control" placeholder="Contoh: 5.1.1, 5.1.2, 5.1.3, 5.2.1" required></textarea>
+                        <small style="color: #94a3b8; font-size: 0.75rem; display: block; margin-top: 4px;">
+                            * Gunakan tanda koma sebagai pemisah antar kode indikator instrumen.
+                        </small>
+                    </div>
+
+                    <button type="submit" id="btnSimpanMaster" class="btn-submit">Simpan Komponen</button>
+                    <button type="button" id="btnBatalEdit" class="btn-submit" style="background:#64748b; display:none; margin-top:5px;">Batal Edit</button>
+                </form>
+            </div>
+
+            <div class="glass-panel">
+                <h2 class="panel-title">Daftar Komponen PKKM yang Aktif di Sistem</h2>
+                <div id="wrapperListMaster" class="master-list-container">
+                    <p style="text-align: center; color: #94a3b8; font-style: italic;">Sedang memuat master data instrumen...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ambilMasterKomponen, simpanMasterKomponenBaru } from './js/pkkm-db.js';
+
+        let DATA_MASTER_LOKAL = [];
+        let modeEditAktif = false;
+
+        const form = document.getElementById("formMasterKomponen");
+        const inputWarnaPicker = document.getElementById("compWarna");
+        const inputWarnaTeks = document.getElementById("compWarnaTeks");
+
+        // Sinkronisasi input picker warna dengan box teks kode HEX
+        inputWarnaPicker.addEventListener("input", (e) => {
+            inputWarnaTeks.value = e.target.value;
+        });
+        inputWarnaTeks.addEventListener("input", (e) => {
+            if(e.target.value.startsWith("#") && e.target.value.length === 7) {
+                inputWarnaPicker.value = e.target.value;
+            }
+        });
+
+        // Trigger inisialisasi awal halaman
+        document.addEventListener("DOMContentLoaded", muatHalamanMasterAdmin);
+
+        async function muatHalamanMasterAdmin() {
+            try {
+                DATA_MASTER_LOKAL = await ambilMasterKomponen();
+                renderDaftarKomponenKeAplikasi();
+            } catch (error) {
+                console.error("Gagal inisialisasi halaman master admin:", error);
+            }
+        }
+
+        // Fungsi menggambar daftar komponen terdaftar
+        function renderDaftarKomponenKeAplikasi() {
+            const container = document.getElementById("wrapperListMaster");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (DATA_MASTER_LOKAL.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-style: italic;">Belum ada komponen kustom terdaftar. Sistem saat ini berjalan menggunakan mode backup default (4 Komponen).</p>';
+                return;
+            }
+
+            DATA_MASTER_LOKAL.forEach(komp => {
+                const card = document.createElement("div");
+                card.className = "comp-item-card";
+                card.style.borderLeftColor = komp.warna || "#ffffff";
+
+                // Cetak pil/tag indikator secara dinamis
+                let stringIndikatorHtml = "";
+                if (komp.indikator && Array.isArray(komp.indikator)) {
+                    komp.indikator.forEach(ind => {
+                        stringIndikatorHtml += `<span class="tag-indikator">${ind}</span>`;
+                    });
+                }
+
+                card.innerHTML = `
+                    <div class="comp-info">
+                        <h3>Komponen ${komp.id}: ${komp.nama}</h3>
+                        <p>🎯 Target: <strong>${komp.target} Berkas Bukti Fisik</strong> | Warna Kartu: <span style="color:${komp.warna}; font-weight:bold;">${komp.warna}</span></p>
+                        <div style="margin-top: 5px;">${stringIndikatorHtml}</div>
+                    </div>
+                    <div class="action-area">
+                        <button type="button" class="btn-edit-tool btn-pemicu-edit">✏️ Edit</button>
+                    </div>
+                `;
+
+                // Event listener tombol edit per baris komponen
+                card.querySelector(".btn-pemicu-edit").addEventListener("click", () => {
+                    persiapkanModeEdit(komp);
+                });
+
+                container.appendChild(card);
+            });
+        }
+
+        // Memasukkan data kartu terpilih ke dalam kolom input form kiri untuk direvisi
+        function persiapkanModeEdit(komp) {
+            modeEditAktif = true;
+            document.getElementById("formActionTitle").innerText = `Revisi Komponen ${komp.id}`;
+            
+            const inputId = document.getElementById("compId");
+            inputId.value = komp.id;
+            inputId.disabled = true; // ID Kunci Utama dikunci tidak boleh diubah demi relasi data
+
+            document.getElementById("compTarget").value = komp.target;
+            document.getElementById("compNama").value = komp.nama;
+            
+            inputWarnaPicker.value = komp.warna || "#1565c0";
+            inputWarnaTeks.value = komp.warna || "#1565c0";
+
+            // Menggabungkan array indikator kembali menjadi string berjarak koma
+            document.getElementById("compIndikator").value = komp.indikator ? komp.indikator.join(", ") : "";
+
+            document.getElementById("btnBatalEdit").style.display = "block";
+            document.getElementById("btnSimpanMaster").innerText = "Simpan Perubahan";
+        }
+
+        // Membatalkan skema edit dan mereset form ke kondisi input baru
+        document.getElementById("btnBatalEdit").addEventListener("click", resetKondisiFormFormulir);
+
+        function resetKondisiFormFormulir() {
+            modeEditAktif = false;
+            document.getElementById("formActionTitle").innerText = "Tambah Komponen Baru";
+            
+            const inputId = document.getElementById("compId");
+            inputId.value = "";
+            inputId.disabled = false;
+
+            form.reset();
+            inputWarnaPicker.value = "#1565c0";
+            inputWarnaTeks.value = "#1565c0";
+
+            document.getElementById("btnBatalEdit").style.display = "none";
+            document.getElementById("btnSimpanMaster").innerText = "Simpan Komponen";
+        }
+
+        // Eksekusi pengiriman formulir ke database Firestore layer
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("btnSimpanMaster");
+
+            const id = document.getElementById("compId").value.trim();
+            const target = parseInt(document.getElementById("compTarget").value, 10);
+            const nama = document.getElementById("compNama").value.trim();
+            const warna = inputWarnaTeks.value.trim();
+            
+            // Logika pemecah string text indikator menjadi Array murni bersih tanpa spasi liar
+            const rawIndikator = document.getElementById("compIndikator").value;
+            const arrayIndikatorBersih = rawIndikator.split(",")
+                                                    .map(item => item.trim())
+                                                    .filter(item => item.length > 0);
+
+            if (arrayIndikatorBersih.length === 0) {
+                alert("Mohon masukkan minimal 1 kode indikator!");
+                return;
+            }
+
+            const payloadMaster = {
+                id: id,
+                nama: nama,
+                target: target,
+                warna: warna,
+                indikator: arrayIndikatorBersih
+            };
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "⏳ Menyimpan ke Database...";
+
+                // Eksekusi fungsi simpan ke Firestore
+                await simpanMasterKomponenBaru(id, payloadMaster);
+
+                alert(`Alhamdulillah, Parameter Komponen ${id} berhasil diperbarui di sistem pusat!`);
+                
+                resetKondisiFormFormulir();
+                await muatHalamanMasterAdmin(); // Refresh live view list kanan
+
+            } catch (err) {
+                alert("Gagal meregistrasi komponen: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = modeEditAktif ? "Simpan Perubahan" : "Simpan Komponen";
+            }
+        });
+    </script>
+</body>
+</html>
