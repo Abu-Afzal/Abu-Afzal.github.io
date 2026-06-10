@@ -1,17 +1,20 @@
+// ==========================================================================
+// KODE UTUH TERBARU: js/pkkm-db.js (Versi CDN 10.12.0)
+// ==========================================================================
 import { db } from './firebase-config.js';
 import { 
     collection, 
     doc, 
     setDoc, 
     getDocs, 
-    deleteDoc, 
+    deleteDoc, // <-- SEKARANG SUDAH AMAN TERPASANG DI SINI PAK 👍
     query, 
     orderBy 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/** ==========================================
+/** ==========================================================================
  * A. SUB-SISTEM MASTER INSTRUMEN (ADMIN)
- * ========================================== */
+ * ========================================================================== */
 
 // 1. Ambil data master komponen untuk konfigurasi kartu & indikator
 export async function ambilMasterKomponen() {
@@ -50,11 +53,13 @@ export async function hapusMasterKomponen(id) {
         throw error;
     }
 }
-/** ==========================================
- * B. SUB-SISTEM BERKAS BUKTI FISIK (GURU)
- * ========================================== */
 
-// 3. Upload atau simpan dokumen e-file berbasis Base64
+
+/** ==========================================================================
+ * B. SUB-SISTEM BERKAS BUKTI FISIK (GURU)
+ * ========================================================================== */
+
+// 4. Upload atau simpan dokumen e-file berbasis Base64
 export async function uploadDokumenPKKM(idIndikator, payload) {
     try {
         await setDoc(doc(db, "pkkm_berkas", idIndikator), payload);
@@ -65,7 +70,7 @@ export async function uploadDokumenPKKM(idIndikator, payload) {
     }
 }
 
-// 4. Ambil semua berkas bukti fisik yang sudah berhasil dikumpulkan guru
+// 5. Ambil semua berkas bukti fisik yang sudah berhasil dikumpulkan guru
 export async function ambilSemuaBerkasPKKM() {
     try {
         const querySnapshot = await getDocs(collection(db, "pkkm_berkas"));
@@ -80,7 +85,7 @@ export async function ambilSemuaBerkasPKKM() {
     }
 }
 
-// 5. Menghapus data berkas dari Firestore
+// 6. Menghapus data berkas dari Firestore
 export async function hapusDokumenPKKM(idIndikator) {
     try {
         await deleteDoc(doc(db, "pkkm_berkas", idIndikator));
