@@ -21,26 +21,20 @@ export function konversiFileKeBase64(file) {
 export async function uploadDokumenPKKM(idIndikator, fileFisik, metadata) {
     try {
         const stringBase64 = await konversiFileKeBase64(fileFisik);
+        const docRef = doc(db, "pkkm_berkas", idIndikator);
         
-        // REVISI AMAN: Memberikan prefix 'indikator_' agar karakter titik (contoh: 1.1.1) 
-        // tidak merusak jalur pembacaan token ID dokumen di Firestore
-        const namaDocAman = `indikator_${idIndikator.replace(/\./g, '_')}`;
-        const docRef = doc(db, "pkkm_berkas", namaDocAman);
-        
-        // Sinkronisasi field payload agar membaca uploader_email dengan aman
         const payload = {
             id_indikator: idIndikator,
-            komponen: metadata.komponen || "Umum",
-            nama_dokumen: metadata.namaDokumen || "Dokumen Tanpa Nama",
+            komponen: metadata.komponen,
+            nama_dokumen: metadata.namaDokumen,
             tipe_file: fileFisik.type,
             nama_file_asli: fileFisik.name,
             file_base64: stringBase64,
-            uploader_email: metadata.uploader_email || "publik@madrasah.id",
+            diupload_oleh: metadata.user || "Staf Madrasah",
             uploadedAt: new Date().toISOString()
         };
 
-        // Menjalankan perintah setDoc murni
-        await setDoc(docRef, payload);
+        await setDoc(docRef, payload, { merge: true });
         return { success: true };
     } catch (error) {
         console.error("Gagal simpan ke Firestore:", error);
@@ -48,21 +42,28 @@ export async function uploadDokumenPKKM(idIndikator, fileFisik, metadata) {
     }
 }
 
-// Mengambil seluruh database berkas PKKM dari Firestore
+// Mengambil seluruh database berkas PKKM
 export async function ambilSemuaBerkasPKKM() {
     try {
         const querySnapshot = await getDocs(collection(db, "pkkm_berkas"));
         const dataMaster = {};
-        
         querySnapshot.forEach((doc) => {
-            // doc.id di sini bernilai "1.1.1", "2.1.1", dll sesuai Screenshot (160)
             dataMaster[doc.id] = doc.data();
         });
-        
-        console.log("Data Berkas PKKM berhasil dimuat ke lokal:", dataMaster);
-        return dataMaster; // Mengembalikan object dengan key berupa ID Indikator (e.g. dataMaster["1.1.1"])
+        return dataMaster;
     } catch (error) {
-        console.error("Gagal ambil data berkas PKKM dari database:", error);
+        console.error("Gagal ambil data PKKM:", error);
+        throw error;
+    }
+}
+
+// Menghapus data dokumen dari Firestore
+export async function hapusDokumenPKKM(idIndikator) {
+    try {
+        await deleteDoc(doc(db, "pkkm_berkas", idIndikator));
+        return { success: true };
+    } catch (error) {
+        console.error("Gagal hapus berkas:", error);
         throw error;
     }
 }
