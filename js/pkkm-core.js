@@ -1,100 +1,76 @@
-import { db } from './firebase-config.js';
-import { 
-    doc, 
-    setDoc, 
-    collection, 
-    getDocs,
-    deleteDoc 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PKKM - Portal SIPELITA</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="sipena-bg">
 
-// 1. Mengubah file fisik kiriman user menjadi Teks Base64
-export function konversiFileKeBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-}
+<div class="sipena-modul main-container">
+    <div class="sipena-header">
+        <div class="header-info-sp">
+            <div class="header-title-sp">Modul PKKM</div>
+            <div class="header-subtitle-sp">Penilaian Kinerja Kepala Madrasah — Portal SIPELITA</div>
+        </div>
+    </div>
 
-// 2. Menyimpan berkas di Firestore (ID Dokumen Murni sesuai Screenshot 160)
-export async function uploadDokumenPKKM(idIndikator, fileFisik, metadata) {
-    try {
-        const stringBase64 = await konversiFileKeBase64(fileFisik);
-        
-        // Tetap menggunakan idIndikator murni (e.g. "1.1.1") agar sinkron dengan database Anda saat ini
-        const docRef = doc(db, "pkkm_berkas", idIndikator);
-        
-        const payload = {
-            id_indikator: idIndikator,
-            komponen: metadata.komponen || "Umum",
-            nama_dokumen: metadata.namaDokumen || "Dokumen Tanpa Nama",
-            tipe_file: fileFisik.type,
-            nama_file_asli: fileFisik.name,
-            file_base64: stringBase64,
-            diupload_oleh: metadata.uploader_email || "Staf Madrasah",
-            uploadedAt: new Date().toISOString()
-        };
+    <div class="content-area-sp active" style="margin-bottom: 24px;">
+        <div class="section-title-sp">Form Unggah Bukti Fisik PKKM</div>
+        <form id="formUploadPkkm">
+            <div class="form-group-sp">
+                <label class="form-label-sp">Pilih Indikator Instrumen</label>
+                <select id="selectIndikator" class="form-input-sp" required>
+                    <option value="">-- Pilih Kode Indikator Penilaian --</option>
+                    <option value="1.1.1">1.1.1 — Struktur Organisasi & RKJM Madrasah</option>
+                    <option value="1.1.2">1.1.2 — Dokumen Evaluasi Diri Madrasah (EDM)</option>
+                    <option value="1.2.1">1.2.1 — Pelaksanaan Program Kewirausahaan</option>
+                    <option value="1.3.1">1.3.1 — Hasil Supervisi Akademik Guru</option>
+                </select>
+            </div>
 
-        await setDoc(docRef, payload);
-        return { success: true };
-    } catch (error) {
-        console.error("Gagal simpan ke Firestore:", error);
-        throw error;
-    }
-}
+            <div class="form-group-sp">
+                <label class="form-label-sp">Nama Komponen Utama</label>
+                <input type="text" id="inputKomponen" class="form-input-sp" placeholder="Contoh: Usaha Pengembangan Madrasah" required>
+            </div>
 
-// 3. Mengambil seluruh database berkas PKKM untuk dirender di grid bawah
-export async function ambilSemuaBerkasPKKM() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "pkkm_berkas"));
-        const dataMaster = {};
-        querySnapshot.forEach((doc) => {
-            dataMaster[doc.id] = doc.data();
-        });
-        console.log("Data berkas berhasil dimuat:", dataMaster);
-        return dataMaster;
-    } catch (error) {
-        console.error("Gagal ambil data PKKM:", error);
-        throw error;
-    }
-}
+            <div class="form-group-sp">
+                <label class="form-label-sp">Nama Label Dokumen</label>
+                <input type="text" id="inputNamaDokumen" class="form-input-sp" placeholder="Contoh: SK Tim Penjamin Mutu 2026" required>
+            </div>
 
-// 4. FUNGSI YANG HILANG (Wajib di-export agar pkkm-core.js tidak crash)
-export async function hapusDokumenPKKM(idIndikator) {
-    try {
-        await deleteDoc(doc(db, "pkkm_berkas", idIndikator));
-        console.log(`Berkas indikator ${idIndikator} berhasil dihapus dari database.`);
-        return { success: true };
-    } catch (error) {
-        console.error("Gagal hapus berkas:", error);
-        throw error;
-    }
-}
+            <div class="form-group-sp">
+                <label class="form-label-sp">Pilih File Berkas (PDF, Excel, Word)</label>
+                <input type="file" id="inputFilePkkm" class="form-input-sp" accept=".pdf,.xlsx,.xls,.docx,.doc" required>
+                <small style="color: #e74c3c; display: block; margin-top: 4px; font-weight: 600;">* Batas rekomendasi file terkompresi: Maksimal 1 MB</small>
+            </div>
 
-// 5. Mengambil master komponen dinamis untuk halaman utama/admin
-export async function ambilMasterKomponen() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "pkkm_master"));
-        let daftarKomponen = [];
-        querySnapshot.forEach((doc) => {
-            daftarKomponen.push(doc.data());
-        });
-        return daftarKomponen.sort((a, b) => a.id.localeCompare(b.id));
-    } catch (error) {
-        console.error("Gagal mengambil master komponen:", error);
-        return [];
-    }
-}
+            <button type="submit" id="btnSimpanPkkm" class="btn-sp btn-sp-primary" style="width: 100%; padding: 12px;">
+                💾 Simpan Dokumen PKKM
+            </button>
+        </form>
+    </div>
 
-// 6. Menyimpan master komponen baru dari halaman admin-pkkm.html
-export async function simpanMasterKomponenBaru(id, dataPayload) {
-    try {
-        const docRef = doc(db, "pkkm_master", `komponen_${id}`);
-        await setDoc(docRef, dataPayload);
-        return true;
-    } catch (error) {
-        console.error("Gagal mendaftarkan komponen baru:", error);
-        throw error;
-    }
-}
+    <div class="content-area-sp active">
+        <div class="section-title-sp">Monitoring & Bukti Fisik Terkumpul</div>
+        <div class="table-container-sp">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 10%;">Kode</th>
+                        <th style="width: 25%;">Komponen</th>
+                        <th style="width: 35%;">Nama Dokumen Terupload</th>
+                        <th style="width: 30%; text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelBodyPkkm">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="js/pkkm-core.js"></script>
+</body>
+</html>
