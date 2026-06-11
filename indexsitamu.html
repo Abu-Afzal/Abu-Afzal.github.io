@@ -42,8 +42,9 @@
             font-size: 14px;
             opacity: 0.9;
         }
+        
         .cloud-status {
-            display: none; 
+            display: inline-block; 
             background: rgba(255, 255, 255, 0.2);
             padding: 5px 12px;
             border-radius: 20px;
@@ -51,6 +52,20 @@
             margin-top: 10px;
             font-weight: 600;
         }
+
+        /* Panel Informasi Bar Pengguna Terlogin */
+        .user-nav-bar {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
         .acara-section {
             background: white;
             padding: 20px;
@@ -235,6 +250,13 @@
             background-color: #0e8076;
         }
 
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #bd2130;
+        }
+
         .btn-block {
             width: 100%;
             padding: 12px 20px;
@@ -336,7 +358,6 @@
             text-decoration: underline;
         }
 
-        /* Loading Spinner */
         .loading-text {
             text-align: center;
             padding: 20px;
@@ -354,93 +375,100 @@
         <div class="cloud-status" id="statusKoneksi">🔄 Menghubungkan ke Firebase...</div>
     </header>
 
-    <div class="acara-section">
-        <div class="acara-header">
-            <div class="acara-title">Daftar Acara / Hajatan</div>
-            <form class="form-tambah-acara" id="formAcara">
-                <input type="text" id="namaAcaraBaru" class="form-control" placeholder="Contoh: Undangan Pernikahan Fulan dan Fulanah" required>
-                <button type="submit" class="btn">+ Tambah</button>
-            </form>
-        </div>
-        
-        <div class="tabs-container" id="wadahTabs">
-            </div>
+    <div class="user-nav-bar">
+        <div>Akun Aktif: <strong id="userEmailAktif" style="color: #11998e;">Mengecek sesi...</strong></div>
+        <button type="button" class="btn btn-danger" id="btnLogout" style="padding: 6px 14px; font-size: 13px;">Keluar</button>
     </div>
 
-    <div id="kontenUtama" style="display: none;">
-        <div class="grid">
-            <div class="grid-col">
-                <div class="card">
-                    <h2>Tambah Catatan Amplop Baru</h2>
-                    <form id="formCatatan">
-                        <div class="form-group">
-                            <label for="namaTamu">Nama Tamu Undangan</label>
-                            <input type="text" id="namaTamu" class="form-control" placeholder="Contoh: Abu Afzal" required>
+    <div id="areaAplikasiUtama" style="display: none;">
+        <div class="acara-section">
+            <div class="acara-header">
+                <div class="acara-title">Daftar Acara / Hajatan</div>
+                <form class="form-tambah-acara" id="formAcara">
+                    <input type="text" id="namaAcaraBaru" class="form-control" placeholder="Contoh: Undangan Pernikahan Fulan dan Fulanah" required>
+                    <button type="submit" class="btn">+ Tambah</button>
+                </form>
+            </div>
+            
+            <div class="tabs-container" id="wadahTabs"></div>
+        </div>
+
+        <div id="kontenUtama" style="display: none;">
+            <div class="grid">
+                <div class="grid-col">
+                    <div class="card">
+                        <h2>Tambah Catatan Amplop Baru</h2>
+                        <form id="formCatatan">
+                            <div class="form-group">
+                                <label for="namaTamu">Nama Tamu Undangan</label>
+                                <input type="text" id="namaTamu" class="form-control" placeholder="Contoh: Abu Afzal" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="asalTamu">Asal / Alamat</label>
+                                <input type="text" id="asalTamu" class="form-control" placeholder="Contoh: Lamanda" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nominalMasker">Nominal Amplop (Rp)</label>
+                                <input type="text" id="nominalMasker" class="form-control" placeholder="Contoh: 100.000" required>
+                            </div>
+                            <button type="submit" class="btn btn-block">Simpan Catatan</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="grid-col">
+                    <div class="card">
+                        <h2>Ringkasan Dana & Tamu (<span id="judulStatistikAcara">Acara</span>)</h2>
+                        <div class="stats-box">
+                            <p>Total Dana Terkumpul</p>
+                            <h3 id="totalDana">Rp 0</h3>
                         </div>
-                        <div class="form-group">
-                            <label for="asalTamu">Asal / Alamat / </label>
-                            <input type="text" id="asalTamu" class="form-control" placeholder="Contoh: Lamanda" required>
+                        <div class="stats-box">
+                            <p>Total Tamu Tercatat</p>
+                            <h3 id="totalTamu">0 Orang</h3>
                         </div>
-                        <div class="form-group">
-                            <label for="nominalMasker">Nominal Amplop (Rp)</label>
-                            <input type="text" id="nominalMasker" class="form-control" placeholder="Contoh: 100.000" required>
+                        <div class="stats-box">
+                            <p>Belum Dibalas</p>
+                            <h3 id="totalBelum">0 Orang</h3>
                         </div>
-                        <button type="submit" class="btn btn-block">Simpan Catatan</button>
-                    </form>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid-col">
-                <div class="card">
-                    <h2>Ringkasan Dana & Tamu (<span id="judulStatistikAcara">Acara</span>)</h2>
-                    <div class="stats-box">
-                        <p>Total Dana Terkumpul</p>
-                        <h3 id="totalDana">Rp 0</h3>
-                    </div>
-                    <div class="stats-box">
-                        <p>Total Tamu Tercatat</p>
-                        <h3 id="totalTamu">0 Orang</h3>
-                    </div>
-                    <div class="stats-box">
-                        <p>Belum Dibalas</p>
-                        <h3 id="totalBelum">0 Orang</h3>
-                    </div>
+            <div class="card search-container">
+                <h2>Pencarian Data Kontan / Real-Time (<span id="judulPencarianAcara">Acara</span>)</h2>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <input type="text" id="keywordSaring" class="form-control" placeholder="Ketik Nama atau Asal daerah untuk mencari secara instan...">
                 </div>
             </div>
-        </div>
 
-        <div class="card search-container">
-            <h2>Pencarian Data Kontan / Real-Time (<span id="judulPencarianAcara">Acara</span>)</h2>
-            <div class="form-group" style="margin-bottom: 0;">
-                <input type="text" id="keywordSaring" class="form-control" placeholder="Ketik Nama atau Asal daerah untuk mencari secara instan...">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">No</th>
+                            <th style="width: 30%;">Nama Tamu</th>
+                            <th style="width: 30%;">Asal / Alamat</th>
+                            <th style="width: 15%;">Nominal</th>
+                            <th style="width: 15%;">Status Balas</th>
+                            <th style="width: 5%;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyTabel">
+                        <tr><td colspan="6" class="loading-text">Memuat data dari cloud...</td></tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 5%;">No</th>
-                        <th style="width: 30%;">Nama Tamu</th>
-                        <th style="width: 30%;">Asal / Alamat</th>
-                        <th style="width: 15%;">Nominal</th>
-                        <th style="width: 15%;">Status Balas</th>
-                        <th style="width: 5%;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="bodyTabel">
-                    <tr><td colspan="6" class="loading-text">Memuat data dari cloud...</td></tr>
-                </tbody>
-            </table>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, push, onValue, remove, update, get, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // Konfigurasi Firebase milik Anda
+    // Konfigurasi Firebase Anda
     const firebaseConfig = {
         apiKey: "AIzaSyBhDGXnuMIvfr-9AXCIw1zgDuJWfCgMUyE",
         authDomain: "data-undangan-digital-9dc5a.firebaseapp.com",
@@ -452,13 +480,15 @@
         databaseURL: "https://data-undangan-digital-9dc5a-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
 
-    // Inisialisasi Aplikasi Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
 
     // State Aplikasi Global
     let masterAcara = {};
     let idAcaraAktif = localStorage.getItem('idAcaraAktif') || null;
+    let currentUser = null;
+    let dbListenerRef = null;
 
     // Element Selector
     const statusKoneksi = document.getElementById('statusKoneksi');
@@ -466,6 +496,40 @@
     const bodyTabel = document.getElementById('bodyTabel');
     const keywordSaring = document.getElementById('keywordSaring');
     const nominalMasker = document.getElementById('nominalMasker');
+    const userEmailAktif = document.getElementById('userEmailAktif');
+    const areaAplikasiUtama = document.getElementById('areaAplikasiUtama');
+
+    // --- PROTEKSI DAN SECURITY GUARD AUTHENTICATION ---
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // Validasi lapis kedua: Cek status isApproved di database
+            get(ref(db, `users/${user.uid}/isApproved`)).then((snapshot) => {
+                if (snapshot.val() === true) {
+                    currentUser = user;
+                    userEmailAktif.innerText = user.email;
+                    areaAplikasiUtama.style.display = "block"; // Tampilkan modul utama
+                    sinkronisasiDataCloud(); // Mulai memuat data miliknya
+                } else {
+                    melemparKeLogin("Akun Anda belum disetujui oleh Admin.");
+                }
+            }).catch(() => melemparKeLogin("Gagal mengambil data autentikasi user."));
+        } else {
+            melemparKeLogin();
+        }
+    });
+
+    function melemparKeLogin(pesan = "") {
+        if (pesan) alert(pesan);
+        if (dbListenerRef && currentUser) { off(dbListenerRef); }
+        signOut(auth).then(() => {
+            window.location.href = "login.html";
+        });
+    }
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+        localStorage.removeItem('idAcaraAktif');
+        melemparKeLogin();
+    });
 
     // --- MASKING INPUT RIBUAN ---
     nominalMasker.addEventListener('input', function(e) {
@@ -481,28 +545,29 @@
         return "Rp " + parseInt(angka).toLocaleString('id-ID');
     }
 
-    // --- SYNCHRONIZE DATA REALTIME DARI CLOUD ---
-    const dbRef = ref(db, 'masterAcara');
-    onValue(dbRef, (snapshot) => {
-        masterAcara = snapshot.val() || {};
-        statusKoneksi.innerText = "☁️ Terhubung ke Firebase Cloud";
-        statusKoneksi.style.background = "rgba(0, 0, 0, 0.3)";
-        
-        // Pilih key acara pertama jika belum ada yang aktif atau acara aktif dihapus oleh user lain
-        const keys = Object.keys(masterAcara);
-        if (keys.length > 0 && (!idAcaraAktif || !masterAcara[idAcaraAktif])) {
-            idAcaraAktif = keys[0];
-            localStorage.setItem('idAcaraAktif', idAcaraAktif);
-        } else if (keys.length === 0) {
-            idAcaraAktif = null;
-        }
+    // --- SYNCHRONIZE DATA REALTIME DARI CLOUD (BERDASARKAN UID USER) ---
+    function sinkronisasiDataCloud() {
+        dbListenerRef = ref(db, `users/${currentUser.uid}/masterAcara`);
+        onValue(dbListenerRef, (snapshot) => {
+            masterAcara = snapshot.val() || {};
+            statusKoneksi.innerText = "☁️ Terhubung ke Firebase Cloud";
+            statusKoneksi.style.background = "rgba(0, 0, 0, 0.3)";
+            
+            const keys = Object.keys(masterAcara);
+            if (keys.length > 0 && (!idAcaraAktif || !masterAcara[idAcaraAktif])) {
+                idAcaraAktif = keys[0];
+                localStorage.setItem('idAcaraAktif', idAcaraAktif);
+            } else if (keys.length === 0) {
+                idAcaraAktif = null;
+            }
 
-        renderTabs();
-        renderData();
-    }, (error) => {
-        statusKoneksi.innerText = "❌ Gagal Terhubung Database";
-        statusKoneksi.style.background = "#dc3545";
-    });
+            renderTabs();
+            renderData();
+        }, (error) => {
+            statusKoneksi.innerText = "❌ Gagal Terhubung Database";
+            statusKoneksi.style.background = "#dc3545";
+        });
+    }
 
     // --- MANAJEMEN TAB / SHEET ACARA ---
     function renderTabs() {
@@ -522,17 +587,15 @@
             const isActive = key === idAcaraAktif;
             const tombolTab = document.createElement('button');
             tombolTab.className = `tab-button ${isActive ? 'active' : ''}`;
-            
             tombolTab.innerHTML = `📄 ${acara.namaAcara} `;
             
-            // Tombol silang hapus acara
             const btnHapus = document.createElement('span');
             btnHapus.className = 'btn-hapus-acara';
             btnHapus.innerText = '×';
             btnHapus.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if (confirm(`Hapus permanen Sheet "${acara.namaAcara}" beserta seluruh data tamunya dari cloud?`)) {
-                    remove(ref(db, `masterAcara/${key}`));
+                    remove(ref(db, `users/${currentUser.uid}/masterAcara/${key}`));
                 }
             });
             
@@ -565,10 +628,10 @@
 
         const infoAcaraBaru = {
             namaAcara: namaBaru,
-            dataTamu: "" // Diinisialisasi kosong terlebih dahulu
+            dataTamu: ""
         };
 
-        const newAcaraRef = push(ref(db, 'masterAcara'));
+        const newAcaraRef = push(ref(db, `users/${currentUser.uid}/masterAcara`));
         idAcaraAktif = newAcaraRef.key;
         localStorage.setItem('idAcaraAktif', idAcaraAktif);
 
@@ -576,7 +639,6 @@
             namaInput.value = "";
         });
     });
-
 
     // --- MANAJEMEN DATA TAMU / AMPLOP ---
     function renderData() {
@@ -586,7 +648,6 @@
         const objekTamu = masterAcara[idAcaraAktif].dataTamu || {};
         const keyword = keywordSaring.value.toLowerCase();
 
-        // Konversi objek database Firebase menjadi array untuk disaring & diurutkan berdasarkan waktu input terbaru
         const arrayTamu = Object.keys(objekTamu).map(key => ({
             idFirebase: key,
             ...objekTamu[key]
@@ -621,27 +682,25 @@
                 tdNominal.innerText = formatRupiah(item.nominal);
                 tr.appendChild(tdNominal);
 
-                // Badge Status Balas klikable
                 const tdStatus = document.createElement('td');
                 const badge = document.createElement('span');
                 badge.className = `status-badge ${item.sudahKembali ? 'status-sudah' : 'status-belum'}`;
                 badge.innerText = item.sudahKembali ? 'Sudah Dibalas' : 'Belum Dibalas';
                 badge.addEventListener('click', () => {
-                    update(ref(db, `masterAcara/${idAcaraAktif}/dataTamu/${item.idFirebase}`), {
+                    update(ref(db, `users/${currentUser.uid}/masterAcara/${idAcaraAktif}/dataTamu/${item.idFirebase}`), {
                         sudahKembali: !item.sudahKembali
                     });
                 });
                 tdStatus.appendChild(badge);
                 tr.appendChild(tdStatus);
 
-                // Tombol Hapus Tamu
                 const tdAksi = document.createElement('td');
                 const btnHapus = document.createElement('button');
                 btnHapus.className = 'btn-delete';
                 btnHapus.innerText = 'Hapus';
                 btnHapus.addEventListener('click', () => {
                     if (confirm(`Hapus catatan tamu "${item.nama}" dari cloud?`)) {
-                        remove(ref(db, `masterAcara/${idAcaraAktif}/dataTamu/${item.idFirebase}`));
+                        remove(ref(db, `users/${currentUser.uid}/masterAcara/${idAcaraAktif}/dataTamu/${item.idFirebase}`));
                     }
                 });
                 tdAksi.appendChild(btnHapus);
@@ -654,7 +713,6 @@
         updateStatistik(arrayTamu);
     }
 
-    // Input Pencarian Realtime lokal untuk kenyamanan ketik kilat
     keywordSaring.addEventListener('keyup', renderData);
 
     function updateStatistik(arrayTamu) {
@@ -693,7 +751,7 @@
             timestamp: Date.now()
         };
 
-        const tamuBaruRef = push(ref(db, `masterAcara/${idAcaraAktif}/dataTamu`));
+        const tamuBaruRef = push(ref(db, `users/${currentUser.uid}/masterAcara/${idAcaraAktif}/dataTamu`));
         set(tamuBaruRef, tamuBaru).then(() => {
             document.getElementById('formCatatan').reset();
         });
