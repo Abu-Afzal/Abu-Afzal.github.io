@@ -296,7 +296,7 @@ function tampilkanDaftarFolderUtama(container, masterBerkas) {
                 <span style="background: ${komp.warna}12; color: ${komp.warna}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">
                     ${persentase}% Selesai
                 </span>
-                <span style="font-size: 0.8rem; color: ${komp.warna}; font-weight: bold; opacity: 0.8;">Buka Berkas ➔</span>
+                <span style="font-size: 0.8rem; color: ${komp.warna}; font-weight: bold; opacity: 0.8;">
             </div>
         `;
 
