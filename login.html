@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masuk - Aplikasi Catatan Undangan Digital</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: white;
+            max-width: 430px;
+            width: 100%;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .brand-header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .brand-header p {
+            font-size: 13px;
+            color: #777;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            border: 1px solid #ccd1d9;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #11998e;
+            box-shadow: 0 0 0 3px rgba(17, 153, 142, 0.1);
+        }
+
+        /* Fitur Intip Password */
+        .password-wrapper {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 13px;
+            color: #888;
+            user-select: none;
+            font-weight: 600;
+        }
+
+        .toggle-password:hover {
+            color: #11998e;
+        }
+
+        .action-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 13px;
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: #11998e;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            box-shadow: 0 4px 12px rgba(17, 153, 142, 0.2);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .switch-auth-mode {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        /* Modal / Overlay Status Tunggu Admin */
+        .overlay-status {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            z-index: 10;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .overlay-status h3 {
+            color: #e67e22;
+            margin-bottom: 10px;
+        }
+
+        .overlay-status p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div class="overlay-status" id="overlayStatus">
+        <div style="font-size: 40px; margin-bottom: 15px;">⏳</div>
+        <h3>Pendaftaran Berhasil!</h3>
+        <p>Akun Anda sedang dalam antrean verifikasi oleh Admin. Silakan hubungi admin untuk mengaktifkan akses Anda.</p>
+        <button class="btn-link" id="btnKembaliLogin">Kembali ke Login</button>
+    </div>
+
+    <div id="sectionLogin">
+        <div class="brand-header">
+            <h1>CANDI APP</h1>
+            <p>Masuk untuk mengelola catatan amplop digital Anda</p>
+        </div>
+
+        <form id="formLogin">
+            <div class="form-group">
+                <label for="loginEmail">Email</label>
+                <input type="email" id="loginEmail" class="form-control" placeholder="nama@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password" required>
+                    <span class="toggle-password" onclick="intipPassword('loginPassword', this)">LIHAT</span>
+                </div>
+            </div>
+            <div class="action-flex">
+                <div></div>
+                <button type="button" class="btn-link" id="btnLupaPassword">Lupa Password?</button>
+            </div>
+            <button type="submit" class="btn-primary">Masuk Sekarang</button>
+        </form>
+
+        <div class="switch-auth-mode">
+            Belum punya akun? <button class="btn-link" id="LariKeDaftar">Daftar Akun Baru</button>
+        </div>
+    </div>
+
+    <div id="sectionDaftar" style="display: none;">
+        <div class="brand-header">
+            <h1>Daftar Akun</h1>
+            <p>Buat akun baru. Akses memerlukan persetujuan admin.</p>
+        </div>
+
+        <form id="formDaftar">
+            <div class="form-group">
+                <label for="daftarEmail">Alamat Email</label>
+                <input type="email" id="daftarEmail" class="form-control" placeholder="nama@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="daftarPassword">Buat Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="daftarPassword" class="form-control" placeholder="Minimal 6 karakter" required>
+                    <span class="toggle-password" onclick="intipPassword('daftarPassword', this)">LIHAT</span>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="background: #555;">Kirim Permohonan Daftar</button>
+        </form>
+
+        <div class="switch-auth-mode">
+            Sudah punya akun? <button class="btn-link" id="LariKeLogin">Masuk di sini</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // Konfigurasi Firebase milik Anda
+    const firebaseConfig = {
+        apiKey: "AIzaSyBhDGXnuMIvfr-9AXCIw1zgDuJWfCgMUyE",
+        authDomain: "data-undangan-digital-9dc5a.firebaseapp.com",
+        projectId: "data-undangan-digital-9dc5a",
+        storageBucket: "data-undangan-digital-9dc5a.firebasestorage.app",
+        messagingSenderId: "765763173060",
+        appId: "1:765763173060:web:043f3f4f5d3de0e30ae791",
+        measurementId: "G-1HTRDFF02C",
+        databaseURL: "https://data-undangan-digital-9dc5a-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    // Navigasi Tampilan Antarmuka Lokal
+    const secLogin = document.getElementById('sectionLogin');
+    const secDaftar = document.getElementById('sectionDaftar');
+    const overlayStatus = document.getElementById('overlayStatus');
+
+    document.getElementById('LariKeDaftar').addEventListener('click', () => { secLogin.style.display='none'; secDaftar.style.display='block'; });
+    document.getElementById('LariKeLogin').addEventListener('click', () => { secDaftar.style.display='none'; secLogin.style.display='block'; });
+    document.getElementById('btnKembaliLogin').addEventListener('click', () => { overlayStatus.style.display='none'; secDaftar.style.display='none'; secLogin.style.display='block'; });
+
+    // --- FITUR 1: DAFTAR AKUN (PENDING VERIFIKASI) ---
+    document.getElementById('formDaftar').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('daftarEmail').value.trim();
+        const password = document.getElementById('daftarPassword').value;
+
+        createUserWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                // Set metadata awal di database: isApproved = false
+                set(ref(db, `users/${user.uid}`), {
+                    email: email,
+                    isApproved: false
+                }).then(() => {
+                    // Masukkan ke antrean log registrasi luar agar admin mudah melihat rekapnya
+                    set(ref(db, `approval_requests/${user.uid}`), {
+                        email: email,
+                        uid: user.uid,
+                        status: "Menunggu Persetujuan"
+                    });
+
+                    // Langsung keluarkan user dari sesi aktif agar tidak langsung lolos masuk
+                    signOut(auth).then(() => {
+                        overlayStatus.style.display = 'flex';
+                        document.getElementById('formDaftar').reset();
+                    });
+                });
+            })
+            .catch(err => alert("Gagal Daftar: " + err.message));
+    });
+
+    // --- FITUR 2: LOGIN DENGAN VALIDASI ADMIN ---
+    document.getElementById('formLogin').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+
+                // Periksa apakah status di database sudah di-approve oleh admin
+                get(ref(db, `users/${user.uid}/isApproved`)).then((snapshot) => {
+                    const isApproved = snapshot.val();
+                    
+                    if (isApproved === true) {
+                        // Jika disetujui, lempar ke halaman aplikasi utama
+                        window.location.href = "index.html";
+                    } else {
+                        // Jika belum disetujui, tendang keluar dan beri peringatan
+                        signOut(auth).then(() => {
+                            alert("Akses Ditolak: Akun Anda belum disetujui oleh Admin. Silakan hubungi pengelola sistem.");
+                        });
+                    }
+                });
+            })
+            .catch(err => alert("Gagal Masuk: " + err.message));
+    });
+
+    // --- FITUR 3: LUPA PASSWORD ---
+    document.getElementById('btnLupaPassword').addEventListener('click', () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        if (!email) return alert("Ketik email Anda di kolom input terlebih dahulu untuk mengirimkan link reset!");
+        
+        sendPasswordResetEmail(auth, email)
+            .then(() => alert("Link reset password telah dikirim ke email Anda. Silakan cek kotak masuk/spam."))
+            .catch(err => alert("Gagal mengirim link: " + err.message));
+    });
+
+    // Ekspos fungsi intip password ke window agar bisa dipanggil inline HTML
+    window.intipPassword = function(idInput, element) {
+        const input = document.getElementById(idInput);
+        if (input.type === "password") {
+            input.type = "text";
+            element.innerText = "SEMBUNYIKAN";
+        } else {
+            input.type = "password";
+            element.innerText = "LIHAT";
+        }
+    }
+</script>
+</body>
+</html>
