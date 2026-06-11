@@ -1,5 +1,5 @@
 // ==========================================================================
-// KODE UTUH REVISI: pkkm-core.js (Satu Komponen = Satu Kartu Induk)
+// KODE UTUH REVISI: pkkm-core.js (Sistem Folder Accordion Hemat Ruang)
 // ==========================================================================
 import { uploadDokumenPKKM, ambilSemuaBerkasPKKM, hapusDokumenPKKM, ambilMasterKomponen } from './pkkm-db.js';
 
@@ -53,7 +53,7 @@ async function muatAplikasiPKKM() {
     try {
         const masterBerkas = await ambilSemuaBerkasPKKM();
         hitungDanRenderDashboard(masterBerkas);
-        muatKartuMonitoring(masterBerkas); // Ini fungsi yang kita rombak strukturnya
+        muatKartuMonitoring(masterBerkas); 
     } catch (err) {
         console.error("Gagal memuat aplikasi PKKM:", err);
     }
@@ -71,7 +71,7 @@ function isiDropdownIndikatorOtomatis() {
     
     // Looping memasukkan semua indikator dari seluruh komponen ke dalam dropdown select
     MASTER_KOMPONEN.forEach(komp => {
-        if (komp.indigo && Array.isArray(komp.indikator)) {
+        if (komp.indikator && Array.isArray(komp.indikator)) {
             komp.indikator.forEach(ind => {
                 const opt = document.createElement("option");
                 opt.value = ind;
@@ -97,7 +97,7 @@ function isiDropdownIndikatorOtomatis() {
 }
 
 /**
- * 4. RENDER DASHBOARD PROGRESS BAR ATAS (Mengikuti gaya komponen Anda)
+ * 4. RENDER DASHBOARD PROGRESS BAR ATAS
  */
 function hitungDanRenderDashboard(masterBerkas) {
     const gridKontainer = document.getElementById("gridKomponenUtama");
@@ -228,7 +228,7 @@ async function tanganiProsesSimpan(e) {
 }
 
 /**
- * 6. REVISI TOTAL: RENDER MONITORING BERSARANG (Satu Komponen = Satu Kartu Induk)
+ * 6. REVISI UTAMA: MODUL MONITORING BENTUK FOLDER DIGITAL (KLIK UNTUK BUKA)
  */
 function muatKartuMonitoring(masterBerkas) {
     const container = document.getElementById("containerKartuPkkm");
@@ -236,109 +236,157 @@ function muatKartuMonitoring(masterBerkas) {
     container.innerHTML = "";
 
     if (!masterBerkas || Object.keys(masterBerkas).length === 0) {
-        container.innerHTML = '<div class="status-empty-box" style="color: #64748b; text-align: center; padding: 30px; font-style: italic; background: rgba(255,255,255,0.5); border-radius:12px;">Belum ada dokumen bukti fisik yang disimpan untuk instrumen PKKM ini.</div>';
+        container.innerHTML = '<div class="status-empty-box" style="color: #64748b; text-align: center; padding: 30px; font-style: italic; background: rgba(255,255,255,0.8); border-radius:12px;">Belum ada dokumen bukti fisik yang disimpan untuk instrumen PKKM ini.</div>';
         return;
     }
 
-    // Ubah data object masterBerkas dari Firestore menjadi format Array agar mudah difilter
     const arrayBerkas = [];
     for (const key in masterBerkas) {
         arrayBerkas.push({ id_firebase: key, ...masterBerkas[key] });
     }
 
-    // Looping Master Komponen untuk membuat Kartu Induk Pembungkusnya
+    // Menggambar baris folder per komponen utama
     MASTER_KOMPONEN.forEach(komp => {
-        // Filter semua file unggahan yang merupakan bagian dari Komponen ini (berdasarkan awalan kode indikator)
         const berkasMilikKomponen = arrayBerkas.filter(berkas => {
             const awalan = berkas.id_indikator ? berkas.id_indikator.split('.')[0] : "";
             return awalan === komp.id;
         });
 
-        // Hitung statistik progress internal komponen
         const jumlahTerisi = berkasMilikKomponen.length;
         const persentase = Math.min(Math.round((jumlahTerisi / komp.target) * 100), 100);
 
-        // Buat elemen Kartu Induk Komponen (Gaya Glassmorphism Terang & Bersih)
-        const kartuInduk = document.createElement("div");
-        kartuInduk.style.cssText = `
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            border-left: 6px solid ${komp.warna};
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        // Wrapper Card berbentuk tab Folder minimalis
+        const folderWrapper = document.createElement("div");
+        folderWrapper.style.cssText = `
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            overflow: hidden;
         `;
 
-        // Atur isi struktur header kartu komponen beserta progress bar-nya
-        kartuInduk.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: bold; color: #1e293b;">Komponen ${komp.id}: ${komp.nama}</h3>
-                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">
-                        Terpenuhi: <span style="color: ${komp.warna}; font-weight: bold;">${jumlahTerisi}</span> dari ${komp.target} Target Berkas
-                    </p>
+        // Barisan Header Folder (Clickable / Bisa diklik)
+        folderWrapper.innerHTML = `
+            <div class="folder-header" style="
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                padding: 14px 20px; 
+                cursor: pointer; 
+                border-left: 6px solid ${komp.warna};
+                background: #ffffff;
+                user-select: none;
+                transition: background 0.2s ease;
+            " onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#ffffff'">
+                
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <span class="icon-folder-status" style="font-size: 1.5rem;">📁</span>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">
+                            Komponen ${komp.id} — ${komp.nama}
+                        </h4>
+                        <p style="margin: 2px 0 0 0; font-size: 0.75rem; color: #64748b;">
+                            Terisi <span style="font-weight: bold; color: ${komp.warna};">${jumlahTerisi}</span> berkas dari target ${komp.target} indikator
+                        </p>
+                    </div>
                 </div>
-                <span style="background: ${komp.warna}15; color: ${komp.warna}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">
-                    ${persentase}% Selesai
-                </span>
+
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="background: ${komp.warna}12; color: ${komp.warna}; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold;">
+                        ${persentase}% Selesai
+                    </span>
+                    <span class="icon-panah-toggle" style="font-size: 0.8rem; color: #94a3b8; transition: transform 0.2s;">▶ Open</span>
+                </div>
             </div>
 
-            <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
-                <div style="width: ${persentase}%; background: ${komp.warna}; height: 100%; transition: width 0.5s ease;"></div>
-            </div>
-
-            <div class="grid-sub-files" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            <div class="folder-body-content" style="display: none; padding: 16px 20px; background: #f8fafc; border-top: 1px solid #edf2f7;">
+                <div style="width: 100%; background: #e2e8f0; height: 4px; border-radius: 4px; overflow: hidden; margin-bottom: 16px;">
+                    <div style="width: ${persentase}%; background: ${komp.warna}; height: 100%;"></div>
+                </div>
+                <div class="sub-files-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;"></div>
             </div>
         `;
 
-        const gridSubFiles = kartuInduk.querySelector(".grid-sub-files");
+        const headerArea = folderWrapper.querySelector(".folder-header");
+        const bodyArea = folderWrapper.querySelector(".folder-body-content");
+        const folderIcon = folderWrapper.querySelector(".icon-folder-status");
+        const toggleText = folderWrapper.querySelector(".icon-panah-toggle");
+        const gridBerkas = folderWrapper.querySelector(".sub-files-grid");
 
-        // Jika komponen ini belum diisi berkas sama sekali
+        // Fungsi klik buka-tutup folder
+        headerArea.addEventListener("click", () => {
+            const dalamKondisiTerbuka = bodyArea.style.display === "block";
+            if (dalamKondisiTerbuka) {
+                bodyArea.style.display = "none";
+                folderIcon.innerText = "📁";
+                toggleText.innerText = "▶ Open";
+                toggleText.style.color = "#94a3b8";
+            } else {
+                bodyArea.style.display = "block";
+                folderIcon.innerText = "📂";
+                toggleText.innerText = "▼ Close";
+                toggleText.style.color = komp.warna;
+            }
+        });
+
+        // Pengisian kartu berkas mini di dalam folder
         if (berkasMilikKomponen.length === 0) {
-            gridSubFiles.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 14px; border: 1px dashed #cbd5e1; border-radius: 8px; color: #94a3b8; font-size: 0.8rem; font-style: italic;">
-                    Belum ada berkas indikator yang diunggah untuk komponen ini.
+            gridBerkas.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 6px; color: #94a3b8; font-size: 0.8rem; font-style: italic;">
+                    Folder kosong. Belum ada berkas fisik yang diunggah ke komponen ini.
                 </div>
             `;
         } else {
-            // Urutkan berkas di dalam komponen berdasarkan urutan kode indikatornya (misal: 1.1.1, 1.1.2)
             berkasMilikKomponen.sort((a, b) => a.id_indikator.localeCompare(b.id_indikator, undefined, { numeric: true }));
 
-            // Gambar kartu berkas berlatar hijau solid (Konsisten dengan palet lama Anda)
             berkasMilikKomponen.forEach(data => {
-                const subCard = document.createElement("div");
-                subCard.style.cssText = `
-                    background-color: #1b5e20; color: #ffffff; border: 1px solid #1b5e20;
-                    border-radius: 8px; padding: 14px; display: flex; flex-direction: column; box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+                const itemFile = document.createElement("div");
+                itemFile.style.cssText = `
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 12px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
                 `;
 
-                subCard.innerHTML = `
-                    <div style="line-height: 1.5;">
-                        <div style="font-size: 0.85rem; margin-bottom: 4px;">Kode: <strong style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${data.id_indikator}</strong></div>
-                        <div style="font-size: 0.95rem; font-weight: bold; margin-top: 6px; margin-bottom: 4px;">📌 ${data.nama_dokumen}</div>
-                        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; opacity: 0.9; word-break: break-all; background: rgba(0,0,0,0.15); padding: 6px; border-radius: 4px; margin-bottom: 10px;">
-                            📄 ${data.nama_file_asli || 'Berkas Dokumen'}
+                itemFile.innerHTML = `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="background: #2e7d32; color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; font-family: monospace;">
+                                Kode ${data.id_indikator}
+                            </span>
+                            <span style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 140px;" title="${data.nama_dokumen}">
+                                📌 ${data.nama_dokumen}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #475569; background: #f1f5f9; padding: 6px 8px; border-radius: 4px; display: flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                            <span style="font-size: 0.9rem;">📄</span>
+                            <span style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 210px;" title="${data.nama_file_asli}">
+                                ${data.nama_file_asli || 'dokumen.pdf'}
+                            </span>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.2);">
-                        <button type="button" class="btn-mini-lihat" style="background: #ffffff; color: #1b5e20; border: none; border-radius: 4px; padding: 6px; font-size: 0.75rem; font-weight: bold; flex: 1; cursor: pointer;">💻 Lihat</button>
-                        <button type="button" class="btn-mini-unduh" style="background: #e0f2fe; color: #0369a1; border: none; border-radius: 4px; padding: 6px; font-size: 0.75rem; font-weight: bold; flex: 1; cursor: pointer;">📥 Download</button>
-                        <button type="button" class="btn-mini-hapus" style="background: #ffe4e6; color: #9f1239; border: none; border-radius: 4px; padding: 6px; font-size: 0.75rem; font-weight: bold; flex: 1; cursor: pointer;">🗑️ Hapus</button>
+                    <div style="display: flex; gap: 4px; border-top: 1px solid #f1f5f9; padding-top: 8px;">
+                        <button type="button" class="btn-mini-lihat" style="background: #f1f5f9; color: #334155; border: none; border-radius: 4px; padding: 6px 4px; font-size: 0.7rem; font-weight: bold; flex: 1; cursor: pointer;">💻 Lihat</button>
+                        <button type="button" class="btn-mini-unduh" style="background: #e0f2fe; color: #0369a1; border: none; border-radius: 4px; padding: 6px 4px; font-size: 0.7rem; font-weight: bold; flex: 1; cursor: pointer;">📥 Unduh</button>
+                        <button type="button" class="btn-mini-hapus" style="background: #ffe4e6; color: #9f1239; border: none; border-radius: 4px; padding: 6px 4px; font-size: 0.7rem; font-weight: bold; flex: 1; cursor: pointer;">🗑️ Hapus</button>
                     </div>
                 `;
 
-                // Hubungkan ulang fungsi tombol aksi Base64 bawaan Anda
-                subCard.querySelector(".btn-mini-lihat").addEventListener("click", () => window.pratinjauBerkasPDF(data.file_base64, data.tipe_file));
-                subCard.querySelector(".btn-mini-unduh").addEventListener("click", () => window.unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
-                subCard.querySelector(".btn-mini-hapus").addEventListener("click", () => window.tanganiHapus(data.id_indikator));
+                // Event Listener khusus tombol agar tidak memicu click event milik folder induk (.stopPropagation())
+                itemFile.querySelector(".btn-mini-lihat").addEventListener("click", (e) => { e.stopPropagation(); window.pratinjauBerkasPDF(data.file_base64, data.tipe_file); });
+                itemFile.querySelector(".btn-mini-unduh").addEventListener("click", (e) => { e.stopPropagation(); window.unduhBerkasDariBase64(data.file_base64, data.nama_file_asli); });
+                itemFile.querySelector(".btn-mini-hapus").addEventListener("click", (e) => { e.stopPropagation(); window.tanganiHapus(data.id_indikator); });
 
-                gridSubFiles.appendChild(subCard);
+                gridBerkas.appendChild(itemFile);
             });
         }
 
-        container.appendChild(kartuInduk);
+        container.appendChild(folderWrapper);
     });
 }
 
