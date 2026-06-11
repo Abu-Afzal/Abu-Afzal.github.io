@@ -159,7 +159,7 @@
         .comp-item-card {
             background: rgba(15, 23, 42, 0.5);
             border-radius: 12px;
-            padding: 16px;
+            padding: 18px;
             border-left: 6px solid #fff;
             display: flex;
             justify-content: space-between;
@@ -171,8 +171,11 @@
             transform: scale(1.01);
         }
 
+        .comp-info {
+            flex: 1;
+        }
         .comp-info h3 {
-            margin: 0 0 4px 0;
+            margin: 0 0 6px 0;
             font-size: 1.05rem;
         }
         .comp-info p {
@@ -191,15 +194,31 @@
             font-family: monospace;
         }
 
+        /* PROGRESS BAR STYLING */
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease-out;
+        }
+
         .action-area {
             display: flex;
+            flex-direction: column;
             gap: 8px;
         }
         .btn-edit-tool {
             background: rgba(255, 255, 255, 0.2);
             color: white;
             border: none;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.8rem;
@@ -209,12 +228,11 @@
             background: rgba(255, 255, 255, 0.35);
         }
 
-        /* STYLE TAMBAHAN UNTUK TOMBOL HAPUS GLASSMORPHISM */
         .btn-delete-tool {
             background: rgba(220, 38, 38, 0.25);
             color: #fca5a5;
             border: none;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.8rem;
@@ -288,8 +306,12 @@
     </div>
 
     <script type="module">
-        // SUDAH DITAMBAHKAN IMPORT hapusMasterKomponen DI SINI PAK 👍
-        import { ambilMasterKomponen, simpanMasterKomponenBaru, hapusMasterKomponen } from '../js/pkkm-db.js';
+        import { 
+            ambilMasterKomponen, 
+            simpanMasterKomponenBaru, 
+            hapusMasterKomponen, 
+            ambilSemuaBerkasPKKM 
+        } from '../js/pkkm-db.js';
 
         let DATA_MASTER_LOKAL = [];
         let modeEditAktif = false;
@@ -313,28 +335,41 @@
 
         async function muatHalamanMasterAdmin() {
             try {
+                // 1. Ambil data komponen dan data berkas terupload secara paralel
                 DATA_MASTER_LOKAL = await ambilMasterKomponen();
-                renderDaftarKomponenKeAplikasi();
+                const dataBerkasTerupload = await ambilSemuaBerkasPKKM();
+                
+                // 2. Gambar ke UI list kanan
+                renderDaftarKomponenKeAplikasi(dataBerkasTerupload);
             } catch (error) {
                 console.error("Gagal inisialisasi halaman master admin:", error);
             }
         }
 
-        // Fungsi menggambar daftar komponen terdaftar
-        function renderDaftarKomponenKeAplikasi() {
+        // Fungsi menggambar daftar komponen terdaftar lengkap dengan hitungan progres %
+        function renderDaftarKomponenKeAplikasi(daftarBerkas) {
             const container = document.getElementById("wrapperListMaster");
             if (!container) return;
             container.innerHTML = "";
 
             if (DATA_MASTER_LOKAL.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-style: italic;">Belum ada komponen kustom terdaftar. Sistem saat ini berjalan menggunakan mode backup default (4 Komponen).</p>';
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-style: italic;">Belum ada komponen kustom terdaftar.</p>';
                 return;
             }
+
+            // Buat pencarian cepat berkas yang sudah diunggah berbasis Set ID
+            const indikatorTerisi = new Set(daftarBerkas.map(berkas => berkas.id));
 
             DATA_MASTER_LOKAL.forEach(komp => {
                 const card = document.createElement("div");
                 card.className = "comp-item-card";
                 card.style.borderLeftColor = komp.warna || "#ffffff";
+
+                // Perhitungan Persentase Progres Berkas
+                const jumlahTerisi = komp.indikator ? komp.indikator.filter(ind => indikatorTerisi.has(ind)).length : 0;
+                const targetBerkas = komp.target || 1;
+                let persentase = Math.round((jumlahTerisi / targetBerkas) * 100);
+                if (persentase > 100) persentase = 100;
 
                 // Cetak pil/tag indikator secara dinamis
                 let stringIndikatorHtml = "";
@@ -344,12 +379,20 @@
                     });
                 }
 
-                // DI SINI TOMBOL HAPUS SUDAH DISINKRONKAN BERBENTUK MODERN GLASS RED 💥
+                // Render struktur kartu dengan Progress Bar bawaan
                 card.innerHTML = `
                     <div class="comp-info">
-                        <h3>Komponen ${komp.id}: ${komp.nama}</h3>
-                        <p>🎯 Target: <strong>${komp.target} Berkas Bukti Fisik</strong> | Warna Kartu: <span style="color:${komp.warna}; font-weight:bold;">${komp.warna}</span></p>
-                        <div style="margin-top: 5px;">${stringIndikatorHtml}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <h3>Komponen ${komp.id}: ${komp.nama}</h3>
+                            <span style="font-size: 0.85rem; font-weight: bold; color: ${komp.warna || '#2dd4bf'}">${persentase}% Selesai</span>
+                        </div>
+                        <p>🎯 Target: <strong>${komp.target} Berkas</strong> | Terisi: <strong>${jumlahTerisi}</strong></p>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${persentase}%; background-color: ${komp.warna || '#0d9488'};"></div>
+                        </div>
+
+                        <div style="margin-top: 8px;">${stringIndikatorHtml}</div>
                     </div>
                     <div class="action-area">
                         <button type="button" class="btn-edit-tool btn-pemicu-edit">✏️ Edit</button>
@@ -378,7 +421,7 @@
             
             const inputId = document.getElementById("compId");
             inputId.value = komp.id;
-            inputId.disabled = true; // ID Kunci Utama dikunci tidak boleh diubah demi relasi data
+            inputId.disabled = true;
 
             document.getElementById("compTarget").value = komp.target;
             document.getElementById("compNama").value = komp.nama;
@@ -386,7 +429,6 @@
             inputWarnaPicker.value = komp.warna || "#1565c0";
             inputWarnaTeks.value = komp.warna || "#1565c0";
 
-            // Menggabungkan array indikator kembali menjadi string berjarak koma
             document.getElementById("compIndikator").value = komp.indikator ? komp.indikator.join(", ") : "";
 
             document.getElementById("btnBatalEdit").style.display = "block";
@@ -395,29 +437,22 @@
 
         // FUNGSI UTAMA UNTUK MENGAPUS MASTER DATA DARI FIRESTORE
         async function tanganiHapusMaster(id) {
-            const konfirmasi = confirm(`Apakah Bapak yakin ingin menghapus Komponen ID [ ${id} ]?\n\nTindakan ini permanen dan akan menghapus struktur penampung indikator komponen ini.`);
+            const konfirmasi = confirm(`Apakah Bapak yakin ingin menghapus Komponen ID [ ${id} ]?\n\nTindakan ini permanen.`);
             if (!konfirmasi) return;
 
             try {
-                // Eksekusi hapus di database layer
                 await hapusMasterKomponen(id);
+                alert(`Alhamdulillah, Parameter Komponen ${id} sukses dibersihkan!`);
                 
-                alert(`Alhamdulillah, Parameter Komponen ${id} sukses dibersihkan dari sistem!`);
-                
-                // Jika sedang mengedit id yang barusan dihapus, kembalikan formulir ke default
                 if (modeEditAktif && document.getElementById("compId").value === id) {
                     resetKondisiFormFormulir();
                 }
-
-                // Refresh daftar visual komponen
                 await muatHalamanMasterAdmin();
-
             } catch (error) {
                 alert("Gagal menghapus komponen instrumen: " + error.message);
             }
         }
 
-        // Membatalkan skema edit dan mereset form ke kondisi input baru
         document.getElementById("btnBatalEdit").addEventListener("click", resetKondisiFormFormulir);
 
         function resetKondisiFormFormulir() {
@@ -436,7 +471,7 @@
             document.getElementById("btnSimpanMaster").innerText = "Simpan Komponen";
         }
 
-        // Eksekusi pengiriman formulir ke database Firestore layer
+        // Eksekusi pengiriman formulir ke database Firestore
         form.addEventListener("submit", async (e) => {
             e.preventDefault();
             const btn = document.getElementById("btnSimpanMaster");
@@ -446,7 +481,6 @@
             const nama = document.getElementById("compNama").value.trim();
             const warna = inputWarnaTeks.value.trim();
             
-            // Logika pemecah string text indikator menjadi Array murni bersih tanpa spasi liar
             const rawIndikator = document.getElementById("compIndikator").value;
             const arrayIndikatorBersih = rawIndikator.split(",")
                                                     .map(item => item.trim())
@@ -467,16 +501,13 @@
 
             try {
                 btn.disabled = true;
-                btn.innerText = "⏳ Menyimpan ke Database...";
+                btn.innerText = "⏳ Menyimpan...";
 
-                // Eksekusi fungsi simpan ke Firestore
                 await simpanMasterKomponenBaru(id, payloadMaster);
 
-                alert(`Alhamdulillah, Parameter Komponen ${id} berhasil diperbarui di sistem pusat!`);
-                
+                alert(`Alhamdulillah, Parameter Komponen ${id} berhasil disimpan!`);
                 resetKondisiFormFormulir();
-                await muatHalamanMasterAdmin(); // Refresh live view list kanan
-
+                await muatHalamanMasterAdmin();
             } catch (err) {
                 alert("Gagal meregistrasi komponen: " + err.message);
             } finally {
