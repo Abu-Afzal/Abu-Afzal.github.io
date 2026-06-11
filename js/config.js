@@ -77,7 +77,7 @@ const CONFIG = {
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
         { icon: '📊', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pkkm.html' },
-        { icon: '📊', title: 'Master PKKM', desc: '', color: '#0dd940', page: '/pages/master-pkkm.html' },
+        { icon: '🛠️', title: 'Master PKKM', desc: '', color: '#0dd940', page: '/pages/master-pkkm.html' },
         { 
             icon: '📗',  // ← Tetap tambahkan icon sebagai fallback
             title: 'RDM', 
