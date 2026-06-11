@@ -44,6 +44,7 @@ const CONFIG = {
     ],
     
     layananMadrasah: [
+        { icon: '👨‍💼', title: 'Admin User', desc: '', color: '#dc3309', page: '/admin-user.html' },
         { 
             icon: '📢', 
             title: 'Kelola Berita', 
