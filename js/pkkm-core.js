@@ -1,5 +1,5 @@
 // ==========================================================================
-// KODE UTUH REVISI: pkkm-core.js
+// KODE UTUH REVISI: pkkm-core.js (Satu Komponen = Satu Kartu Induk)
 // ==========================================================================
 import { uploadDokumenPKKM, ambilSemuaBerkasPKKM, hapusDokumenPKKM, ambilMasterKomponen } from './pkkm-db.js';
 
@@ -53,7 +53,7 @@ async function muatAplikasiPKKM() {
     try {
         const masterBerkas = await ambilSemuaBerkasPKKM();
         hitungDanRenderDashboard(masterBerkas);
-        muatKartuMonitoring(masterBerkas);
+        muatKartuMonitoring(masterBerkas); // Ini fungsi yang kita rombak strukturnya
     } catch (err) {
         console.error("Gagal memuat aplikasi PKKM:", err);
     }
@@ -71,7 +71,7 @@ function isiDropdownIndikatorOtomatis() {
     
     // Looping memasukkan semua indikator dari seluruh komponen ke dalam dropdown select
     MASTER_KOMPONEN.forEach(komp => {
-        if (komp.indikator && Array.isArray(komp.indikator)) {
+        if (komp.indigo && Array.isArray(komp.indikator)) {
             komp.indikator.forEach(ind => {
                 const opt = document.createElement("option");
                 opt.value = ind;
@@ -97,20 +97,18 @@ function isiDropdownIndikatorOtomatis() {
 }
 
 /**
- * 4. RENDER DASHBOARD PROGRESS BAR (Mendukung Multi Komponen 4 hingga 6 secara Dinamis)
+ * 4. RENDER DASHBOARD PROGRESS BAR ATAS (Mengikuti gaya komponen Anda)
  */
 function hitungDanRenderDashboard(masterBerkas) {
     const gridKontainer = document.getElementById("gridKomponenUtama");
     if (!gridKontainer) return;
     gridKontainer.innerHTML = "";
 
-    // REVISI SUPER DINAMIS: Membuat counter otomatis mengikuti jumlah komponen di Firestore
     const counterKoleksi = {};
     MASTER_KOMPONEN.forEach(komp => {
         counterKoleksi[komp.id] = 0;
     });
 
-    // Hitung berkas yang ada di database berdasarkan kode depan indikator
     for (const key in masterBerkas) {
         const data = masterBerkas[key];
         const awalan = data.id_indikator ? data.id_indikator.split('.')[0] : "";
@@ -119,13 +117,12 @@ function hitungDanRenderDashboard(masterBerkas) {
         }
     }
 
-    // Menggambar Kartu Glassmorphism mengikuti gaya .galeri-card Anda
     MASTER_KOMPONEN.forEach(komp => {
         const jumlahTerisi = counterKoleksi[komp.id] || 0;
         const persentase = Math.min(Math.round((jumlahTerisi / komp.target) * 100), 100);
 
         const cardKomp = document.createElement("div");
-        cardKomp.className = "galeri-card"; // Menyelaraskan dengan CSS Glassmorphism milik Anda
+        cardKomp.className = "galeri-card"; 
         cardKomp.style.cssText = `
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(8px);
@@ -160,7 +157,7 @@ function hitungDanRenderDashboard(masterBerkas) {
 }
 
 /**
- * 5. PROSES SIMPAN AMAN (REVISI: Integrasi Objek Base64 yang Benar untuk Firestore)
+ * 5. PROSES SIMPAN AMAN
  */
 async function tanganiProsesSimpan(e) {
     e.preventDefault();
@@ -185,27 +182,24 @@ async function tanganiProsesSimpan(e) {
         btn.disabled = true;
         btn.innerText = "⏳ Memproses Penyimpanan...";
 
-        // 1. Jalankan pembacaan file fisik menjadi String Base64
         const reader = new FileReader();
         reader.readAsDataURL(fileFisik);
         
         reader.onload = async function () {
             const base64String = reader.result;
 
-            // 2. Susun payload JSON murni yang sesuai dengan kebutuhan fungsi muatKartuMonitoring()
             const payloadData = {
                 id_indikator: idIndikator,
                 komponen: komponen,
                 nama_dokumen: namaDokumen,
                 nama_file_asli: fileFisik.name,
                 tipe_file: fileFisik.type,
-                file_base64: base64String, // String Base64 disimpan di sini
+                file_base64: base64String,
                 uploader_email: "Guru/Staf Madrasah",
                 waktu_upload: new Date().toISOString()
             };
 
             try {
-                // 3. Kirim ke fungsi db layer hanya membawa 2 parameter utama
                 await uploadDokumenPKKM(idIndikator, payloadData);
 
                 alert("Alhamdulillah, Dokumen PKKM Berhasil Disimpan!");
@@ -234,7 +228,7 @@ async function tanganiProsesSimpan(e) {
 }
 
 /**
- * 6. RENDER KARTU BUKTI FISIK BERWARNA
+ * 6. REVISI TOTAL: RENDER MONITORING BERSARANG (Satu Komponen = Satu Kartu Induk)
  */
 function muatKartuMonitoring(masterBerkas) {
     const container = document.getElementById("containerKartuPkkm");
@@ -242,53 +236,110 @@ function muatKartuMonitoring(masterBerkas) {
     container.innerHTML = "";
 
     if (!masterBerkas || Object.keys(masterBerkas).length === 0) {
-        container.innerHTML = '<div class="status-empty-box" style="color: white; text-align: center; padding: 20px; font-style: italic;">Belum ada dokumen bukti fisik yang disimpan untuk instrumen PKKM ini.</div>';
+        container.innerHTML = '<div class="status-empty-box" style="color: #64748b; text-align: center; padding: 30px; font-style: italic; background: rgba(255,255,255,0.5); border-radius:12px;">Belum ada dokumen bukti fisik yang disimpan untuk instrumen PKKM ini.</div>';
         return;
     }
 
-    const paletTema = [
-        { bg: '#1b5e20', teks: '#ffffff', border: '#1b5e20', btnLihat: '#ffffff', btnLihatTeks: '#1b5e20' },
-        { bg: '#2e7d32', teks: '#ffffff', border: '#2e7d32', btnLihat: '#ffffff', btnLihatTeks: '#2e7d32' },
-        { bg: '#e3f2fd', teks: '#1e293b', border: '#bbdefb', btnLihat: '#f1f5f9', btnLihatTeks: '#334155' },
-        { bg: '#f0fdf4', teks: '#1e293b', border: '#bbf7d0', btnLihat: '#f1f5f9', btnLihatTeks: '#334155' }
-    ];
-
-    let index = 0;
+    // Ubah data object masterBerkas dari Firestore menjadi format Array agar mudah difilter
+    const arrayBerkas = [];
     for (const key in masterBerkas) {
-        const data = masterBerkas[key];
-        const card = document.createElement("div");
-        card.className = "pkkm-card-box";
-        
-        const tema = paletTema[index % paletTema.length];
-        index++;
-
-        card.style.cssText = `
-            background-color: ${tema.bg}; color: ${tema.teks}; border: 1px solid ${tema.border};
-            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        `;
-
-        card.innerHTML = `
-            <div style="line-height: 1.6;">
-                <div style="font-size: 0.95rem; margin-bottom: 4px;">Kode: <strong>${data.id_indikator}</strong></div>
-                <div style="font-size: 0.85rem; margin-bottom: 8px; opacity: 0.9;">Kategori: ${data.komponen}</div>
-                <div style="font-size: 0.95rem; font-weight: bold; margin-bottom: 4px;">📌 ${data.nama_dokumen}</div>
-                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; margin-bottom: 12px; opacity: 0.8; word-break: break-all;">
-                    📄 ${data.nama_file_asli || 'Berkas Dokumen'}
-                </div>
-            </div>
-            <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2);">
-                <button type="button" class="btn-action-mini btn-mini-lihat" style="background: ${tema.btnLihat}; color: ${tema.btnLihatTeks}; border: none; border-radius: 6px; padding: 8px 6px; font-weight: bold; flex: 1; cursor: pointer;">💻 Lihat</button>
-                <button type="button" class="btn-action-mini btn-mini-unduh" style="background: #e0f2fe; color: #0369a1; border: none; border-radius: 6px; padding: 8px 6px; font-weight: bold; flex: 1; cursor: pointer;">📥 Download</button>
-                <button type="button" class="btn-action-mini btn-mini-hapus" style="background: #ffe4e6; color: #9f1239; border: none; border-radius: 6px; padding: 8px 6px; font-weight: bold; flex: 1; cursor: pointer;">🗑️ Hapus</button>
-            </div>
-        `;
-
-        card.querySelector(".btn-mini-lihat").addEventListener("click", () => window.pratinjauBerkasPDF(data.file_base64, data.tipe_file));
-        card.querySelector(".btn-mini-unduh").addEventListener("click", () => window.unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
-        card.querySelector(".btn-mini-hapus").addEventListener("click", () => window.tanganiHapus(data.id_indikator));
-
-        container.appendChild(card);
+        arrayBerkas.push({ id_firebase: key, ...masterBerkas[key] });
     }
+
+    // Looping Master Komponen untuk membuat Kartu Induk Pembungkusnya
+    MASTER_KOMPONEN.forEach(komp => {
+        // Filter semua file unggahan yang merupakan bagian dari Komponen ini (berdasarkan awalan kode indikator)
+        const berkasMilikKomponen = arrayBerkas.filter(berkas => {
+            const awalan = berkas.id_indikator ? berkas.id_indikator.split('.')[0] : "";
+            return awalan === komp.id;
+        });
+
+        // Hitung statistik progress internal komponen
+        const jumlahTerisi = berkasMilikKomponen.length;
+        const persentase = Math.min(Math.round((jumlahTerisi / komp.target) * 100), 100);
+
+        // Buat elemen Kartu Induk Komponen (Gaya Glassmorphism Terang & Bersih)
+        const kartuInduk = document.createElement("div");
+        kartuInduk.style.cssText = `
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-left: 6px solid ${komp.warna};
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        `;
+
+        // Atur isi struktur header kartu komponen beserta progress bar-nya
+        kartuInduk.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.05rem; font-weight: bold; color: #1e293b;">Komponen ${komp.id}: ${komp.nama}</h3>
+                    <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: #64748b;">
+                        Terpenuhi: <span style="color: ${komp.warna}; font-weight: bold;">${jumlahTerisi}</span> dari ${komp.target} Target Berkas
+                    </p>
+                </div>
+                <span style="background: ${komp.warna}15; color: ${komp.warna}; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;">
+                    ${persentase}% Selesai
+                </span>
+            </div>
+
+            <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 10px; overflow: hidden; margin-bottom: 18px;">
+                <div style="width: ${persentase}%; background: ${komp.warna}; height: 100%; transition: width 0.5s ease;"></div>
+            </div>
+
+            <div class="grid-sub-files" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+            </div>
+        `;
+
+        const gridSubFiles = kartuInduk.querySelector(".grid-sub-files");
+
+        // Jika komponen ini belum diisi berkas sama sekali
+        if (berkasMilikKomponen.length === 0) {
+            gridSubFiles.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 14px; border: 1px dashed #cbd5e1; border-radius: 8px; color: #94a3b8; font-size: 0.8rem; font-style: italic;">
+                    Belum ada berkas indikator yang diunggah untuk komponen ini.
+                </div>
+            `;
+        } else {
+            // Urutkan berkas di dalam komponen berdasarkan urutan kode indikatornya (misal: 1.1.1, 1.1.2)
+            berkasMilikKomponen.sort((a, b) => a.id_indikator.localeCompare(b.id_indikator, undefined, { numeric: true }));
+
+            // Gambar kartu berkas berlatar hijau solid (Konsisten dengan palet lama Anda)
+            berkasMilikKomponen.forEach(data => {
+                const subCard = document.createElement("div");
+                subCard.style.cssText = `
+                    background-color: #1b5e20; color: #ffffff; border: 1px solid #1b5e20;
+                    border-radius: 8px; padding: 14px; display: flex; flex-direction: column; box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+                `;
+
+                subCard.innerHTML = `
+                    <div style="line-height: 1.5;">
+                        <div style="font-size: 0.85rem; margin-bottom: 4px;">Kode: <strong style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${data.id_indikator}</strong></div>
+                        <div style="font-size: 0.95rem; font-weight: bold; margin-top: 6px; margin-bottom: 4px;">📌 ${data.nama_dokumen}</div>
+                        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; opacity: 0.9; word-break: break-all; background: rgba(0,0,0,0.15); padding: 6px; border-radius: 4px; margin-bottom: 10px;">
+                            📄 ${data.nama_file_asli || 'Berkas Dokumen'}
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.2);">
+                        <button type="button" class="btn-mini-lihat" style="background: #ffffff; color: #1b5e20; border: none; border-radius: 4px; padding: 6px; font-size: 0.75rem; font-weight: bold; flex: 1; cursor: pointer;">💻 Lihat</button>
+                        <button type="button" class="btn-mini-unduh" style="background: #e0f2fe; color: #0369a1; border: none; border-radius: 4px; padding: 6px; font-size: 0.75rem; font-weight: bold; flex: 1; cursor: pointer;">📥 Download</button>
+                        <button type="button" class="btn-mini-hapus" style="background: #ffe4e6; color: #9f1239; border: none; border-radius: 4px; padding: 6px; font-size: 0.75rem; font-weight: bold; flex: 1; cursor: pointer;">🗑️ Hapus</button>
+                    </div>
+                `;
+
+                // Hubungkan ulang fungsi tombol aksi Base64 bawaan Anda
+                subCard.querySelector(".btn-mini-lihat").addEventListener("click", () => window.pratinjauBerkasPDF(data.file_base64, data.tipe_file));
+                subCard.querySelector(".btn-mini-unduh").addEventListener("click", () => window.unduhBerkasDariBase64(data.file_base64, data.nama_file_asli));
+                subCard.querySelector(".btn-mini-hapus").addEventListener("click", () => window.tanganiHapus(data.id_indikator));
+
+                gridSubFiles.appendChild(subCard);
+            });
+        }
+
+        container.appendChild(kartuInduk);
+    });
 }
 
 // ==========================================================================
