@@ -2,20 +2,47 @@ function renderCards() {
     const umumContainer = document.getElementById('layanan-umum');
     const madrasahContainer = document.getElementById('layanan-madrasah');
 
-    // 🔒 1. Ambil data user aktif dari localStorage untuk pengecekan role
-    const userStr = localStorage.getItem('sipelita_user');
-    const currentUser = userStr ? JSON.parse(userStr) : null;
+    // ====================================================================
+    // 🔒 DETEKSI ROLE ANTI-CRASH (KEBAL PELURU)
+    // ====================================================================
+    let currentRole = 'guru'; // Default fallback aman agar menu tidak hilang jika gagal deteksi
+    
+    try {
+        // Daftar nama key yang sering digunakan oleh sistem auth
+        const authKeys = ['sipelita_user', 'user', 'userData', 'auth'];
+        
+        for (const key of authKeys) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed && parsed.role) {
+                        currentRole = parsed.role;
+                        break;
+                    }
+                } catch (e) {
+                    // Jika ternyata disimpan dalam bentuk string biasa (bukan JSON object)
+                    if (data === 'admin' || data === 'guru') {
+                        currentRole = data;
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Gagal mendeteksi session role, menggunakan akses standar:", err);
+    }
 
-    // 🔒 2. Daftar hitam judul card yang HANYA boleh dilihat oleh Admin
+    // Daftar judul card yang HANYA boleh dilihat oleh Admin
     const fiturKhususAdmin = ['Master PKKM', 'Admin Users', 'Kelola Berita'];
 
     // ========== LAYANAN UMUM ==========
     if (umumContainer && CONFIG.layananUmum) {
         umumContainer.innerHTML = CONFIG.layananUmum
-            // 🔒 Saring Layanan Umum
             .filter(item => {
-                if (fiturKhususAdmin.includes(item.title) && (!currentUser || currentUser.role !== 'admin')) {
-                    return false; // Sembunyikan jika bukan admin
+                // Sembunyikan jika menu termasuk fitur admin, tapi yang login BUKAN admin
+                if (fiturKhususAdmin.includes(item.title) && currentRole !== 'admin') {
+                    return false;
                 }
                 return true;
             })
@@ -40,10 +67,10 @@ function renderCards() {
     // ========== LAYANAN MADRASAH ==========
     if (madrasahContainer && CONFIG.layananMadrasah) {
         madrasahContainer.innerHTML = CONFIG.layananMadrasah
-            // 🔒 Saring Layanan Madrasah
             .filter(item => {
-                if (fiturKhususAdmin.includes(item.title) && (!currentUser || currentUser.role !== 'admin')) {
-                    return false; // Sembunyikan jika bukan admin
+                // Sembunyikan jika menu termasuk fitur admin, tapi yang login BUKAN admin
+                if (fiturKhususAdmin.includes(item.title) && currentRole !== 'admin') {
+                    return false;
                 }
                 return true;
             })
@@ -74,3 +101,26 @@ function renderCards() {
             }).join('');
     }
 }
+
+function closeModal() {
+    const modal = document.getElementById('integrationModal');
+    if (modal) modal.classList.remove('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    renderCards();
+    
+    // Close modal when clicking outside
+    const modal = document.getElementById('integrationModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    }
+    
+    // Close button
+    const closeBtn = document.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+});
