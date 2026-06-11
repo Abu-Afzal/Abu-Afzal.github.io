@@ -52,7 +52,7 @@
     </div>
     
     <div class="content">
-      <div class="upload-box">
+      <div class="upload-box" id="uploadBox">
         <h3>📤 Upload Dokumen Baru</h3>
         <div class="form-row">
           <select id="kategori" required>
@@ -98,6 +98,43 @@
   <script type="module">
     import { db } from '../js/firebase-config.js';
     import { collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // ====================================================================
+    // 🔒 DETEKSI ROLE SATEPAM (ANTI-CRASH)
+    // ====================================================================
+    let currentRole = 'guru'; 
+    try {
+        const authKeys = ['sipelita_user', 'user', 'userData', 'auth'];
+        for (const key of authKeys) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed && parsed.role) {
+                        currentRole = parsed.role;
+                        break;
+                    }
+                } catch (e) {
+                    if (data === 'admin' || data === 'guru') {
+                        currentRole = data;
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Gagal mendeteksi session role:", err);
+    }
+
+    // Sembunyikan Box Upload secara realtime jika user bukan Admin
+    const uploadBox = document.getElementById('uploadBox');
+    if (uploadBox) {
+        if (currentRole === 'admin') {
+            uploadBox.style.display = 'block';
+        } else {
+            uploadBox.style.display = 'none'; // Sembunyikan total form upload untuk Guru
+        }
+    }
 
     // DOM Elements
     const btnUpload = document.getElementById('btnUpload');
@@ -157,6 +194,11 @@
           // Deteksi apakah data berupa Link Google Drive atau Base64 Lokal
           const isLink = d.url && d.url.startsWith('http');
           
+          // 🔒 KONDISI TOMBOL HAPUS: Hanya dibuat jika role-nya adalah 'admin'
+          const tombolHapusHTML = (currentRole === 'admin') 
+            ? `<button class="btn-delete" onclick="hapusDokumen('${d.id}')">🗑️ Hapus</button>` 
+            : '';
+          
           container.innerHTML += `
             <div class="dokumen-item">
               <h4>${d.nama}</h4>
@@ -164,7 +206,7 @@
               <div class="actions">
                 <button onclick="lihatDokumen('${d.url}')" class="btn-view">🖥️ Lihat</button>
                 <a href="${d.url}" ${isLink ? 'target="_blank"' : `download="${d.fileName}"`} class="btn-download">${isLink ? '🔗 Buka Link' : '⬇️ Download'}</a>
-                <button class="btn-delete" onclick="hapusDokumen('${d.id}')">🗑️ Hapus</button>
+                ${tombolHapusHTML}
               </div>
             </div>
           `;
@@ -201,7 +243,6 @@
       const mode = document.querySelector('input[name="sumberDokumen"]:checked').value;
       
       if (mode === 'lokal') {
-        // JIKA MENGGUNAKAN FILE LOKAL
         if (!fileInput.files[0]) {
           errorMsg.textContent = '⚠️ Silakan pilih file perangkat Anda terlebih dahulu!';
           errorMsg.classList.add('show');
@@ -215,10 +256,9 @@
         }
         finalUrl = await convertToBase64(file);
         finalFileName = file.name;
-        finalSize = file.size; // Fixed: Disamakan variabelnya menjadi finalSize
+        finalSize = file.size;
         
       } else {
-        // JIKA MENGGUNAKAN LINK GOOGLE DRIVE
         if (!linkInput.value.trim().startsWith('http')) {
           errorMsg.textContent = '⚠️ Silakan masukkan tautan URL Google Drive yang valid (Diawali http/https)!';
           errorMsg.classList.add('show');
@@ -226,7 +266,7 @@
         }
         finalUrl = linkInput.value.trim();
         finalFileName = 'Google Drive Link';
-        finalSize = 0; // Tanda jika ini data link teks
+        finalSize = 0;
       }
       
       btnUpload.disabled = true;
@@ -273,10 +313,8 @@
     window.lihatDokumen = (urlOrBase64) => {
       try {
         if (urlOrBase64.startsWith('http')) {
-          // Jika data berupa Link, langsung buka tab baru ke Google Drive
           window.open(urlOrBase64, '_blank');
         } else {
-          // Jika data berupa Base64 lokal, ubah ke Blob dulu baru buka
           const parts = urlOrBase64.split(';base64,');
           const contentType = parts[0].split(':')[1];
           const raw = window.atob(parts[1]);
