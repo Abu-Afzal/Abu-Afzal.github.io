@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisi Madrasah - SIPELITA</title>
+    <link rel="icon" type="image/png" href="assets/images/icon-app.png">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px;}
+        .container{max-width:1200px;margin:0 auto;}
+        
+        /* Header */
+        .header{background:white;border-radius:15px;padding:20px 30px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+        .header h1{color:#667eea;font-size:1.8rem;margin:0;}
+        .header-info{color:#64748b;font-size:0.9rem;margin-top:5px;}
+        .user-badge{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:8px 20px;border-radius:20px;font-weight:600;font-size:0.9rem;}
+        
+        /* Card */
+        .card{background:white;border-radius:15px;padding:25px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:20px;}
+        .card-title{font-size:1.3rem;font-weight:700;color:#1e293b;margin-bottom:20px;padding-bottom:10px;border-bottom:3px solid #667eea;}
+        
+        /* Login Form */
+        .login-box{max-width:450px;margin:50px auto;background:white;padding:40px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+        .login-box h2{text-align:center;color:#667eea;margin-bottom:10px;}
+        .login-box p{text-align:center;color:#64748b;margin-bottom:30px;}
+        .form-group{margin-bottom:20px;}
+        .form-group label{display:block;margin-bottom:8px;font-weight:600;color:#475569;font-size:0.9rem;}
+        .form-group input,.form-group select{width:100%;padding:12px 15px;border:2px solid #e2e8f0;border-radius:10px;font-size:1rem;outline:none;transition:border-color .3s;}
+        .form-group input:focus,.form-group select:focus{border-color:#667eea;}
+        .btn{width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:transform .2s;}
+        .btn:hover{transform:translateY(-2px);}
+        .btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+        
+        /* Dashboard */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:30px;}
+        .stat-card{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:25px;border-radius:12px;box-shadow:0 4px 15px rgba(102,126,234,0.3);}
+        .stat-card h3{font-size:2.5rem;margin:0 0 5px;}
+        .stat-card p{margin:0;opacity:0.9;font-size:0.95rem;}
+        
+        /* Table */
+        .table-responsive{overflow-x:auto;}
+        table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+        th{background:#f8fafc;color:#1e293b;font-weight:700;padding:12px;text-align:left;border-bottom:3px solid #e2e8f0;}
+        td{padding:12px;border-bottom:1px solid #f1f5f9;}
+        tr:hover td{background:#fafbff;}
+        
+        /* Badge */
+        .badge{padding:5px 12px;border-radius:20px;font-size:0.75rem;font-weight:700;display:inline-block;}
+        .badge-primary{background:#dbeafe;color:#1e40af;}
+        .badge-success{background:#dcfce7;color:#166534;}
+        .badge-warning{background:#fef3c7;color:#92400e;}
+        
+        /* Button */
+        .btn-sm{padding:8px 16px;font-size:0.85rem;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:all .2s;}
+        .btn-primary{background:#667eea;color:white;}
+        .btn-primary:hover{background:#5568d3;}
+        .btn-success{background:#10b981;color:white;}
+        .btn-success:hover{background:#059669;}
+        .btn-info{background:#3b82f6;color:white;}
+        .btn-info:hover{background:#2563eb;}
+        
+        /* Modal */
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px;}
+        .modal.active{display:flex;}
+        .modal-content{background:white;border-radius:15px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;}
+        .modal-header{padding:20px 25px;border-bottom:2px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;}
+        .modal-header h3{margin:0;color:#1e293b;}
+        .modal-close{background:none;border:none;font-size:1.8rem;cursor:pointer;color:#94a3b8;}
+        .modal-body{padding:25px;}
+        .modal-footer{padding:15px 25px;border-top:2px solid #e2e8f0;display:flex;gap:10px;justify-content:flex-end;}
+        
+        /* Supervision Form */
+        .aspect-group{margin-bottom:25px;padding:20px;background:#f8fafc;border-radius:10px;border-left:4px solid #667eea;}
+        .aspect-title{font-weight:700;color:#1e293b;margin-bottom:15px;font-size:1.05rem;}
+        .rating-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;}
+        .rating-item{background:white;padding:12px;border-radius:8px;border:2px solid #e2e8f0;}
+        .rating-item label{display:block;margin-bottom:8px;font-weight:600;font-size:0.85rem;color:#475569;}
+        .rating-item select{width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.9rem;}
+        .notes-field{width:100%;min-height:80px;padding:12px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:inherit;font-size:0.9rem;resize:vertical;}
+        
+        /* Alert */
+        .alert{padding:15px 20px;border-radius:10px;margin-bottom:20px;font-weight:600;}
+        .alert-success{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+        .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+        
+        /* Detail View */
+        .detail-section{margin-bottom:25px;}
+        .detail-title{font-weight:700;color:#667eea;margin-bottom:10px;font-size:1.05rem;border-bottom:2px solid #e2e8f0;padding-bottom:5px;}
+        .detail-item{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;}
+        .detail-label{color:#64748b;font-weight:600;}
+        .detail-value{color:#1e293b;font-weight:600;}
+        .score-box{background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:20px;border-radius:10px;text-align:center;margin-top:20px;}
+        .score-number{font-size:3rem;font-weight:800;margin:0;}
+        .score-label{font-size:0.95rem;opacity:0.9;}
+        
+        /* Responsive */
+        @media(max-width:768px){
+            .header{flex-direction:column;text-align:center;gap:15px;}
+            .stats-grid{grid-template-columns:1fr;}
+            .rating-group{grid-template-columns:1fr;}
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+    <div class="login-box">
+        <h2>🔐 Supervisi Madrasah</h2>
+        <p>Sistem Supervisi Administrasi & Kinerja</p>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="nama@manbantaeng.sch.id" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPass" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn" id="btnLogin">Masuk</button>
+        </form>
+        <div id="loginError" class="alert alert-error" style="display:none;margin-top:15px;"></div>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;">
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>📊 Supervisi Madrasah</h1>
+                <div class="header-info">Sistem Supervisi Administrasi & Kinerja - MAN Bantaeng</div>
+            </div>
+            <div>
+                <div class="user-badge" id="userRole"></div>
+                <div style="text-align:right;margin-top:5px;font-weight:600;color:#1e293b;" id="userName"></div>
+                <button onclick="logout()" style="margin-top:8px;padding:6px 15px;background:#ef4444;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85rem;">Logout</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <!-- Content based on role -->
+        <div id="supervisorContent" style="display:none;">
+            <div class="card">
+                <div class="card-title">📝 Supervisi Baru</div>
+                <button onclick="openSupervisionModal()" class="btn btn-primary" style="width:auto;padding:12px 30px;">
+                    + Buat Supervisi
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">📋 Riwayat Supervisi yang Dilakukan</div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Yang Disupervisi</th>
+                                <th>Jenis</th>
+                                <th>Skor</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supervisionList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="superviseeContent" style="display:none;">
+            <div class="card">
+                <div class="card-title">📊 Hasil Supervisi Saya</div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Supervisor</th>
+                                <th>Jenis Supervisi</th>
+                                <th>Skor</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mySupervisionList"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: SUPERVISION FORM -->
+<div id="supervisionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📝 Form Supervisi</h3>
+            <button class="modal-close" onclick="closeModal('supervisionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="supervisionForm">
+                <div class="form-group">
+                    <label>Yang Disupervisi *</label>
+                    <select id="superviseeSelect" required>
+                        <option value="">-- Pilih --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Jenis Supervisi *</label>
+                    <select id="supervisionType" required onchange="loadAspects()">
+                        <option value="">-- Pilih --</option>
+                        <option value="administrasi">Supervisi Administrasi</option>
+                        <option value="kinerja">Supervisi Kinerja</option>
+                        <option value="pembelajaran">Supervisi Pembelajaran</option>
+                    </select>
+                </div>
+
+                <div id="aspectsContainer"></div>
+
+                <div class="form-group">
+                    <label>Catatan & Rekomendasi</label>
+                    <textarea id="supervisionNotes" class="notes-field" placeholder="Berikan catatan dan rekomendasi untuk perbaikan..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeModal('supervisionModal')" class="btn-sm" style="background:#94a3b8;color:white;">Batal</button>
+            <button onclick="saveSupervision()" class="btn-sm btn-success">Simpan Supervisi</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETAIL SUPERVISION -->
+<div id="detailModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📊 Detail Hasil Supervisi</h3>
+            <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="detailContent"></div>
+        <div class="modal-footer">
+            <button onclick="closeModal('detailModal')" class="btn-sm" style="background:#94a3b8;color:white;">Tutup</button>
+            <button onclick="printSupervision()" class="btn-sm btn-primary">🖨️ Cetak</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs, addDoc, getDoc, doc, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Firebase Config
+const firebaseConfig = {
+    apiKey:"AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+    authDomain:"sipelita-digital.firebaseapp.com",
+    databaseURL:"https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"sipelita-digital",
+    storageBucket:"sipelita-digital.firebasestorage.app",
+    messagingSenderId:"787840817745",
+    appId:"1:787840817745:web:e6b5237cfbb5e51be93670",
+    measurementId:"G-1D5DWJV54E"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// State
+let currentUser = null;
+let currentSupervision = null;
+
+// Aspek Supervisi
+const aspectsData = {
+    administrasi: [
+        { id:'kelengkapan', label:'Kelengkapan Dokumen Administrasi', maxScore:25 },
+        { id:'kerapihan', label:'Kerapihan & Sistematika', maxScore:25 },
+        { id:'ketepatan', label:'Ketepatan Waktu Pengumpulan', maxScore:25 },
+        { id:'kesesuaian', label:'Kesesuaian dengan Standar', maxScore:25 }
+    ],
+    kinerja: [
+        { id:'disiplin', label:'Kedisiplinan', maxScore:20 },
+        { id:'tanggungjawab', label:'Tanggung Jawab', maxScore:20 },
+        { id:'kerjasama', label:'Kerjasama Tim', maxScore:20 },
+        { id:'inisiatif', label:'Inisiatif & Kreativitas', maxScore:20 },
+        { id:'pencapaian', label:'Pencapaian Target Kerja', maxScore:20 }
+    ],
+    pembelajaran: [
+        { id:'perencanaan', label:'Perencanaan Pembelajaran', maxScore:20 },
+        { id:'pelaksanaan', label:'Pelaksanaan Pembelajaran', maxScore:30 },
+        { id:'evaluasi', label:'Evaluasi & Penilaian', maxScore:25 },
+        { id:'inovasi', label:'Inovasi Pembelajaran', maxScore:25 }
+    ]
+};
+
+// Login
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPass').value;
+    const btn = document.getElementById('btnLogin');
+    const err = document.getElementById('loginError');
+    
+    btn.disabled = true;
+    btn.textContent = 'Memeriksa...';
+    err.style.display = 'none';
+    
+    try {
+        // Check user in Firestore
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email));
+        const snapshot = await getDocs(q);
+        
+        if (snapshot.empty) {
+            throw new Error('User tidak ditemukan');
+        }
+        
+        const userData = snapshot.docs[0].data();
+        const userId = snapshot.docs[0].id;
+        
+        // Verify password (simple check - in production use Firebase Auth properly)
+        if (userData.password !== password) {
+            throw new Error('Password salah');
+        }
+        
+        currentUser = {
+            id: userId,
+            email: userData.email,
+            nama: userData.nama,
+            role: userData.role, // 'kepala', 'wakil', 'guru'
+            fitur: userData.fitur || []
+        };
+        
+        // Save to session
+        sessionStorage.setItem('supervisi_user', JSON.stringify(currentUser));
+        
+        showDashboard();
+        
+    } catch (error) {
+        err.textContent = '❌ ' + error.message;
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Masuk';
+    }
+});
+
+// Show Dashboard
+async function showDashboard() {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    
+    document.getElementById('userName').textContent = currentUser.nama;
+    document.getElementById('userRole').textContent = getRoleLabel(currentUser.role);
+    
+    // Load stats
+    await loadStats();
+    
+    // Show content based on role
+    if (currentUser.role === 'kepala' || currentUser.role === 'wakil') {
+        document.getElementById('supervisorContent').style.display = 'block';
+        document.getElementById('superviseeContent').style.display = 'none';
+        await loadSupervisionList();
+        await loadSuperviseeOptions();
+    } else {
+        document.getElementById('supervisorContent').style.display = 'none';
+        document.getElementById('superviseeContent').style.display = 'block';
+        await loadMySupervisionList();
+    }
+}
+
+function getRoleLabel(role) {
+    const labels = {
+        'kepala': '👑 Kepala Madrasah',
+        'wakil': '⭐ Wakil Kepala Madrasah',
+        'guru': '👨‍🏫 Guru'
+    };
+    return labels[role] || role;
+}
+
+async function loadStats() {
+    const statsGrid = document.getElementById('statsGrid');
+    
+    if (currentUser.role === 'kepala' || currentUser.role === 'wakil') {
+        // Count supervisions done
+        const q = query(
+            collection(db, 'supervisions'),
+            where('supervisorId', '==', currentUser.id)
+        );
+        const snapshot = await getDocs(q);
+        const total = snapshot.size;
+        
+        statsGrid.innerHTML = `
+            <div class="stat-card">
+                <h3>${total}</h3>
+                <p>Total Supervisi Dilakukan</p>
+            </div>
+        `;
+    } else {
+        // Count supervisions received
+        const q = query(
+            collection(db, 'supervisions'),
+            where('superviseeId', '==', currentUser.id)
+        );
+        const snapshot = await getDocs(q);
+        const total = snapshot.size;
+        
+        statsGrid.innerHTML = `
+            <div class="stat-card">
+                <h3>${total}</h3>
+                <p>Total Supervisi Diterima</p>
+            </div>
+        `;
+    }
+}
+
+async function loadSupervisionList() {
+    const q = query(
+        collection(db, 'supervisions'),
+        where('supervisorId', '==', currentUser.id),
+        orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const tbody = document.getElementById('supervisionList');
+    
+    if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">Belum ada supervisi</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return `
+            <tr>
+                <td>${new Date(data.createdAt.toDate()).toLocaleDateString('id-ID')}</td>
+                <td>${data.superviseeName}</td>
+                <td>${getSupervisionTypeLabel(data.type)}</td>
+                <td><strong>${data.totalScore}</strong></td>
+                <td><span class="badge badge-success">Selesai</span></td>
+                <td>
+                    <button onclick="viewDetail('${doc.id}')" class="btn-sm btn-info">👁️ Lihat</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function loadMySupervisionList() {
+    const q = query(
+        collection(db, 'supervisions'),
+        where('superviseeId', '==', currentUser.id),
+        orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const tbody = document.getElementById('mySupervisionList');
+    
+    if (snapshot.empty) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">Belum ada supervisi</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return `
+            <tr>
+                <td>${new Date(data.createdAt.toDate()).toLocaleDateString('id-ID')}</td>
+                <td>${data.supervisorName}</td>
+                <td>${getSupervisionTypeLabel(data.type)}</td>
+                <td><strong>${data.totalScore}</strong></td>
+                <td><span class="badge badge-success">Selesai</span></td>
+                <td>
+                    <button onclick="viewDetail('${doc.id}')" class="btn-sm btn-info">👁️ Lihat Detail</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function getSupervisionTypeLabel(type) {
+    const labels = {
+        'administrasi': 'Supervisi Administrasi',
+        'kinerja': 'Supervisi Kinerja',
+        'pembelajaran': 'Supervisi Pembelajaran'
+    };
+    return labels[type] || type;
+}
+
+async function loadSuperviseeOptions() {
+    const select = document.getElementById('superviseeSelect');
+    
+    // Get users based on supervisor role
+    let roleFilter = [];
+    if (currentUser.role === 'kepala') {
+        roleFilter = ['wakil']; // Kepala supervisi Wakil
+    } else if (currentUser.role === 'wakil') {
+        roleFilter = ['guru']; // Wakil supervisi Guru
+    }
+    
+    const q = query(collection(db, 'users'));
+    const snapshot = await getDocs(q);
+    
+    select.innerHTML = '<option value="">-- Pilih --</option>';
+    
+    snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (roleFilter.includes(data.role)) {
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `${data.nama} (${getRoleLabel(data.role)})`;
+            option.dataset.name = data.nama;
+            select.appendChild(option);
+        }
+    });
+}
+
+function loadAspects() {
+    const type = document.getElementById('supervisionType').value;
+    const container = document.getElementById('aspectsContainer');
+    
+    if (!type || !aspectsData[type]) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const aspects = aspectsData[type];
+    container.innerHTML = `
+        <div class="aspect-group">
+            <div class="aspect-title">Aspek Penilaian</div>
+            <div class="rating-group">
+                ${aspects.map(aspect => `
+                    <div class="rating-item">
+                        <label>${aspect.label} (Max: ${aspect.maxScore})</label>
+                        <select class="aspect-score" data-aspect="${aspect.id}" data-max="${aspect.maxScore}" required>
+                            <option value="">-- Nilai --</option>
+                            ${Array.from({length: aspect.maxScore + 1}, (_, i) => 
+                                `<option value="${i}">${i}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+window.openSupervisionModal = function() {
+    document.getElementById('supervisionForm').reset();
+    document.getElementById('aspectsContainer').innerHTML = '';
+    openModal('supervisionModal');
+}
+
+window.saveSupervision = async function() {
+    const superviseeId = document.getElementById('superviseeSelect').value;
+    const superviseeName = document.getElementById('superviseeSelect').options[document.getElementById('superviseeSelect').selectedIndex].dataset.name;
+    const type = document.getElementById('supervisionType').value;
+    const notes = document.getElementById('supervisionNotes').value;
+    
+    if (!superviseeId || !type) {
+        alert('Lengkapi semua field wajib!');
+        return;
+    }
+    
+    // Calculate scores
+    const aspectScores = {};
+    let totalScore = 0;
+    let maxTotal = 0;
+    
+    document.querySelectorAll('.aspect-score').forEach(select => {
+        const aspect = select.dataset.aspect;
+        const max = parseInt(select.dataset.max);
+        const value = parseInt(select.value) || 0;
+        
+        aspectScores[aspect] = { score: value, max: max };
+        totalScore += value;
+        maxTotal += max;
+    });
+    
+    const percentage = maxTotal > 0 ? ((totalScore / maxTotal) * 100).toFixed(1) : 0;
+    
+    try {
+        await addDoc(collection(db, 'supervisions'), {
+            supervisorId: currentUser.id,
+            supervisorName: currentUser.nama,
+            supervisorRole: currentUser.role,
+            superviseeId: superviseeId,
+            superviseeName: superviseeName,
+            type: type,
+            aspectScores: aspectScores,
+            totalScore: totalScore,
+            maxScore: maxTotal,
+            percentage: percentage,
+            notes: notes,
+            createdAt: new Date(),
+            status: 'completed'
+        });
+        
+        closeModal('supervisionModal');
+        alert('✅ Supervisi berhasil disimpan!');
+        loadSupervisionList();
+        loadStats();
+        
+    } catch (error) {
+        console.error('Error saving supervision:', error);
+        alert('❌ Gagal menyimpan supervisi');
+    }
+}
+
+window.viewDetail = async function(docId) {
+    const docRef = doc(db, 'supervisions', docId);
+    const docSnap = await getDoc(docRef);
+    
+    if (!docSnap.exists()) {
+        alert('Data tidak ditemukan');
+        return;
+    }
+    
+    currentSupervision = { id: docId, ...docSnap.data() };
+    showDetailModal();
+}
+
+function showDetailModal() {
+    const data = currentSupervision;
+    const aspects = aspectsData[data.type] || [];
+    
+    let aspectsHtml = aspects.map(aspect => {
+        const scoreData = data.aspectScores[aspect.id] || { score: 0, max: aspect.maxScore };
+        return `
+            <div class="detail-item">
+                <span class="detail-label">${aspect.label}</span>
+                <span class="detail-value">${scoreData.score} / ${scoreData.max}</span>
+            </div>
+        `;
+    }).join('');
+    
+    const content = document.getElementById('detailContent');
+    content.innerHTML = `
+        <div class="detail-section">
+            <div class="detail-title">Informasi Umum</div>
+            <div class="detail-item">
+                <span class="detail-label">Tanggal</span>
+                <span class="detail-value">${new Date(data.createdAt.toDate()).toLocaleDateString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Supervisor</span>
+                <span class="detail-value">${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Yang Disupervisi</span>
+                <span class="detail-value">${data.superviseeName}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Jenis Supervisi</span>
+                <span class="detail-value">${getSupervisionTypeLabel(data.type)}</span>
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <div class="detail-title">Detail Penilaian</div>
+            ${aspectsHtml}
+        </div>
+        
+        ${data.notes ? `
+        <div class="detail-section">
+            <div class="detail-title">Catatan & Rekomendasi</div>
+            <div style="background:#f8fafc;padding:15px;border-radius:8px;margin-top:10px;white-space:pre-wrap;">${data.notes}</div>
+        </div>
+        ` : ''}
+        
+        <div class="score-box">
+            <div class="score-number">${data.percentage}%</div>
+            <div class="score-label">Total Skor: ${data.totalScore} / ${data.maxScore}</div>
+        </div>
+    `;
+    
+    openModal('detailModal');
+}
+
+window.printSupervision = function() {
+    // Simple print function
+    window.print();
+}
+
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+function logout() {
+    sessionStorage.removeItem('supervisi_user');
+    location.reload();
+}
+
+// Check session on load
+window.addEventListener('load', () => {
+    const saved = sessionStorage.getItem('supervisi_user');
+    if (saved) {
+        currentUser = JSON.parse(saved);
+        showDashboard();
+    }
+});
+
+// Make functions global
+window.openSupervisionModal = openSupervisionModal;
+window.saveSupervision = saveSupervision;
+window.viewDetail = viewDetail;
+window.printSupervision = printSupervision;
+window.logout = logout;
+</script>
+
+</body>
+</html>
