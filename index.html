@@ -60,43 +60,88 @@
     <script type="module">
   import { AuthService } from './js/auth-service.js';
 
-  // 1. Cek apakah user sudah login
-  const user = AuthService.checkAuth();
+  try {
+    // 1. Cek apakah user sudah login
+    const user = AuthService.checkAuth();
 
-  if (user) {
-    // Tampilkan sapaan "Hi, [Nama]"
-    document.getElementById('userName').textContent = `Hi, ${user.nama}`;
-    
-    // Tampilkan role
-    if (user.role === 'admin') {
-      document.getElementById('userRole').textContent = '👑 Admin';
+    if (user) {
+      // Tampilkan sapaan "Hi, [Nama]"
+      const userNameEl = document.getElementById('userName');
+      if (userNameEl) {
+        userNameEl.textContent = `Hi, ${user.nama || 'User'}`;
+      }
+      
+      // Tampilkan role
+      const userRoleEl = document.getElementById('userRole');
+      if (userRoleEl) {
+        if (user.role === 'admin') {
+          userRoleEl.textContent = '👑 Admin';
+        } else if (user.role === 'kepala') {
+          userRoleEl.textContent = '👑 Kepala Madrasah';
+        } else if (user.role === 'wakil') {
+          userRoleEl.textContent = '⭐ Wakil Kepala';
+        } else {
+          userRoleEl.textContent = '👤 Guru';
+        }
+      }
+
+      // Cek apakah elemen adminSection ADA sebelum diubah
+      const adminSection = document.getElementById('adminSection');
+      if (adminSection) {
+        if (user.role === 'admin') {
+          adminSection.style.display = 'block';
+        } else {
+          adminSection.style.display = 'none';
+        }
+      }
+
     } else {
-      document.getElementById('userRole').textContent = '👤 Guru';
+      // Jika belum login, tendang ke home.html
+      window.location.href = 'home.html';
     }
 
-    // ✅ PERBAIKAN DI SINI: Cek apakah elemen adminSection ADA sebelum diubah
-    const adminSection = document.getElementById('adminSection');
-    if (adminSection) {
-      if (user.role === 'admin') {
-        adminSection.style.display = 'block';
-      } else {
-        adminSection.style.display = 'none';
-      }
+    // 2. Handle Tombol Logout - DENGAN ERROR HANDLING
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', async () => {
+        if (confirm('Yakin ingin keluar dari SIPELITA?')) {
+          try {
+            // Clear session
+            localStorage.removeItem('sipelita_user');
+            sessionStorage.removeItem('sipelita_user');
+            
+            // Panggil AuthService.logout() jika tersedia
+            if (typeof AuthService !== 'undefined' && AuthService.logout) {
+              await AuthService.logout();
+            } else {
+              // Fallback: redirect manual
+              window.location.href = 'home.html';
+            }
+          } catch (error) {
+            console.error('Error saat logout:', error);
+            // Fallback: tetap redirect
+            localStorage.removeItem('sipelita_user');
+            sessionStorage.removeItem('sipelita_user');
+            window.location.href = 'home.html';
+          }
+        }
+      });
     }
 
-  } else {
-    // Jika belum login, tendang ke home.html
-    window.location.href = 'home.html';
-  }
-
-  // 2. Handle Tombol Logout (Sekarang ini aman karena script tidak crash di atas)
-  const btnLogout = document.getElementById('btnLogout');
-  if (btnLogout) {
-    btnLogout.addEventListener('click', async () => {
-      if (confirm('Yakin ingin keluar dari SIPELITA?')) {
-        await AuthService.logout();
-      }
-    });
+  } catch (error) {
+    console.error('❌ Error di script module:', error);
+    
+    // Fallback: tetap tampilkan tombol logout yang berfungsi
+    const btnLogout = document.getElementById('btnLogout');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', () => {
+        if (confirm('Yakin ingin keluar?')) {
+          localStorage.removeItem('sipelita_user');
+          sessionStorage.removeItem('sipelita_user');
+          window.location.href = 'home.html';
+        }
+      });
+    }
   }
 </script>
 </body>
