@@ -779,20 +779,44 @@ window.loadScheduleDetail = async function() {
       return;
     }
     
-    const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-    docContainer.innerHTML = docs.map(d => {
-      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'':'📄');
-      return `
-        <div class="doc-item">
-          <div class="doc-icon">${icon}</div>
-          <div class="doc-info">
-            <div class="doc-name">${d.nama}</div>
-            <div class="doc-meta">${d.kategori} • ${new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
-          </div>
-          ${d.type==='link' ? `<a href="${d.link}" target="_blank" class="btn btn-primary btn-sm">🔗 Buka</a>` : `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇ Unduh</button>`}
-        </div>
-      `;
-    }).join('');
+const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+docContainer.innerHTML = docs.map(d => {
+  const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
+  
+  // Tombol Lihat (Preview)
+  let btnLihat = '';
+  if (d.type === 'link') {
+    btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
+  } else if (d.fileExt === 'pdf') {
+    // PDF bisa langsung dibuka di tab baru
+    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+  } else if (['doc','docx','xls','xlsx','ppt','pptx'].includes(d.fileExt)) {
+    // File Office: gunakan Google Docs Viewer
+    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`;
+  } else {
+    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+  }
+  
+  // Tombol Unduh (hanya untuk file, bukan link)
+  let btnUnduh = '';
+  if (d.type !== 'link') {
+    btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')"> Unduh</button>`;
+  }
+  
+  return `
+    <div class="doc-item">
+      <div class="doc-icon">${icon}</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.nama}</div>
+        <div class="doc-meta">${d.kategori} • ${new Date(d.createdAt).toLocaleDateString('id-ID')} • ${d.fileSize ? (d.fileSize/1024/1024).toFixed(2)+' MB' : 'Link'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${btnLihat}
+        ${btnUnduh}
+      </div>
+    </div>
+  `;
+}).join('');
     
   } catch(e) {
     docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">❌</div><p>Gagal memuat dokumen</p></div>';
@@ -1101,38 +1125,40 @@ async function loadMyDocs(){
   }
   
   tbody.innerHTML = snap.docs.map(d => {
-    const data = d.data();
-    const icon = data.type==='link' ? '' : (data.fileExt==='pdf'?'':['doc','docx'].includes(data.fileExt)?'📘':['xls','xlsx'].includes(data.fileExt)?'📗':'📄');
-    return `
-      <tr>
-        <td>${icon} ${data.nama}</td>
-        <td>${data.kategori}</td>
-        <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
-        <td>
-          ${data.type==='link' ? `<a href="${data.link}" target="_blank" class="btn btn-primary btn-sm">🔗 Buka</a>` : `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${data.nama.replace(/'/g,"\\'")}','${data.fileExt}')"> Unduh</button>`}
+  const data = d.data();
+  const icon = data.type==='link' ? '🔗' : (data.fileExt==='pdf'?'📕':['doc','docx'].includes(data.fileExt)?'📘':['xls','xlsx'].includes(data.fileExt)?'📗':'📄');
+  
+  // Tombol Lihat (Preview)
+  let btnLihat = '';
+  if (data.type === 'link') {
+    btnLihat = `<a href="${data.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
+  } else if (data.fileExt === 'pdf') {
+    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+  } else if (['doc','docx','xls','xlsx','ppt','pptx'].includes(data.fileExt)) {
+    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${data.fileExt}')">👁️ Lihat</button>`;
+  }
+  
+  // Tombol Unduh
+  let btnUnduh = '';
+  if (data.type !== 'link') {
+    btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${data.nama.replace(/'/g,"\\'")}','${data.fileExt}')">⬇ Unduh</button>`;
+  }
+  
+  return `
+    <tr>
+      <td>${icon} ${data.nama}</td>
+      <td>${data.kategori}</td>
+      <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${btnLihat}
+          ${btnUnduh}
           <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-window.downloadMyDoc = async function(docId, nama, ext){
-  const snap = await db.collection('supervision_documents').doc(docId).get();
-  const data = snap.data();
-  const a = document.createElement('a');
-  a.href = data.fileData;
-  a.download = nama + '.' + ext;
-  a.click();
-};
-
-window.downloadDoc = window.downloadMyDoc;
-
-window.deleteMyDoc = async function(docId){
-  if(!confirm('Hapus dokumen ini?')) return;
-  await db.collection('supervision_documents').doc(docId).delete();
-  loadMyDocs();
-};
+        </div>
+      </td>
+    </tr>
+  `;
+}).join('');
 
 // ══════════════════════════════════════════════
 //   📊 HASIL SUPERVISI (GURU)
@@ -1256,6 +1282,159 @@ window.downloadPDF = async function(docId){
   pdf.save(`Supervisi_${data.superviseeName}_${new Date(data.createdAt).toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`);
 };
 
+// ══════════════════════════════════════════════
+//   👁️ PREVIEW DOKUMEN
+// ══════════════════════════════════════════════
+
+/**
+ * Preview dokumen PDF di tab baru
+ */
+window.previewDoc = async function(docId) {
+  try {
+    const snap = await db.collection('supervision_documents').doc(docId).get();
+    if (!snap.exists) {
+      alert('Dokumen tidak ditemukan');
+      return;
+    }
+    
+    const data = snap.data();
+    
+    if (data.type === 'link') {
+      // Buka link langsung
+      window.open(data.link, '_blank');
+    } else if (data.fileExt === 'pdf') {
+      // Buka PDF di tab baru
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>Preview: ${data.nama}</title>
+            <style>
+              body { margin: 0; background: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
+              .header { 
+                background: #3b82f6; 
+                color: white; 
+                padding: 12px 20px; 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center;
+              }
+              .header h3 { margin: 0; font-size: 1rem; }
+              .header a { 
+                color: white; 
+                text-decoration: none; 
+                background: rgba(255,255,255,0.2); 
+                padding: 6px 14px; 
+                border-radius: 6px;
+                font-size: 0.85rem;
+              }
+              .header a:hover { background: rgba(255,255,255,0.3); }
+              iframe { width: 100%; height: calc(100vh - 50px); border: none; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h3>📄 ${data.nama}</h3>
+              <a href="${data.fileData}" download="${data.nama}.${data.fileExt}"> Download</a>
+            </div>
+            <iframe src="${data.fileData}"></iframe>
+          </body>
+        </html>
+      `);
+    } else {
+      // File lain: tampilkan info
+      alert(`File ${data.fileExt.toUpperCase()} tidak bisa di-preview langsung.\nSilakan download untuk melihat isinya.`);
+      window.previewDocOffice(docId, data.fileExt);
+    }
+    
+  } catch(e) {
+    console.error('Error preview:', e);
+    alert('❌ Gagal membuka preview: ' + e.message);
+  }
+};
+
+/**
+ * Preview file Office (doc, xls, ppt) via Google Docs Viewer
+ */
+window.previewDocOffice = async function(docId, fileExt) {
+  try {
+    const snap = await db.collection('supervision_documents').doc(docId).get();
+    if (!snap.exists) {
+      alert('Dokumen tidak ditemukan');
+      return;
+    }
+    
+    const data = snap.data();
+    
+    if (data.type === 'link') {
+      window.open(data.link, '_blank');
+      return;
+    }
+    
+    // Konversi base64 ke blob URL untuk Google Docs Viewer
+    // Karena Google Docs Viewer butuh URL publik, kita buka di tab baru dengan data URL
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(`
+      <html>
+        <head>
+          <title>Preview: ${data.nama}</title>
+          <style>
+            body { 
+              margin: 0; 
+              background: #f3f4f6; 
+              font-family: 'Segoe UI', sans-serif;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+            }
+            .card {
+              background: white;
+              padding: 30px;
+              border-radius: 14px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+              max-width: 500px;
+              text-align: center;
+            }
+            .icon { font-size: 4rem; margin-bottom: 15px; }
+            h3 { color: #1e40af; margin-bottom: 10px; }
+            p { color: #6b7280; margin-bottom: 20px; }
+            .btn {
+              display: inline-block;
+              background: #3b82f6;
+              color: white;
+              padding: 10px 20px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              margin: 5px;
+            }
+            .btn:hover { background: #2563eb; }
+            .btn-secondary { background: #6b7280; }
+            .btn-secondary:hover { background: #4b5563; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="icon">${fileExt === 'pdf' ? '📕' : ['doc','docx'].includes(fileExt) ? '📘' : ['xls','xlsx'].includes(fileExt) ? '📗' : '📄'}</div>
+            <h3>${data.nama}</h3>
+            <p>${data.kategori} • ${data.fileSize ? (data.fileSize/1024/1024).toFixed(2) + ' MB' : ''}</p>
+            <p style="font-size:0.85rem;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung di browser.</p>
+            <a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn">⬇ Download untuk Melihat</a>
+            <br>
+            <button onclick="window.close()" class="btn btn-secondary">Tutup</button>
+          </div>
+        </body>
+      </html>
+    `);
+    
+  } catch(e) {
+    console.error('Error preview office:', e);
+    alert('❌ Gagal membuka preview: ' + e.message);
+  }
+};
+  
 window.closeModal = function(id){
   document.getElementById(id).classList.remove('active');
 };
