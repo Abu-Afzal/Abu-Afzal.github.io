@@ -334,10 +334,16 @@ function showAccessDenied(message) {
 }
 
 async function checkSipelitaSession() {
-  console.log('🔍 Memeriksa session SIPELITA...');
+  console.log(' Memeriksa session SIPELITA...');
   
-  // 1. Cek sessionStorage dari SIPELITA
-  const sipelitaUser = sessionStorage.getItem('sipelita_user');
+  // 1. Cek sessionStorage DULU (prioritas utama)
+  let sipelitaUser = sessionStorage.getItem('sipelita_user');
+  
+  // 2. Jika tidak ada di sessionStorage, cek localStorage (fallback)
+  if (!sipelitaUser) {
+    sipelitaUser = localStorage.getItem('sipelita_user');
+    console.log('⚠️ Session tidak ada di sessionStorage, cek localStorage...');
+  }
   
   if (!sipelitaUser) {
     console.warn('⚠️ Tidak ada session SIPELITA');
@@ -353,30 +359,20 @@ async function checkSipelitaSession() {
   try {
     userData = JSON.parse(sipelitaUser);
   } catch(e) {
-    console.error('❌ Error parsing session:', e);
+    console.error(' Error parsing session:', e);
     showAccessDenied('<strong>⚠️ Session SIPELITA tidak valid!</strong><br>Silakan login ulang di portal SIPELITA.');
     return false;
   }
   
-  // 2. Validasi field yang diperlukan
+  // 3. Validasi field yang diperlukan
   if (!userData.email || !userData.nama) {
-    console.warn('⚠️ Data user tidak lengkap');
+    console.warn('️ Data user tidak lengkap');
     showAccessDenied('<strong>⚠️ Data user tidak lengkap!</strong><br>Silakan login ulang di portal SIPELITA.');
     return false;
   }
   
-  // 3. Cek akses fitur supervisi
-  if (!userData.fitur || !Array.isArray(userData.fitur) || !userData.fitur.includes('supervisi')) {
-    console.warn('⚠️ User tidak punya akses supervisi:', userData);
-    showAccessDenied(`
-      <strong>⛔ Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>
-      Login sebagai: <strong>${userData.nama}</strong> (${userData.email})<br><br>
-      Hubungi administrator untuk meminta akses ke fitur Supervisi.
-    `);
-    return false;
-  }
-  
-  // 4. Verifikasi data user di Firestore (opsional, untuk memastikan data terbaru)
+  // 4. VERIFIKASI LANGSUNG KE FIRESTORE (PENTING!)
+  // Ambil data terbaru dari Firestore untuk memastikan user yang benar
   try {
     const userDoc = await db.collection('users').doc(userData.email).get();
     
@@ -392,7 +388,7 @@ async function checkSipelitaSession() {
     
     const firestoreData = userDoc.data();
     
-    // Gunakan data terbaru dari Firestore
+    // Gunakan data TERBARU dari Firestore
     currentUser = {
       uid: userData.uid || userDoc.id,
       email: firestoreData.email || userData.email,
@@ -400,6 +396,8 @@ async function checkSipelitaSession() {
       role: firestoreData.role || userData.role || 'guru',
       fitur: firestoreData.fitur || userData.fitur
     };
+    
+    console.log('✅ Data user terverifikasi dari Firestore:', currentUser);
     
   } catch(e) {
     console.error('❌ Error mengambil data Firestore:', e);
@@ -413,8 +411,21 @@ async function checkSipelitaSession() {
     };
   }
   
-  // 5. Simpan session untuk supervisi
-  sessionStorage.setItem('supervisi_user', JSON.stringify(currentUser));
+  // 5. Cek akses fitur supervisi
+  if (!currentUser.fitur || !Array.isArray(currentUser.fitur) || !currentUser.fitur.includes('supervisi')) {
+    console.warn('⚠️ User tidak punya akses supervisi:', currentUser);
+    showAccessDenied(`
+      <strong>⛔ Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>
+      Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})<br><br>
+      Hubungi administrator untuk meminta akses ke fitur Supervisi.
+    `);
+    return false;
+  }
+  
+  // 6. Simpan session ke KEDUA storage (sessionStorage DAN localStorage)
+  // agar konsisten
+  sessionStorage.setItem('sipelita_user', JSON.stringify(currentUser));
+  localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
   
   console.log('✅ Session valid:', currentUser);
   return true;
