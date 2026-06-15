@@ -1256,7 +1256,6 @@ window.loadInstrumentForm = function() {
   formArea.style.display = 'block';
   formArea.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat form penilaian...</div>';
   
-  // Load instrument details
   db.collection('supervision_instruments').doc(instrumentId).get().then(doc => {
     if (!doc.exists) {
       formArea.innerHTML = '<div class="alert alert-error">❌ Instrumen tidak ditemukan</div>';
@@ -1266,37 +1265,108 @@ window.loadInstrumentForm = function() {
     const data = doc.data();
     currentInstrument = { ...currentInstrument, ...data };
     
-    let html = `<div class="assessment-category">
-      <div class="category-title">📋 ${data.name}</div>
-      <p style="color:#6b7280;margin-bottom:20px;">${data.description || ''}</p>`;
+    // Tambah field info guru yang disupervisi
+    let html = `
+      <div class="card" style="background:#f9fafb;margin-bottom:20px;">
+        <h3 style="color:#1e40af;margin-bottom:15px;">📋 ${data.name}</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama Madrasah</label>
+            <input type="text" id="schoolName" value="MTs. As'adiyah Ereng-Ereng">
+          </div>
+          <div class="form-group">
+            <label>Mata Pelajaran</label>
+            <input type="text" id="subject" placeholder="Contoh: Matematika">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Kelas/Semester</label>
+            <input type="text" id="classSemester" placeholder="Contoh: VII/1">
+          </div>
+          <div class="form-group">
+            <label>Jumlah Jam Tatap Muka</label>
+            <input type="number" id="meetingHours" placeholder="Contoh: 4">
+          </div>
+        </div>
+      </div>
+      
+      <div class="table-wrap">
+        <table style="border-collapse:collapse;width:100%;">
+          <thead>
+            <tr style="background:#4CAF50;color:white;">
+              <th style="border:1px solid #ddd;padding:10px;text-align:center;width:5%;">No</th>
+              <th style="border:1px solid #ddd;padding:10px;text-align:left;width:55%;">Komponen</th>
+              <th colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;background:#81C784;">Skor Nilai</th>
+            </tr>
+            <tr style="background:#81C784;">
+              <th style="border:1px solid #ddd;"></th>
+              <th style="border:1px solid #ddd;"></th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">1</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">2</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">3</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">4</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
     
     data.components.forEach((comp, index) => {
       html += `
-        <div class="assessment-item">
-          <div class="item-label">${index + 1}. ${comp.name}</div>
-          <div class="score-options">
-            <div class="score-option">
-              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_1" value="1">
-              <label for="score_${comp.id}_1">1<br><small>${comp.level1 || 'Kurang'}</small></label>
-            </div>
-            <div class="score-option">
-              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_2" value="2">
-              <label for="score_${comp.id}_2">2<br><small>${comp.level2 || 'Cukup'}</small></label>
-            </div>
-            <div class="score-option">
-              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_3" value="3">
-              <label for="score_${comp.id}_3">3<br><small>${comp.level3 || 'Baik'}</small></label>
-            </div>
-            <div class="score-option">
-              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_4" value="4">
-              <label for="score_${comp.id}_4">4<br><small>${comp.level4 || 'Sangat Baik'}</small></label>
-            </div>
-          </div>
-        </div>
+        <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">${index + 1}</td>
+          <td style="border:1px solid #ddd;padding:8px;">${comp.name}</td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_${comp.id}" value="1" onchange="handleCheckbox('${comp.id}', 1)">
+          </td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_${comp.id}" value="2" onchange="handleCheckbox('${comp.id}', 2)">
+          </td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_${comp.id}" value="3" onchange="handleCheckbox('${comp.id}', 3)">
+          </td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_${comp.id}" value="4" onchange="handleCheckbox('${comp.id}', 4)">
+          </td>
+        </tr>
       `;
     });
     
-    html += '</div>';
+    html += `
+          </tbody>
+          <tfoot>
+            <tr style="background:#C8E6C9;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Jumlah</td>
+              <td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_1">0</td>
+              <td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_2">0</td>
+              <td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_3">0</td>
+              <td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_4">0</td>
+            </tr>
+            <tr style="background:#A5D6A7;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Skor Total</td>
+              <td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="totalScore">0</td>
+            </tr>
+            <tr style="background:#81C784;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Persentase Capaian</td>
+              <td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="percentage">0%</td>
+            </tr>
+            <tr style="background:#4CAF50;color:white;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Predikat</td>
+              <td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="predicate">-</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      
+      <div style="margin-top:15px;background:#FFF3E0;padding:12px;border-radius:8px;border-left:4px solid #FF9800;">
+        <strong>Keterangan:</strong><br>
+        • 91% - 100% = Sangat Baik<br>
+        • 81% - 90% = Baik<br>
+        • 71% - 80% = Cukup<br>
+        • ≤70% = Kurang
+      </div>
+    `;
+    
     formArea.innerHTML = html;
     
   }).catch(e => {
@@ -1304,6 +1374,57 @@ window.loadInstrumentForm = function() {
   });
 };
 
+// Handle checkbox - hanya satu yang bisa dipilih per baris
+window.handleCheckbox = function(compId, value) {
+  // Uncheck semua checkbox lain untuk komponen ini
+  const checkboxes = document.querySelectorAll(`input[name="score_${compId}"]`);
+  checkboxes.forEach(cb => {
+    if (parseInt(cb.value) !== value) {
+      cb.checked = false;
+    }
+  });
+  
+  // Update perhitungan
+  calculateScores();
+};
+
+function calculateScores() {
+  const instrument = currentInstrument;
+  if (!instrument) return;
+  
+  let count1 = 0, count2 = 0, count3 = 0, count4 = 0;
+  let totalScore = 0;
+  let maxScore = instrument.components.length * 4;
+  
+  instrument.components.forEach(comp => {
+    const selected = document.querySelector(`input[name="score_${comp.id}"]:checked`);
+    if (selected) {
+      const value = parseInt(selected.value);
+      totalScore += value;
+      if (value === 1) count1++;
+      else if (value === 2) count2++;
+      else if (value === 3) count3++;
+      else if (value === 4) count4++;
+    }
+  });
+  
+  document.getElementById('count_1').textContent = count1;
+  document.getElementById('count_2').textContent = count2;
+  document.getElementById('count_3').textContent = count3;
+  document.getElementById('count_4').textContent = count4;
+  document.getElementById('totalScore').textContent = totalScore;
+  
+  const percentage = maxScore > 0 ? ((totalScore / maxScore) * 100).toFixed(0) : 0;
+  document.getElementById('percentage').textContent = percentage + '%';
+  
+  let predicate = '-';
+  if (percentage >= 91) predicate = 'Sangat Baik';
+  else if (percentage >= 81) predicate = 'Baik';
+  else if (percentage >= 71) predicate = 'Cukup';
+  else if (percentage > 0) predicate = 'Kurang';
+  
+  document.getElementById('predicate').textContent = predicate;
+}
 // ══════════════════════════════════════════════
 //   📝 SIMPAN SUPERVISI
 // ══════════════════════════════════════════════
@@ -1336,7 +1457,19 @@ window.saveSupervision = async function() {
     totalScore += parseInt(selected.value);
   }
   
-  const percentage = ((totalScore / maxScore) * 100).toFixed(1);
+  const percentage = ((totalScore / maxScore) * 100).toFixed(0);
+  
+  let predicate = '-';
+  if (percentage >= 91) predicate = 'Sangat Baik';
+  else if (percentage >= 81) predicate = 'Baik';
+  else if (percentage >= 71) predicate = 'Cukup';
+  else predicate = 'Kurang';
+  
+  // Ambil info tambahan
+  const schoolName = document.getElementById('schoolName').value.trim();
+  const subject = document.getElementById('subject').value.trim();
+  const classSemester = document.getElementById('classSemester').value.trim();
+  const meetingHours = document.getElementById('meetingHours').value.trim();
   
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
@@ -1358,10 +1491,15 @@ window.saveSupervision = async function() {
       superviseeId: superviseeEmail,
       superviseeEmail: superviseeEmail,
       superviseeName: superviseeName,
+      schoolName: schoolName,
+      subject: subject,
+      classSemester: classSemester,
+      meetingHours: meetingHours,
       scores: scores,
       totalScore: totalScore,
       maxScore: maxScore,
       percentage: percentage,
+      predicate: predicate,
       notes: notes,
       actionPlan: actionPlan,
       status: 'completed',
@@ -1376,6 +1514,7 @@ window.saveSupervision = async function() {
     alert.textContent = '✅ Supervisi berhasil disimpan!';
     alert.className = 'alert alert-success show';
     
+    // Reset form
     document.getElementById('supervisionSchedule').value = '';
     document.getElementById('instrumentSelect').value = '';
     document.getElementById('supervisionNotes').value = '';
@@ -1393,7 +1532,6 @@ window.saveSupervision = async function() {
   btn.disabled = false;
   btn.textContent = '💾 Simpan Hasil Supervisi';
 };
-
 async function loadSupervisionList(){
   const snap = await db.collection('supervisions').where('supervisorEmail', '==', currentUser.email).get();
   const tbody = document.getElementById('supervisionList');
@@ -1639,23 +1777,51 @@ window.viewDetail = async function(docId){
   showDetailModal();
 };
 
-function showDetailModal(){
+function showDetailModal() {
   const data = currentSupervision;
   const statusText = '✅ Sudah Dinilai';
   
   let scoresHtml = '';
   if (data.scores && currentInstrument) {
-    currentInstrument.components.forEach(comp => {
+    scoresHtml = `
+      <div class="table-wrap" style="margin:15px 0;">
+        <table style="border-collapse:collapse;width:100%;font-size:0.85rem;">
+          <thead>
+            <tr style="background:#4CAF50;color:white;">
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:5%;">No</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:left;width:75%;">Komponen</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:20%;">Skor</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    currentInstrument.components.forEach((comp, index) => {
       const score = data.scores[comp.id] || 0;
-      scoresHtml += `<div class="detail-row"><span class="detail-label">${comp.name}</span><span class="detail-value">${score}/4</span></div>`;
+      scoresHtml += `
+        <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">${index + 1}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${comp.name}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;font-weight:bold;">${score}/4</td>
+        </tr>
+      `;
     });
+    
+    scoresHtml += `
+          </tbody>
+        </table>
+      </div>
+    `;
   }
   
   document.getElementById('detailContent').innerHTML = `
     <div style="margin-bottom:18px;">
-      <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${new Date(data.createdAt).toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span></div>
+      <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${new Date(data.createdAt).toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</span></div>
+      <div class="detail-row"><span class="detail-label">Nama Madrasah</span><span class="detail-value">${data.schoolName || '-'}</span></div>
       <div class="detail-row"><span class="detail-label">Supervisor</span><span class="detail-value">${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</span></div>
       <div class="detail-row"><span class="detail-label">Yang Disupervisi</span><span class="detail-value">${data.superviseeName}</span></div>
+      <div class="detail-row"><span class="detail-label">Mata Pelajaran</span><span class="detail-value">${data.subject || '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">Kelas/Semester</span><span class="detail-value">${data.classSemester || '-'}</span></div>
       <div class="detail-row"><span class="detail-label">Instrumen</span><span class="detail-value">${data.instrumentName || '-'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${statusText}</span></div>
     </div>
@@ -1665,58 +1831,211 @@ function showDetailModal(){
     ${data.actionPlan ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Rencana Tindak Lanjut</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.actionPlan}</div>` : ''}
     <div class="score-box">
       <div class="score-number">${data.percentage}%</div>
-      <div class="score-label">Total Skor: ${data.totalScore} / ${data.maxScore}</div>
+      <div class="score-label">Total Skor: ${data.totalScore} / ${data.maxScore} | Predikat: ${data.predicate || '-'}</div>
     </div>
   `;
   
   document.getElementById('detailModal').classList.add('active');
 }
-
-window.downloadPDF = async function(docId){
+  // ══════════════════════════════════════════════
+//   DOWNLOAD PDF
+// ══════════════════════════════════════════════
+window.downloadPDF = async function(docId) {
   const id = docId || currentSupervision.id;
   const snap = await db.collection('supervisions').doc(id).get();
-  if(!snap.exists){ alert('Data tidak ditemukan'); return; }
+  if (!snap.exists) { alert('Data tidak ditemukan'); return; }
   
   const data = snap.data();
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
+  const pdf = new jsPDF('p', 'mm', 'a4');
   
-  pdf.setFontSize(16);
-  pdf.text('HASIL SUPERVISI PEMBELAJARAN', 105, 20, {align:'center'});
-  pdf.setFontSize(12);
-  pdf.text('KURIKULUM BERBASIS CINTA (KBC)', 105, 30, {align:'center'});
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const margin = 15;
+  let y = 15;
   
-  pdf.setFontSize(10);
-  pdf.text(`Tanggal: ${new Date(data.createdAt).toLocaleDateString('id-ID')}`, 20, 50);
-  pdf.text(`Supervisor: ${data.supervisorName}`, 20, 60);
-  pdf.text(`Yang Disupervisi: ${data.superviseeName}`, 20, 70);
-  pdf.text(`Instrumen: ${data.instrumentName || '-'}`, 20, 80);
-  
-  pdf.setFontSize(12);
-  pdf.text('Detail Penilaian:', 20, 100);
-  
-  let y = 110;
-  if (data.scores) {
-    Object.keys(data.scores).forEach(key => {
-      pdf.setFontSize(9);
-      pdf.text(`${key}: ${data.scores[key]}/4`, 20, y);
-      y += 6;
-    });
-  }
-  
+  // Header
+  pdf.setFontSize(14);
+  pdf.setFont(undefined, 'bold');
+  pdf.text('HASIL SUPERVISI PEMBELAJARAN', pageWidth / 2, y, { align: 'center' });
+  y += 7;
   pdf.setFontSize(11);
-  pdf.text(`Total Skor: ${data.totalScore}/${data.maxScore} (${data.percentage}%)`, 20, y + 10);
+  pdf.text('KURIKULUM BERBASIS CINTA (KBC)', pageWidth / 2, y, { align: 'center' });
+  y += 10;
   
-  if(data.notes){
-    pdf.text('Catatan:', 20, y + 25);
-    pdf.setFontSize(9);
-    const split = pdf.splitTextToSize(data.notes, 170);
-    pdf.text(split, 20, y + 35);
+  // Info
+  pdf.setFontSize(9);
+  pdf.setFont(undefined, 'normal');
+  pdf.text(`Nama Madrasah: ${data.schoolName || '-'}`, margin, y);
+  y += 5;
+  pdf.text(`Nama Guru: ${data.superviseeName}`, margin, y);
+  y += 5;
+  pdf.text(`Mata Pelajaran: ${data.subject || '-'}`, margin, y);
+  y += 5;
+  pdf.text(`Kelas/Semester: ${data.classSemester || '-'}`, margin, y);
+  y += 5;
+  pdf.text(`Jumlah Jam Tatap Muka: ${data.meetingHours || '-'}`, margin, y);
+  y += 5;
+  pdf.text(`Supervisor: ${data.supervisorName}`, margin, y);
+  y += 5;
+  pdf.text(`Tanggal: ${new Date(data.createdAt).toLocaleDateString('id-ID')}`, margin, y);
+  y += 10;
+  
+  // Tabel
+  pdf.setFontSize(9);
+  pdf.setFont(undefined, 'bold');
+  
+  const colWidths = [10, 95, 15, 15, 15, 15];
+  const headers = ['No', 'Komponen', '1', '2', '3', '4'];
+  
+  // Header tabel
+  pdf.setFillColor(76, 175, 80);
+  pdf.setTextColor(255, 255, 255);
+  for (let i = 0; i < headers.length; i++) {
+    pdf.rect(margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0), y, colWidths[i], 8, 'F');
+    pdf.text(headers[i], margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + colWidths[i] / 2, y + 5, { align: 'center' });
+  }
+  y += 8;
+  
+  // Data
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFont(undefined, 'normal');
+  
+  const components = currentInstrument ? currentInstrument.components : 
+    Object.keys(data.scores).map((key, idx) => ({ id: key, name: `Komponen ${idx + 1}` }));
+  
+  components.forEach((comp, index) => {
+    const score = data.scores[comp.id] || 0;
+    const rowHeight = 7;
+    
+    // Alternating background
+    if (index % 2 === 0) {
+      pdf.setFillColor(232, 245, 233);
+      pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+    }
+    
+    // Border
+    pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), rowHeight, 'S');
+    
+    // No
+    pdf.text(String(index + 1), margin + 5, y + 5);
+    
+    // Komponen (wrap text)
+    const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2);
+    pdf.text(compText[0], margin + colWidths[0] + 2, y + 5);
+    
+    // Skor (checkbox style)
+    for (let i = 1; i <= 4; i++) {
+      const x = margin + colWidths.slice(0, 2 + i - 1).reduce((a, b) => a + b, 0) + colWidths[2 + i - 1] / 2;
+      if (score === i) {
+        pdf.setFillColor(76, 175, 80);
+        pdf.rect(x - 3, y + 2, 6, 6, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.text('✓', x, y + 6, { align: 'center' });
+        pdf.setTextColor(0, 0, 0);
+      } else {
+        pdf.rect(x - 3, y + 2, 6, 6, 'S');
+      }
+    }
+    
+    y += rowHeight;
+  });
+  
+  // Footer tabel
+  y += 2;
+  pdf.setFillColor(200, 230, 201);
+  pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 8, 'F');
+  pdf.setFont(undefined, 'bold');
+  pdf.text('Jumlah', margin + colWidths[0] + colWidths[1] - 2, y + 5, { align: 'right' });
+  
+  // Hitung jumlah per kolom
+  let count1 = 0, count2 = 0, count3 = 0, count4 = 0;
+  Object.values(data.scores).forEach(score => {
+    if (score === 1) count1++;
+    else if (score === 2) count2++;
+    else if (score === 3) count3++;
+    else if (score === 4) count4++;
+  });
+  
+  pdf.text(String(count1), margin + colWidths[0] + colWidths[1] + colWidths[2] / 2, y + 5, { align: 'center' });
+  pdf.text(String(count2), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2, y + 5, { align: 'center' });
+  pdf.text(String(count3), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2, y + 5, { align: 'center' });
+  pdf.text(String(count4), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2, y + 5, { align: 'center' });
+  
+  y += 8;
+  pdf.setFillColor(165, 214, 167);
+  pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 8, 'F');
+  pdf.text('Skor Total', margin + colWidths[0] + colWidths[1] - 2, y + 5, { align: 'right' });
+  pdf.text(`${data.totalScore} / ${data.maxScore}`, margin + colWidths[0] + colWidths[1] + 5, y + 5);
+  
+  y += 8;
+  pdf.setFillColor(129, 199, 132);
+  pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 8, 'F');
+  pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 5, { align: 'right' });
+  pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 5);
+  
+  y += 8;
+  pdf.setFillColor(76, 175, 80);
+  pdf.setTextColor(255, 255, 255);
+  pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 8, 'F');
+  pdf.text('Predikat', margin + colWidths[0] + colWidths[1] - 2, y + 5, { align: 'right' });
+  pdf.text(data.predicate || '-', margin + colWidths[0] + colWidths[1] + 5, y + 5);
+  
+  y += 15;
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFontSize(8);
+  pdf.setFont(undefined, 'normal');
+  pdf.text('Keterangan:', margin, y);
+  y += 4;
+  pdf.text('• 91% - 100% = Sangat Baik', margin, y);
+  y += 4;
+  pdf.text('• 81% - 90% = Baik', margin, y);
+  y += 4;
+  pdf.text('• 71% - 80% = Cukup', margin, y);
+  y += 4;
+  pdf.text('• ≤70% = Kurang', margin, y);
+  
+  // Catatan
+  if (data.notes) {
+    y += 10;
+    pdf.setFont(undefined, 'bold');
+    pdf.text('Catatan Khusus Hasil Supervisi:', margin, y);
+    y += 5;
+    pdf.setFont(undefined, 'normal');
+    const splitNotes = pdf.splitTextToSize(data.notes, pageWidth - 2 * margin);
+    pdf.text(splitNotes, margin, y);
+    y += splitNotes.length * 4 + 5;
   }
   
-  pdf.save(`Supervisi_${data.superviseeName}_${new Date(data.createdAt).toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`);
+  // Rencana Tindak Lanjut
+  if (data.actionPlan) {
+    y += 5;
+    pdf.setFont(undefined, 'bold');
+    pdf.text('Rencana Tindak Lanjut:', margin, y);
+    y += 5;
+    pdf.setFont(undefined, 'normal');
+    const splitPlan = pdf.splitTextToSize(data.actionPlan, pageWidth - 2 * margin);
+    pdf.text(splitPlan, margin, y);
+    y += splitPlan.length * 4 + 10;
+  }
+  
+  // Tanda tangan
+  y += 10;
+  const signY = y;
+  pdf.setFont(undefined, 'normal');
+  pdf.text('Bantaeng, ' + new Date(data.createdAt).toLocaleDateString('id-ID'), pageWidth - margin - 60, signY);
+  signY += 20;
+  
+  pdf.text('Guru yang disupervisi', margin + 20, signY);
+  pdf.text('Supervisor', pageWidth - margin - 80, signY);
+  signY += 25;
+  
+  pdf.setFont(undefined, 'bold');
+  pdf.text(data.superviseeName, margin + 20, signY);
+  pdf.text(data.supervisorName, pageWidth - margin - 80, signY);
+  
+  // Save
+  pdf.save(`Supervisi_${data.superviseeName}_${new Date(data.createdAt).toLocaleDateString('id-ID').replace(/\//g, '-')}.pdf`);
 };
-
 // ══════════════════════════════════════════════
 //   👁️ PREVIEW DOKUMEN
 // ══════════════════════════════════════════════
