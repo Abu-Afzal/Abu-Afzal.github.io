@@ -73,6 +73,7 @@ tr:hover td{background:#f9fafb;}
 .badge-info{background:#dbeafe;color:#1e40af;}
 .badge-scheduled{background:#ede9fe;color:#5b21b6;}
 .badge-progress{background:#fef3c7;color:#92400e;}
+.badge-admin{background:#fce7f3;color:#be185d;}
 
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px;}
 .modal.active{display:flex;}
@@ -122,7 +123,7 @@ tr:hover td{background:#f9fafb;}
 .doc-name{font-weight:600;color:#1e293b;}
 .doc-meta{font-size:0.8rem;color:#6b7280;}
 
-/* ═══ SCHEDULE CARD ═══ */
+/* ══ SCHEDULE CARD ═══ */
 .schedule-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
 .schedule-info{flex:1;min-width:200px;}
 .schedule-title{font-weight:700;color:#1e40af;font-size:1.05rem;}
@@ -132,12 +133,35 @@ tr:hover td{background:#f9fafb;}
 .empty-state{text-align:center;padding:40px;color:#9ca3af;}
 .empty-state .icon{font-size:3rem;margin-bottom:10px;}
 
+/* ═══ INSTRUMENT CARD ═══ */
+.instrument-card{background:white;border:2px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:16px;transition:all .2s;}
+.instrument-card:hover{border-color:#3b82f6;box-shadow:0 4px 12px rgba(59,130,246,0.1);}
+.instrument-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.instrument-name{font-size:1.1rem;font-weight:700;color:#1e40af;}
+.instrument-type{font-size:0.85rem;color:#6b7280;}
+.instrument-stats{display:flex;gap:20px;margin-top:10px;}
+.stat-item{font-size:0.85rem;color:#6b7280;}
+.stat-item strong{color:#1e40af;}
+
+/* ═══ ASSESSMENT FORM ═══ */
+.assessment-category{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:20px;margin-bottom:20px;}
+.category-title{font-size:1.1rem;font-weight:700;color:#1e40af;margin-bottom:15px;padding-bottom:10px;border-bottom:2px solid #dbeafe;}
+.assessment-item{background:white;border:1px solid #e5e7eb;border-radius:8px;padding:15px;margin-bottom:12px;}
+.item-label{font-weight:600;color:#1e293b;margin-bottom:10px;font-size:0.95rem;}
+.score-options{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.score-option{position:relative;}
+.score-option input{display:none;}
+.score-option label{display:block;padding:10px;text-align:center;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85rem;transition:all .2s;}
+.score-option input:checked + label{background:#3b82f6;color:white;border-color:#3b82f6;}
+.score-option label:hover{border-color:#3b82f6;background:#eff6ff;}
+
 @media(max-width:768px){
   .form-row,.form-row-3{grid-template-columns:1fr;}
   .header h1{font-size:1.6rem;}
   .rating-grid{grid-template-columns:1fr;}
   .tabs{flex-wrap:wrap;}
   .schedule-card{flex-direction:column;align-items:flex-start;}
+  .score-options{grid-template-columns:repeat(2,1fr);}
 }
 </style>
 </head>
@@ -186,8 +210,8 @@ tr:hover td{background:#f9fafb;}
       <div style="font-size:0.85rem;color:#6b7280;">Selamat datang,</div>
       <div style="font-size:1.2rem;font-weight:700;color:#1e40af;" id="userNameDisplay">–</div>
       <div style="font-size:0.85rem;color:#6b7280;" id="userRoleDisplay">–</div>
+      <div id="adminBadge" style="display:none;margin-top:4px;"><span class="badge badge-admin">👑 Admin - Hak Istimewa</span></div>
     </div>
-    
   </div>
 
   <!-- ══════════════════════════════════════════ -->
@@ -199,7 +223,8 @@ tr:hover td{background:#f9fafb;}
         <button class="tab active" onclick="switchTab('tabJadwal')"> Jadwal Supervisi</button>
         <button class="tab" onclick="switchTab('tabBuatJadwal')">➕ Buat Jadwal</button>
         <button class="tab" onclick="switchTab('tabSupervisi')">📝 Mulai Supervisi</button>
-        <button class="tab" onclick="switchTab('tabRiwayat')"> Riwayat</button>
+        <button class="tab" onclick="switchTab('tabRiwayat')">📋 Riwayat</button>
+        <button class="tab" id="tabInstruments" onclick="switchTab('tabKelolaInstrumen')" style="display:none;">️ Kelola Instrumen</button>
       </div>
 
       <!-- TAB: Jadwal Supervisi -->
@@ -249,18 +274,22 @@ tr:hover td{background:#f9fafb;}
             <div id="teacherDocuments"></div>
           </div>
           <div class="form-group">
-            <label>Jenis Supervisi *</label>
-            <select id="supervisionType" onchange="loadAspects()">
-              <option value="">-- Pilih --</option>
-              <option value="administrasi">Supervisi Administrasi</option>
-              <option value="kinerja">Supervisi Kinerja</option>
-              <option value="pembelajaran">Supervisi Pembelajaran</option>
+            <label>Pilih Instrumen Penilaian *</label>
+            <select id="instrumentSelect" onchange="loadInstrumentForm()">
+              <option value="">-- Pilih Instrumen --</option>
             </select>
+            <div style="font-size:0.78rem;color:#6b7280;margin-top:4px;">* Instrumen disediakan oleh Admin</div>
           </div>
-          <div id="aspectsContainer"></div>
+          <div id="assessmentFormArea" style="display:none;">
+            <!-- Form penilaian akan di-generate di sini -->
+          </div>
           <div class="form-group">
-            <label>Catatan & Rekomendasi</label>
-            <textarea id="supervisionNotes" placeholder="Berikan catatan dan rekomendasi untuk perbaikan..."></textarea>
+            <label>Catatan Khusus Hasil Supervisi</label>
+            <textarea id="supervisionNotes" placeholder="Berikan catatan khusus hasil supervisi..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Rencana Tindak Lanjut</label>
+            <textarea id="actionPlan" placeholder="Berikan rencana tindak lanjut..."></textarea>
           </div>
           <button class="btn btn-success" onclick="saveSupervision()" id="btnSaveSup" style="width:auto;padding:12px 30px;">💾 Simpan Hasil Supervisi</button>
           <div id="alertSup" class="alert alert-success"></div>
@@ -273,11 +302,21 @@ tr:hover td{background:#f9fafb;}
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Tanggal</th><th>Guru</th><th>Jenis</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
+              <tr><th>Tanggal</th><th>Guru</th><th>Instrumen</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
             </thead>
             <tbody id="supervisionList"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- TAB: Kelola Instrumen (HANYA ADMIN) -->
+      <div id="tabKelolaInstrumen" class="tab-content">
+        <h2 class="section-title">⚙️ Kelola Instrumen Penilaian</h2>
+        <div style="margin-bottom:20px;">
+          <button class="btn btn-primary" onclick="openInstrumentModal()" style="width:auto;padding:12px 30px;"> Tambah Instrumen Baru</button>
+          <button class="btn btn-secondary" onclick="importDefaultInstruments()" style="width:auto;padding:12px 30px;margin-left:10px;">📥 Import Instrumen Default</button>
+        </div>
+        <div id="instrumentsList"></div>
       </div>
     </div>
   </div>
@@ -288,9 +327,9 @@ tr:hover td{background:#f9fafb;}
   <div id="teacherTabs" style="display:none;">
     <div class="card">
       <div class="tabs">
-        <button class="tab active" onclick="switchTab('tabJadwalSaya')">📅 Jadwal Saya</button>
-        <button class="tab" onclick="switchTab('tabUpload')">📤 Upload Dokumen</button>
-        <button class="tab" onclick="switchTab('tabHasil')">📊 Hasil Supervisi</button>
+        <button class="tab active" onclick="switchTab('tabJadwalSaya')"> Jadwal Saya</button>
+        <button class="tab" onclick="switchTab('tabUpload')"> Upload Dokumen</button>
+        <button class="tab" onclick="switchTab('tabHasil')"> Hasil Supervisi</button>
       </div>
 
       <!-- TAB: Jadwal Saya -->
@@ -302,7 +341,7 @@ tr:hover td{background:#f9fafb;}
       <!-- TAB: Upload Dokumen -->
       <div id="tabUpload" class="tab-content">
         <div class="upload-section">
-          <h2> Upload Dokumen Pendukung</h2>
+          <h2>📤 Upload Dokumen Pendukung</h2>
           <p style="color:#1e40af;font-size:0.9rem;margin-bottom:14px;">Upload RPP, Modul Ajar, atau dokumen lain untuk supervisi</p>
           <div class="form-row">
             <div class="form-group" style="margin:0;">
@@ -321,8 +360,8 @@ tr:hover td{background:#f9fafb;}
             </div>
           </div>
           <div class="radio-group">
-            <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()"> 📁 Dokumen</label>
-            <label><input type="radio" name="docType" value="link" onchange="toggleDocType()">  Link Google Drive</label>
+            <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()">  Dokumen</label>
+            <label><input type="radio" name="docType" value="link" onchange="toggleDocType()"> 🔗 Link Google Drive</label>
           </div>
           <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
           <div id="fileInputWrap">
@@ -348,11 +387,11 @@ tr:hover td{background:#f9fafb;}
 
       <!-- TAB: Hasil Supervisi -->
       <div id="tabHasil" class="tab-content">
-        <h2 class="section-title">📊 Hasil Supervisi Saya</h2>
+        <h2 class="section-title"> Hasil Supervisi Saya</h2>
         <div class="table-wrap">
           <table>
             <thead>
-              <tr><th>Tanggal</th><th>Supervisor</th><th>Jenis</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
+              <tr><th>Tanggal</th><th>Supervisor</th><th>Instrumen</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
             </thead>
             <tbody id="mySupervisionList"></tbody>
           </table>
@@ -361,6 +400,45 @@ tr:hover td{background:#f9fafb;}
     </div>
   </div>
 
+</div>
+
+<!-- ═══ MODAL INSTRUMENT ══ -->
+<div id="instrumentModal" class="modal">
+  <div class="modal-content" style="max-width:900px;">
+    <div class="modal-header">
+      <h3 id="instrumentModalTitle">➕ Tambah Instrumen Baru</h3>
+      <button class="modal-close" onclick="closeModal('instrumentModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Nama Instrumen *</label>
+        <input type="text" id="instrumentName" placeholder="Contoh: Supervisi Administrasi Pembelajaran">
+      </div>
+      <div class="form-group">
+        <label>Jenis Supervisi *</label>
+        <select id="instrumentType">
+          <option value="">-- Pilih --</option>
+          <option value="administrasi">Administrasi Pembelajaran</option>
+          <option value="perencanaan">Perencanaan Pembelajaran</option>
+          <option value="pelaksanaan">Pelaksanaan Pembelajaran</option>
+          <option value="asesmen">Asesmen Pembelajaran</option>
+          <option value="bk">Bimbingan Konseling</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Deskripsi (opsional)</label>
+        <textarea id="instrumentDesc" placeholder="Deskripsi singkat instrumen..."></textarea>
+      </div>
+      
+      <h4 style="margin:20px 0 10px;color:#1e40af;">Komponen Penilaian</h4>
+      <div id="componentsContainer"></div>
+      <button class="btn btn-secondary" onclick="addComponent()" style="width:auto;padding:10px 20px;margin-top:10px;">➕ Tambah Komponen</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('instrumentModal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveInstrument()" style="width:auto;">💾 Simpan Instrumen</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ MODAL DETAIL ═══ -->
@@ -404,28 +482,9 @@ const db = firebase.firestore();
 let currentUser = null;
 let currentSupervision = null;
 let selectedScheduleId = null;
-
-const aspectsData = {
-  administrasi: [
-    {id:'kelengkapan', label:'Kelengkapan Dokumen Administrasi', maxScore:25},
-    {id:'kerapihan', label:'Kerapihan & Sistematika', maxScore:25},
-    {id:'ketepatan', label:'Ketepatan Waktu Pengumpulan', maxScore:25},
-    {id:'kesesuaian', label:'Kesesuaian dengan Standar', maxScore:25}
-  ],
-  kinerja: [
-    {id:'disiplin', label:'Kedisiplinan', maxScore:20},
-    {id:'tanggungjawab', label:'Tanggung Jawab', maxScore:20},
-    {id:'kerjasama', label:'Kerjasama Tim', maxScore:20},
-    {id:'inisiatif', label:'Inisiatif & Kreativitas', maxScore:20},
-    {id:'pencapaian', label:'Pencapaian Target Kerja', maxScore:20}
-  ],
-  pembelajaran: [
-    {id:'perencanaan', label:'Perencanaan Pembelajaran', maxScore:20},
-    {id:'pelaksanaan', label:'Pelaksanaan Pembelajaran', maxScore:30},
-    {id:'evaluasi', label:'Evaluasi & Penilaian', maxScore:25},
-    {id:'inovasi', label:'Inovasi Pembelajaran', maxScore:25}
-  ]
-};
+let currentInstrument = null;
+let editingInstrumentId = null;
+let componentCounter = 0;
 
 // ══════════════════════════════════════════════
 //   🔐 INTEGRASI SESSION SIPELITA
@@ -494,7 +553,7 @@ async function checkSipelitaSession() {
   }
   
   if (!currentUser.fitur || !Array.isArray(currentUser.fitur) || !currentUser.fitur.includes('supervisi')) {
-    showAccessDenied(`<strong> Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})`);
+    showAccessDenied(`<strong>⛔ Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})`);
     return false;
   }
   
@@ -519,11 +578,12 @@ window.switchTab = function(tabId) {
   // Refresh data saat tab aktif
   if (tabId === 'tabJadwal') loadScheduleList();
   if (tabId === 'tabBuatJadwal') loadAvailableTeachers();
-  if (tabId === 'tabSupervisi') loadPendingSchedules();
+  if (tabId === 'tabSupervisi') { loadPendingSchedules(); loadInstruments(); }
   if (tabId === 'tabRiwayat') loadSupervisionList();
   if (tabId === 'tabJadwalSaya') loadMySchedule();
   if (tabId === 'tabUpload') loadMyDocs();
   if (tabId === 'tabHasil') loadMySupervisionList();
+  if (tabId === 'tabKelolaInstrumen') loadInstrumentsList();
 };
 
 // ══════════════════════════════════════════════
@@ -537,7 +597,13 @@ function showDashboard(){
   document.getElementById('userNameDisplay').textContent = currentUser.nama;
   document.getElementById('userRoleDisplay').textContent = getRoleLabel(currentUser.role);
   
-  if(currentUser.role === 'kepala' || currentUser.role === 'wakil'){
+  // Tampilkan badge admin jika role admin
+  if (currentUser.role === 'admin') {
+    document.getElementById('adminBadge').style.display = 'block';
+    document.getElementById('tabInstruments').style.display = 'block';
+  }
+  
+  if(currentUser.role === 'kepala' || currentUser.role === 'wakil' || currentUser.role === 'admin'){
     document.getElementById('supervisorTabs').style.display = 'block';
     document.getElementById('teacherTabs').style.display = 'none';
     loadScheduleList();
@@ -565,30 +631,18 @@ window.doLogout = function(){
 // ══════════════════════════════════════════════
 //   📅 JADWAL SUPERVISI (SUPERVISOR)
 // ══════════════════════════════════════════════
-
-/**
- * Load daftar guru yang BELUM dijadwalkan
- */
 async function loadAvailableTeachers() {
   const select = document.getElementById('scheduleTeacher');
   select.innerHTML = '<option value="">-- Memuat data... --</option>';
   
   try {
-    // Ambil semua guru
-    const teachersSnap = await db.collection('users')
-      .where('role', '==', 'guru')
-      .get();
-    
+    const teachersSnap = await db.collection('users').where('role', '==', 'guru').get();
     const allTeachers = teachersSnap.docs.map(d => ({id: d.id, ...d.data()}));
     
-    // Ambil jadwal yang aktif (scheduled/in-progress)
     const schedulesSnap = await db.collection('supervision_schedule')
-      .where('status', 'in', ['scheduled', 'in-progress'])
-      .get();
-    
+      .where('status', 'in', ['scheduled', 'in-progress']).get();
     const scheduledTeacherIds = schedulesSnap.docs.map(d => d.data().teacherId);
     
-    // Filter guru yang belum dijadwalkan
     const availableTeachers = allTeachers.filter(t => !scheduledTeacherIds.includes(t.id));
     
     if (availableTeachers.length === 0) {
@@ -607,9 +661,6 @@ async function loadAvailableTeachers() {
   }
 }
 
-/**
- * Buat jadwal supervisi baru
- */
 window.createSchedule = async function() {
   const teacherSelect = document.getElementById('scheduleTeacher');
   const teacherId = teacherSelect.value;
@@ -650,12 +701,10 @@ window.createSchedule = async function() {
     alert.textContent = `✅ Jadwal berhasil dibuat! ${teacherName} akan disupervisi pada ${formatDate(scheduledDate)}`;
     alert.className = 'alert alert-success show';
     
-    // Reset form
     teacherSelect.value = '';
     document.getElementById('scheduleDate').value = '';
     document.getElementById('scheduleNotes').value = '';
     
-    // Reload data
     loadAvailableTeachers();
     
   } catch(e) {
@@ -663,20 +712,16 @@ window.createSchedule = async function() {
     alert.className = 'alert alert-error show';
   }
   btn.disabled = false;
-  btn.textContent = ' Simpan Jadwal';
+  btn.textContent = '💾 Simpan Jadwal';
 };
 
-/**
- * Load daftar jadwal supervisor
- */
 async function loadScheduleList() {
   const container = document.getElementById('scheduleList');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
   
   try {
     const snap = await db.collection('supervision_schedule')
-      .where('supervisorEmail', '==', currentUser.email)
-      .get();
+      .where('supervisorEmail', '==', currentUser.email).get();
     
     if (snap.empty) {
       container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Belum ada jadwal supervisi</p></div>';
@@ -696,30 +741,23 @@ async function loadScheduleList() {
       return `
         <div class="schedule-card">
           <div class="schedule-info">
-            <div class="schedule-title">👨‍🏫 ${s.teacherName}</div>
-            <div class="schedule-detail">
-               ${formatDate(s.scheduledDate)} | 
-              👤 Supervisor: ${s.supervisorName} | 
-              ${statusBadge}
-            </div>
+            <div class="schedule-title">👨‍ ${s.teacherName}</div>
+            <div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>
             ${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}
           </div>
           <div class="schedule-actions">
             ${s.status !== 'completed' ? `<button class="btn btn-warning btn-sm" onclick="updateScheduleStatus('${s.id}','in-progress')">🔄 Mulai</button>` : ''}
-            ${s.status === 'scheduled' ? `<button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">️ Hapus</button>` : ''}
+            ${s.status === 'scheduled' ? `<button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">🗑️ Hapus</button>` : ''}
           </div>
         </div>
       `;
     }).join('');
     
   } catch(e) {
-    container.innerHTML = '<div class="empty-state"><div class="icon"></div><p>Gagal memuat jadwal</p></div>';
+    container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>';
   }
 }
 
-/**
- * Load jadwal yang pending untuk tab supervisi
- */
 async function loadPendingSchedules() {
   const select = document.getElementById('supervisionSchedule');
   select.innerHTML = '<option value="">-- Memuat... --</option>';
@@ -727,8 +765,7 @@ async function loadPendingSchedules() {
   try {
     const snap = await db.collection('supervision_schedule')
       .where('supervisorEmail', '==', currentUser.email)
-      .where('status', 'in', ['scheduled', 'in-progress'])
-      .get();
+      .where('status', 'in', ['scheduled', 'in-progress']).get();
     
     if (snap.empty) {
       select.innerHTML = '<option value="">-- Tidak ada jadwal aktif --</option>';
@@ -747,9 +784,6 @@ async function loadPendingSchedules() {
   }
 }
 
-/**
- * Load detail jadwal yang dipilih (termasuk dokumen guru)
- */
 window.loadScheduleDetail = async function() {
   const select = document.getElementById('supervisionSchedule');
   const scheduleId = select.value;
@@ -765,67 +799,54 @@ window.loadScheduleDetail = async function() {
   
   const teacherEmail = select.options[select.selectedIndex].dataset.email;
   
-  // Load dokumen guru
   const docContainer = document.getElementById('teacherDocuments');
   docContainer.innerHTML = '<div style="text-align:center;padding:10px;"><span class="spinner"></span> Memuat dokumen...</div>';
   
   try {
-    const snap = await db.collection('supervision_documents')
-      .where('userEmail', '==', teacherEmail)
-      .get();
+    const snap = await db.collection('supervision_documents').where('userEmail', '==', teacherEmail).get();
     
     if (snap.empty) {
       docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">📭</div><p>Guru belum upload dokumen</p></div>';
       return;
     }
     
-const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-docContainer.innerHTML = docs.map(d => {
-  const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
-  
-  // Tombol Lihat (Preview)
-  let btnLihat = '';
-  if (d.type === 'link') {
-    btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
-  } else if (d.fileExt === 'pdf') {
-    // PDF bisa langsung dibuka di tab baru
-    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
-  } else if (['doc','docx','xls','xlsx','ppt','pptx'].includes(d.fileExt)) {
-    // File Office: gunakan Google Docs Viewer
-    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`;
-  } else {
-    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
-  }
-  
-  // Tombol Unduh (hanya untuk file, bukan link)
-  let btnUnduh = '';
-  if (d.type !== 'link') {
-    btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')"> Unduh</button>`;
-  }
-  
-  return `
-    <div class="doc-item">
-      <div class="doc-icon">${icon}</div>
-      <div class="doc-info">
-        <div class="doc-name">${d.nama}</div>
-        <div class="doc-meta">${d.kategori} • ${new Date(d.createdAt).toLocaleDateString('id-ID')} • ${d.fileSize ? (d.fileSize/1024/1024).toFixed(2)+' MB' : 'Link'}</div>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${btnLihat}
-        ${btnUnduh}
-      </div>
-    </div>
-  `;
-}).join('');
+    const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    docContainer.innerHTML = docs.map(d => {
+      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
+      let btnLihat = '';
+      if (d.type === 'link') {
+        btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
+      } else if (d.fileExt === 'pdf') {
+        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+      } else {
+        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`;
+      }
+      
+      let btnUnduh = '';
+      if (d.type !== 'link') {
+        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇ Unduh</button>`;
+      }
+      
+      return `
+        <div class="doc-item">
+          <div class="doc-icon">${icon}</div>
+          <div class="doc-info">
+            <div class="doc-name">${d.nama}</div>
+            <div class="doc-meta">${d.kategori} • ${new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${btnLihat}
+            ${btnUnduh}
+          </div>
+        </div>
+      `;
+    }).join('');
     
   } catch(e) {
     docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">❌</div><p>Gagal memuat dokumen</p></div>';
   }
 };
 
-/**
- * Update status jadwal
- */
 window.updateScheduleStatus = async function(scheduleId, status) {
   if (!confirm(`Ubah status jadwal menjadi "${status}"?`)) return;
   try {
@@ -835,13 +856,10 @@ window.updateScheduleStatus = async function(scheduleId, status) {
     });
     loadScheduleList();
   } catch(e) {
-    alert(' ' + e.message);
+    alert('❌ ' + e.message);
   }
 };
 
-/**
- * Hapus jadwal
- */
 window.deleteSchedule = async function(scheduleId) {
   if (!confirm('Hapus jadwal ini? Guru akan bisa dijadwalkan ulang.')) return;
   try {
@@ -852,89 +870,504 @@ window.deleteSchedule = async function(scheduleId) {
   }
 };
 
-// ═════════════════════════════════════════════
-//   📝 SUPERVISI (SUPERVISOR)
 // ══════════════════════════════════════════════
-window.loadAspects = function(){
-  const type = document.getElementById('supervisionType').value;
-  const container = document.getElementById('aspectsContainer');
-  
-  if(!type || !aspectsData[type]){
-    container.innerHTML = '';
-    return;
-  }
-  
-  const aspects = aspectsData[type];
-  container.innerHTML = `
-    <div class="aspect-group">
-      <div class="aspect-title">Aspek Penilaian</div>
-      <div class="rating-grid">
-        ${aspects.map(a => `
-          <div class="rating-item">
-            <label>${a.label} (Max: ${a.maxScore})</label>
-            <select class="aspect-score" data-aspect="${a.id}" data-max="${a.maxScore}">
-              <option value="">-- Nilai --</option>
-              ${Array.from({length:a.maxScore+1},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
-            </select>
-          </div>
-        `).join('')}
+//   ⚙️ KELOLA INSTRUMEN (HANYA ADMIN)
+// ══════════════════════════════════════════════
+window.openInstrumentModal = function() {
+  editingInstrumentId = null;
+  document.getElementById('instrumentModalTitle').textContent = '➕ Tambah Instrumen Baru';
+  document.getElementById('instrumentName').value = '';
+  document.getElementById('instrumentType').value = '';
+  document.getElementById('instrumentDesc').value = '';
+  document.getElementById('componentsContainer').innerHTML = '';
+  componentCounter = 0;
+  openModal('instrumentModal');
+};
+
+window.addComponent = function() {
+  componentCounter++;
+  const container = document.getElementById('componentsContainer');
+  const div = document.createElement('div');
+  div.className = 'assessment-item';
+  div.id = `component-${componentCounter}`;
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <strong>Komponen #${componentCounter}</strong>
+      <button type="button" class="btn btn-danger btn-sm" onclick="removeComponent(${componentCounter})">🗑️ Hapus</button>
+    </div>
+    <div class="form-group">
+      <label>Nama Komponen *</label>
+      <input type="text" class="component-name" placeholder="Contoh: Kalender pendidikan dan analisisnya">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Level 1 (Kurang)</label>
+        <textarea class="component-level1" placeholder="Deskripsi level 1..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Level 2 (Cukup)</label>
+        <textarea class="component-level2" placeholder="Deskripsi level 2..."></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Level 3 (Baik)</label>
+        <textarea class="component-level3" placeholder="Deskripsi level 3..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Level 4 (Sangat Baik)</label>
+        <textarea class="component-level4" placeholder="Deskripsi level 4..."></textarea>
       </div>
     </div>
   `;
+  container.appendChild(div);
 };
 
-window.saveSupervision = async function(){
-  const type = document.getElementById('supervisionType').value;
-  const notes = document.getElementById('supervisionNotes').value;
+window.removeComponent = function(id) {
+  const el = document.getElementById(`component-${id}`);
+  if (el) el.remove();
+};
+
+window.saveInstrument = async function() {
+  const name = document.getElementById('instrumentName').value.trim();
+  const type = document.getElementById('instrumentType').value;
+  const desc = document.getElementById('instrumentDesc').value.trim();
+  
+  if (!name || !type) {
+    alert('❌ Nama dan jenis instrumen wajib diisi!');
+    return;
+  }
+  
+  const components = [];
+  document.querySelectorAll('#componentsContainer .assessment-item').forEach((item, index) => {
+    const compName = item.querySelector('.component-name').value.trim();
+    if (compName) {
+      components.push({
+        id: `comp_${index + 1}`,
+        name: compName,
+        level1: item.querySelector('.component-level1').value.trim(),
+        level2: item.querySelector('.component-level2').value.trim(),
+        level3: item.querySelector('.component-level3').value.trim(),
+        level4: item.querySelector('.component-level4').value.trim()
+      });
+    }
+  });
+  
+  if (components.length === 0) {
+    alert(' Minimal tambahkan 1 komponen!');
+    return;
+  }
+  
+  const instrumentData = {
+    name,
+    type,
+    description: desc,
+    components,
+    isActive: true,
+    createdBy: currentUser.email,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  
+  try {
+    if (editingInstrumentId) {
+      await db.collection('supervision_instruments').doc(editingInstrumentId).update(instrumentData);
+      alert('✅ Instrumen berhasil diupdate!');
+    } else {
+      await db.collection('supervision_instruments').add(instrumentData);
+      alert('✅ Instrumen berhasil ditambahkan!');
+    }
+    
+    closeModal('instrumentModal');
+    loadInstrumentsList();
+    
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
+
+async function loadInstrumentsList() {
+  const container = document.getElementById('instrumentsList');
+  container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
+  try {
+    const snap = await db.collection('supervision_instruments').orderBy('createdAt', 'desc').get();
+    
+    if (snap.empty) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Belum ada instrumen. Klik "Tambah Instrumen Baru" atau "Import Instrumen Default"</p></div>';
+      return;
+    }
+    
+    const typeLabels = {
+      'administrasi': 'Administrasi',
+      'perencanaan': 'Perencanaan',
+      'pelaksanaan': 'Pelaksanaan',
+      'asesmen': 'Asesmen',
+      'bk': 'Bimbingan Konseling'
+    };
+    
+    container.innerHTML = snap.docs.map(doc => {
+      const data = doc.data();
+      return `
+        <div class="instrument-card">
+          <div class="instrument-header">
+            <div>
+              <div class="instrument-name">${data.name}</div>
+              <div class="instrument-type">${typeLabels[data.type] || data.type} • ${data.components.length} Komponen</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-warning btn-sm" onclick="editInstrument('${doc.id}')">✏️ Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteInstrument('${doc.id}')">🗑️ Hapus</button>
+            </div>
+          </div>
+          ${data.description ? `<div style="margin-top:10px;color:#6b7280;font-size:0.9rem;">${data.description}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+    
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat instrumen</p></div>';
+  }
+}
+
+window.editInstrument = async function(docId) {
+  const snap = await db.collection('supervision_instruments').doc(docId).get();
+  if (!snap.exists) return;
+  
+  const data = snap.data();
+  editingInstrumentId = docId;
+  
+  document.getElementById('instrumentModalTitle').textContent = '✏️ Edit Instrumen';
+  document.getElementById('instrumentName').value = data.name;
+  document.getElementById('instrumentType').value = data.type;
+  document.getElementById('instrumentDesc').value = data.description || '';
+  
+  document.getElementById('componentsContainer').innerHTML = '';
+  componentCounter = 0;
+  
+  data.components.forEach(comp => {
+    componentCounter++;
+    const container = document.getElementById('componentsContainer');
+    const div = document.createElement('div');
+    div.className = 'assessment-item';
+    div.id = `component-${componentCounter}`;
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <strong>Komponen #${componentCounter}</strong>
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeComponent(${componentCounter})">🗑️ Hapus</button>
+      </div>
+      <div class="form-group">
+        <label>Nama Komponen *</label>
+        <input type="text" class="component-name" value="${comp.name}">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Level 1 (Kurang)</label>
+          <textarea class="component-level1">${comp.level1 || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Level 2 (Cukup)</label>
+          <textarea class="component-level2">${comp.level2 || ''}</textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Level 3 (Baik)</label>
+          <textarea class="component-level3">${comp.level3 || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Level 4 (Sangat Baik)</label>
+          <textarea class="component-level4">${comp.level4 || ''}</textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+  
+  openModal('instrumentModal');
+};
+
+window.deleteInstrument = async function(docId) {
+  if (!confirm('Hapus instrumen ini? Tindakan tidak dapat dibatalkan.')) return;
+  try {
+    await db.collection('supervision_instruments').doc(docId).delete();
+    loadInstrumentsList();
+  } catch(e) {
+    alert(' ' + e.message);
+  }
+};
+
+// Import instrumen default dari Excel
+window.importDefaultInstruments = async function() {
+  if (!confirm('Import instrumen default dari file Excel? Ini akan menambahkan 5 instrumen standar.')) return;
+  
+  const defaultInstruments = [
+    {
+      name: "Supervisi Administrasi Pembelajaran",
+      type: "administrasi",
+      description: "Instrumen supervisi untuk menilai kelengkapan administrasi pembelajaran guru",
+      components: [
+        { name: "Kalender pendidikan dan analisisnya", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Program Tahunan/ Program Semester", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Capaian Pembelajaran (CP) - TP dan ATP", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Modul Ajar/ Perencanaan Pembelajaran", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Daftar Penilaian/ Asesmen", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Data Analisis Hasil Penilaian/ Asesmen", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Program Remedial dan Pengayaan", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Absensi Siswa", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Buku Teks Pelajaran", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" }
+      ]
+    },
+    {
+      name: "Supervisi Perencanaan Pembelajaran",
+      type: "perencanaan",
+      description: "Instrumen supervisi untuk menilai perencanaan pembelajaran berbasis Kurikulum Berbasis Cinta (KBC)",
+      components: [
+        { name: "Identifikasi Murid: Sesuai kondisi objektif, menunjukkan kesiapan belajar, serta membangun empati dan kasih sayang", level1: "Tidak sesuai kondisi, tidak ada empati", level2: "Sebagian sesuai, empati minimal", level3: "Sesuai kondisi, empati baik", level4: "Sangat sesuai, empati kuat terhadap keberagaman" },
+        { name: "Dimensi Profil Lulusan sesuai materi dengan penekanan karakter humanis", level1: "Tidak sesuai, tanpa karakter humanis", level2: "Sebagian sesuai, karakter minimal", level3: "Sesuai, karakter humanis baik", level4: "Sangat sesuai, karakter humanis terintegrasi kuat" },
+        { name: "Mengintegrasikan Topik Panca Cinta dalam pembelajaran", level1: "Tidak ada integrasi Panca Cinta", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi sangat baik dan mendalam" },
+        { name: "Tujuan Pembelajaran dari analisis CP dengan integrasi nilai cinta", level1: "Tidak dari CP, tanpa nilai cinta", level2: "Sebagian dari CP, nilai cinta minimal", level3: "Dari CP, nilai cinta terintegrasi", level4: "Sangat baik dari CP, nilai cinta mendalam" },
+        { name: "Tujuan Pembelajaran jelas, terukur, relevan dengan kompetensi dan materi", level1: "Tidak jelas, tidak terukur", level2: "Cukup jelas, terukur minimal", level3: "Jelas, terukur, relevan", level4: "Sangat jelas, terukur, relevan, lengkap" },
+        { name: "Praktek Pedagogis sesuai prinsip berkesadaran, bermakna, menggembirakan", level1: "Tidak sesuai prinsip", level2: "Sebagian sesuai", level3: "Sesuai prinsip dengan baik", level4: "Sangat sesuai, sepenuhnya mendukung siswa aktif" },
+        { name: "Kemitraan Pembelajaran melibatkan stakeholder", level1: "Tidak ada kemitraan", level2: "Kemitraan minimal", level3: "Kemitraan baik dengan stakeholder", level4: "Kemitraan sangat baik, kolaborasi kuat" },
+        { name: "Lingkungan Pembelajaran aman, inklusif, menumbuhkan nilai cinta", level1: "Tidak aman/inklusif", level2: "Cukup aman, inklusif minimal", level3: "Aman, inklusif, nilai cinta baik", level4: "Sangat aman, inklusif, nilai cinta kuat" },
+        { name: "Pemanfaatan teknologi/digital untuk pembelajaran interaktif", level1: "Tidak ada teknologi", level2: "Teknologi minimal", level3: "Teknologi baik untuk interaktif", level4: "Teknologi sangat baik, interaktif optimal" },
+        { name: "Langkah pembelajaran runtut sesuai tahapan (Memahami, Mengaplikasi, Merefleksi)", level1: "Tidak runtut, tidak sesuai tahapan", level2: "Cukup runtut, tahapan minimal", level3: "Runtut, sesuai tahapan", level4: "Sangat runtut, sesuai tahapan optimal" }
+      ]
+    },
+    {
+      name: "Supervisi Pelaksanaan Pembelajaran",
+      type: "pelaksanaan",
+      description: "Instrumen supervisi untuk menilai pelaksanaan pembelajaran dengan nilai-nilai KBC",
+      components: [
+        { name: "Guru menyampaikan tujuan pembelajaran dengan integrasi nilai cinta", level1: "Tanpa integrasi nilai cinta", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi optimal, fondasi humanis mendalam" },
+        { name: "Guru membuka pembelajaran dengan apersepsi dan motivasi dijiwai nilai cinta", level1: "Tanpa apersepsi/motivasi", level2: "Apersepsi minimal", level3: "Apersepsi baik, empati tumbuh", level4: "Apersepsi sangat baik, empati kuat sejak awal" },
+        { name: "Menyajikan materi runtut, jelas, menarik dengan nilai KBC", level1: "Tidak runtut, tanpa KBC", level2: "Cukup runtut, KBC minimal", level3: "Runtut, jelas, KBC baik", level4: "Sangat runtut, menarik, KBC optimal" },
+        { name: "Memfasilitasi pertanyaan dan penggalian pengetahuan awal dengan empati", level1: "Tidak ada fasilitasi", level2: "Fasilitasi minimal", level3: "Fasilitasi baik, empati terbangun", level4: "Fasilitasi sangat baik, empati kuat" },
+        { name: "Mengimplementasikan prinsip pembelajaran (Berkesadaran, Bermakna, Menggembirakan)", level1: "Prinsip tidak diimplementasi", level2: "Implementasi minimal", level3: "Implementasi baik", level4: "Implementasi optimal, selaras KBC" },
+        { name: "Menggunakan media pembelajaran relevan dan interaktif dengan nilai cinta", level1: "Media tidak relevan", level2: "Media cukup relevan", level3: "Media relevan, interaktif baik", level4: "Media sangat relevan, interaktif optimal" },
+        { name: "Memberikan pengalaman nyata (kontekstualisasi) dengan nilai KBC", level1: "Tidak ada pengalaman nyata", level2: "Pengalaman minimal", level3: "Pengalaman nyata baik", level4: "Pengalaman nyata sangat baik, karakter humanis" },
+        { name: "Melibatkan siswa aktif dalam kolaborasi berbasis empati", level1: "Tidak ada keterlibatan", level2: "Keterlibatan minimal", level3: "Keterlibatan aktif baik", level4: "Keterlibatan sangat aktif, empati kuat" },
+        { name: "Mengarahkan berpikir kritis dan kreatif dijiwai nilai cinta", level1: "Tidak ada pengarahan", level2: "Pengarahan minimal", level3: "Pengarahan baik, nilai cinta", level4: "Pengarahan sangat baik, generasi berkarakter" },
+        { name: "Mengimplementasikan prinsip pembelajaran dalam aplikasi dengan KBC", level1: "Prinsip tidak diimplementasi", level2: "Implementasi minimal", level3: "Implementasi baik, KBC", level4: "Implementasi optimal, kasih sayang mendalam" },
+        { name: "Mengajak murid merefleksikan proses dan hasil belajar dengan nilai cinta", level1: "Tidak ada refleksi", level2: "Refleksi minimal", level3: "Refleksi baik, nilai cinta", level4: "Refleksi sangat baik, humanis optimal" },
+        { name: "Memberikan umpan balik berbasis empati sesuai KBC", level1: "Umpan balik tidak diberikan", level2: "Umpan balik minimal", level3: "Umpan balik baik, empati", level4: "Umpan balik sangat baik, sesuai KBC" },
+        { name: "Mengintegrasikan topik Panca Cinta dalam refleksi pembelajaran", level1: "Tidak ada integrasi", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi sangat baik, holistik" },
+        { name: "Mengimplementasikan prinsip pembelajaran dalam refleksi untuk penguatan nilai cinta", level1: "Prinsip tidak diimplementasi", level2: "Implementasi minimal", level3: "Implementasi baik", level4: "Implementasi optimal, poros pendidikan" }
+      ]
+    },
+    {
+      name: "Supervisi Asesmen Pembelajaran",
+      type: "asesmen",
+      description: "Instrumen supervisi untuk menilai asesmen pembelajaran berbasis KBC",
+      components: [
+        { name: "Instrumen penilaian sesuai tujuan pembelajaran dengan integrasi nilai cinta", level1: "Tidak selaras, tanpa nilai cinta", level2: "Selaras, integrasi umum", level3: "Selaras, nilai cinta jelas", level4: "Sangat selaras, humanis bermakna" },
+        { name: "Penilaian mencakup proses dan hasil belajar dijiwai KBC", level1: "Hanya hasil, tanpa empati", level2: "Proses & hasil, empati minimal", level3: "Proses & hasil, empati tampak", level4: "Komprehensif, KBC konsisten" },
+        { name: "Penilaian berorientasi Profil Lulusan dan Panca Cinta", level1: "Tidak mengacu", level2: "Mulai mengacu, belum utuh", level3: "Berorientasi jelas", level4: "Sangat selaras, ruh humanis" },
+        { name: "Menggunakan teknik beragam (tes, non-tes, observasi, portofolio) berbasis empati", level1: "Satu teknik, tanpa empati", level2: "Lebih dari satu, belum empati", level3: "Beragam, mulai empati", level4: "Beragam, inklusif sesuai KBC" },
+        { name: "Memberikan umpan balik membangun penuh kasih sayang", level1: "Minimal, menilai kesalahan", level2: "Diberikan, belum konsisten", level3: "Membangun, bahasa empatik", level4: "Sangat membangun, holistik" },
+        { name: "Memanfaatkan hasil asesmen untuk perbaikan pembelajaran", level1: "Tidak dimanfaatkan", level2: "Terbatas untuk teknis", level3: "Untuk perbaikan & penguatan nilai", level4: "Sistematis, berkelanjutan, humanis" },
+        { name: "Penilaian mendukung suasana aman dan inklusif", level1: "Tidak aman/inklusif", level2: "Mulai aman, belum konsisten", level3: "Aman, inklusif, KBC", level4: "Sadar menumbuhkan karakter utuh" },
+        { name: "Mengintegrasikan refleksi diri siswa dalam penilaian berbasis spiritual", level1: "Tidak ada refleksi", level2: "Ada, belum spiritual", level3: "Terintegrasi, nilai cinta", level4: "Kuat, mendalam, spiritual, bermakna" }
+      ]
+    },
+    {
+      name: "Supervisi Guru Bimbingan dan Konseling",
+      type: "bk",
+      description: "Instrumen supervisi untuk menilai layanan BK berbasis deep learning dan KBC",
+      components: [
+        { name: "Merencanakan layanan berbasis deep learning (bermakna, mendalam, menyenangkan)", level1: "Tidak berbasis deep learning", level2: "Sebagian berbasis", level3: "Berbasis baik", level4: "Sepenuhnya berbasis optimal" },
+        { name: "Merancang program BK dengan prinsip KBC (kasih sayang, humanis, menghargai martabat)", level1: "Tanpa prinsip KBC", level2: "Prinsip minimal", level3: "Prinsip baik", level4: "Prinsip sangat baik, martabat dihargai" },
+        { name: "Melakukan asesmen kebutuhan belajar dengan pendekatan humanis", level1: "Tanpa pendekatan humanis", level2: "Humanis minimal", level3: "Humanis baik, empati", level4: "Humanis sangat baik, penuh empati" },
+        { name: "Kolaborasi dengan guru & orang tua untuk memetakan potensi", level1: "Tidak ada kolaborasi", level2: "Kolaborasi minimal", level3: "Kolaborasi baik", level4: "Kolaborasi sangat baik, komprehensif" },
+        { name: "Membantu siswa memahami emosi & membangun kepercayaan diri", level1: "Tidak membantu", level2: "Membantu minimal", level3: "Membantu baik", level4: "Membantu sangat baik, percaya diri kuat" },
+        { name: "Mengembangkan rasa cinta diri (self-love) sesuai KBC", level1: "Tidak ada pengembangan", level2: "Pengembangan minimal", level3: "Pengembangan baik", level4: "Pengembangan sangat baik, self-love kuat" },
+        { name: "Menstimulasi siswa berpikir kritis & kreatif melalui pemecahan masalah", level1: "Tidak menstimulasi", level2: "Stimulasi minimal", level3: "Stimulasi baik", level4: "Stimulasi sangat baik, kritis kreatif" },
+        { name: "Menumbuhkan rasa cinta belajar & pengetahuan", level1: "Tidak menumbuhkan", level2: "Menumbuhkan minimal", level3: "Menumbuhkan baik", level4: "Menumbuhkan sangat baik, cinta pengetahuan" },
+        { name: "Menyediakan ruang konseling yang mendukung rasa aman", level1: "Tidak aman", level2: "Cukup aman", level3: "Aman, nyaman", level4: "Sangat aman, penuh cinta" },
+        { name: "Membangun iklim penuh cinta, saling menghargai, dan empati", level1: "Tidak ada iklim positif", level2: "Iklim minimal", level3: "Iklim baik, empati", level4: "Iklim sangat baik, cinta & hormat" },
+        { name: "Kolaborasi dengan guru untuk mengatasi hambatan belajar", level1: "Tidak ada kolaborasi", level2: "Kolaborasi minimal", level3: "Kolaborasi baik", level4: "Kolaborasi sangat baik, holistik" },
+        { name: "Melibatkan orang tua dengan penuh penghargaan & komunikasi cinta kasih", level1: "Tidak melibatkan", level2: "Melibatkan minimal", level3: "Melibatkan baik", level4: "Melibatkan sangat baik, cinta kasih" },
+        { name: "Mengevaluasi layanan BK berbasis deep learning & KBC", level1: "Tidak mengevaluasi", level2: "Evaluasi minimal", level3: "Evaluasi baik", level4: "Evaluasi sangat baik, berbasis" },
+        { name: "Menyusun tindak lanjut untuk peningkatan layanan penuh cinta kasih", level1: "Tidak ada tindak lanjut", level2: "Tindak lanjut minimal", level3: "Tindak lanjut baik", level4: "Tindak lanjut sangat baik, cinta kasih" }
+      ]
+    }
+  ];
+  
+  try {
+    for (const instrument of defaultInstruments) {
+      await db.collection('supervision_instruments').add({
+        ...instrument,
+        isActive: true,
+        createdBy: 'system',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+    alert('✅ 5 instrumen default berhasil diimport!');
+    loadInstrumentsList();
+  } catch(e) {
+    alert('❌ Gagal import: ' + e.message);
+  }
+};
+
+async function loadInstruments() {
+  const select = document.getElementById('instrumentSelect');
+  select.innerHTML = '<option value="">-- Memuat... --</option>';
+  
+  try {
+    const snap = await db.collection('supervision_instruments').where('isActive', '==', true).get();
+    
+    if (snap.empty) {
+      select.innerHTML = '<option value="">-- Belum ada instrumen tersedia --</option>';
+      return;
+    }
+    
+    const instruments = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    select.innerHTML = '<option value="">-- Pilih Instrumen --</option>';
+    instruments.forEach(inst => {
+      select.innerHTML += `<option value="${inst.id}" data-name="${inst.name}" data-type="${inst.type}">${inst.name}</option>`;
+    });
+    
+  } catch(e) {
+    select.innerHTML = '<option value="">-- Error --</option>';
+  }
+}
+
+window.loadInstrumentForm = function() {
+  const select = document.getElementById('instrumentSelect');
+  const instrumentId = select.value;
+  const formArea = document.getElementById('assessmentFormArea');
+  
+  if (!instrumentId) {
+    formArea.style.display = 'none';
+    currentInstrument = null;
+    return;
+  }
+  
+  const instrumentData = select.options[select.selectedIndex];
+  currentInstrument = {
+    id: instrumentId,
+    name: instrumentData.dataset.name,
+    type: instrumentData.dataset.type
+  };
+  
+  formArea.style.display = 'block';
+  formArea.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat form penilaian...</div>';
+  
+  // Load instrument details
+  db.collection('supervision_instruments').doc(instrumentId).get().then(doc => {
+    if (!doc.exists) {
+      formArea.innerHTML = '<div class="alert alert-error">❌ Instrumen tidak ditemukan</div>';
+      return;
+    }
+    
+    const data = doc.data();
+    currentInstrument = { ...currentInstrument, ...data };
+    
+    let html = `<div class="assessment-category">
+      <div class="category-title">📋 ${data.name}</div>
+      <p style="color:#6b7280;margin-bottom:20px;">${data.description || ''}</p>`;
+    
+    data.components.forEach((comp, index) => {
+      html += `
+        <div class="assessment-item">
+          <div class="item-label">${index + 1}. ${comp.name}</div>
+          <div class="score-options">
+            <div class="score-option">
+              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_1" value="1">
+              <label for="score_${comp.id}_1">1<br><small>${comp.level1 || 'Kurang'}</small></label>
+            </div>
+            <div class="score-option">
+              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_2" value="2">
+              <label for="score_${comp.id}_2">2<br><small>${comp.level2 || 'Cukup'}</small></label>
+            </div>
+            <div class="score-option">
+              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_3" value="3">
+              <label for="score_${comp.id}_3">3<br><small>${comp.level3 || 'Baik'}</small></label>
+            </div>
+            <div class="score-option">
+              <input type="radio" name="score_${comp.id}" id="score_${comp.id}_4" value="4">
+              <label for="score_${comp.id}_4">4<br><small>${comp.level4 || 'Sangat Baik'}</small></label>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    formArea.innerHTML = html;
+    
+  }).catch(e => {
+    formArea.innerHTML = '<div class="alert alert-error">❌ Gagal memuat form: ' + e.message + '</div>';
+  });
+};
+
+// ══════════════════════════════════════════════
+//   📝 SIMPAN SUPERVISI
+// ══════════════════════════════════════════════
+window.saveSupervision = async function() {
+  if (!selectedScheduleId || !currentInstrument) {
+    alert('❌ Pilih jadwal dan instrumen penilaian!');
+    return;
+  }
+  
+  const notes = document.getElementById('supervisionNotes').value.trim();
+  const actionPlan = document.getElementById('actionPlan').value.trim();
   const alert = document.getElementById('alertSup');
   const btn = document.getElementById('btnSaveSup');
   
   alert.classList.remove('show');
   
-  if(!selectedScheduleId || !type){
-    alert.textContent = '❌ Pilih jadwal dan jenis supervisi!';
-    alert.className = 'alert alert-error show';
-    return;
+  // Collect scores
+  const scores = {};
+  let totalScore = 0;
+  let maxScore = currentInstrument.components.length * 4;
+  
+  for (const comp of currentInstrument.components) {
+    const selected = document.querySelector(`input[name="score_${comp.id}"]:checked`);
+    if (!selected) {
+      alert.textContent = `❌ Lengkapi penilaian untuk komponen: ${comp.name}`;
+      alert.className = 'alert alert-error show';
+      return;
+    }
+    scores[comp.id] = parseInt(selected.value);
+    totalScore += parseInt(selected.value);
   }
   
-  const aspectScores = {};
-  let totalScore = 0, maxTotal = 0;
-  
-  document.querySelectorAll('.aspect-score').forEach(sel => {
-    const aspect = sel.dataset.aspect;
-    const max = parseInt(sel.dataset.max);
-    const value = parseInt(sel.value) || 0;
-    aspectScores[aspect] = {score:value, max};
-    totalScore += value;
-    maxTotal += max;
-  });
-  
-  const percentage = maxTotal > 0 ? ((totalScore/maxTotal)*100).toFixed(1) : 0;
-  
-  const select = document.getElementById('supervisionSchedule');
-  const superviseeName = select.options[select.selectedIndex].dataset.teacher;
-  const superviseeEmail = select.options[select.selectedIndex].dataset.email;
+  const percentage = ((totalScore / maxScore) * 100).toFixed(1);
   
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
   
   try {
-    // Simpan supervisi
+    const select = document.getElementById('supervisionSchedule');
+    const superviseeName = select.options[select.selectedIndex].dataset.teacher;
+    const superviseeEmail = select.options[select.selectedIndex].dataset.email;
+    
     await db.collection('supervisions').add({
       scheduleId: selectedScheduleId,
+      instrumentId: currentInstrument.id,
+      instrumentName: currentInstrument.name,
+      instrumentType: currentInstrument.type,
       supervisorId: currentUser.uid,
       supervisorEmail: currentUser.email,
       supervisorName: currentUser.nama,
       supervisorRole: currentUser.role,
-      superviseeId: select.value,
+      superviseeId: superviseeEmail,
       superviseeEmail: superviseeEmail,
       superviseeName: superviseeName,
-      type, aspectScores, totalScore, maxScore:maxTotal, percentage, notes,
+      scores: scores,
+      totalScore: totalScore,
+      maxScore: maxScore,
+      percentage: percentage,
+      notes: notes,
+      actionPlan: actionPlan,
       status: 'completed',
       createdAt: new Date().toISOString()
     });
     
-    // Update status jadwal jadi completed
     await db.collection('supervision_schedule').doc(selectedScheduleId).update({
       status: 'completed',
       updatedAt: new Date().toISOString()
@@ -943,13 +1376,15 @@ window.saveSupervision = async function(){
     alert.textContent = '✅ Supervisi berhasil disimpan!';
     alert.className = 'alert alert-success show';
     
-    // Reset
     document.getElementById('supervisionSchedule').value = '';
-    document.getElementById('supervisionType').value = '';
+    document.getElementById('instrumentSelect').value = '';
     document.getElementById('supervisionNotes').value = '';
-    document.getElementById('aspectsContainer').innerHTML = '';
+    document.getElementById('actionPlan').value = '';
+    document.getElementById('assessmentFormArea').innerHTML = '';
+    document.getElementById('assessmentFormArea').style.display = 'none';
     document.getElementById('scheduleDetailArea').style.display = 'none';
     selectedScheduleId = null;
+    currentInstrument = null;
     
   } catch(e) {
     alert.textContent = '❌ ' + e.message;
@@ -960,9 +1395,7 @@ window.saveSupervision = async function(){
 };
 
 async function loadSupervisionList(){
-  const snap = await db.collection('supervisions')
-    .where('supervisorEmail', '==', currentUser.email)
-    .get();
+  const snap = await db.collection('supervisions').where('supervisorEmail', '==', currentUser.email).get();
   const tbody = document.getElementById('supervisionList');
   
   if(snap.empty){
@@ -974,18 +1407,16 @@ async function loadSupervisionList(){
   
   tbody.innerHTML = docs.map(d => {
     const data = d.data();
-    const statusBadge = data.status==='completed' ? '<span class="badge badge-done">Sudah Dinilai</span>' : '<span class="badge badge-pending">Belum Dinilai</span>';
-    const typeLabel = {administrasi:'Administrasi', kinerja:'Kinerja', pembelajaran:'Pembelajaran'}[data.type];
     return `
       <tr>
         <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
         <td>${data.superviseeName}</td>
-        <td>${typeLabel}</td>
-        <td><strong>${data.totalScore}/${data.maxScore}</strong></td>
-        <td>${statusBadge}</td>
+        <td>${data.instrumentName || '-'}</td>
+        <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
+        <td><span class="badge badge-done">Selesai</span></td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-          <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')"> PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')">📥 PDF</button>
         </td>
       </tr>
     `;
@@ -1000,9 +1431,7 @@ async function loadMySchedule() {
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
   
   try {
-    const snap = await db.collection('supervision_schedule')
-      .where('teacherEmail', '==', currentUser.email)
-      .get();
+    const snap = await db.collection('supervision_schedule').where('teacherEmail', '==', currentUser.email).get();
     
     if (snap.empty) {
       container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Anda belum dijadwalkan untuk supervisi</p></div>';
@@ -1022,15 +1451,10 @@ async function loadMySchedule() {
       return `
         <div class="schedule-card">
           <div class="schedule-info">
-            <div class="schedule-title"> Supervisor: ${s.supervisorName}</div>
-            <div class="schedule-detail">
-               Tanggal: ${formatDate(s.scheduledDate)} | 
-              ${statusBadge}
-            </div>
+            <div class="schedule-title">👤 Supervisor: ${s.supervisorName}</div>
+            <div class="schedule-detail"> Tanggal: ${formatDate(s.scheduledDate)} | ${statusBadge}</div>
             ${s.notes ? `<div class="schedule-detail">📝 Catatan: ${s.notes}</div>` : ''}
-            <div class="schedule-detail" style="margin-top:6px;">
-              <strong>💡 Silakan upload dokumen pendukung Anda di tab "Upload Dokumen"</strong>
-            </div>
+            <div class="schedule-detail" style="margin-top:6px;"><strong>💡 Silakan upload dokumen pendukung Anda di tab "Upload Dokumen"</strong></div>
           </div>
         </div>
       `;
@@ -1114,9 +1538,7 @@ window.uploadDokumen = async function(){
 };
 
 async function loadMyDocs(){
-  const snap = await db.collection('supervision_documents')
-    .where('userEmail', '==', currentUser.email)
-    .get();
+  const snap = await db.collection('supervision_documents').where('userEmail', '==', currentUser.email).get();
   const tbody = document.getElementById('myDocsList');
   
   if(snap.empty){
@@ -1125,49 +1547,61 @@ async function loadMyDocs(){
   }
   
   tbody.innerHTML = snap.docs.map(d => {
-  const data = d.data();
-  const icon = data.type==='link' ? '🔗' : (data.fileExt==='pdf'?'📕':['doc','docx'].includes(data.fileExt)?'📘':['xls','xlsx'].includes(data.fileExt)?'📗':'📄');
-  
-  // Tombol Lihat (Preview)
-  let btnLihat = '';
-  if (data.type === 'link') {
-    btnLihat = `<a href="${data.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
-  } else if (data.fileExt === 'pdf') {
-    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
-  } else if (['doc','docx','xls','xlsx','ppt','pptx'].includes(data.fileExt)) {
-    btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${data.fileExt}')">👁️ Lihat</button>`;
-  }
-  
-  // Tombol Unduh
-  let btnUnduh = '';
-  if (data.type !== 'link') {
-    btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${data.nama.replace(/'/g,"\\'")}','${data.fileExt}')">⬇ Unduh</button>`;
-  }
-  
-   return `
-    <tr>
-      <td>${icon} ${data.nama}</td>
-      <td>${data.kategori}</td>
-      <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
-      <td>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          ${btnLihat}
-          ${btnUnduh}
-          <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
-        </div>
-      </td>
-    </tr>
-  `;
-}).join('');
+    const data = d.data();
+    const icon = data.type==='link' ? '🔗' : (data.fileExt==='pdf'?'📕':['doc','docx'].includes(data.fileExt)?'📘':['xls','xlsx'].includes(data.fileExt)?'📗':'📄');
+    let btnLihat = '';
+    if (data.type === 'link') {
+      btnLihat = `<a href="${data.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
+    } else if (data.fileExt === 'pdf') {
+      btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+    } else {
+      btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${data.fileExt}')">👁️ Lihat</button>`;
+    }
+    
+    let btnUnduh = '';
+    if (data.type !== 'link') {
+      btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${data.nama.replace(/'/g,"\\'")}','${data.fileExt}')">⬇ Unduh</button>`;
+    }
+    
+    return `
+      <tr>
+        <td>${icon} ${data.nama}</td>
+        <td>${data.kategori}</td>
+        <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${btnLihat}
+            ${btnUnduh}
+            <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
+
+window.downloadMyDoc = async function(docId, nama, ext){
+  const snap = await db.collection('supervision_documents').doc(docId).get();
+  const data = snap.data();
+  const a = document.createElement('a');
+  a.href = data.fileData;
+  a.download = nama + '.' + ext;
+  a.click();
+};
+
+window.downloadDoc = window.downloadMyDoc;
+
+window.deleteMyDoc = async function(docId){
+  if(!confirm('Hapus dokumen ini?')) return;
+  await db.collection('supervision_documents').doc(docId).delete();
+  loadMyDocs();
+};
 
 // ══════════════════════════════════════════════
 //   📊 HASIL SUPERVISI (GURU)
 // ══════════════════════════════════════════════
 async function loadMySupervisionList(){
-  const snap = await db.collection('supervisions')
-    .where('superviseeEmail', '==', currentUser.email)
-    .get();
+  const snap = await db.collection('supervisions').where('superviseeEmail', '==', currentUser.email).get();
   const tbody = document.getElementById('mySupervisionList');
   
   if(snap.empty){
@@ -1179,18 +1613,16 @@ async function loadMySupervisionList(){
   
   tbody.innerHTML = docs.map(d => {
     const data = d.data();
-    const statusBadge = data.status==='completed' ? '<span class="badge badge-done">Sudah Dinilai</span>' : '<span class="badge badge-pending">Belum Dinilai</span>';
-    const typeLabel = {administrasi:'Administrasi', kinerja:'Kinerja', pembelajaran:'Pembelajaran'}[data.type];
     return `
       <tr>
         <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
         <td>${data.supervisorName}</td>
-        <td>${typeLabel}</td>
-        <td><strong>${data.totalScore}/${data.maxScore}</strong></td>
-        <td>${statusBadge}</td>
+        <td>${data.instrumentName || '-'}</td>
+        <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
+        <td><span class="badge badge-done">Selesai</span></td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-          ${data.status==='completed' ? `<button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')">📥 PDF</button>` : ''}
+          <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')">📥 PDF</button>
         </td>
       </tr>
     `;
@@ -1209,25 +1641,28 @@ window.viewDetail = async function(docId){
 
 function showDetailModal(){
   const data = currentSupervision;
-  const aspects = aspectsData[data.type] || [];
-  const statusText = data.status==='completed' ? '✅ Sudah Dinilai' : '⏳ Belum Dinilai';
+  const statusText = '✅ Sudah Dinilai';
   
-  let aspectsHtml = aspects.map(a => {
-    const sd = data.aspectScores[a.id] || {score:0, max:a.maxScore};
-    return `<div class="detail-row"><span class="detail-label">${a.label}</span><span class="detail-value">${sd.score} / ${sd.max}</span></div>`;
-  }).join('');
+  let scoresHtml = '';
+  if (data.scores && currentInstrument) {
+    currentInstrument.components.forEach(comp => {
+      const score = data.scores[comp.id] || 0;
+      scoresHtml += `<div class="detail-row"><span class="detail-label">${comp.name}</span><span class="detail-value">${score}/4</span></div>`;
+    });
+  }
   
   document.getElementById('detailContent').innerHTML = `
     <div style="margin-bottom:18px;">
       <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${new Date(data.createdAt).toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span></div>
       <div class="detail-row"><span class="detail-label">Supervisor</span><span class="detail-value">${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</span></div>
       <div class="detail-row"><span class="detail-label">Yang Disupervisi</span><span class="detail-value">${data.superviseeName}</span></div>
-      <div class="detail-row"><span class="detail-label">Jenis Supervisi</span><span class="detail-value">${{administrasi:'Supervisi Administrasi',kinerja:'Supervisi Kinerja',pembelajaran:'Supervisi Pembelajaran'}[data.type]}</span></div>
+      <div class="detail-row"><span class="detail-label">Instrumen</span><span class="detail-value">${data.instrumentName || '-'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${statusText}</span></div>
     </div>
     <h4 style="color:#1e40af;margin-bottom:10px;">Detail Penilaian</h4>
-    ${aspectsHtml}
-    ${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan & Rekomendasi</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}
+    ${scoresHtml}
+    ${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan Khusus</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}
+    ${data.actionPlan ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Rencana Tindak Lanjut</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.actionPlan}</div>` : ''}
     <div class="score-box">
       <div class="score-number">${data.percentage}%</div>
       <div class="score-label">Total Skor: ${data.totalScore} / ${data.maxScore}</div>
@@ -1247,37 +1682,36 @@ window.downloadPDF = async function(docId){
   const pdf = new jsPDF();
   
   pdf.setFontSize(16);
-  pdf.text('LAPORAN HASIL SUPERVISI', 105, 20, {align:'center'});
-  pdf.setFontSize(11);
-  pdf.text('MAN Bantaeng', 105, 30, {align:'center'});
+  pdf.text('HASIL SUPERVISI PEMBELAJARAN', 105, 20, {align:'center'});
+  pdf.setFontSize(12);
+  pdf.text('KURIKULUM BERBASIS CINTA (KBC)', 105, 30, {align:'center'});
   
   pdf.setFontSize(10);
   pdf.text(`Tanggal: ${new Date(data.createdAt).toLocaleDateString('id-ID')}`, 20, 50);
   pdf.text(`Supervisor: ${data.supervisorName}`, 20, 60);
   pdf.text(`Yang Disupervisi: ${data.superviseeName}`, 20, 70);
-  pdf.text(`Jenis: ${{administrasi:'Supervisi Administrasi',kinerja:'Supervisi Kinerja',pembelajaran:'Supervisi Pembelajaran'}[data.type]}`, 20, 80);
-  pdf.text(`Status: ${data.status==='completed'?'Sudah Dinilai':'Belum Dinilai'}`, 20, 90);
+  pdf.text(`Instrumen: ${data.instrumentName || '-'}`, 20, 80);
   
   pdf.setFontSize(12);
-  pdf.text('Detail Penilaian:', 20, 110);
+  pdf.text('Detail Penilaian:', 20, 100);
   
-  const aspects = aspectsData[data.type] || [];
-  let y = 120;
-  aspects.forEach(a => {
-    const sd = data.aspectScores[a.id] || {score:0, max:a.maxScore};
-    pdf.setFontSize(10);
-    pdf.text(`${a.label}: ${sd.score}/${sd.max}`, 20, y);
-    y += 8;
-  });
+  let y = 110;
+  if (data.scores) {
+    Object.keys(data.scores).forEach(key => {
+      pdf.setFontSize(9);
+      pdf.text(`${key}: ${data.scores[key]}/4`, 20, y);
+      y += 6;
+    });
+  }
   
   pdf.setFontSize(11);
-  pdf.text(`Total Skor: ${data.totalScore}/${data.maxScore} (${data.percentage}%)`, 20, y+10);
+  pdf.text(`Total Skor: ${data.totalScore}/${data.maxScore} (${data.percentage}%)`, 20, y + 10);
   
   if(data.notes){
-    pdf.text('Catatan:', 20, y+25);
-    pdf.setFontSize(10);
+    pdf.text('Catatan:', 20, y + 25);
+    pdf.setFontSize(9);
     const split = pdf.splitTextToSize(data.notes, 170);
-    pdf.text(split, 20, y+35);
+    pdf.text(split, 20, y + 35);
   }
   
   pdf.save(`Supervisi_${data.superviseeName}_${new Date(data.createdAt).toLocaleDateString('id-ID').replace(/\//g,'-')}.pdf`);
@@ -1286,163 +1720,41 @@ window.downloadPDF = async function(docId){
 // ══════════════════════════════════════════════
 //   👁️ PREVIEW DOKUMEN
 // ══════════════════════════════════════════════
-
-/**
- * Preview dokumen PDF di tab baru
- */
 window.previewDoc = async function(docId) {
   try {
     const snap = await db.collection('supervision_documents').doc(docId).get();
-    if (!snap.exists) {
-      alert('Dokumen tidak ditemukan');
-      return;
-    }
-    
+    if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; }
     const data = snap.data();
-    
-    if (data.type === 'link') {
-      // Buka link langsung
-      window.open(data.link, '_blank');
-    } else if (data.fileExt === 'pdf') {
-      // Buka PDF di tab baru
+    if (data.type === 'link') { window.open(data.link, '_blank'); }
+    else if (data.fileExt === 'pdf') {
       const newWindow = window.open('', '_blank');
-      newWindow.document.write(`
-        <html>
-          <head>
-            <title>Preview: ${data.nama}</title>
-            <style>
-              body { margin: 0; background: #f3f4f6; font-family: 'Segoe UI', sans-serif; }
-              .header { 
-                background: #3b82f6; 
-                color: white; 
-                padding: 12px 20px; 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center;
-              }
-              .header h3 { margin: 0; font-size: 1rem; }
-              .header a { 
-                color: white; 
-                text-decoration: none; 
-                background: rgba(255,255,255,0.2); 
-                padding: 6px 14px; 
-                border-radius: 6px;
-                font-size: 0.85rem;
-              }
-              .header a:hover { background: rgba(255,255,255,0.3); }
-              iframe { width: 100%; height: calc(100vh - 50px); border: none; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h3>📄 ${data.nama}</h3>
-              <a href="${data.fileData}" download="${data.nama}.${data.fileExt}"> Download</a>
-            </div>
-            <iframe src="${data.fileData}"></iframe>
-          </body>
-        </html>
-      `);
-    } else {
-      // File lain: tampilkan info
-      alert(`File ${data.fileExt.toUpperCase()} tidak bisa di-preview langsung.\nSilakan download untuk melihat isinya.`);
-      window.previewDocOffice(docId, data.fileExt);
-    }
-    
-  } catch(e) {
-    console.error('Error preview:', e);
-    alert('❌ Gagal membuka preview: ' + e.message);
-  }
+      newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;}.header{background:#3b82f6;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}.header h3{margin:0;font-size:1rem;}.header a{color:white;text-decoration:none;background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:6px;font-size:0.85rem;}iframe{width:100%;height:calc(100vh - 50px);border:none;}</style></head><body><div class="header"><h3>📄 ${data.nama}</h3><a href="${data.fileData}" download="${data.nama}.${data.fileExt}">⬇ Download</a></div><iframe src="${data.fileData}"></iframe></body></html>`);
+    } else { alert(`File ${data.fileExt.toUpperCase()} tidak bisa di-preview langsung.`); window.previewDocOffice(docId, data.fileExt); }
+  } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); }
 };
 
-/**
- * Preview file Office (doc, xls, ppt) via Google Docs Viewer
- */
 window.previewDocOffice = async function(docId, fileExt) {
   try {
     const snap = await db.collection('supervision_documents').doc(docId).get();
-    if (!snap.exists) {
-      alert('Dokumen tidak ditemukan');
-      return;
-    }
-    
+    if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; }
     const data = snap.data();
-    
-    if (data.type === 'link') {
-      window.open(data.link, '_blank');
-      return;
-    }
-    
-    // Konversi base64 ke blob URL untuk Google Docs Viewer
-    // Karena Google Docs Viewer butuh URL publik, kita buka di tab baru dengan data URL
+    if (data.type === 'link') { window.open(data.link, '_blank'); return; }
     const newWindow = window.open('', '_blank');
-    newWindow.document.write(`
-      <html>
-        <head>
-          <title>Preview: ${data.nama}</title>
-          <style>
-            body { 
-              margin: 0; 
-              background: #f3f4f6; 
-              font-family: 'Segoe UI', sans-serif;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-            }
-            .card {
-              background: white;
-              padding: 30px;
-              border-radius: 14px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-              max-width: 500px;
-              text-align: center;
-            }
-            .icon { font-size: 4rem; margin-bottom: 15px; }
-            h3 { color: #1e40af; margin-bottom: 10px; }
-            p { color: #6b7280; margin-bottom: 20px; }
-            .btn {
-              display: inline-block;
-              background: #3b82f6;
-              color: white;
-              padding: 10px 20px;
-              border-radius: 8px;
-              text-decoration: none;
-              font-weight: 600;
-              margin: 5px;
-            }
-            .btn:hover { background: #2563eb; }
-            .btn-secondary { background: #6b7280; }
-            .btn-secondary:hover { background: #4b5563; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="icon">${fileExt === 'pdf' ? '📕' : ['doc','docx'].includes(fileExt) ? '📘' : ['xls','xlsx'].includes(fileExt) ? '📗' : '📄'}</div>
-            <h3>${data.nama}</h3>
-            <p>${data.kategori} • ${data.fileSize ? (data.fileSize/1024/1024).toFixed(2) + ' MB' : ''}</p>
-            <p style="font-size:0.85rem;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung di browser.</p>
-            <a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn">⬇ Download untuk Melihat</a>
-            <br>
-            <button onclick="window.close()" class="btn btn-secondary">Tutup</button>
-          </div>
-        </body>
-      </html>
-    `);
-    
-  } catch(e) {
-    console.error('Error preview office:', e);
-    alert('❌ Gagal membuka preview: ' + e.message);
-  }
+    newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}.card{background:white;padding:30px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-width:500px;text-align:center;}.icon{font-size:4rem;margin-bottom:15px;}h3{color:#1e40af;margin-bottom:10px;}p{color:#6b7280;margin-bottom:20px;}.btn{display:inline-block;background:#3b82f6;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;margin:5px;}.btn:hover{background:#2563eb;}.btn-secondary{background:#6b7280;}.btn-secondary:hover{background:#4b5563;}</style></head><body><div class="card"><div class="icon">${fileExt==='pdf'?'':['doc','docx'].includes(fileExt)?'📘':['xls','xlsx'].includes(fileExt)?'📗':'📄'}</div><h3>${data.nama}</h3><p>${data.kategori} • ${data.fileSize?(data.fileSize/1024/1024).toFixed(2)+' MB':''}</p><p style="font-size:0.85rem;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung.</p><a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn"> Download untuk Melihat</a><br><button onclick="window.close()" class="btn btn-secondary">Tutup</button></div></body></html>`);
+  } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); }
 };
-  
+
 window.closeModal = function(id){
   document.getElementById(id).classList.remove('active');
 };
 
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
 // ══════════════════════════════════════════════
 //   🛠️ HELPER
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
