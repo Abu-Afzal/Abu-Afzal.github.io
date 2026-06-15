@@ -16,7 +16,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f3f4f6;min-height:100v
 .btn-back{display:inline-block;background:rgba(255,255,255,0.2);color:white;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;transition:background .2s;border:1px solid rgba(255,255,255,0.3);}
 .btn-back:hover{background:rgba(255,255,255,0.3);}
 
-.container{max-width:1100px;margin:30px auto;padding:0 20px;}
+.container{max-width:1200px;margin:30px auto;padding:0 20px;}
 
 .card{background:white;border-radius:14px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:24px;}
 
@@ -24,6 +24,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f3f4f6;min-height:100v
 .upload-section h2{color:#1e40af;font-size:1.3rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
 
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
 .form-group{margin-bottom:14px;}
 .form-group label{display:block;font-weight:600;color:#374151;margin-bottom:6px;font-size:0.9rem;}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.95rem;font-family:inherit;outline:none;transition:border-color .2s;background:white;}
@@ -46,9 +47,19 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f3f4f6;min-height:100v
 .btn-success:hover{background:#059669;}
 .btn-danger{background:#ef4444;color:white;}
 .btn-danger:hover{background:#dc2626;}
+.btn-warning{background:#f59e0b;color:white;}
+.btn-warning:hover{background:#d97706;}
 .btn-sm{padding:7px 14px;font-size:0.82rem;width:auto;}
 
 .section-title{color:#1e40af;font-size:1.3rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* ═══ TABS ═══ */
+.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid #e5e7eb;overflow-x:auto;}
+.tab{padding:12px 20px;background:none;border:none;border-bottom:3px solid transparent;cursor:pointer;font-weight:600;color:#6b7280;font-size:0.95rem;transition:all .2s;white-space:nowrap;}
+.tab:hover{color:#3b82f6;}
+.tab.active{color:#3b82f6;border-bottom-color:#3b82f6;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
 
 .table-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:0.9rem;}
@@ -59,6 +70,9 @@ tr:hover td{background:#f9fafb;}
 .badge{padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;display:inline-block;}
 .badge-pending{background:#fef3c7;color:#92400e;}
 .badge-done{background:#dcfce7;color:#166534;}
+.badge-info{background:#dbeafe;color:#1e40af;}
+.badge-scheduled{background:#ede9fe;color:#5b21b6;}
+.badge-progress{background:#fef3c7;color:#92400e;}
 
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:20px;}
 .modal.active{display:flex;}
@@ -91,22 +105,39 @@ tr:hover td{background:#f9fafb;}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid #e5e7eb;border-top:2px solid #3b82f6;border-radius:50%;animation:spin 1s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ═══ ACCESS DENIED PAGE ═══ */
 .access-denied{max-width:600px;margin:60px auto;background:white;padding:40px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.08);text-align:center;}
 .access-denied .icon{font-size:5rem;margin-bottom:20px;}
 .access-denied h2{color:#ef4444;margin-bottom:12px;font-size:1.5rem;}
 .access-denied .message{background:#fee2e2;color:#991b1b;padding:20px;border-radius:10px;margin-bottom:20px;text-align:left;line-height:1.6;}
 .access-denied .info{background:#eff6ff;color:#1e40af;padding:16px;border-radius:10px;margin-bottom:20px;text-align:left;font-size:0.9rem;line-height:1.6;}
 
-/* ═══ LOADING PAGE ═══ */
 .loading-page{text-align:center;padding:80px 20px;}
 .loading-page .icon{font-size:4rem;margin-bottom:20px;animation:pulse 1.5s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
 
+/* ═══ DOCUMENT LIST ═══ */
+.doc-item{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+.doc-icon{font-size:1.8rem;}
+.doc-info{flex:1;}
+.doc-name{font-weight:600;color:#1e293b;}
+.doc-meta{font-size:0.8rem;color:#6b7280;}
+
+/* ═══ SCHEDULE CARD ═══ */
+.schedule-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.schedule-info{flex:1;min-width:200px;}
+.schedule-title{font-weight:700;color:#1e40af;font-size:1.05rem;}
+.schedule-detail{font-size:0.85rem;color:#6b7280;margin-top:4px;}
+.schedule-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.empty-state{text-align:center;padding:40px;color:#9ca3af;}
+.empty-state .icon{font-size:3rem;margin-bottom:10px;}
+
 @media(max-width:768px){
-  .form-row{grid-template-columns:1fr;}
+  .form-row,.form-row-3{grid-template-columns:1fr;}
   .header h1{font-size:1.6rem;}
   .rating-grid{grid-template-columns:1fr;}
+  .tabs{flex-wrap:wrap;}
+  .schedule-card{flex-direction:column;align-items:flex-start;}
 }
 </style>
 </head>
@@ -119,7 +150,7 @@ tr:hover td{background:#f9fafb;}
   <a href="../index.html" class="btn-back">← Kembali ke Dashboard SIPELITA</a>
 </div>
 
-<!-- ═══ LOADING PAGE (Saat Cek Session) ═══ -->
+<!-- ═══ LOADING PAGE ═══ -->
 <div id="loadingPage" class="container">
   <div class="loading-page">
     <div class="icon">🔐</div>
@@ -134,9 +165,7 @@ tr:hover td{background:#f9fafb;}
   <div class="access-denied">
     <div class="icon">🔒</div>
     <h2>Akses Ditolak</h2>
-    <div class="message" id="accessDeniedMessage">
-      Anda harus login melalui portal SIPELITA terlebih dahulu.
-    </div>
+    <div class="message" id="accessDeniedMessage">Anda harus login melalui portal SIPELITA terlebih dahulu.</div>
     <div class="info">
       <strong>💡 Cara Mengakses:</strong><br>
       1. Buka portal utama SIPELITA di <code>index.html</code><br>
@@ -144,108 +173,192 @@ tr:hover td{background:#f9fafb;}
       3. Klik menu <strong>Supervisi</strong> dari dashboard<br>
       4. Anda akan otomatis masuk ke halaman ini
     </div>
-    <a href="../index.html" class="btn btn-primary" style="width:auto;padding:12px 30px;">
-      ← Kembali ke Portal SIPELITA
-    </a>
+    <a href="../index.html" class="btn btn-primary" style="width:auto;padding:12px 30px;">← Kembali ke Portal SIPELITA</a>
   </div>
 </div>
 
 <!-- ═══ DASHBOARD ═══ -->
 <div id="dashboardPage" class="container" style="display:none;">
 
+  <!-- Info User -->
   <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
     <div>
       <div style="font-size:0.85rem;color:#6b7280;">Selamat datang,</div>
       <div style="font-size:1.2rem;font-weight:700;color:#1e40af;" id="userNameDisplay">–</div>
       <div style="font-size:0.85rem;color:#6b7280;" id="userRoleDisplay">–</div>
+      <div style="font-size:0.78rem;color:#10b981;margin-top:4px;">✅ Login terintegrasi dengan SIPELITA</div>
     </div>
-   <button class="btn btn-danger btn-sm" onclick="doLogout()">🚪 Logout</button>
-  </div>
-  <div class="upload-section">
-    <h2>📤 Upload Dokumen Pendukung</h2>
-    <p style="color:#1e40af;font-size:0.9rem;margin-bottom:14px;">Upload RPP, Modul Ajar, atau dokumen lain sebelum disupervisi</p>
-    <div class="form-row">
-      <div class="form-group" style="margin:0;">
-        <select id="docKategori">
-          <option value="">Pilih Kategori</option>
-          <option>RPP / Modul Ajar</option>
-          <option>Program Tahunan</option>
-          <option>Program Semester</option>
-          <option>Lembar Kerja Siswa</option>
-          <option>Laporan Kegiatan</option>
-          <option>Lainnya</option>
-        </select>
-      </div>
-      <div class="form-group" style="margin:0;">
-        <input type="text" id="docNama" placeholder="Nama Dokumen (contoh: RPP Sosiologi X.1)">
-      </div>
-    </div>
-    <div class="radio-group">
-      <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()"> 📁 Dokumen</label>
-      <label><input type="radio" name="docType" value="link" onchange="toggleDocType()"> 🔗 Link Google Drive</label>
-    </div>
-    <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
-    <div id="fileInputWrap">
-      <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
-    </div>
-    <div id="linkInputWrap" style="display:none;">
-      <input type="url" id="docLink" placeholder="https://drive.google.com/...">
-    </div>
-    <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc">💾 Simpan Dokumen</button>
-    <div id="alertUpload" class="alert alert-success"></div>
+    <button class="btn btn-danger btn-sm" onclick="doLogout()">🚪 Logout</button>
   </div>
 
-  <div class="card">
-    <h2 class="section-title">📂 Dokumen Saya</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Nama Dokumen</th><th>Kategori</th><th>Tanggal</th><th>Aksi</th></tr>
-        </thead>
-        <tbody id="myDocsList"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div id="supervisorSection" style="display:none;">
+  <!-- ══════════════════════════════════════════ -->
+  <!--          TABS UNTUK SUPERVISOR             -->
+  <!-- ══════════════════════════════════════════ -->
+  <div id="supervisorTabs" style="display:none;">
     <div class="card">
-      <h2 class="section-title">📝 Buat Supervisi Baru</h2>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Yang Disupervisi *</label>
-          <select id="superviseeSelect">
-            <option value="">-- Pilih --</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Jenis Supervisi *</label>
-          <select id="supervisionType" onchange="loadAspects()">
-            <option value="">-- Pilih --</option>
-            <option value="administrasi">Supervisi Administrasi</option>
-            <option value="kinerja">Supervisi Kinerja</option>
-            <option value="pembelajaran">Supervisi Pembelajaran</option>
-          </select>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('tabJadwal')"> Jadwal Supervisi</button>
+        <button class="tab" onclick="switchTab('tabBuatJadwal')">➕ Buat Jadwal</button>
+        <button class="tab" onclick="switchTab('tabSupervisi')">📝 Mulai Supervisi</button>
+        <button class="tab" onclick="switchTab('tabRiwayat')"> Riwayat</button>
+      </div>
+
+      <!-- TAB: Jadwal Supervisi -->
+      <div id="tabJadwal" class="tab-content active">
+        <h2 class="section-title">📅 Jadwal Supervisi yang Sudah Dijadwalkan</h2>
+        <div id="scheduleList"></div>
+      </div>
+
+      <!-- TAB: Buat Jadwal -->
+      <div id="tabBuatJadwal" class="tab-content">
+        <h2 class="section-title">➕ Buat Jadwal Supervisi Baru</h2>
+        <div class="upload-section">
+          <div class="form-row-3">
+            <div class="form-group" style="margin:0;">
+              <label>Guru yang Disupervisi *</label>
+              <select id="scheduleTeacher">
+                <option value="">-- Pilih Guru --</option>
+              </select>
+              <div style="font-size:0.78rem;color:#6b7280;margin-top:4px;">* Hanya guru yang belum dijadwalkan</div>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Tanggal Supervisi *</label>
+              <input type="date" id="scheduleDate">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Catatan (opsional)</label>
+              <input type="text" id="scheduleNotes" placeholder="Contoh: Supervisi RPP Matematika">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="createSchedule()" id="btnCreateSchedule" style="width:auto;padding:12px 30px;">💾 Simpan Jadwal</button>
+          <div id="alertSchedule" class="alert alert-success"></div>
         </div>
       </div>
-      <div id="aspectsContainer"></div>
-      <div class="form-group">
-        <label>Catatan & Rekomendasi</label>
-        <textarea id="supervisionNotes" placeholder="Berikan catatan dan rekomendasi untuk perbaikan..."></textarea>
+
+      <!-- TAB: Mulai Supervisi -->
+      <div id="tabSupervisi" class="tab-content">
+        <h2 class="section-title">📝 Mulai Supervisi</h2>
+        <div class="form-group">
+          <label>Pilih Jadwal Supervisi *</label>
+          <select id="supervisionSchedule" onchange="loadScheduleDetail()">
+            <option value="">-- Pilih Jadwal --</option>
+          </select>
+        </div>
+        <div id="scheduleDetailArea" style="display:none;">
+          <div class="card" style="background:#f9fafb;">
+            <h3 style="color:#1e40af;margin-bottom:12px;">📄 Dokumen yang Diupload Guru</h3>
+            <div id="teacherDocuments"></div>
+          </div>
+          <div class="form-group">
+            <label>Jenis Supervisi *</label>
+            <select id="supervisionType" onchange="loadAspects()">
+              <option value="">-- Pilih --</option>
+              <option value="administrasi">Supervisi Administrasi</option>
+              <option value="kinerja">Supervisi Kinerja</option>
+              <option value="pembelajaran">Supervisi Pembelajaran</option>
+            </select>
+          </div>
+          <div id="aspectsContainer"></div>
+          <div class="form-group">
+            <label>Catatan & Rekomendasi</label>
+            <textarea id="supervisionNotes" placeholder="Berikan catatan dan rekomendasi untuk perbaikan..."></textarea>
+          </div>
+          <button class="btn btn-success" onclick="saveSupervision()" id="btnSaveSup" style="width:auto;padding:12px 30px;">💾 Simpan Hasil Supervisi</button>
+          <div id="alertSup" class="alert alert-success"></div>
+        </div>
       </div>
-      <button class="btn btn-primary" onclick="saveSupervision()" id="btnSaveSup">💾 Simpan Supervisi</button>
-      <div id="alertSup" class="alert alert-success"></div>
+
+      <!-- TAB: Riwayat -->
+      <div id="tabRiwayat" class="tab-content">
+        <h2 class="section-title">📋 Riwayat Supervisi yang Dilakukan</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Tanggal</th><th>Guru</th><th>Jenis</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="supervisionList"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <h2 class="section-title" id="riwayatTitle">📋 Riwayat Supervisi</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Tanggal</th><th id="colSupervisee">Yang Disupervisi</th><th>Jenis</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
-        </thead>
-        <tbody id="supervisionList"></tbody>
-      </table>
+  <!-- ══════════════════════════════════════════ -->
+  <!--          TABS UNTUK GURU                   -->
+  <!-- ══════════════════════════════════════════ -->
+  <div id="teacherTabs" style="display:none;">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('tabJadwalSaya')">📅 Jadwal Saya</button>
+        <button class="tab" onclick="switchTab('tabUpload')">📤 Upload Dokumen</button>
+        <button class="tab" onclick="switchTab('tabHasil')">📊 Hasil Supervisi</button>
+      </div>
+
+      <!-- TAB: Jadwal Saya -->
+      <div id="tabJadwalSaya" class="tab-content active">
+        <h2 class="section-title">📅 Jadwal Supervisi Saya</h2>
+        <div id="myScheduleArea"></div>
+      </div>
+
+      <!-- TAB: Upload Dokumen -->
+      <div id="tabUpload" class="tab-content">
+        <div class="upload-section">
+          <h2> Upload Dokumen Pendukung</h2>
+          <p style="color:#1e40af;font-size:0.9rem;margin-bottom:14px;">Upload RPP, Modul Ajar, atau dokumen lain untuk supervisi</p>
+          <div class="form-row">
+            <div class="form-group" style="margin:0;">
+              <select id="docKategori">
+                <option value="">Pilih Kategori</option>
+                <option>RPP / Modul Ajar</option>
+                <option>Program Tahunan</option>
+                <option>Program Semester</option>
+                <option>Lembar Kerja Siswa</option>
+                <option>Laporan Kegiatan</option>
+                <option>Lainnya</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <input type="text" id="docNama" placeholder="Nama Dokumen (contoh: RPP Sosiologi X.1)">
+            </div>
+          </div>
+          <div class="radio-group">
+            <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()"> 📁 Dokumen</label>
+            <label><input type="radio" name="docType" value="link" onchange="toggleDocType()">  Link Google Drive</label>
+          </div>
+          <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
+          <div id="fileInputWrap">
+            <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+          </div>
+          <div id="linkInputWrap" style="display:none;">
+            <input type="url" id="docLink" placeholder="https://drive.google.com/...">
+          </div>
+          <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc" style="width:auto;padding:12px 30px;">💾 Simpan Dokumen</button>
+          <div id="alertUpload" class="alert alert-success"></div>
+        </div>
+
+        <h2 class="section-title">📂 Dokumen Saya</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Nama Dokumen</th><th>Kategori</th><th>Tanggal</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="myDocsList"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: Hasil Supervisi -->
+      <div id="tabHasil" class="tab-content">
+        <h2 class="section-title">📊 Hasil Supervisi Saya</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Tanggal</th><th>Supervisor</th><th>Jenis</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="mySupervisionList"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -291,6 +404,7 @@ const db = firebase.firestore();
 
 let currentUser = null;
 let currentSupervision = null;
+let selectedScheduleId = null;
 
 const aspectsData = {
   administrasi: [
@@ -315,9 +429,8 @@ const aspectsData = {
 };
 
 // ══════════════════════════════════════════════
-//   🔐 INTEGRASI SESSION SIPELITA (AUTO-LOGIN)
+//   🔐 INTEGRASI SESSION SIPELITA
 // ══════════════════════════════════════════════
-
 function showLoading() {
   document.getElementById('loadingPage').style.display = 'block';
   document.getElementById('accessDeniedPage').style.display = 'none';
@@ -332,24 +445,15 @@ function showAccessDenied(message) {
 }
 
 async function checkSipelitaSession() {
-  console.log(' Memeriksa session SIPELITA...');
+  console.log('🔍 Memeriksa session SIPELITA...');
   
-  // 1. Cek sessionStorage DULU (prioritas utama)
   let sipelitaUser = sessionStorage.getItem('sipelita_user');
-  
-  // 2. Jika tidak ada di sessionStorage, cek localStorage (fallback)
   if (!sipelitaUser) {
     sipelitaUser = localStorage.getItem('sipelita_user');
-    console.log('⚠️ Session tidak ada di sessionStorage, cek localStorage...');
   }
   
   if (!sipelitaUser) {
-    console.warn('⚠️ Tidak ada session SIPELITA');
-    showAccessDenied(`
-      <strong>⛔ Session SIPELITA tidak ditemukan!</strong><br><br>
-      Anda belum login ke portal SIPELITA. Silakan login terlebih dahulu melalui halaman utama SIPELITA, 
-      lalu klik menu <strong>Supervisi</strong> dari dashboard.
-    `);
+    showAccessDenied(`<strong>⛔ Session SIPELITA tidak ditemukan!</strong><br><br>Anda belum login ke portal SIPELITA.`);
     return false;
   }
   
@@ -357,36 +461,22 @@ async function checkSipelitaSession() {
   try {
     userData = JSON.parse(sipelitaUser);
   } catch(e) {
-    console.error(' Error parsing session:', e);
-    showAccessDenied('<strong>⚠️ Session SIPELITA tidak valid!</strong><br>Silakan login ulang di portal SIPELITA.');
+    showAccessDenied('<strong>⚠️ Session SIPELITA tidak valid!</strong><br>Silakan login ulang.');
     return false;
   }
   
-  // 3. Validasi field yang diperlukan
   if (!userData.email || !userData.nama) {
-    console.warn('️ Data user tidak lengkap');
-    showAccessDenied('<strong>⚠️ Data user tidak lengkap!</strong><br>Silakan login ulang di portal SIPELITA.');
+    showAccessDenied('<strong>⚠️ Data user tidak lengkap!</strong><br>Silakan login ulang.');
     return false;
   }
   
-  // 4. VERIFIKASI LANGSUNG KE FIRESTORE (PENTING!)
-  // Ambil data terbaru dari Firestore untuk memastikan user yang benar
   try {
     const userDoc = await db.collection('users').doc(userData.email).get();
-    
     if (!userDoc.exists) {
-      console.warn('⚠️ User tidak ditemukan di Firestore');
-      showAccessDenied(`
-        <strong>⚠️ Akun tidak ditemukan di database!</strong><br><br>
-        Email: <strong>${userData.email}</strong><br><br>
-        Hubungi administrator.
-      `);
+      showAccessDenied(`<strong>️ Akun tidak ditemukan!</strong><br>Email: ${userData.email}`);
       return false;
     }
-    
     const firestoreData = userDoc.data();
-    
-    // Gunakan data TERBARU dari Firestore
     currentUser = {
       uid: userData.uid || userDoc.id,
       email: firestoreData.email || userData.email,
@@ -394,12 +484,7 @@ async function checkSipelitaSession() {
       role: firestoreData.role || userData.role || 'guru',
       fitur: firestoreData.fitur || userData.fitur
     };
-    
-    console.log('✅ Data user terverifikasi dari Firestore:', currentUser);
-    
   } catch(e) {
-    console.error('❌ Error mengambil data Firestore:', e);
-    // Fallback: gunakan data dari session
     currentUser = {
       uid: userData.uid || userData.id || userData.email,
       email: userData.email,
@@ -409,25 +494,38 @@ async function checkSipelitaSession() {
     };
   }
   
-  // 5. Cek akses fitur supervisi
   if (!currentUser.fitur || !Array.isArray(currentUser.fitur) || !currentUser.fitur.includes('supervisi')) {
-    console.warn('⚠️ User tidak punya akses supervisi:', currentUser);
-    showAccessDenied(`
-      <strong>⛔ Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>
-      Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})<br><br>
-      Hubungi administrator untuk meminta akses ke fitur Supervisi.
-    `);
+    showAccessDenied(`<strong> Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})`);
     return false;
   }
   
-  // 6. Simpan session ke KEDUA storage (sessionStorage DAN localStorage)
-  // agar konsisten
   sessionStorage.setItem('sipelita_user', JSON.stringify(currentUser));
   localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
   
   console.log('✅ Session valid:', currentUser);
   return true;
 }
+
+// ══════════════════════════════════════════════
+//            TABS
+// ══════════════════════════════════════════════
+window.switchTab = function(tabId) {
+  const parent = document.getElementById(tabId).closest('.card');
+  parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
+  event.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+  
+  // Refresh data saat tab aktif
+  if (tabId === 'tabJadwal') loadScheduleList();
+  if (tabId === 'tabBuatJadwal') loadAvailableTeachers();
+  if (tabId === 'tabSupervisi') loadPendingSchedules();
+  if (tabId === 'tabRiwayat') loadSupervisionList();
+  if (tabId === 'tabJadwalSaya') loadMySchedule();
+  if (tabId === 'tabUpload') loadMyDocs();
+  if (tabId === 'tabHasil') loadMySupervisionList();
+};
 
 // ══════════════════════════════════════════════
 //            DASHBOARD
@@ -441,40 +539,487 @@ function showDashboard(){
   document.getElementById('userRoleDisplay').textContent = getRoleLabel(currentUser.role);
   
   if(currentUser.role === 'kepala' || currentUser.role === 'wakil'){
-    document.getElementById('supervisorSection').style.display = 'block';
-    document.getElementById('colSupervisee').textContent = 'Yang Disupervisi';
-    document.getElementById('riwayatTitle').textContent = '📋 Riwayat Supervisi yang Dilakukan';
-    loadSuperviseeOptions();
-    loadSupervisionList();
+    document.getElementById('supervisorTabs').style.display = 'block';
+    document.getElementById('teacherTabs').style.display = 'none';
+    loadScheduleList();
   } else {
-    document.getElementById('supervisorSection').style.display = 'none';
-    document.getElementById('colSupervisee').textContent = 'Supervisor';
-    document.getElementById('riwayatTitle').textContent = '📊 Hasil Supervisi Saya';
+    document.getElementById('supervisorTabs').style.display = 'none';
+    document.getElementById('teacherTabs').style.display = 'block';
+    loadMySchedule();
+    loadMyDocs();
     loadMySupervisionList();
   }
-  loadMyDocs();
 }
 
 function getRoleLabel(role){
   return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role;
 }
 
-// ══════════════════════════════════════════════
-//            LOGOUT (HANYA SUPERVISI)
-// ══════════════════════════════════════════════
 window.doLogout = function(){
   if(confirm('Apakah Anda yakin ingin keluar dari Supervisi?\n\nAnda akan kembali ke portal SIPELITA.')){
-    // Hapus hanya session supervisi, JANGAN hapus session SIPELITA
     sessionStorage.removeItem('supervisi_user');
     currentUser = null;
-    
-    // Redirect ke portal SIPELITA
     window.location.href = '../index.html';
   }
 };
 
 // ══════════════════════════════════════════════
-//            UPLOAD DOKUMEN
+//   📅 JADWAL SUPERVISI (SUPERVISOR)
+// ══════════════════════════════════════════════
+
+/**
+ * Load daftar guru yang BELUM dijadwalkan
+ */
+async function loadAvailableTeachers() {
+  const select = document.getElementById('scheduleTeacher');
+  select.innerHTML = '<option value="">-- Memuat data... --</option>';
+  
+  try {
+    // Ambil semua guru
+    const teachersSnap = await db.collection('users')
+      .where('role', '==', 'guru')
+      .get();
+    
+    const allTeachers = teachersSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    // Ambil jadwal yang aktif (scheduled/in-progress)
+    const schedulesSnap = await db.collection('supervision_schedule')
+      .where('status', 'in', ['scheduled', 'in-progress'])
+      .get();
+    
+    const scheduledTeacherIds = schedulesSnap.docs.map(d => d.data().teacherId);
+    
+    // Filter guru yang belum dijadwalkan
+    const availableTeachers = allTeachers.filter(t => !scheduledTeacherIds.includes(t.id));
+    
+    if (availableTeachers.length === 0) {
+      select.innerHTML = '<option value="">-- Tidak ada guru tersedia --</option>';
+      return;
+    }
+    
+    select.innerHTML = '<option value="">-- Pilih Guru --</option>';
+    availableTeachers.forEach(t => {
+      select.innerHTML += `<option value="${t.id}" data-nama="${t.nama}" data-email="${t.email}">${t.nama}</option>`;
+    });
+    
+  } catch(e) {
+    console.error('Error loading teachers:', e);
+    select.innerHTML = '<option value="">-- Error memuat data --</option>';
+  }
+}
+
+/**
+ * Buat jadwal supervisi baru
+ */
+window.createSchedule = async function() {
+  const teacherSelect = document.getElementById('scheduleTeacher');
+  const teacherId = teacherSelect.value;
+  const teacherName = teacherSelect.options[teacherSelect.selectedIndex]?.dataset.nama;
+  const teacherEmail = teacherSelect.options[teacherSelect.selectedIndex]?.dataset.email;
+  const scheduledDate = document.getElementById('scheduleDate').value;
+  const notes = document.getElementById('scheduleNotes').value.trim();
+  const alert = document.getElementById('alertSchedule');
+  const btn = document.getElementById('btnCreateSchedule');
+  
+  alert.classList.remove('show');
+  
+  if (!teacherId || !scheduledDate) {
+    alert.textContent = '❌ Pilih guru dan tanggal supervisi!';
+    alert.className = 'alert alert-error show';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  
+  try {
+    await db.collection('supervision_schedule').add({
+      supervisorId: currentUser.uid,
+      supervisorName: currentUser.nama,
+      supervisorEmail: currentUser.email,
+      supervisorRole: currentUser.role,
+      teacherId: teacherId,
+      teacherName: teacherName,
+      teacherEmail: teacherEmail,
+      scheduledDate: scheduledDate,
+      notes: notes,
+      status: 'scheduled',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    
+    alert.textContent = `✅ Jadwal berhasil dibuat! ${teacherName} akan disupervisi pada ${formatDate(scheduledDate)}`;
+    alert.className = 'alert alert-success show';
+    
+    // Reset form
+    teacherSelect.value = '';
+    document.getElementById('scheduleDate').value = '';
+    document.getElementById('scheduleNotes').value = '';
+    
+    // Reload data
+    loadAvailableTeachers();
+    
+  } catch(e) {
+    alert.textContent = '❌ ' + e.message;
+    alert.className = 'alert alert-error show';
+  }
+  btn.disabled = false;
+  btn.textContent = ' Simpan Jadwal';
+};
+
+/**
+ * Load daftar jadwal supervisor
+ */
+async function loadScheduleList() {
+  const container = document.getElementById('scheduleList');
+  container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
+  try {
+    const snap = await db.collection('supervision_schedule')
+      .where('supervisorEmail', '==', currentUser.email)
+      .get();
+    
+    if (snap.empty) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Belum ada jadwal supervisi</p></div>';
+      return;
+    }
+    
+    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()}))
+      .sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+    
+    container.innerHTML = schedules.map(s => {
+      const statusBadge = {
+        'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>',
+        'in-progress': '<span class="badge badge-progress">🔄 Berlangsung</span>',
+        'completed': '<span class="badge badge-done">✅ Selesai</span>'
+      }[s.status] || '<span class="badge badge-info">' + s.status + '</span>';
+      
+      return `
+        <div class="schedule-card">
+          <div class="schedule-info">
+            <div class="schedule-title">👨‍🏫 ${s.teacherName}</div>
+            <div class="schedule-detail">
+               ${formatDate(s.scheduledDate)} | 
+              👤 Supervisor: ${s.supervisorName} | 
+              ${statusBadge}
+            </div>
+            ${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}
+          </div>
+          <div class="schedule-actions">
+            ${s.status !== 'completed' ? `<button class="btn btn-warning btn-sm" onclick="updateScheduleStatus('${s.id}','in-progress')">🔄 Mulai</button>` : ''}
+            ${s.status === 'scheduled' ? `<button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">️ Hapus</button>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><div class="icon"></div><p>Gagal memuat jadwal</p></div>';
+  }
+}
+
+/**
+ * Load jadwal yang pending untuk tab supervisi
+ */
+async function loadPendingSchedules() {
+  const select = document.getElementById('supervisionSchedule');
+  select.innerHTML = '<option value="">-- Memuat... --</option>';
+  
+  try {
+    const snap = await db.collection('supervision_schedule')
+      .where('supervisorEmail', '==', currentUser.email)
+      .where('status', 'in', ['scheduled', 'in-progress'])
+      .get();
+    
+    if (snap.empty) {
+      select.innerHTML = '<option value="">-- Tidak ada jadwal aktif --</option>';
+      document.getElementById('scheduleDetailArea').style.display = 'none';
+      return;
+    }
+    
+    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    select.innerHTML = '<option value="">-- Pilih Jadwal --</option>';
+    schedules.forEach(s => {
+      select.innerHTML += `<option value="${s.id}" data-teacher="${s.teacherName}" data-email="${s.teacherEmail}" data-date="${s.scheduledDate}">${s.teacherName} - ${formatDate(s.scheduledDate)}</option>`;
+    });
+    
+  } catch(e) {
+    select.innerHTML = '<option value="">-- Error --</option>';
+  }
+}
+
+/**
+ * Load detail jadwal yang dipilih (termasuk dokumen guru)
+ */
+window.loadScheduleDetail = async function() {
+  const select = document.getElementById('supervisionSchedule');
+  const scheduleId = select.value;
+  const detailArea = document.getElementById('scheduleDetailArea');
+  
+  if (!scheduleId) {
+    detailArea.style.display = 'none';
+    return;
+  }
+  
+  selectedScheduleId = scheduleId;
+  detailArea.style.display = 'block';
+  
+  const teacherEmail = select.options[select.selectedIndex].dataset.email;
+  
+  // Load dokumen guru
+  const docContainer = document.getElementById('teacherDocuments');
+  docContainer.innerHTML = '<div style="text-align:center;padding:10px;"><span class="spinner"></span> Memuat dokumen...</div>';
+  
+  try {
+    const snap = await db.collection('supervision_documents')
+      .where('userEmail', '==', teacherEmail)
+      .get();
+    
+    if (snap.empty) {
+      docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">📭</div><p>Guru belum upload dokumen</p></div>';
+      return;
+    }
+    
+    const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    docContainer.innerHTML = docs.map(d => {
+      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'':'📄');
+      return `
+        <div class="doc-item">
+          <div class="doc-icon">${icon}</div>
+          <div class="doc-info">
+            <div class="doc-name">${d.nama}</div>
+            <div class="doc-meta">${d.kategori} • ${new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
+          </div>
+          ${d.type==='link' ? `<a href="${d.link}" target="_blank" class="btn btn-primary btn-sm">🔗 Buka</a>` : `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇ Unduh</button>`}
+        </div>
+      `;
+    }).join('');
+    
+  } catch(e) {
+    docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">❌</div><p>Gagal memuat dokumen</p></div>';
+  }
+};
+
+/**
+ * Update status jadwal
+ */
+window.updateScheduleStatus = async function(scheduleId, status) {
+  if (!confirm(`Ubah status jadwal menjadi "${status}"?`)) return;
+  try {
+    await db.collection('supervision_schedule').doc(scheduleId).update({
+      status: status,
+      updatedAt: new Date().toISOString()
+    });
+    loadScheduleList();
+  } catch(e) {
+    alert(' ' + e.message);
+  }
+};
+
+/**
+ * Hapus jadwal
+ */
+window.deleteSchedule = async function(scheduleId) {
+  if (!confirm('Hapus jadwal ini? Guru akan bisa dijadwalkan ulang.')) return;
+  try {
+    await db.collection('supervision_schedule').doc(scheduleId).delete();
+    loadScheduleList();
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
+};
+
+// ═════════════════════════════════════════════
+//   📝 SUPERVISI (SUPERVISOR)
+// ══════════════════════════════════════════════
+window.loadAspects = function(){
+  const type = document.getElementById('supervisionType').value;
+  const container = document.getElementById('aspectsContainer');
+  
+  if(!type || !aspectsData[type]){
+    container.innerHTML = '';
+    return;
+  }
+  
+  const aspects = aspectsData[type];
+  container.innerHTML = `
+    <div class="aspect-group">
+      <div class="aspect-title">Aspek Penilaian</div>
+      <div class="rating-grid">
+        ${aspects.map(a => `
+          <div class="rating-item">
+            <label>${a.label} (Max: ${a.maxScore})</label>
+            <select class="aspect-score" data-aspect="${a.id}" data-max="${a.maxScore}">
+              <option value="">-- Nilai --</option>
+              ${Array.from({length:a.maxScore+1},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
+            </select>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+};
+
+window.saveSupervision = async function(){
+  const type = document.getElementById('supervisionType').value;
+  const notes = document.getElementById('supervisionNotes').value;
+  const alert = document.getElementById('alertSup');
+  const btn = document.getElementById('btnSaveSup');
+  
+  alert.classList.remove('show');
+  
+  if(!selectedScheduleId || !type){
+    alert.textContent = '❌ Pilih jadwal dan jenis supervisi!';
+    alert.className = 'alert alert-error show';
+    return;
+  }
+  
+  const aspectScores = {};
+  let totalScore = 0, maxTotal = 0;
+  
+  document.querySelectorAll('.aspect-score').forEach(sel => {
+    const aspect = sel.dataset.aspect;
+    const max = parseInt(sel.dataset.max);
+    const value = parseInt(sel.value) || 0;
+    aspectScores[aspect] = {score:value, max};
+    totalScore += value;
+    maxTotal += max;
+  });
+  
+  const percentage = maxTotal > 0 ? ((totalScore/maxTotal)*100).toFixed(1) : 0;
+  
+  const select = document.getElementById('supervisionSchedule');
+  const superviseeName = select.options[select.selectedIndex].dataset.teacher;
+  const superviseeEmail = select.options[select.selectedIndex].dataset.email;
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  
+  try {
+    // Simpan supervisi
+    await db.collection('supervisions').add({
+      scheduleId: selectedScheduleId,
+      supervisorId: currentUser.uid,
+      supervisorEmail: currentUser.email,
+      supervisorName: currentUser.nama,
+      supervisorRole: currentUser.role,
+      superviseeId: select.value,
+      superviseeEmail: superviseeEmail,
+      superviseeName: superviseeName,
+      type, aspectScores, totalScore, maxScore:maxTotal, percentage, notes,
+      status: 'completed',
+      createdAt: new Date().toISOString()
+    });
+    
+    // Update status jadwal jadi completed
+    await db.collection('supervision_schedule').doc(selectedScheduleId).update({
+      status: 'completed',
+      updatedAt: new Date().toISOString()
+    });
+    
+    alert.textContent = '✅ Supervisi berhasil disimpan!';
+    alert.className = 'alert alert-success show';
+    
+    // Reset
+    document.getElementById('supervisionSchedule').value = '';
+    document.getElementById('supervisionType').value = '';
+    document.getElementById('supervisionNotes').value = '';
+    document.getElementById('aspectsContainer').innerHTML = '';
+    document.getElementById('scheduleDetailArea').style.display = 'none';
+    selectedScheduleId = null;
+    
+  } catch(e) {
+    alert.textContent = '❌ ' + e.message;
+    alert.className = 'alert alert-error show';
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Simpan Hasil Supervisi';
+};
+
+async function loadSupervisionList(){
+  const snap = await db.collection('supervisions')
+    .where('supervisorEmail', '==', currentUser.email)
+    .get();
+  const tbody = document.getElementById('supervisionList');
+  
+  if(snap.empty){
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">Belum ada supervisi</td></tr>';
+    return;
+  }
+  
+  const docs = snap.docs.sort((a,b) => new Date(b.data().createdAt) - new Date(a.data().createdAt));
+  
+  tbody.innerHTML = docs.map(d => {
+    const data = d.data();
+    const statusBadge = data.status==='completed' ? '<span class="badge badge-done">Sudah Dinilai</span>' : '<span class="badge badge-pending">Belum Dinilai</span>';
+    const typeLabel = {administrasi:'Administrasi', kinerja:'Kinerja', pembelajaran:'Pembelajaran'}[data.type];
+    return `
+      <tr>
+        <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
+        <td>${data.superviseeName}</td>
+        <td>${typeLabel}</td>
+        <td><strong>${data.totalScore}/${data.maxScore}</strong></td>
+        <td>${statusBadge}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
+          <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')"> PDF</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//    JADWAL & DOKUMEN (GURU)
+// ══════════════════════════════════════════════
+async function loadMySchedule() {
+  const container = document.getElementById('myScheduleArea');
+  container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
+  try {
+    const snap = await db.collection('supervision_schedule')
+      .where('teacherEmail', '==', currentUser.email)
+      .get();
+    
+    if (snap.empty) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Anda belum dijadwalkan untuk supervisi</p></div>';
+      return;
+    }
+    
+    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()}))
+      .sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+    
+    container.innerHTML = schedules.map(s => {
+      const statusBadge = {
+        'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>',
+        'in-progress': '<span class="badge badge-progress">🔄 Sedang Disupervisi</span>',
+        'completed': '<span class="badge badge-done">✅ Selesai</span>'
+      }[s.status] || '<span class="badge badge-info">' + s.status + '</span>';
+      
+      return `
+        <div class="schedule-card">
+          <div class="schedule-info">
+            <div class="schedule-title"> Supervisor: ${s.supervisorName}</div>
+            <div class="schedule-detail">
+               Tanggal: ${formatDate(s.scheduledDate)} | 
+              ${statusBadge}
+            </div>
+            ${s.notes ? `<div class="schedule-detail">📝 Catatan: ${s.notes}</div>` : ''}
+            <div class="schedule-detail" style="margin-top:6px;">
+              <strong>💡 Silakan upload dokumen pendukung Anda di tab "Upload Dokumen"</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+//    UPLOAD DOKUMEN (GURU)
 // ══════════════════════════════════════════════
 window.toggleDocType = function(){
   const type = document.querySelector('input[name=docType]:checked').value;
@@ -538,7 +1083,6 @@ window.uploadDokumen = async function(){
     document.getElementById('docLink').value = '';
     loadMyDocs();
   } catch(e){
-    console.error('Upload error:', e);
     alert.textContent = '❌ ' + e.message;
     alert.className = 'alert alert-error show';
   }
@@ -559,14 +1103,14 @@ async function loadMyDocs(){
   
   tbody.innerHTML = snap.docs.map(d => {
     const data = d.data();
-    const icon = data.type==='link' ? '🔗' : (data.fileExt==='pdf'?'📕':['doc','docx'].includes(data.fileExt)?'📘':['xls','xlsx'].includes(data.fileExt)?'📗':'📄');
+    const icon = data.type==='link' ? '' : (data.fileExt==='pdf'?'':['doc','docx'].includes(data.fileExt)?'📘':['xls','xlsx'].includes(data.fileExt)?'📗':'📄');
     return `
       <tr>
         <td>${icon} ${data.nama}</td>
         <td>${data.kategori}</td>
         <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
         <td>
-          ${data.type==='link' ? `<a href="${data.link}" target="_blank" class="btn btn-primary btn-sm" style="width:auto;">🔗 Buka</a>` : `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${data.nama.replace(/'/g,"\\'")}','${data.fileExt}')">⬇ Unduh</button>`}
+          ${data.type==='link' ? `<a href="${data.link}" target="_blank" class="btn btn-primary btn-sm">🔗 Buka</a>` : `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${data.nama.replace(/'/g,"\\'")}','${data.fileExt}')"> Unduh</button>`}
           <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
         </td>
       </tr>
@@ -583,6 +1127,8 @@ window.downloadMyDoc = async function(docId, nama, ext){
   a.click();
 };
 
+window.downloadDoc = window.downloadMyDoc;
+
 window.deleteMyDoc = async function(docId){
   if(!confirm('Hapus dokumen ini?')) return;
   await db.collection('supervision_documents').doc(docId).delete();
@@ -590,153 +1136,13 @@ window.deleteMyDoc = async function(docId){
 };
 
 // ══════════════════════════════════════════════
-//            SUPERVISI
+//   📊 HASIL SUPERVISI (GURU)
 // ══════════════════════════════════════════════
-async function loadSuperviseeOptions(){
-  const select = document.getElementById('superviseeSelect');
-  const roleFilter = currentUser.role === 'kepala' ? ['wakil','guru'] : ['guru'];
-  
-  const snap = await db.collection('users').get();
-  select.innerHTML = '<option value="">-- Pilih --</option>';
-  
-  snap.docs.forEach(d => {
-    const data = d.data();
-    if(roleFilter.includes(data.role)){
-      select.innerHTML += `<option value="${d.id}" data-nama="${data.nama}" data-email="${data.email}">${data.nama} (${getRoleLabel(data.role)})</option>`;
-    }
-  });
-}
-
-window.loadAspects = function(){
-  const type = document.getElementById('supervisionType').value;
-  const container = document.getElementById('aspectsContainer');
-  
-  if(!type || !aspectsData[type]){
-    container.innerHTML = '';
-    return;
-  }
-  
-  const aspects = aspectsData[type];
-  container.innerHTML = `
-    <div class="aspect-group">
-      <div class="aspect-title">Aspek Penilaian</div>
-      <div class="rating-grid">
-        ${aspects.map(a => `
-          <div class="rating-item">
-            <label>${a.label} (Max: ${a.maxScore})</label>
-            <select class="aspect-score" data-aspect="${a.id}" data-max="${a.maxScore}">
-              <option value="">-- Nilai --</option>
-              ${Array.from({length:a.maxScore+1},(_,i)=>`<option value="${i}">${i}</option>`).join('')}
-            </select>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
-};
-
-window.saveSupervision = async function(){
-  const superviseeSelect = document.getElementById('superviseeSelect');
-  const superviseeId = superviseeSelect.value;
-  const superviseeName = superviseeSelect.options[superviseeSelect.selectedIndex].dataset.nama;
-  const superviseeEmail = superviseeSelect.options[superviseeSelect.selectedIndex].dataset.email;
-  const type = document.getElementById('supervisionType').value;
-  const notes = document.getElementById('supervisionNotes').value;
-  const alert = document.getElementById('alertSup');
-  const btn = document.getElementById('btnSaveSup');
-  
-  alert.classList.remove('show');
-  
-  if(!superviseeId || !type){
-    alert.textContent = '❌ Lengkapi semua field wajib!';
-    alert.className = 'alert alert-error show';
-    return;
-  }
-  
-  const aspectScores = {};
-  let totalScore = 0, maxTotal = 0;
-  
-  document.querySelectorAll('.aspect-score').forEach(sel => {
-    const aspect = sel.dataset.aspect;
-    const max = parseInt(sel.dataset.max);
-    const value = parseInt(sel.value) || 0;
-    aspectScores[aspect] = {score:value, max};
-    totalScore += value;
-    maxTotal += max;
-  });
-  
-  const percentage = maxTotal > 0 ? ((totalScore/maxTotal)*100).toFixed(1) : 0;
-  
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
-  
-  try {
-    await db.collection('supervisions').add({
-      supervisorId: currentUser.uid,
-      supervisorEmail: currentUser.email,
-      supervisorName: currentUser.nama,
-      supervisorRole: currentUser.role,
-      superviseeId: superviseeId,
-      superviseeEmail: superviseeEmail,
-      superviseeName: superviseeName,
-      type, aspectScores, totalScore, maxScore:maxTotal, percentage, notes,
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    });
-    
-    alert.textContent = '✅ Supervisi berhasil disimpan!';
-    alert.className = 'alert alert-success show';
-    document.getElementById('superviseeSelect').value = '';
-    document.getElementById('supervisionType').value = '';
-    document.getElementById('supervisionNotes').value = '';
-    document.getElementById('aspectsContainer').innerHTML = '';
-    loadSupervisionList();
-  } catch(e){
-    alert.textContent = '❌ ' + e.message;
-    alert.className = 'alert alert-error show';
-  }
-  btn.disabled = false;
-  btn.textContent = '💾 Simpan Supervisi';
-};
-
-async function loadSupervisionList(){
-  const snap = await db.collection('supervisions')
-    .where('supervisorEmail', '==', currentUser.email)
-    .get();
-  const tbody = document.getElementById('supervisionList');
-  
-  if(snap.empty){
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">Belum ada supervisi</td></tr>';
-    return;
-  }
-  
-  const docs = snap.docs.sort((a,b) => new Date(b.data().createdAt) - new Date(a.data().createdAt));
-  
-  tbody.innerHTML = docs.map(d => {
-    const data = d.data();
-    const statusBadge = data.status==='completed' ? '<span class="badge badge-done">Sudah Dinilai</span>' : '<span class="badge badge-pending">Belum Dinilai</span>';
-    const typeLabel = {administrasi:'Administrasi', kinerja:'Kinerja', pembelajaran:'Pembelajaran'}[data.type];
-    return `
-      <tr>
-        <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
-        <td>${data.superviseeName}</td>
-        <td>${typeLabel}</td>
-        <td><strong>${data.totalScore}/${data.maxScore}</strong></td>
-        <td>${statusBadge}</td>
-        <td>
-          <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-          ${data.status!=='completed' ? `<button class="btn btn-success btn-sm" onclick="markCompleted('${d.id}')">✅ Selesai</button>` : ''}
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
 async function loadMySupervisionList(){
   const snap = await db.collection('supervisions')
     .where('superviseeEmail', '==', currentUser.email)
     .get();
-  const tbody = document.getElementById('supervisionList');
+  const tbody = document.getElementById('mySupervisionList');
   
   if(snap.empty){
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">Belum ada supervisi</td></tr>';
@@ -765,15 +1171,9 @@ async function loadMySupervisionList(){
   }).join('');
 }
 
-window.markCompleted = async function(docId){
-  if(!confirm('Tandai supervisi ini sebagai sudah dinilai?')) return;
-  await db.collection('supervisions').doc(docId).update({
-    status:'completed', 
-    updatedAt:new Date().toISOString()
-  });
-  loadSupervisionList();
-};
-
+// ══════════════════════════════════════════════
+//   👁️ DETAIL & PDF
+// ══════════════════════════════════════════════
 window.viewDetail = async function(docId){
   const snap = await db.collection('supervisions').doc(docId).get();
   if(!snap.exists){ alert('Data tidak ditemukan'); return; }
@@ -862,21 +1262,25 @@ window.closeModal = function(id){
 };
 
 // ══════════════════════════════════════════════
-//   🚀 INIT - CEK SESSION SAAT HALAMAN DIBUKA
+//   🛠️ HELPER
+// ══════════════════════════════════════════════
+function formatDate(dateStr) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+}
+
+// ══════════════════════════════════════════════
+//   🚀 INIT
 // ══════════════════════════════════════════════
 window.addEventListener('load', async () => {
   showLoading();
-  
-  // Tunggu sebentar agar loading terlihat
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  // Cek session SIPELITA
   const isValid = await checkSipelitaSession();
-  
   if (isValid) {
     showDashboard();
   }
-  // Jika tidak valid, showAccessDenied() sudah dipanggil di checkSipelitaSession()
 });
 
 window.loadAspects = loadAspects;
