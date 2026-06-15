@@ -4,7 +4,7 @@ const CONFIG = {
             id: 'pusaka', 
             title: 'Absensi Pusaka', 
             desc: '', 
-            color: '#ebebeb', 
+            color: '#ffffff', 
             url: 'https://pusaka-v3.kemenag.go.id/',
             logo: 'assets/images/icon-app.png'
         },
