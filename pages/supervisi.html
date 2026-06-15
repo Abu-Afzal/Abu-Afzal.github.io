@@ -1312,25 +1312,25 @@ window.loadInstrumentForm = function() {
     `;
     
     data.components.forEach((comp, index) => {
-      html += `
-        <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;">${index + 1}</td>
-          <td style="border:1px solid #ddd;padding:8px;">${comp.name}</td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
-            <input type="checkbox" name="score_${comp.id}" value="1" onchange="handleCheckbox('${comp.id}', 1)">
-          </td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
-            <input type="checkbox" name="score_${comp.id}" value="2" onchange="handleCheckbox('${comp.id}', 2)">
-          </td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
-            <input type="checkbox" name="score_${comp.id}" value="3" onchange="handleCheckbox('${comp.id}', 3)">
-          </td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
-            <input type="checkbox" name="score_${comp.id}" value="4" onchange="handleCheckbox('${comp.id}', 4)">
-          </td>
-        </tr>
-      `;
-    });
+  html += `
+    <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
+      <td style="border:1px solid #ddd;padding:8px;text-align:center;">${index + 1}</td>
+      <td style="border:1px solid #ddd;padding:8px;">${comp.name}</td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+        <input type="checkbox" name="score_row_${index}" data-row="${index}" value="1" onchange="handleCheckbox(${index}, 1)">
+      </td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+        <input type="checkbox" name="score_row_${index}" data-row="${index}" value="2" onchange="handleCheckbox(${index}, 2)">
+      </td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+        <input type="checkbox" name="score_row_${index}" data-row="${index}" value="3" onchange="handleCheckbox(${index}, 3)">
+      </td>
+      <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+        <input type="checkbox" name="score_row_${index}" data-row="${index}" value="4" onchange="handleCheckbox(${index}, 4)">
+      </td>
+    </tr>
+  `;
+});
     
     html += `
           </tbody>
@@ -1375,14 +1375,13 @@ window.loadInstrumentForm = function() {
 };
 
 // Handle checkbox - memastikan hanya satu yang dicentang per baris/komponen
-window.handleCheckbox = function(compId, value) {
-  console.log('Checkbox clicked:', compId, value);
+// Handle checkbox - menggunakan index baris untuk memastikan hanya baris yang sama terpengaruh
+window.handleCheckbox = function(rowIndex, value) {
+  console.log('Checkbox clicked - Row:', rowIndex, 'Value:', value);
   
-  // Dapatkan semua checkbox untuk komponen ini
-  const checkboxes = document.querySelectorAll(`input[name="score_${compId}"]`);
-  
-  // Uncheck checkbox lain untuk komponen yang sama
-  checkboxes.forEach(cb => {
+  // Hanya uncheck checkbox di baris yang sama
+  const rowCheckboxes = document.querySelectorAll(`input[data-row="${rowIndex}"]`);
+  rowCheckboxes.forEach(cb => {
     const cbValue = parseInt(cb.value);
     if (cbValue !== value) {
       cb.checked = false;
@@ -1392,7 +1391,7 @@ window.handleCheckbox = function(compId, value) {
   // Update perhitungan
   calculateScores();
 };
-
+  
 function calculateScores() {
   const instrument = currentInstrument;
   if (!instrument) {
@@ -1402,15 +1401,15 @@ function calculateScores() {
   
   let count1 = 0, count2 = 0, count3 = 0, count4 = 0;
   let totalScore = 0;
-  let scoredComponents = 0;
+  let scores = {};
   
-  // Hitung skor untuk setiap komponen
-  instrument.components.forEach(comp => {
-    const selected = document.querySelector(`input[name="score_${comp.id}"]:checked`);
+  // Hitung skor untuk setiap baris/komponen
+  instrument.components.forEach((comp, index) => {
+    const selected = document.querySelector(`input[data-row="${index}"]:checked`);
     if (selected) {
       const value = parseInt(selected.value);
+      scores[comp.id] = value;
       totalScore += value;
-      scoredComponents++;
       
       if (value === 1) count1++;
       else if (value === 2) count2++;
@@ -1418,6 +1417,9 @@ function calculateScores() {
       else if (value === 4) count4++;
     }
   });
+  
+  // Simpan scores ke currentInstrument untuk digunakan saat save
+  currentInstrument._scores = scores;
   
   // Update tampilan jumlah per kolom
   const count1El = document.getElementById('count_1');
@@ -1451,7 +1453,7 @@ function calculateScores() {
   
   console.log('Scores calculated:', { count1, count2, count3, count4, totalScore, percentage, predicate });
 }
-// ══════════════════════════════════════════════
+  // ══════════════════════════════════════════════
 //   📝 SIMPAN SUPERVISI
 // ══════════════════════════════════════════════
 window.saveSupervision = async function() {
@@ -1473,15 +1475,16 @@ window.saveSupervision = async function() {
   let maxScore = currentInstrument.components.length * 4;
   
   for (const comp of currentInstrument.components) {
-    const selected = document.querySelector(`input[name="score_${comp.id}"]:checked`);
-    if (!selected) {
-      alert.textContent = `❌ Lengkapi penilaian untuk komponen: ${comp.name}`;
-      alert.className = 'alert alert-error show';
-      return;
-    }
-    scores[comp.id] = parseInt(selected.value);
-    totalScore += parseInt(selected.value);
+  const index = currentInstrument.components.indexOf(comp);
+  const selected = document.querySelector(`input[data-row="${index}"]:checked`);
+  if (!selected) {
+    alert.textContent = `❌ Lengkapi penilaian untuk komponen: ${comp.name}`;
+    alert.className = 'alert alert-error show';
+    return;
   }
+  scores[comp.id] = parseInt(selected.value);
+  totalScore += parseInt(selected.value);
+}
   
   const percentage = ((totalScore / maxScore) * 100).toFixed(0);
   
