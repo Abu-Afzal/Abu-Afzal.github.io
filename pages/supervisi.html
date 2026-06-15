@@ -1904,12 +1904,6 @@ window.downloadPDF = async function(docId) {
     
     const data = snap.data();
     
-    // Check if jsPDF is loaded
-    if (!window.jspdf) {
-      alert('Library PDF sedang dimuat. Silakan coba lagi.');
-      return;
-    }
-    
     // Load instrument components
     let components = [];
     if (data.instrumentId) {
@@ -1917,6 +1911,12 @@ window.downloadPDF = async function(docId) {
       if (instSnap.exists) {
         components = instSnap.data().components;
       }
+    }
+    
+    // Check if jsPDF is loaded
+    if (!window.jspdf) {
+      alert('Library PDF sedang dimuat. Silakan coba lagi.');
+      return;
     }
     
     const { jsPDF } = window.jspdf;
@@ -1966,9 +1966,9 @@ window.downloadPDF = async function(docId) {
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
       for (let i = 0; i < headers.length; i++) {
-        const x = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
-        pdf.rect(x, y, colWidths[i], 7, 'F');
-        pdf.text(headers[i], x + colWidths[i] / 2, y + 4.5, { align: 'center' });
+        const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+        pdf.rect(xPos, y, colWidths[i], 7, 'F');
+        pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' });
       }
       y += 7;
       
@@ -1981,7 +1981,7 @@ window.downloadPDF = async function(docId) {
         const rowHeight = 7;
         
         // Check if we need a new page
-        if (y > 250) {
+        if (y > 240) {
           pdf.addPage();
           y = 15;
         }
@@ -2006,15 +2006,15 @@ window.downloadPDF = async function(docId) {
         
         // Skor checkboxes
         for (let i = 1; i <= 4; i++) {
-          const x = margin + colWidths.slice(0, 2 + i - 1).reduce((a, b) => a + b, 0) + colWidths[2 + i - 1] / 2;
+          const xPos = margin + colWidths.slice(0, 2 + i - 1).reduce((a, b) => a + b, 0) + colWidths[2 + i - 1] / 2;
           if (score === i) {
             pdf.setFillColor(76, 175, 80);
-            pdf.rect(x - 3, y + 2, 6, 6, 'F');
+            pdf.rect(xPos - 3, y + 2, 6, 6, 'F');
             pdf.setTextColor(255, 255, 255);
-            pdf.text('✓', x, y + 6, { align: 'center' });
+            pdf.text('✓', xPos, y + 6, { align: 'center' });
             pdf.setTextColor(0, 0, 0);
           } else {
-            pdf.rect(x - 3, y + 2, 6, 6, 'S');
+            pdf.rect(xPos - 3, y + 2, 6, 6, 'S');
           }
         }
         
@@ -2105,24 +2105,43 @@ window.downloadPDF = async function(docId) {
       y += splitPlan.length * 4 + 15;
     }
     
-    // Tanda tangan
+    // Tanda tangan - BAGIAN INI YANG DITAMBAHKAN
     y += 10;
     if (y > 220) {
       pdf.addPage();
       y = 15;
     }
+    
+    // Garis untuk tanda tangan
     const signY = y;
+    const leftSignX = margin + 20;
+    const rightSignX = pageWidth - margin - 60;
+    
+    // Tanggal
     pdf.setFont(undefined, 'normal');
-    pdf.text('Bantaeng, ' + date.toLocaleDateString('id-ID'), pageWidth - margin - 60, signY);
-    signY += 20;
+    pdf.text('Bantaeng, ' + date.toLocaleDateString('id-ID'), rightSignX, signY);
     
-    pdf.text('Guru yang disupervisi', margin + 20, signY);
-    pdf.text('Supervisor', pageWidth - margin - 80, signY);
-    signY += 25;
+    // Label
+    pdf.text('Guru yang disupervisi', leftSignX, signY + 20);
+    pdf.text('Supervisor', rightSignX, signY + 20);
     
+    // Ruang untuk tanda tangan (garis bawah)
+    pdf.line(leftSignX, signY + 38, leftSignX + 50, signY + 38);
+    pdf.line(rightSignX, signY + 38, rightSignX + 50, signY + 38);
+    
+    // Nama
     pdf.setFont(undefined, 'bold');
-    pdf.text(data.superviseeName, margin + 20, signY);
-    pdf.text(data.supervisorName, pageWidth - margin - 80, signY);
+    pdf.text(data.superviseeName, leftSignX, signY + 43);
+    pdf.text(data.supervisorName, rightSignX, signY + 43);
+    
+    // NIP (jika ada)
+    pdf.setFont(undefined, 'normal');
+    if (data.superviseeNIP) {
+      pdf.text(`NIP. ${data.superviseeNIP}`, leftSignX, signY + 48);
+    }
+    if (data.supervisorNIP) {
+      pdf.text(`NIP. ${data.supervisorNIP}`, rightSignX, signY + 48);
+    }
     
     // Save
     const fileName = `Supervisi_${data.superviseeName.replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`;
@@ -2132,8 +2151,7 @@ window.downloadPDF = async function(docId) {
     console.error('Error download PDF:', error);
     alert('❌ Gagal mendownload PDF: ' + error.message);
   }
-};
-  
+};  
 // ══════════════════════════════════════════════
 //   👁️ PREVIEW DOKUMEN
 // ══════════════════════════════════════════════
