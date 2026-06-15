@@ -1374,12 +1374,17 @@ window.loadInstrumentForm = function() {
   });
 };
 
-// Handle checkbox - hanya satu yang bisa dipilih per baris
+// Handle checkbox - memastikan hanya satu yang dicentang per baris/komponen
 window.handleCheckbox = function(compId, value) {
-  // Uncheck semua checkbox lain untuk komponen ini
+  console.log('Checkbox clicked:', compId, value);
+  
+  // Dapatkan semua checkbox untuk komponen ini
   const checkboxes = document.querySelectorAll(`input[name="score_${compId}"]`);
+  
+  // Uncheck checkbox lain untuk komponen yang sama
   checkboxes.forEach(cb => {
-    if (parseInt(cb.value) !== value) {
+    const cbValue = parseInt(cb.value);
+    if (cbValue !== value) {
       cb.checked = false;
     }
   });
@@ -1390,17 +1395,23 @@ window.handleCheckbox = function(compId, value) {
 
 function calculateScores() {
   const instrument = currentInstrument;
-  if (!instrument) return;
+  if (!instrument) {
+    console.log('No instrument loaded');
+    return;
+  }
   
   let count1 = 0, count2 = 0, count3 = 0, count4 = 0;
   let totalScore = 0;
-  let maxScore = instrument.components.length * 4;
+  let scoredComponents = 0;
   
+  // Hitung skor untuk setiap komponen
   instrument.components.forEach(comp => {
     const selected = document.querySelector(`input[name="score_${comp.id}"]:checked`);
     if (selected) {
       const value = parseInt(selected.value);
       totalScore += value;
+      scoredComponents++;
+      
       if (value === 1) count1++;
       else if (value === 2) count2++;
       else if (value === 3) count3++;
@@ -1408,22 +1419,37 @@ function calculateScores() {
     }
   });
   
-  document.getElementById('count_1').textContent = count1;
-  document.getElementById('count_2').textContent = count2;
-  document.getElementById('count_3').textContent = count3;
-  document.getElementById('count_4').textContent = count4;
-  document.getElementById('totalScore').textContent = totalScore;
+  // Update tampilan jumlah per kolom
+  const count1El = document.getElementById('count_1');
+  const count2El = document.getElementById('count_2');
+  const count3El = document.getElementById('count_3');
+  const count4El = document.getElementById('count_4');
+  const totalScoreEl = document.getElementById('totalScore');
+  const percentageEl = document.getElementById('percentage');
+  const predicateEl = document.getElementById('predicate');
   
+  if (count1El) count1El.textContent = count1;
+  if (count2El) count2El.textContent = count2;
+  if (count3El) count3El.textContent = count3;
+  if (count4El) count4El.textContent = count4;
+  if (totalScoreEl) totalScoreEl.textContent = totalScore;
+  
+  // Hitung persentase
+  const maxScore = instrument.components.length * 4;
   const percentage = maxScore > 0 ? ((totalScore / maxScore) * 100).toFixed(0) : 0;
-  document.getElementById('percentage').textContent = percentage + '%';
   
+  if (percentageEl) percentageEl.textContent = percentage + '%';
+  
+  // Tentukan predikat
   let predicate = '-';
   if (percentage >= 91) predicate = 'Sangat Baik';
   else if (percentage >= 81) predicate = 'Baik';
   else if (percentage >= 71) predicate = 'Cukup';
   else if (percentage > 0) predicate = 'Kurang';
   
-  document.getElementById('predicate').textContent = predicate;
+  if (predicateEl) predicateEl.textContent = predicate;
+  
+  console.log('Scores calculated:', { count1, count2, count3, count4, totalScore, percentage, predicate });
 }
 // ══════════════════════════════════════════════
 //   📝 SIMPAN SUPERVISI
