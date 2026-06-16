@@ -2054,21 +2054,31 @@ window.downloadPDF = async function(docId) {
         pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
         
         // Gambar kotak checkbox
-        const boxSize = 4;
-        [col1X, col2X, col3X, col4X].forEach((cx, idx) => {
-          const value = idx + 1;
-          pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'S');
-          
-          if (score === value) {
-          // Isi kotak dengan warna hijau
-          pdf.setFillColor(76, 175, 80);
-          pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'F');
-          pdf.setDrawColor(255, 255, 255); // Warna putih
-          pdf.setLineWidth(0.6); // Ketebalan garis
-          pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
-          pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
-          }
-        });
+        // Gambar kotak checkbox dengan border hitam yang jelas
+const boxSize = 4;
+[col1X, col2X, col3X, col4X].forEach((cx, idx) => {
+  const value = idx + 1;
+  
+  // Set border hitam untuk semua kotak
+  pdf.setDrawColor(0, 0, 0); // Hitam
+  pdf.setLineWidth(0.5);
+  
+  if (score === value) {
+    // Kotak tercentang: isi hijau dengan border hitam
+    pdf.setFillColor(76, 175, 80);
+    pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD'); // F=Fill, D=Draw (border)
+    
+    // Gambar tanda V (ceklis) putih
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.8);
+    pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
+    pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
+  } else {
+    // Kotak tidak tercentang: kosong dengan border hitam tebal
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
+  }
+});
         
         // Skor value
         pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' });
