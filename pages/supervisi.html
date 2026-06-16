@@ -1851,7 +1851,9 @@ function showDetailModal() {
     `;
     
     currentInstrument.components.forEach((comp, index) => {
+      // Ambil skor yang benar dari data.scores menggunakan component ID
       const score = data.scores[comp.id] || 0;
+      
       tableHTML += `
         <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
           <td style="border:1px solid #ddd;padding:6px;text-align:center;">${index + 1}</td>
