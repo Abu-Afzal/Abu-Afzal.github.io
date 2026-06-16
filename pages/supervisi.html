@@ -1942,7 +1942,6 @@ window.downloadPDF = async function(docId) {
       }
     }
     
-    // Check if jsPDF is loaded
     if (!window.jspdf) {
       alert('Library PDF sedang dimuat. Silakan coba lagi.');
       return;
@@ -1985,13 +1984,13 @@ window.downloadPDF = async function(docId) {
     
     // Tabel
     if (components.length > 0) {
-      pdf.setFontSize(9);
+      pdf.setFontSize(8);
       pdf.setFont(undefined, 'bold');
       
-      const colWidths = [8, 80, 12, 12, 12, 12, 14];
+      const colWidths = [8, 82, 11, 11, 11, 11, 14];
       const headers = ['No', 'Komponen', '1', '2', '3', '4', 'Skor'];
       
-      // Header tabel
+      // Header tabel - hijau
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
       for (let i = 0; i < headers.length; i++) {
@@ -2001,7 +2000,7 @@ window.downloadPDF = async function(docId) {
       }
       y += 7;
       
-      // Data
+      // Data rows
       pdf.setTextColor(0, 0, 0);
       pdf.setFont(undefined, 'normal');
       
@@ -2009,10 +2008,20 @@ window.downloadPDF = async function(docId) {
         const score = data.scores[comp.id] || 0;
         const rowHeight = 7;
         
-        // Check if we need a new page
-        if (y > 240) {
+        // New page if needed
+        if (y > 245) {
           pdf.addPage();
           y = 15;
+          // Re-draw header
+          pdf.setFillColor(76, 175, 80);
+          pdf.setTextColor(255, 255, 255);
+          for (let i = 0; i < headers.length; i++) {
+            const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
+            pdf.rect(xPos, y, colWidths[i], 7, 'F');
+            pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' });
+          }
+          y += 7;
+          pdf.setTextColor(0, 0, 0);
         }
         
         // Alternating background
@@ -2029,32 +2038,45 @@ window.downloadPDF = async function(docId) {
         // No
         pdf.text(String(index + 1), margin + 4, y + 4.5);
         
-        // Komponen (wrap text)
+        // Komponen name (wrap)
         const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2);
         pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
         
-        // Skor checkboxes
-        for (let i = 1; i <= 4; i++) {
-          const xPos = margin + colWidths.slice(0, 2 + i - 1).reduce((a, b) => a + b, 0) + colWidths[2 + i - 1] / 2;
-          if (score === i) {
-            pdf.setFillColor(76, 175, 80);
-            pdf.rect(xPos - 3, y + 2, 6, 6, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.text('✓', xPos, y + 6, { align: 'center' });
-            pdf.setTextColor(0, 0, 0);
-          } else {
-            pdf.rect(xPos - 3, y + 2, 6, 6, 'S');
-          }
-        }
+        // ===== FIX: Render checkbox dengan benar =====
+        // Posisi kolom 1, 2, 3, 4
+        const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
+        const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
+        const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
+        const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
         
-        // Skor value
-        const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
+        const boxSize = 4; // ukuran kotak checkbox
+        
+        // Gambar kotak kosong untuk semua kolom
+        [col1X, col2X, col3X, col4X].forEach((cx, idx) => {
+          const value = idx + 1;
+          pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'S');
+          
+          // Jika score sesuai, isi kotak dengan warna hijau dan tanda X
+          if (score === value) {
+            pdf.setFillColor(76, 175, 80);
+            pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'F');
+            // Gunakan karakter 'X' (ASCII) bukan '✓' (Unicode)
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('X', cx, y + 4.5, { align: 'center' });
+            pdf.setFont(undefined, 'normal');
+            pdf.setTextColor(0, 0, 0);
+          }
+        });
+        
+        // Skor value di kolom terakhir
+        const scoreX = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] + colWidths[6] / 2;
         pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' });
         
         y += rowHeight;
       });
       
-      // Footer tabel
+      // Footer tabel - Jumlah
       y += 2;
       pdf.setFillColor(200, 230, 201);
       const footerWidth = colWidths.reduce((a, b) => a + b, 0);
@@ -2062,24 +2084,25 @@ window.downloadPDF = async function(docId) {
       pdf.setFont(undefined, 'bold');
       pdf.text('Jumlah', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       
-      // Hitung jumlah per kolom
       const count1 = Object.values(data.scores).filter(s => s === 1).length;
       const count2 = Object.values(data.scores).filter(s => s === 2).length;
       const count3 = Object.values(data.scores).filter(s => s === 3).length;
       const count4 = Object.values(data.scores).filter(s => s === 4).length;
       
-      pdf.text(String(count1), margin + colWidths[0] + colWidths[1] + colWidths[2] / 2, y + 4.5, { align: 'center' });
-      pdf.text(String(count2), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2, y + 4.5, { align: 'center' });
-      pdf.text(String(count3), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2, y + 4.5, { align: 'center' });
-      pdf.text(String(count4), margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2, y + 4.5, { align: 'center' });
-      pdf.text(`${data.totalScore}/${data.maxScore}`, margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] + colWidths[6] / 2, y + 4.5, { align: 'center' });
+      pdf.text(String(count1), col1X, y + 4.5, { align: 'center' });
+      pdf.text(String(count2), col2X, y + 4.5, { align: 'center' });
+      pdf.text(String(count3), col3X, y + 4.5, { align: 'center' });
+      pdf.text(String(count4), col4X, y + 4.5, { align: 'center' });
+      pdf.text(`${data.totalScore}/${data.maxScore}`, scoreX, y + 4.5, { align: 'center' });
       
+      // Persentase
       y += 7;
       pdf.setFillColor(165, 214, 167);
       pdf.rect(margin, y, footerWidth, 7, 'F');
       pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
       
+      // Predikat
       y += 7;
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
@@ -2105,10 +2128,7 @@ window.downloadPDF = async function(docId) {
     // Catatan
     if (data.notes) {
       y += 10;
-      if (y > 200) {
-        pdf.addPage();
-        y = 15;
-      }
+      if (y > 200) { pdf.addPage(); y = 15; }
       pdf.setFont(undefined, 'bold');
       pdf.text('Catatan Khusus Hasil Supervisi:', margin, y);
       y += 5;
@@ -2121,10 +2141,7 @@ window.downloadPDF = async function(docId) {
     // Rencana Tindak Lanjut
     if (data.actionPlan) {
       y += 5;
-      if (y > 200) {
-        pdf.addPage();
-        y = 15;
-      }
+      if (y > 200) { pdf.addPage(); y = 15; }
       pdf.setFont(undefined, 'bold');
       pdf.text('Rencana Tindak Lanjut:', margin, y);
       y += 5;
@@ -2134,41 +2151,34 @@ window.downloadPDF = async function(docId) {
       y += splitPlan.length * 4 + 15;
     }
     
-    // Tanda tangan - BAGIAN INI YANG DITAMBAHKAN
+    // Tanda tangan
     y += 10;
-    if (y > 220) {
-      pdf.addPage();
-      y = 15;
-    }
+    if (y > 220) { pdf.addPage(); y = 15; }
     
-    // Garis untuk tanda tangan
     const signY = y;
     const leftSignX = margin + 20;
     const rightSignX = pageWidth - margin - 60;
     
-    // Tanggal
     pdf.setFont(undefined, 'normal');
     pdf.text('Bantaeng, ' + date.toLocaleDateString('id-ID'), rightSignX, signY);
     
-    // Label
     pdf.text('Guru yang disupervisi', leftSignX, signY + 20);
     pdf.text('Supervisor', rightSignX, signY + 20);
     
-    // Ruang untuk tanda tangan (garis bawah)
+    // Garis tanda tangan
     pdf.line(leftSignX, signY + 38, leftSignX + 50, signY + 38);
     pdf.line(rightSignX, signY + 38, rightSignX + 50, signY + 38);
     
-    // Nama
     pdf.setFont(undefined, 'bold');
     pdf.text(data.superviseeName, leftSignX, signY + 43);
     pdf.text(data.supervisorName, rightSignX, signY + 43);
     
-    // NIP (jika ada)
-    pdf.setFont(undefined, 'normal');
     if (data.superviseeNIP) {
+      pdf.setFont(undefined, 'normal');
       pdf.text(`NIP. ${data.superviseeNIP}`, leftSignX, signY + 48);
     }
     if (data.supervisorNIP) {
+      pdf.setFont(undefined, 'normal');
       pdf.text(`NIP. ${data.supervisorNIP}`, rightSignX, signY + 48);
     }
     
@@ -2180,7 +2190,8 @@ window.downloadPDF = async function(docId) {
     console.error('Error download PDF:', error);
     alert('❌ Gagal mendownload PDF: ' + error.message);
   }
-};  
+};
+  
 // ══════════════════════════════════════════════
 //   👁️ PREVIEW DOKUMEN
 // ══════════════════════════════════════════════
