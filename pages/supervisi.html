@@ -2060,13 +2060,13 @@ window.downloadPDF = async function(docId) {
           pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'S');
           
           if (score === value) {
-            pdf.setFillColor(76, 175, 80);
-            pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'F');
-            pdf.setTextColor(255, 255, 255);
-            pdf.setFont(undefined, 'bold');
-            pdf.text('X', cx, y + 4.5, { align: 'center' });
-            pdf.setFont(undefined, 'normal');
-            pdf.setTextColor(0, 0, 0);
+          // Isi kotak dengan warna hijau
+          pdf.setFillColor(76, 175, 80);
+          pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'F');
+          pdf.setDrawColor(255, 255, 255); // Warna putih
+          pdf.setLineWidth(0.6); // Ketebalan garis
+          pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
+          pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
           }
         });
         
