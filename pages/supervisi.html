@@ -1799,39 +1799,40 @@ async function loadMySupervisionList(){
 // ══════════════════════════════════════════════
 //   👁️ DETAIL & PDF
 // ══════════════════════════════════════════════
-window.viewDetail = async function(docId){
-  const snap = await db.collection('supervisions').doc(docId).get();
-  if(!snap.exists){ alert('Data tidak ditemukan'); return; }
-  currentSupervision = {id:docId, ...snap.data()};
-  showDetailModal();
+window.viewDetail = async function(docId) {
+  try {
+    const snap = await db.collection('supervisions').doc(docId).get();
+    if (!snap.exists) { 
+      alert('Data tidak ditemukan'); 
+      return; 
+    }
+    
+    currentSupervision = { id: docId, ...snap.data() };
+    
+    // Load instrument data first
+    if (currentSupervision.instrumentId) {
+      const instSnap = await db.collection('supervision_instruments').doc(currentSupervision.instrumentId).get();
+      if (instSnap.exists) {
+        const instrumentData = instSnap.data();
+        currentInstrument = { id: instSnap.id, ...instrumentData };
+      }
+    }
+    
+    showDetailModal();
+  } catch (error) {
+    console.error('Error loading detail:', error);
+    alert('❌ Gagal memuat detail: ' + error.message);
+  }
 };
 
 function showDetailModal() {
   const data = currentSupervision;
-  
-  // Load instrument data if available
-  if (data.instrumentId) {
-    db.collection('supervision_instruments').doc(data.instrumentId).get().then(doc => {
-      if (doc.exists) {
-        const instrumentComponents = doc.data().components;
-        renderDetailTable(instrumentComponents, data);
-      } else {
-        renderDetailTable([], data);
-      }
-    }).catch(() => {
-      renderDetailTable([], data);
-    });
-  } else {
-    renderDetailTable([], data);
-  }
-}
-
-function renderDetailTable(components, data) {
-  let tableHTML = '';
   const statusText = '✅ Sudah Dinilai';
   
-  if (components.length > 0) {
-    // Tabel dengan komponen dari instrumen
+  // Render table with components
+  let tableHTML = '';
+  
+  if (currentInstrument && currentInstrument.components && currentInstrument.components.length > 0) {
     tableHTML = `
       <div class="table-wrap" style="margin:15px 0;">
         <table style="border-collapse:collapse;width:100%;font-size:0.85rem;">
@@ -1849,7 +1850,7 @@ function renderDetailTable(components, data) {
           <tbody>
     `;
     
-    components.forEach((comp, index) => {
+    currentInstrument.components.forEach((comp, index) => {
       const score = data.scores[comp.id] || 0;
       tableHTML += `
         <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
@@ -1896,7 +1897,6 @@ function renderDetailTable(components, data) {
       </div>
     `;
   } else {
-    // Fallback jika tidak ada komponen
     tableHTML = '<p style="color:#999;text-align:center;padding:20px;">Detail penilaian tidak tersedia</p>';
   }
   
@@ -1938,7 +1938,8 @@ window.downloadPDF = async function(docId) {
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
       if (instSnap.exists) {
-        components = instSnap.data().components;
+        const instrumentData = instSnap.data();
+        components = instrumentData.components;
       }
     }
     
@@ -1990,6 +1991,13 @@ window.downloadPDF = async function(docId) {
       const colWidths = [8, 82, 11, 11, 11, 11, 14];
       const headers = ['No', 'Komponen', '1', '2', '3', '4', 'Skor'];
       
+      // DEFINISIKAN VARIABEL POSISI KOLOM DI SINI
+      const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
+      const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
+      const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
+      const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
+      const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
+      
       // Header tabel - hijau
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
@@ -2003,13 +2011,6 @@ window.downloadPDF = async function(docId) {
       // Data rows
       pdf.setTextColor(0, 0, 0);
       pdf.setFont(undefined, 'normal');
-      
-      // DEFINISIKAN VARIABEL POSISI KOLOM DI SINI (sebelum loop)
-      const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
-      const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
-      const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
-      const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
-      const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
       
       components.forEach((comp, index) => {
         const score = data.scores[comp.id] || 0;
@@ -2085,7 +2086,6 @@ window.downloadPDF = async function(docId) {
       const count3 = Object.values(data.scores).filter(s => s === 3).length;
       const count4 = Object.values(data.scores).filter(s => s === 4).length;
       
-      // Gunakan variabel yang sudah didefinisikan di atas
       pdf.text(String(count1), col1X, y + 4.5, { align: 'center' });
       pdf.text(String(count2), col2X, y + 4.5, { align: 'center' });
       pdf.text(String(count3), col3X, y + 4.5, { align: 'center' });
