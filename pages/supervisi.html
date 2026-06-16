@@ -2004,6 +2004,13 @@ window.downloadPDF = async function(docId) {
       pdf.setTextColor(0, 0, 0);
       pdf.setFont(undefined, 'normal');
       
+      // DEFINISIKAN VARIABEL POSISI KOLOM DI SINI (sebelum loop)
+      const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
+      const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
+      const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
+      const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
+      const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
+      
       components.forEach((comp, index) => {
         const score = data.scores[comp.id] || 0;
         const rowHeight = 7;
@@ -2042,25 +2049,15 @@ window.downloadPDF = async function(docId) {
         const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2);
         pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
         
-        // ===== FIX: Render checkbox dengan benar =====
-        // Posisi kolom 1, 2, 3, 4
-        const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
-        const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
-        const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
-        const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
-        
-        const boxSize = 4; // ukuran kotak checkbox
-        
-        // Gambar kotak kosong untuk semua kolom
+        // Gambar kotak checkbox
+        const boxSize = 4;
         [col1X, col2X, col3X, col4X].forEach((cx, idx) => {
           const value = idx + 1;
           pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'S');
           
-          // Jika score sesuai, isi kotak dengan warna hijau dan tanda X
           if (score === value) {
             pdf.setFillColor(76, 175, 80);
             pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'F');
-            // Gunakan karakter 'X' (ASCII) bukan '✓' (Unicode)
             pdf.setTextColor(255, 255, 255);
             pdf.setFont(undefined, 'bold');
             pdf.text('X', cx, y + 4.5, { align: 'center' });
@@ -2069,8 +2066,7 @@ window.downloadPDF = async function(docId) {
           }
         });
         
-        // Skor value di kolom terakhir
-        const scoreX = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] + colWidths[6] / 2;
+        // Skor value
         pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' });
         
         y += rowHeight;
@@ -2089,6 +2085,7 @@ window.downloadPDF = async function(docId) {
       const count3 = Object.values(data.scores).filter(s => s === 3).length;
       const count4 = Object.values(data.scores).filter(s => s === 4).length;
       
+      // Gunakan variabel yang sudah didefinisikan di atas
       pdf.text(String(count1), col1X, y + 4.5, { align: 'center' });
       pdf.text(String(count2), col2X, y + 4.5, { align: 'center' });
       pdf.text(String(count3), col3X, y + 4.5, { align: 'center' });
@@ -2165,7 +2162,6 @@ window.downloadPDF = async function(docId) {
     pdf.text('Guru yang disupervisi', leftSignX, signY + 20);
     pdf.text('Supervisor', rightSignX, signY + 20);
     
-    // Garis tanda tangan
     pdf.line(leftSignX, signY + 38, leftSignX + 50, signY + 38);
     pdf.line(rightSignX, signY + 38, rightSignX + 50, signY + 38);
     
@@ -2182,7 +2178,6 @@ window.downloadPDF = async function(docId) {
       pdf.text(`NIP. ${data.supervisorNIP}`, rightSignX, signY + 48);
     }
     
-    // Save
     const fileName = `Supervisi_${data.superviseeName.replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`;
     pdf.save(fileName);
     
