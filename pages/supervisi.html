@@ -1469,22 +1469,22 @@ window.saveSupervision = async function() {
   
   alert.classList.remove('show');
   
-  // Collect scores
+  // Collect scores - GUNAKAN INDEX SEBAGAI KEY
   const scores = {};
   let totalScore = 0;
   let maxScore = currentInstrument.components.length * 4;
   
-  for (const comp of currentInstrument.components) {
-  const index = currentInstrument.components.indexOf(comp);
-  const selected = document.querySelector(`input[data-row="${index}"]:checked`);
-  if (!selected) {
-    alert.textContent = `❌ Lengkapi penilaian untuk komponen: ${comp.name}`;
-    alert.className = 'alert alert-error show';
-    return;
-  }
-  scores[comp.id] = parseInt(selected.value);
-  totalScore += parseInt(selected.value);
-}
+  currentInstrument.components.forEach((comp, index) => {
+    const selected = document.querySelector(`input[data-row="${index}"]:checked`);
+    if (!selected) {
+      alert.textContent = `❌ Lengkapi penilaian untuk komponen: ${comp.name}`;
+      alert.className = 'alert alert-error show';
+      return;
+    }
+    // GUNAKAN INDEX SEBAGAI KEY YANG UNIK
+    scores[`comp_${index}`] = parseInt(selected.value);
+    totalScore += parseInt(selected.value);
+  });
   
   const percentage = ((totalScore / maxScore) * 100).toFixed(0);
   
@@ -1524,7 +1524,7 @@ window.saveSupervision = async function() {
       subject: subject,
       classSemester: classSemester,
       meetingHours: meetingHours,
-      scores: scores,
+      scores: scores,  // Format: { comp_0: 4, comp_1: 3, comp_2: 2, ... }
       totalScore: totalScore,
       maxScore: maxScore,
       percentage: percentage,
@@ -1561,7 +1561,8 @@ window.saveSupervision = async function() {
   btn.disabled = false;
   btn.textContent = '💾 Simpan Hasil Supervisi';
 };
-async function loadSupervisionList(){
+  
+  async function loadSupervisionList(){
   const snap = await db.collection('supervisions').where('supervisorEmail', '==', currentUser.email).get();
   const tbody = document.getElementById('supervisionList');
   
@@ -1851,8 +1852,8 @@ function showDetailModal() {
     `;
     
     currentInstrument.components.forEach((comp, index) => {
-      // Ambil skor yang benar dari data.scores menggunakan component ID
-      const score = data.scores[comp.id] || 0;
+      // AMBIL SCORE MENGGUNAKAN KEY YANG SAMA (comp_index)
+      const score = data.scores[`comp_${index}`] || 0;
       
       tableHTML += `
         <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
@@ -1866,7 +1867,7 @@ function showDetailModal() {
         </tr>
       `;
     });
-    
+     
     tableHTML += `
           </tbody>
           <tfoot>
@@ -2015,8 +2016,8 @@ window.downloadPDF = async function(docId) {
       pdf.setFont(undefined, 'normal');
       
       components.forEach((comp, index) => {
-        const score = data.scores[comp.id] || 0;
-        const rowHeight = 7;
+  const score = data.scores[`comp_${index}`] || 0;
+  const rowHeight = 7;
         
         // New page if needed
         if (y > 245) {
