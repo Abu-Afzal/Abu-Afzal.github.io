@@ -322,91 +322,89 @@ tr:hover td{background:#f9fafb;}
   </div>
 
   <!-- ══════════════════════════════════════════ -->
-  <!--          TABS UNTUK GURU                   -->
-  <!-- ══════════════════════════════════════════ -->
-  <div id="teacherTabs" style="display:none;">
-    <div id="teacherTabs" style="display:none;">
+<!--          TABS UNTUK GURU & WAKAMAD         -->
+<!-- ══════════════════════════════════════════ -->
+<div id="teacherTabs" style="display:none;">
   <div class="card">
     <div class="tabs">
       <button class="tab active" onclick="switchTab('tabJadwalSaya')">📅 Jadwal Saya</button>
       <button class="tab" onclick="switchTab('tabUpload')">📤 Upload Dokumen</button>
-      <button class="tab" onclick="switchTab('tabHasil')">📊 Hasil Supervisi Saya</button>
+      <button class="tab" onclick="switchTab('tabHasil')">📊 Hasil Supervisi</button>
     </div>
-    <div class="card">
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab('tabJadwalSaya')"> Jadwal Saya</button>
-        <button class="tab" onclick="switchTab('tabUpload')"> Upload Dokumen</button>
-        <button class="tab" onclick="switchTab('tabHasil')"> Hasil Supervisi</button>
+
+    <!-- TAB: Jadwal Saya -->
+    <div id="tabJadwalSaya" class="tab-content active">
+      <h2 class="section-title">📅 Jadwal Supervisi Saya</h2>
+      <div id="myScheduleArea"></div>
+    </div>
+
+    <!-- TAB: Upload Dokumen -->
+    <div id="tabUpload" class="tab-content">
+      <div class="upload-section">
+        <h2>📤 Upload Dokumen Pendukung</h2>
+        <p style="color:#1e40af;font-size:0.9rem;margin-bottom:14px;">
+          Upload dokumen pendukung untuk supervisi (RPP, Modul Ajar, Program BK, dll)
+        </p>
+        <div class="form-row">
+          <div class="form-group" style="margin:0;">
+            <select id="docKategori">
+              <option value="">Pilih Kategori</option>
+              <option>RPP / Modul Ajar</option>
+              <option>Program Tahunan</option>
+              <option>Program Semester</option>
+              <option>Lembar Kerja Siswa</option>
+              <option>Laporan Kegiatan</option>
+              <option>Program BK</option>
+              <option>Data Siswa</option>
+              <option>Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <input type="text" id="docNama" placeholder="Nama Dokumen">
+          </div>
+        </div>
+        <div class="radio-group">
+          <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()"> 📁 Upload File</label>
+          <label><input type="radio" name="docType" value="link" onchange="toggleDocType()"> 🔗 Link Google Drive</label>
+        </div>
+        <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
+        <div id="fileInputWrap">
+          <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+        </div>
+        <div id="linkInputWrap" style="display:none;">
+          <input type="url" id="docLink" placeholder="https://drive.google.com/...">
+        </div>
+        <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc" style="width:auto;padding:12px 30px;">
+          💾 Simpan Dokumen
+        </button>
+        <div id="alertUpload" class="alert alert-success"></div>
       </div>
 
-      <!-- TAB: Jadwal Saya -->
-      <div id="tabJadwalSaya" class="tab-content active">
-        <h2 class="section-title">📅 Jadwal Supervisi Saya</h2>
-        <div id="myScheduleArea"></div>
+      <h2 class="section-title">📂 Dokumen Saya</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Nama Dokumen</th><th>Kategori</th><th>Tanggal</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="myDocsList"></tbody>
+        </table>
       </div>
+    </div>
 
-      <!-- TAB: Upload Dokumen -->
-      <div id="tabUpload" class="tab-content">
-        <div class="upload-section">
-          <h2>📤 Upload Dokumen Pendukung</h2>
-          <p style="color:#1e40af;font-size:0.9rem;margin-bottom:14px;">Upload RPP, Modul Ajar, atau dokumen lain untuk supervisi</p>
-          <div class="form-row">
-            <div class="form-group" style="margin:0;">
-              <select id="docKategori">
-                <option value="">Pilih Kategori</option>
-                <option>RPP / Modul Ajar</option>
-                <option>Program Tahunan</option>
-                <option>Program Semester</option>
-                <option>Lembar Kerja Siswa</option>
-                <option>Laporan Kegiatan</option>
-                <option>Lainnya</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin:0;">
-              <input type="text" id="docNama" placeholder="Nama Dokumen (contoh: RPP Sosiologi X.1)">
-            </div>
-          </div>
-          <div class="radio-group">
-            <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()">  Dokumen</label>
-            <label><input type="radio" name="docType" value="link" onchange="toggleDocType()"> 🔗 Link Google Drive</label>
-          </div>
-          <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
-          <div id="fileInputWrap">
-            <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
-          </div>
-          <div id="linkInputWrap" style="display:none;">
-            <input type="url" id="docLink" placeholder="https://drive.google.com/...">
-          </div>
-          <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc" style="width:auto;padding:12px 30px;">💾 Simpan Dokumen</button>
-          <div id="alertUpload" class="alert alert-success"></div>
-        </div>
-
-        <h2 class="section-title">📂 Dokumen Saya</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Nama Dokumen</th><th>Kategori</th><th>Tanggal</th><th>Aksi</th></tr>
-            </thead>
-            <tbody id="myDocsList"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB: Hasil Supervisi -->
-      <div id="tabHasil" class="tab-content">
-        <h2 class="section-title"> Hasil Supervisi Saya</h2>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Tanggal</th><th>Supervisor</th><th>Instrumen</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
-            </thead>
-            <tbody id="mySupervisionList"></tbody>
-          </table>
-        </div>
+    <!-- TAB: Hasil Supervisi -->
+    <div id="tabHasil" class="tab-content">
+      <h2 class="section-title">📊 Hasil Supervisi Saya</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Tanggal</th><th>Supervisor</th><th>Instrumen</th><th>Skor</th><th>Status</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="mySupervisionList"></tbody>
+        </table>
       </div>
     </div>
   </div>
-
+</div>
 </div>
 
 <!-- ═══ MODAL INSTRUMENT ══ -->
@@ -620,10 +618,12 @@ function showDashboard(){
   else if (currentUser.role === 'wakil') {
     document.getElementById('supervisorTabs').style.display = 'block';
     document.getElementById('teacherTabs').style.display = 'block';
-    loadScheduleList();
-    loadMySchedule();
-    loadMyDocs();
-    loadMySupervisionList();
+    
+    // Load data untuk kedua role
+    loadScheduleList(); // Sebagai supervisor
+    loadMySchedule(); // Sebagai yang disupervisi
+    loadMyDocs(); // Upload dokumen
+    loadMySupervisionList(); // Lihat hasil supervisi
   }
   
   // GURU: Tampilkan tab teacher saja
@@ -635,7 +635,7 @@ function showDashboard(){
     loadMySupervisionList();
   }
 }
-function getRoleLabel(role){
+  function getRoleLabel(role){
   return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role;
 }
 
@@ -845,16 +845,19 @@ window.loadScheduleDetail = async function() {
   docContainer.innerHTML = '<div style="text-align:center;padding:10px;"><span class="spinner"></span> Memuat dokumen...</div>';
   
   try {
-    const snap = await db.collection('supervision_documents').where('userEmail', '==', teacherEmail).get();
+    // Load dokumen dari guru ATAU wakamad
+    const snap = await db.collection('supervision_documents')
+      .where('userEmail', '==', teacherEmail)
+      .get();
     
     if (snap.empty) {
-      docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">📭</div><p>Guru belum upload dokumen</p></div>';
+      docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">📭</div><p>Belum ada dokumen yang diupload</p></div>';
       return;
     }
     
     const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
     docContainer.innerHTML = docs.map(d => {
-      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
+      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
       let btnLihat = '';
       if (d.type === 'link') {
         btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
@@ -869,11 +872,13 @@ window.loadScheduleDetail = async function() {
         btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇ Unduh</button>`;
       }
       
+      const roleBadge = d.userRole === 'wakil' ? '<span class="badge" style="background:#ede9fe;color:#5b21b6;margin-left:5px;">⭐ Wakamad</span>' : '';
+      
       return `
         <div class="doc-item">
           <div class="doc-icon">${icon}</div>
           <div class="doc-info">
-            <div class="doc-name">${d.nama}</div>
+            <div class="doc-name">${d.nama} ${roleBadge}</div>
             <div class="doc-meta">${d.kategori} • ${new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -888,7 +893,6 @@ window.loadScheduleDetail = async function() {
     docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">❌</div><p>Gagal memuat dokumen</p></div>';
   }
 };
-
 window.updateScheduleStatus = async function(scheduleId, status) {
   if (!confirm(`Ubah status jadwal menjadi "${status}"?`)) return;
   try {
