@@ -1993,24 +1993,22 @@ window.downloadPDF = async function(docId) {
       const colWidths = [8, 82, 11, 11, 11, 11, 14];
       const headers = ['No', 'Komponen', '1', '2', '3', '4', 'Skor'];
       
-      // DEFINISIKAN VARIABEL POSISI KOLOM DI SINI
+      // Posisi kolom
       const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
       const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
       const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
       const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
       const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
       
-      // Header tabel - hijau
+      // Header tabel
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
-      
-      // Set border konsisten untuk header
       pdf.setDrawColor(0, 0, 0);
-      pdf.setLineWidth(0.3); 
+      pdf.setLineWidth(0.3);
       
       for (let i = 0; i < headers.length; i++) {
         const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
-        pdf.rect(xPos, y, colWidths[i], 7, 'FD'); // FD = Fill + Draw border
+        pdf.rect(xPos, y, colWidths[i], 7, 'FD');
         pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' });
       }
       y += 7;
@@ -2020,14 +2018,13 @@ window.downloadPDF = async function(docId) {
       pdf.setFont(undefined, 'normal');
       
       components.forEach((comp, index) => {
-        const score = data.scores[comp.id] || 0;
+        // ✅ FIX 1: Gunakan key yang SAMA PERSIS dengan saat save (comp_index)
+        const score = data.scores[`comp_${index}`] || 0;
         const rowHeight = 7;
         
-        // New page if needed
         if (y > 245) {
           pdf.addPage();
           y = 15;
-          // Re-draw header
           pdf.setFillColor(76, 175, 80);
           pdf.setTextColor(255, 255, 255);
           pdf.setDrawColor(0, 0, 0);
@@ -2041,64 +2038,53 @@ window.downloadPDF = async function(docId) {
           pdf.setTextColor(0, 0, 0);
         }
         
-        // Alternating background
         if (index % 2 === 0) {
           pdf.setFillColor(232, 245, 233);
           const totalWidth = colWidths.reduce((a, b) => a + b, 0);
           pdf.rect(margin, y, totalWidth, rowHeight, 'F');
         }
         
-        // === PERBAIKAN UTAMA: Reset border tabel sebelum menggambar ===
+        // Reset border tabel
         pdf.setDrawColor(0, 0, 0);
-        pdf.setLineWidth(0.3); // Tipis dan konsisten untuk garis tabel
+        pdf.setLineWidth(0.3);
         
-        // Border baris
         const totalWidth = colWidths.reduce((a, b) => a + b, 0);
         pdf.rect(margin, y, totalWidth, rowHeight, 'S');
         
-        // No
         pdf.text(String(index + 1), margin + 4, y + 4.5);
         
-        // Komponen name (wrap)
         const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2);
         pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
         
-        // Gambar kotak checkbox
+        // Checkbox
         const boxSize = 4;
         [col1X, col2X, col3X, col4X].forEach((cx, idx) => {
           const value = idx + 1;
           
           if (score === value) {
-            // Kotak tercentang: isi hijau dengan border hitam
             pdf.setFillColor(76, 175, 80);
             pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
             
-            // Gambar tanda V (ceklis) putih
             pdf.setDrawColor(255, 255, 255);
-            pdf.setLineWidth(0.6); // Tebal khusus untuk tanda V
+            pdf.setLineWidth(0.6);
             pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
             pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
             
-            // === PENTING: Reset ke style border tabel untuk iterasi berikutnya ===
+            // Reset ke border tabel
             pdf.setDrawColor(0, 0, 0);
             pdf.setLineWidth(0.3);
           } else {
-            // Kotak tidak tercentang: kosong dengan border hitam
             pdf.setFillColor(255, 255, 255);
             pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
           }
         });
         
-        // Skor value
         pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' });
-        
         y += rowHeight;
       });
       
-      // Footer tabel - Jumlah
+      // Footer
       y += 2;
-      
-      // Reset border untuk footer
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.3);
       
@@ -2119,14 +2105,12 @@ window.downloadPDF = async function(docId) {
       pdf.text(String(count4), col4X, y + 4.5, { align: 'center' });
       pdf.text(`${data.totalScore}/${data.maxScore}`, scoreX, y + 4.5, { align: 'center' });
       
-      // Persentase
       y += 7;
       pdf.setFillColor(165, 214, 167);
       pdf.rect(margin, y, footerWidth, 7, 'FD');
       pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
       
-      // Predikat
       y += 7;
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
@@ -2146,10 +2130,11 @@ window.downloadPDF = async function(docId) {
       y += 4;
       pdf.text('• 71% - 80% = Cukup', margin, y);
       y += 4;
-      pdf.text('• ≤70% = Kurang', margin, y);
+      // ✅ FIX 2: Ganti karakter Unicode "≤" dengan "<" agar tidak corrupt di PDF
+      pdf.text('• < 70% = Kurang', margin, y);
     }
     
-    // Catatan
+    // Catatan & Tindak Lanjut
     if (data.notes) {
       y += 10;
       if (y > 200) { pdf.addPage(); y = 15; }
@@ -2162,7 +2147,6 @@ window.downloadPDF = async function(docId) {
       y += splitNotes.length * 4 + 5;
     }
     
-    // Rencana Tindak Lanjut
     if (data.actionPlan) {
       y += 5;
       if (y > 200) { pdf.addPage(); y = 15; }
