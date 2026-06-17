@@ -325,6 +325,13 @@ tr:hover td{background:#f9fafb;}
   <!--          TABS UNTUK GURU                   -->
   <!-- ══════════════════════════════════════════ -->
   <div id="teacherTabs" style="display:none;">
+    <div id="teacherTabs" style="display:none;">
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('tabJadwalSaya')">📅 Jadwal Saya</button>
+      <button class="tab" onclick="switchTab('tabUpload')">📤 Upload Dokumen</button>
+      <button class="tab" onclick="switchTab('tabHasil')">📊 Hasil Supervisi Saya</button>
+    </div>
     <div class="card">
       <div class="tabs">
         <button class="tab active" onclick="switchTab('tabJadwalSaya')"> Jadwal Saya</button>
@@ -597,17 +604,30 @@ function showDashboard(){
   document.getElementById('userNameDisplay').textContent = currentUser.nama;
   document.getElementById('userRoleDisplay').textContent = getRoleLabel(currentUser.role);
   
-  // Tampilkan badge admin jika role admin
   if (currentUser.role === 'admin') {
     document.getElementById('adminBadge').style.display = 'block';
     document.getElementById('tabInstruments').style.display = 'block';
   }
   
-  if(currentUser.role === 'kepala' || currentUser.role === 'wakil' || currentUser.role === 'admin'){
+  // KAMAD: Tampilkan tab supervisor saja
+  if (currentUser.role === 'kepala') {
     document.getElementById('supervisorTabs').style.display = 'block';
     document.getElementById('teacherTabs').style.display = 'none';
     loadScheduleList();
-  } else {
+  }
+  
+  // WAKAMAD: Tampilkan KEDUA tab (supervisor + teacher)
+  else if (currentUser.role === 'wakil') {
+    document.getElementById('supervisorTabs').style.display = 'block';
+    document.getElementById('teacherTabs').style.display = 'block';
+    loadScheduleList();
+    loadMySchedule();
+    loadMyDocs();
+    loadMySupervisionList();
+  }
+  
+  // GURU: Tampilkan tab teacher saja
+  else {
     document.getElementById('supervisorTabs').style.display = 'none';
     document.getElementById('teacherTabs').style.display = 'block';
     loadMySchedule();
@@ -615,7 +635,6 @@ function showDashboard(){
     loadMySupervisionList();
   }
 }
-
 function getRoleLabel(role){
   return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role;
 }
@@ -636,23 +655,38 @@ async function loadAvailableTeachers() {
   select.innerHTML = '<option value="">-- Memuat data... --</option>';
   
   try {
-    const teachersSnap = await db.collection('users').where('role', '==', 'guru').get();
-    const allTeachers = teachersSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    // TENTUKAN ROLE FILTER BERDASARKAN ROLE CURRENT USER
+    let roleFilter = ['guru'];
+    if (currentUser.role === 'kepala') {
+      roleFilter = ['guru', 'wakil']; // Kamad bisa supervise guru + wakamad
+    }
+    // Wakamad hanya bisa supervise guru
     
+    // Ambil semua user dengan role yang sesuai
+    const allUsersSnap = await db.collection('users').get();
+    const allUsers = allUsersSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    // Filter berdasarkan role yang diizinkan
+    const eligibleUsers = allUsers.filter(u => roleFilter.includes(u.role));
+    
+    // Ambil jadwal yang aktif
     const schedulesSnap = await db.collection('supervision_schedule')
       .where('status', 'in', ['scheduled', 'in-progress']).get();
     const scheduledTeacherIds = schedulesSnap.docs.map(d => d.data().teacherId);
     
-    const availableTeachers = allTeachers.filter(t => !scheduledTeacherIds.includes(t.id));
+    // Filter user yang belum dijadwalkan
+    const availableUsers = eligibleUsers.filter(u => !scheduledTeacherIds.includes(u.id));
     
-    if (availableTeachers.length === 0) {
-      select.innerHTML = '<option value="">-- Tidak ada guru tersedia --</option>';
+    if (availableUsers.length === 0) {
+      select.innerHTML = '<option value="">-- Tidak ada yang tersedia --</option>';
       return;
     }
     
-    select.innerHTML = '<option value="">-- Pilih Guru --</option>';
-    availableTeachers.forEach(t => {
-      select.innerHTML += `<option value="${t.id}" data-nama="${t.nama}" data-email="${t.email}">${t.nama}</option>`;
+    // Tampilkan dengan label role
+    select.innerHTML = '<option value="">-- Pilih --</option>';
+    availableUsers.forEach(u => {
+      const roleLabel = u.role === 'wakil' ? '⭐ Wakil Kepala' : '👨‍🏫 Guru';
+      select.innerHTML += `<option value="${u.id}" data-nama="${u.nama}" data-email="${u.email}">${u.nama} (${roleLabel})</option>`;
     });
     
   } catch(e) {
@@ -674,7 +708,7 @@ window.createSchedule = async function() {
   alert.classList.remove('show');
   
   if (!teacherId || !scheduledDate) {
-    alert.textContent = '❌ Pilih guru dan tanggal supervisi!';
+    alert.textContent = '❌ Pilih guru/wakil dan tanggal supervisi!';
     alert.className = 'alert alert-error show';
     return;
   }
@@ -683,6 +717,10 @@ window.createSchedule = async function() {
   btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
   
   try {
+    // Ambil role teacher dari database
+    const teacherDoc = await db.collection('users').doc(teacherEmail).get();
+    const teacherRole = teacherDoc.exists ? teacherDoc.data().role : 'guru';
+    
     await db.collection('supervision_schedule').add({
       supervisorId: currentUser.uid,
       supervisorName: currentUser.nama,
@@ -691,6 +729,7 @@ window.createSchedule = async function() {
       teacherId: teacherId,
       teacherName: teacherName,
       teacherEmail: teacherEmail,
+      teacherRole: teacherRole,  // ← TAMBAHKAN INI
       scheduledDate: scheduledDate,
       notes: notes,
       status: 'scheduled',
@@ -698,7 +737,8 @@ window.createSchedule = async function() {
       updatedAt: new Date().toISOString()
     });
     
-    alert.textContent = `✅ Jadwal berhasil dibuat! ${teacherName} akan disupervisi pada ${formatDate(scheduledDate)}`;
+    const roleLabel = teacherRole === 'wakil' ? 'Wakil Kepala' : 'Guru';
+    alert.textContent = `✅ Jadwal berhasil dibuat! ${teacherName} (${roleLabel}) akan disupervisi pada ${formatDate(scheduledDate)}`;
     alert.className = 'alert alert-success show';
     
     teacherSelect.value = '';
@@ -714,7 +754,6 @@ window.createSchedule = async function() {
   btn.disabled = false;
   btn.textContent = '💾 Simpan Jadwal';
 };
-
 async function loadScheduleList() {
   const container = document.getElementById('scheduleList');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
@@ -738,10 +777,13 @@ async function loadScheduleList() {
         'completed': '<span class="badge badge-done">✅ Selesai</span>'
       }[s.status] || '<span class="badge badge-info">' + s.status + '</span>';
       
+      // Tentukan icon berdasarkan role supervisee
+      const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '👨‍🏫';
+      
       return `
         <div class="schedule-card">
           <div class="schedule-info">
-            <div class="schedule-title">👨‍ ${s.teacherName}</div>
+            <div class="schedule-title">${roleIcon} ${s.teacherName}</div>
             <div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>
             ${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}
           </div>
@@ -1769,7 +1811,9 @@ window.deleteMyDoc = async function(docId){
 //   📊 HASIL SUPERVISI (GURU)
 // ══════════════════════════════════════════════
 async function loadMySupervisionList(){
-  const snap = await db.collection('supervisions').where('superviseeEmail', '==', currentUser.email).get();
+  const snap = await db.collection('supervisions')
+    .where('superviseeEmail', '==', currentUser.email)
+    .get();
   const tbody = document.getElementById('mySupervisionList');
   
   if(snap.empty){
@@ -1784,10 +1828,10 @@ async function loadMySupervisionList(){
     return `
       <tr>
         <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
-        <td>${data.supervisorName}</td>
+        <td>${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</td>
         <td>${data.instrumentName || '-'}</td>
         <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
-        <td><span class="badge badge-done">Selesai</span></td>
+        <td><span class="badge badge-done">${data.predicate || 'Selesai'}</span></td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
           <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')">📥 PDF</button>
