@@ -1941,8 +1941,7 @@ window.downloadPDF = async function(docId) {
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
       if (instSnap.exists) {
-        const instrumentData = instSnap.data();
-        components = instrumentData.components;
+        components = instSnap.data().components;
       }
     }
     
@@ -2004,9 +2003,14 @@ window.downloadPDF = async function(docId) {
       // Header tabel - hijau
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
+      
+      // Set border konsisten untuk header
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.3); 
+      
       for (let i = 0; i < headers.length; i++) {
         const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
-        pdf.rect(xPos, y, colWidths[i], 7, 'F');
+        pdf.rect(xPos, y, colWidths[i], 7, 'FD'); // FD = Fill + Draw border
         pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' });
       }
       y += 7;
@@ -2016,8 +2020,8 @@ window.downloadPDF = async function(docId) {
       pdf.setFont(undefined, 'normal');
       
       components.forEach((comp, index) => {
-  const score = data.scores[`comp_${index}`] || 0;
-  const rowHeight = 7;
+        const score = data.scores[comp.id] || 0;
+        const rowHeight = 7;
         
         // New page if needed
         if (y > 245) {
@@ -2026,9 +2030,11 @@ window.downloadPDF = async function(docId) {
           // Re-draw header
           pdf.setFillColor(76, 175, 80);
           pdf.setTextColor(255, 255, 255);
+          pdf.setDrawColor(0, 0, 0);
+          pdf.setLineWidth(0.3);
           for (let i = 0; i < headers.length; i++) {
             const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
-            pdf.rect(xPos, y, colWidths[i], 7, 'F');
+            pdf.rect(xPos, y, colWidths[i], 7, 'FD');
             pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' });
           }
           y += 7;
@@ -2042,7 +2048,11 @@ window.downloadPDF = async function(docId) {
           pdf.rect(margin, y, totalWidth, rowHeight, 'F');
         }
         
-        // Border
+        // === PERBAIKAN UTAMA: Reset border tabel sebelum menggambar ===
+        pdf.setDrawColor(0, 0, 0);
+        pdf.setLineWidth(0.3); // Tipis dan konsisten untuk garis tabel
+        
+        // Border baris
         const totalWidth = colWidths.reduce((a, b) => a + b, 0);
         pdf.rect(margin, y, totalWidth, rowHeight, 'S');
         
@@ -2054,31 +2064,30 @@ window.downloadPDF = async function(docId) {
         pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
         
         // Gambar kotak checkbox
-        // Gambar kotak checkbox dengan border hitam yang jelas
-const boxSize = 4;
-[col1X, col2X, col3X, col4X].forEach((cx, idx) => {
-  const value = idx + 1;
-  
-  // Set border hitam untuk semua kotak
-  pdf.setDrawColor(0, 0, 0); // Hitam
-  pdf.setLineWidth(0.5);
-  
-  if (score === value) {
-    // Kotak tercentang: isi hijau dengan border hitam
-    pdf.setFillColor(76, 175, 80);
-    pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD'); // F=Fill, D=Draw (border)
-    
-    // Gambar tanda V (ceklis) putih
-    pdf.setDrawColor(255, 255, 255);
-    pdf.setLineWidth(0.8);
-    pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
-    pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
-  } else {
-    // Kotak tidak tercentang: kosong dengan border hitam tebal
-    pdf.setFillColor(255, 255, 255);
-    pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
-  }
-});
+        const boxSize = 4;
+        [col1X, col2X, col3X, col4X].forEach((cx, idx) => {
+          const value = idx + 1;
+          
+          if (score === value) {
+            // Kotak tercentang: isi hijau dengan border hitam
+            pdf.setFillColor(76, 175, 80);
+            pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
+            
+            // Gambar tanda V (ceklis) putih
+            pdf.setDrawColor(255, 255, 255);
+            pdf.setLineWidth(0.6); // Tebal khusus untuk tanda V
+            pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
+            pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
+            
+            // === PENTING: Reset ke style border tabel untuk iterasi berikutnya ===
+            pdf.setDrawColor(0, 0, 0);
+            pdf.setLineWidth(0.3);
+          } else {
+            // Kotak tidak tercentang: kosong dengan border hitam
+            pdf.setFillColor(255, 255, 255);
+            pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
+          }
+        });
         
         // Skor value
         pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' });
@@ -2088,9 +2097,14 @@ const boxSize = 4;
       
       // Footer tabel - Jumlah
       y += 2;
+      
+      // Reset border untuk footer
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.3);
+      
       pdf.setFillColor(200, 230, 201);
       const footerWidth = colWidths.reduce((a, b) => a + b, 0);
-      pdf.rect(margin, y, footerWidth, 7, 'F');
+      pdf.rect(margin, y, footerWidth, 7, 'FD');
       pdf.setFont(undefined, 'bold');
       pdf.text('Jumlah', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       
@@ -2108,7 +2122,7 @@ const boxSize = 4;
       // Persentase
       y += 7;
       pdf.setFillColor(165, 214, 167);
-      pdf.rect(margin, y, footerWidth, 7, 'F');
+      pdf.rect(margin, y, footerWidth, 7, 'FD');
       pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
       
@@ -2116,7 +2130,7 @@ const boxSize = 4;
       y += 7;
       pdf.setFillColor(76, 175, 80);
       pdf.setTextColor(255, 255, 255);
-      pdf.rect(margin, y, footerWidth, 7, 'F');
+      pdf.rect(margin, y, footerWidth, 7, 'FD');
       pdf.text('Predikat', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       pdf.text(data.predicate || '-', margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
       
