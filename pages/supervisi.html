@@ -1960,12 +1960,14 @@ async function loadFolders() {
   container.innerHTML = '<span class="spinner"></span> Memuat folder...';
   
   try {
+    // Query TANPA orderBy (tidak perlu index)
     const snap = await db.collection('supervision_folders')
       .where('userEmail', '==', currentUser.email)
-      .orderBy('createdAt', 'desc')
       .get();
     
-    userFolders = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    // Konversi ke array dan sort manual di client-side
+    let userFolders = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    userFolders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     // Hitung jumlah dokumen per folder
     const docsSnap = await db.collection('supervision_documents')
@@ -1995,7 +1997,7 @@ async function loadFolders() {
             </div>
             <div class="folder-actions">
               <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openFolderModal('${f.id}')" title="Edit">✏️</button>
-              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFolder('${f.id}')" title="Hapus">🗑️</button>
+              <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFolder('${f.id}')" title="Hapus">️</button>
             </div>
           </div>
         `;
@@ -2019,7 +2021,7 @@ async function loadFolders() {
     container.innerHTML = '<p style="color:#ef4444;">❌ Gagal memuat folder: ' + e.message + '</p>';
   }
 }
-window.uploadDokumen = async function(){
+  window.uploadDokumen = async function(){
   const folderId = document.getElementById('docFolder').value;
   const folderName = document.getElementById('docFolder').options[document.getElementById('docFolder').selectedIndex]?.dataset.name || '';
   const kategori = document.getElementById('docKategori').value;
