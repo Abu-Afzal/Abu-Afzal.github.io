@@ -164,6 +164,51 @@ tr:hover td{background:#f9fafb;}
   .schedule-card{flex-direction:column;align-items:flex-start;}
   .score-options{grid-template-columns:repeat(2,1fr);}
 }
+
+/* ═══ FOLDER CARD ═══ */
+.folder-card{
+  background:white;
+  border:2px solid #e5e7eb;
+  border-radius:10px;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+  transition:all .2s;
+  min-width:200px;
+}
+.folder-card:hover{
+  border-color:#3b82f6;
+  box-shadow:0 4px 8px rgba(59,130,246,0.1);
+}
+.folder-icon{
+  font-size:1.8rem;
+}
+.folder-info{
+  flex:1;
+}
+.folder-name{
+  font-weight:700;
+  color:#1e40af;
+  font-size:0.95rem;
+}
+.folder-count{
+  font-size:0.78rem;
+  color:#6b7280;
+}
+.folder-actions{
+  display:flex;
+  gap:4px;
+}
+.folder-badge{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:10px;
+  font-size:0.72rem;
+  font-weight:600;
+  color:white;
+}
 </style>
 </head>
 <body>
@@ -438,51 +483,7 @@ tr:hover td{background:#f9fafb;}
   </div>
 </div>
 
-    /* ═══ FOLDER CARD ═══ */
-.folder-card{
-  background:white;
-  border:2px solid #e5e7eb;
-  border-radius:10px;
-  padding:12px 16px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  cursor:pointer;
-  transition:all .2s;
-  min-width:200px;
-}
-.folder-card:hover{
-  border-color:#3b82f6;
-  box-shadow:0 4px 8px rgba(59,130,246,0.1);
-}
-.folder-icon{
-  font-size:1.8rem;
-}
-.folder-info{
-  flex:1;
-}
-.folder-name{
-  font-weight:700;
-  color:#1e40af;
-  font-size:0.95rem;
-}
-.folder-count{
-  font-size:0.78rem;
-  color:#6b7280;
-}
-.folder-actions{
-  display:flex;
-  gap:4px;
-}
-.folder-badge{
-  display:inline-block;
-  padding:2px 8px;
-  border-radius:10px;
-  font-size:0.72rem;
-  font-weight:600;
-  color:white;
-}
-    <!-- TAB: Hasil Supervisi -->
+       <!-- TAB: Hasil Supervisi -->
     <div id="tabHasil" class="tab-content">
       <h2 class="section-title">📊 Hasil Supervisi Saya</h2>
       <div class="table-wrap">
