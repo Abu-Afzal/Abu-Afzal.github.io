@@ -74,7 +74,7 @@ window.switchTab = function(tabId) {
   if (tabId === 'tabSupervisi') { loadPendingSchedules(); loadInstruments(); }
   if (tabId === 'tabRiwayat') loadSupervisionList();
   if (tabId === 'tabJadwalSaya') loadMySchedule();
-  if (tabId === 'tabUpload') loadFolders();
+  if (tabId === 'tabUpload') { currentFolderId = null; loadFolderContents(); }
   if (tabId === 'tabHasil') loadMySupervisionList();
   if (tabId === 'tabKelolaInstrumen') loadInstrumentsList();
 };
@@ -87,8 +87,8 @@ function showDashboard(){
   document.getElementById('userRoleDisplay').textContent = getRoleLabel(currentUser.role);
   if (currentUser.role === 'admin') { document.getElementById('adminBadge').style.display = 'block'; document.getElementById('tabInstruments').style.display = 'block'; }
   if (currentUser.role === 'kepala') { document.getElementById('supervisorTabs').style.display = 'block'; document.getElementById('teacherTabs').style.display = 'none'; loadScheduleList(); }
-  else if (currentUser.role === 'wakil') { document.getElementById('supervisorTabs').style.display = 'block'; document.getElementById('teacherTabs').style.display = 'block'; loadScheduleList(); loadMySchedule(); loadFolders(); loadMySupervisionList(); }
-  else { document.getElementById('supervisorTabs').style.display = 'none'; document.getElementById('teacherTabs').style.display = 'block'; loadMySchedule(); loadFolders(); loadMySupervisionList(); }
+  else if (currentUser.role === 'wakil') { document.getElementById('supervisorTabs').style.display = 'block'; document.getElementById('teacherTabs').style.display = 'block'; loadScheduleList(); loadMySchedule(); currentFolderId = null; loadFolderContents(); loadMySupervisionList(); }
+  else { document.getElementById('supervisorTabs').style.display = 'none'; document.getElementById('teacherTabs').style.display = 'block'; loadMySchedule(); currentFolderId = null; loadFolderContents(); loadMySupervisionList(); }
 }
 function getRoleLabel(role){ return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role; }
 window.doLogout = function(){ if(confirm('Apakah Anda yakin ingin keluar?')){ sessionStorage.removeItem('supervisi_user'); currentUser = null; window.location.href = '../index.html'; } };
