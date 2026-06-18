@@ -114,3 +114,44 @@ tr:hover td{background:#f9fafb;}
 .folder-actions .btn-danger:hover{background:#dc2626;}
 .folder-actions button{transition:all 0.2s ease;}
 .folder-actions button:hover{transform:scale(1.1);}
+
+./* ═══ FILE ITEM (dalam folder) ═══ */
+.file-grid-item {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: default;
+  transition: all 0.2s;
+  text-align: center;
+}
+.file-grid-item:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  transform: translateY(-2px);
+}
+.file-grid-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+.file-grid-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.file-grid-meta {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+.file-grid-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.file-grid-actions button {
+  padding: 5px 8px;
+  font-size: 0.75rem;
+}
