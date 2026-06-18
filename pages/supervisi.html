@@ -1927,27 +1927,41 @@ window.saveFolder = async function() {
   }
 };
 
-window.deleteFolder = async function(folderId) {
-  const folder = userFolders.find(f => f.id === folderId);
-  if (!folder) return;
+window.deleteFolder = async function(folderId, folderName, docCount) {
+  // Konfirmasi hapus
+  let confirmMsg = `Hapus folder "${folderName}"?`;
   
-  // Cek apakah folder berisi dokumen
-  const docsSnap = await db.collection('supervision_documents')
-    .where('folderId', '==', folderId)
-    .get();
-  
-  if (!docsSnap.empty) {
-    alert(`❌ Folder "${folder.name}" masih berisi ${docsSnap.size} dokumen.\nPindahkan atau hapus dokumen terlebih dahulu.`);
-    return;
+  if (docCount > 0) {
+    confirmMsg = `️ Folder "${folderName}" masih berisi ${docCount} dokumen.\n\nSemua dokumen di folder ini akan ikut terhapus!\n\nApakah Anda yakin ingin menghapus?`;
   }
   
-  if (!confirm(`Hapus folder "${folder.name}"?`)) return;
+  if (!confirm(confirmMsg)) return;
   
   try {
+    // Jika ada dokumen, hapus semua dokumen di folder ini terlebih dahulu
+    if (docCount > 0) {
+      const docsSnap = await db.collection('supervision_documents')
+        .where('folderId', '==', folderId)
+        .get();
+      
+      // Hapus semua dokumen dalam folder (batch delete)
+      const batch = db.batch();
+      docsSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      
+      console.log(`✅ ${docsSnap.size} dokumen dihapus dari folder`);
+    }
+    
+    // Hapus folder
     await db.collection('supervision_folders').doc(folderId).delete();
+    
     alert('✅ Folder berhasil dihapus!');
-    loadFolders();
+    loadFolders(); // Refresh daftar folder
+    
   } catch(e) {
+    console.error('Error deleting folder:', e);
     alert('❌ Gagal menghapus folder: ' + e.message);
   }
 };
