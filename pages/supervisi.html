@@ -250,6 +250,52 @@ tr:hover td{background:#f9fafb;}
 .folder-actions button:hover {
   transform: scale(1.1);
 }
+  /* ═══ FOLDER GRID (Google Drive Style) ═══ */
+.folder-grid-item {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.folder-grid-item:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  transform: translateY(-2px);
+}
+
+.folder-grid-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.folder-grid-name {
+  font-weight: 700;
+  color: #1e40af;
+  font-size: 1rem;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+
+.folder-grid-count {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.folder-grid-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.folder-grid-actions button {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
 </style>
 </head>
 <body>
@@ -426,100 +472,90 @@ tr:hover td{background:#f9fafb;}
     </div>
 
     <!-- TAB: Upload Dokumen -->
+<!-- TAB: Upload Dokumen (Google Drive Style) -->
 <div id="tabUpload" class="tab-content">
   
-  <!-- BAGIAN FOLDER MANAGEMENT -->
-  <div class="card" style="background:#eff6ff;border:1px solid #dbeafe;margin-bottom:20px;">
-    <h3 style="color:#1e40af;margin-bottom:15px;">📁 Kelola Folder</h3>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;">
+  <!-- Breadcrumb Navigation -->
+  <div id="breadcrumbNav" style="display:none;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#eff6ff;border-radius:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="showFolderList()" style="width:auto;padding:6px 12px;">
+        📁 Semua Folder
+      </button>
+      <span style="color:#6b7280;">›</span>
+      <span id="currentFolderName" style="font-weight:700;color:#1e40af;"></span>
+    </div>
+  </div>
+
+  <!-- VIEW 1: Daftar Folder -->
+  <div id="folderListView">
+    <div class="card" style="background:#eff6ff;border:1px solid #dbeafe;margin-bottom:20px;">
+      <h3 style="color:#1e40af;margin-bottom:15px;">📁 Kelola Folder</h3>
       <button class="btn btn-primary" onclick="openFolderModal()" style="width:auto;padding:10px 20px;">
         ➕ Buat Folder Baru
       </button>
     </div>
-    <div id="folderList" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+
+    <div id="folderGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;"></div>
   </div>
 
-  <!-- BAGIAN UPLOAD DOKUMEN -->
-  <div class="upload-section">
-    <h2>📤 Upload Dokumen Pendukung</h2>
-    <p style="color:#1e40af;font-size:0.9rem;margin-bottom:14px;">
-      Upload RPP, Modul Ajar, Program BK, atau dokumen lain untuk supervisi
-    </p>
-    
-    <div class="form-row">
-      <div class="form-group" style="margin:0;">
-        <label>📁 Pilih Folder *</label>
-        <select id="docFolder" required>
-          <option value="">-- Pilih Folder --</option>
-        </select>
-        <div style="font-size:0.78rem;color:#6b7280;margin-top:4px;">
-          * Buat folder baru jika belum ada
+  <!-- VIEW 2: Isi Folder (File List) -->
+  <div id="folderContentView" style="display:none;">
+    <div class="card" style="background:#eff6ff;border:1px solid #dbeafe;margin-bottom:20px;">
+      <h3 style="color:#1e40af;margin-bottom:15px;">📤 Upload Dokumen ke Folder Ini</h3>
+      <div class="form-row">
+        <div class="form-group" style="margin:0;">
+          <label>📂 Kategori Dokumen *</label>
+          <select id="docKategori">
+            <option value="">Pilih Kategori</option>
+            <option>RPP / Modul Ajar</option>
+            <option>Program Tahunan</option>
+            <option>Program Semester</option>
+            <option>Lembar Kerja Siswa</option>
+            <option>Laporan Kegiatan</option>
+            <option>Program BK</option>
+            <option>Data Siswa</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label> Nama Dokumen *</label>
+          <input type="text" id="docNama" placeholder="Contoh: RPP Sosiologi X.1">
         </div>
       </div>
-      <div class="form-group" style="margin:0;">
-        <label>📂 Kategori Dokumen *</label>
-        <select id="docKategori">
-          <option value="">Pilih Kategori</option>
-          <option>RPP / Modul Ajar</option>
-          <option>Program Tahunan</option>
-          <option>Program Semester</option>
-          <option>Lembar Kerja Siswa</option>
-          <option>Laporan Kegiatan</option>
-          <option>Program BK</option>
-          <option>Data Siswa</option>
-          <option>Lainnya</option>
-        </select>
+      <div class="radio-group">
+        <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()"> 📁 Upload File</label>
+        <label><input type="radio" name="docType" value="link" onchange="toggleDocType()"> 🔗 Link Google Drive</label>
       </div>
+      <div class="warning">️ Maksimal Ukuran File: 5 MB</div>
+      <div id="fileInputWrap">
+        <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+      </div>
+      <div id="linkInputWrap" style="display:none;">
+        <input type="url" id="docLink" placeholder="https://drive.google.com/...">
+      </div>
+      <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc" style="width:auto;padding:12px 30px;margin-top:10px;">
+        💾 Simpan Dokumen
+      </button>
+      <div id="alertUpload" class="alert alert-success"></div>
     </div>
-    
-    <div class="form-group">
-      <label>📝 Nama Dokumen *</label>
-      <input type="text" id="docNama" placeholder="Contoh: RPP Sosiologi X.1 - Semester 1">
-    </div>
-    
-    <div class="radio-group">
-      <label><input type="radio" name="docType" value="file" checked onchange="toggleDocType()"> 📁 Upload File</label>
-      <label><input type="radio" name="docType" value="link" onchange="toggleDocType()"> 🔗 Link Google Drive</label>
-    </div>
-    
-    <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
-    <div id="fileInputWrap">
-      <input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
-    </div>
-    <div id="linkInputWrap" style="display:none;">
-      <input type="url" id="docLink" placeholder="https://drive.google.com/...">
-    </div>
-    
-    <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc" style="width:auto;padding:12px 30px;">
-      💾 Simpan Dokumen
-    </button>
-    <div id="alertUpload" class="alert alert-success"></div>
-  </div>
 
-  <!-- FILTER FOLDER -->
-  <div class="card" style="margin-top:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
-      <h2 class="section-title" style="margin:0;">📂 Dokumen Saya</h2>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <label style="font-weight:600;color:#374151;">Filter Folder:</label>
-        <select id="filterFolder" onchange="loadMyDocs()" style="padding:8px 12px;border:1.5px solid #d1d5db;border-radius:6px;">
-          <option value="">📁 Semua Folder</option>
-        </select>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+        <h2 class="section-title" style="margin:0;">📄 Dokumen dalam Folder</h2>
       </div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Folder</th>
-            <th>Nama Dokumen</th>
-            <th>Kategori</th>
-            <th>Tanggal</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="myDocsList"></tbody>
-      </table>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama Dokumen</th>
+              <th>Kategori</th>
+              <th>Tanggal</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="folderFileList"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -796,26 +832,24 @@ function showDashboard(){
     loadScheduleList();
   }
 
-  // WAKAMAD: Tampilkan KEDUA tab
-  else if (currentUser.role === 'wakil') {
-    document.getElementById('supervisorTabs').style.display = 'block';
-    document.getElementById('teacherTabs').style.display = 'block';
-    loadScheduleList();
-    loadMySchedule();
-    loadFolders();  // ← TAMBAHKAN INI
-    loadMyDocs();
-    loadMySupervisionList();
-  }
+  /// WAKAMAD: Tampilkan KEDUA tab
+else if (currentUser.role === 'wakil') {
+  document.getElementById('supervisorTabs').style.display = 'block';
+  document.getElementById('teacherTabs').style.display = 'block';
+  loadScheduleList();
+  loadMySchedule();
+  showFolderList();  // ← GANTI loadMyDocs() dengan ini
+  loadMySupervisionList();
+}
   
   // GURU: Tampilkan tab teacher saja
-  else {
-    document.getElementById('supervisorTabs').style.display = 'none';
-    document.getElementById('teacherTabs').style.display = 'block';
-    loadMySchedule();
-    loadFolders();  // ← TAMBAHKAN INI
-    loadMyDocs();
-    loadMySupervisionList();
-  }
+else {
+  document.getElementById('supervisorTabs').style.display = 'none';
+  document.getElementById('teacherTabs').style.display = 'block';
+  loadMySchedule();
+  showFolderList();  // ← GANTI dengan ini
+  loadMySupervisionList();
+}
 }
   function getRoleLabel(role){
   return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role;
@@ -1864,7 +1898,356 @@ async function loadMySchedule() {
 // ══════════════════════════════════════════════
 //    UPLOAD DOKUMEN (GURU)
 // ══════════════════════════════════════════════
-window.toggleDocType = function(){
+// ══════════════════════════════════════════════
+//    KELOLA FOLDER (Google Drive Style)
+// ══════════════════════════════════════════════
+let editingFolderId = null;
+let userFolders = [];
+let currentOpenFolderId = null; // Folder yang sedang dibuka
+
+// Tampilkan daftar folder (view utama)
+window.showFolderList = function() {
+  currentOpenFolderId = null;
+  document.getElementById('folderListView').style.display = 'block';
+  document.getElementById('folderContentView').style.display = 'none';
+  document.getElementById('breadcrumbNav').style.display = 'none';
+  loadFolders();
+};
+
+// Buka folder dan tampilkan isinya
+window.openFolder = function(folderId) {
+  currentOpenFolderId = folderId;
+  const folder = userFolders.find(f => f.id === folderId);
+  if (!folder) return;
+  
+  document.getElementById('folderListView').style.display = 'none';
+  document.getElementById('folderContentView').style.display = 'block';
+  document.getElementById('breadcrumbNav').style.display = 'block';
+  document.getElementById('currentFolderName').textContent = folder.name;
+  
+  loadFolderContents(folderId);
+};
+
+// Muat daftar folder
+async function loadFolders() {
+  const container = document.getElementById('folderGrid');
+  container.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;"><span class="spinner"></span> Memuat folder...</div>';
+  
+  try {
+    const snap = await db.collection('supervision_folders')
+      .where('userEmail', '==', currentUser.email)
+      .get();
+    
+    userFolders = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    userFolders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    // Hitung jumlah dokumen per folder
+    const docsSnap = await db.collection('supervision_documents')
+      .where('userEmail', '==', currentUser.email)
+      .get();
+    
+    const folderCounts = {};
+    docsSnap.docs.forEach(d => {
+      const folderId = d.data().folderId;
+      if (folderId) {
+        folderCounts[folderId] = (folderCounts[folderId] || 0) + 1;
+      }
+    });
+    
+    if (userFolders.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:60px;color:#9ca3af;"><div style="font-size:4rem;margin-bottom:10px;">📁</div><p>Belum ada folder. Klik "Buat Folder Baru" untuk memulai.</p></div>';
+      return;
+    }
+    
+    container.innerHTML = userFolders.map(f => {
+      const count = folderCounts[f.id] || 0;
+      return `
+        <div class="folder-grid-item" onclick="openFolder('${f.id}')">
+          <div class="folder-grid-icon">📁</div>
+          <div class="folder-grid-name">${f.name}</div>
+          <div class="folder-grid-count">${count} dokumen</div>
+          <div class="folder-grid-actions">
+            <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openFolderModal('${f.id}')" title="Edit">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFolder('${f.id}', '${f.name.replace(/'/g, "\\'")}', ${count})" title="Hapus">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    
+  } catch(e) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;">❌ Gagal memuat folder: ${e.message}</div>`;
+  }
+}
+
+// Muat isi folder (daftar file)
+async function loadFolderContents(folderId) {
+  const tbody = document.getElementById('folderFileList');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat dokumen...</td></tr>';
+  
+  try {
+    const snap = await db.collection('supervision_documents')
+      .where('userEmail', '==', currentUser.email)
+      .where('folderId', '==', folderId)
+      .get();
+    
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:#9ca3af;"><div style="font-size:3rem;margin-bottom:10px;">📭</div><p>Folder ini kosong. Upload dokumen pertama Anda!</p></td></tr>';
+      return;
+    }
+    
+    const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    docs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    tbody.innerHTML = docs.map(d => {
+      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'');
+      
+      let btnLihat = '';
+      if (d.type === 'link') {
+        btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">️ Lihat</a>`;
+      } else if (d.fileExt === 'pdf') {
+        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">️ Lihat</button>`;
+      } else {
+        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`;
+      }
+      
+      let btnUnduh = '';
+      if (d.type !== 'link') {
+        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">️</button>`;
+      }
+      
+      return `
+        <tr>
+          <td>${icon} ${d.nama}</td>
+          <td>${d.kategori}</td>
+          <td>${new Date(d.createdAt).toLocaleDateString('id-ID')}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${btnLihat}
+              ${btnUnduh}
+              <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:20px;color:#ef4444;">❌ ${e.message}</td></tr>`;
+  }
+}
+
+// Modal folder
+window.openFolderModal = function(folderId = null) {
+  editingFolderId = folderId;
+  const title = document.getElementById('folderModalTitle');
+  const nameInput = document.getElementById('folderName');
+  
+  if (folderId) {
+    title.textContent = '✏️ Edit Folder';
+    const folder = userFolders.find(f => f.id === folderId);
+    if (folder) {
+      nameInput.value = folder.name;
+      document.querySelectorAll('input[name=folderColor]').forEach(radio => {
+        const label = radio.parentElement;
+        const div = label.querySelector('div');
+        if (radio.value === folder.color) {
+          radio.checked = true;
+          div.style.border = '3px solid #1e40af';
+        } else {
+          radio.checked = false;
+          div.style.border = '3px solid transparent';
+        }
+      });
+    }
+  } else {
+    title.textContent = '📁 Buat Folder Baru';
+    nameInput.value = '';
+    document.querySelector('input[name=folderColor][value="#3b82f6"]').checked = true;
+    document.querySelectorAll('input[name=folderColor]').forEach(radio => {
+      const div = radio.parentElement.querySelector('div');
+      div.style.border = radio.value === '#3b82f6' ? '3px solid #1e40af' : '3px solid transparent';
+    });
+  }
+  
+  openModal('folderModal');
+};
+
+// Handle klik warna folder
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('color-option') || e.target.closest('label')?.querySelector('input[name=folderColor]')) {
+    const label = e.target.closest('label');
+    if (label) {
+      const radio = label.querySelector('input[name=folderColor]');
+      if (radio) {
+        radio.checked = true;
+        document.querySelectorAll('input[name=folderColor]').forEach(r => {
+          const div = r.parentElement.querySelector('div');
+          div.style.border = r.checked ? '3px solid #1e40af' : '3px solid transparent';
+        });
+      }
+    }
+  }
+});
+
+// Simpan folder
+window.saveFolder = async function() {
+  const name = document.getElementById('folderName').value.trim();
+  const color = document.querySelector('input[name=folderColor]:checked')?.value || '#3b82f6';
+  
+  if (!name) {
+    alert('❌ Nama folder wajib diisi!');
+    return;
+  }
+  
+  try {
+    if (editingFolderId) {
+      await db.collection('supervision_folders').doc(editingFolderId).update({
+        name: name,
+        color: color,
+        updatedAt: new Date().toISOString()
+      });
+      alert('✅ Folder berhasil diupdate!');
+    } else {
+      await db.collection('supervision_folders').add({
+        name: name,
+        color: color,
+        userEmail: currentUser.email,
+        userName: currentUser.nama,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      alert('✅ Folder berhasil dibuat!');
+    }
+    
+    closeModal('folderModal');
+    
+    // Refresh view yang sedang aktif
+    if (currentOpenFolderId) {
+      loadFolderContents(currentOpenFolderId);
+    } else {
+      loadFolders();
+    }
+    
+  } catch(e) {
+    alert('❌ Gagal menyimpan folder: ' + e.message);
+  }
+};
+
+// Hapus folder
+window.deleteFolder = async function(folderId, folderName, docCount) {
+  let confirmMsg = `Hapus folder "${folderName}"?`;
+  
+  if (docCount > 0) {
+    confirmMsg = `️ Folder "${folderName}" masih berisi ${docCount} dokumen.\n\nSemua dokumen di folder ini akan ikut terhapus!\n\nApakah Anda yakin?`;
+  }
+  
+  if (!confirm(confirmMsg)) return;
+  
+  try {
+    if (docCount > 0) {
+      const docsSnap = await db.collection('supervision_documents')
+        .where('folderId', '==', folderId)
+        .get();
+      
+      const batch = db.batch();
+      docsSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+    }
+    
+    await db.collection('supervision_folders').doc(folderId).delete();
+    alert('✅ Folder berhasil dihapus!');
+    
+    if (currentOpenFolderId === folderId) {
+      showFolderList();
+    } else {
+      loadFolders();
+    }
+    
+  } catch(e) {
+    alert('❌ Gagal menghapus folder: ' + e.message);
+  }
+};
+
+// Upload dokumen (update untuk auto-select folder)
+window.uploadDokumen = async function() {
+  const kategori = document.getElementById('docKategori').value;
+  const nama = document.getElementById('docNama').value.trim();
+  const type = document.querySelector('input[name=docType]:checked').value;
+  const alert = document.getElementById('alertUpload');
+  const btn = document.getElementById('btnUploadDoc');
+  
+  alert.classList.remove('show');
+  
+  if (!currentOpenFolderId) {
+    alert.textContent = '❌ Buka folder terlebih dahulu!';
+    alert.className = 'alert alert-error show';
+    return;
+  }
+  
+  if (!kategori || !nama) {
+    alert.textContent = '❌ Kategori dan nama dokumen wajib diisi!';
+    alert.className = 'alert alert-error show';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  
+  try {
+    let fileData = null, fileExt = '', fileSize = 0, link = '';
+    
+    if (type === 'file') {
+      const file = document.getElementById('docFile').files[0];
+      if (!file) throw new Error('Pilih file terlebih dahulu!');
+      if (file.size > 5*1024*1024) throw new Error('Ukuran file maksimal 5MB!');
+      
+      const reader = new FileReader();
+      fileData = await new Promise((res, rej) => {
+        reader.onload = e => res(e.target.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+      fileExt = file.name.split('.').pop();
+      fileSize = file.size;
+    } else {
+      link = document.getElementById('docLink').value.trim();
+      if (!link) throw new Error('Masukkan link Google Drive!');
+    }
+    
+    const folder = userFolders.find(f => f.id === currentOpenFolderId);
+    
+    await db.collection('supervision_documents').add({
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      userName: currentUser.nama,
+      userRole: currentUser.role,
+      folderId: currentOpenFolderId,
+      folderName: folder?.name || '',
+      kategori, nama,
+      type, fileData, fileExt, fileSize, link,
+      createdAt: new Date().toISOString()
+    });
+    
+    alert.textContent = '✅ Dokumen berhasil disimpan!';
+    alert.className = 'alert alert-success show';
+    
+    document.getElementById('docKategori').value = '';
+    document.getElementById('docNama').value = '';
+    document.getElementById('docFile').value = '';
+    document.getElementById('docLink').value = '';
+    
+    loadFolderContents(currentOpenFolderId);
+    
+  } catch(e) {
+    alert.textContent = '❌ ' + e.message;
+    alert.className = 'alert alert-error show';
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Simpan Dokumen';
+};
+  window.toggleDocType = function(){
   const type = document.querySelector('input[name=docType]:checked').value;
   document.getElementById('fileInputWrap').style.display = type==='file'?'block':'none';
   document.getElementById('linkInputWrap').style.display = type==='link'?'block':'none';
@@ -1873,8 +2256,6 @@ window.toggleDocType = function(){
   // ══════════════════════════════════════════════
 //   📁 KELOLA FOLDER
 // ══════════════════════════════════════════════
-let editingFolderId = null;
-let userFolders = []; // Cache folder user
 
 window.openFolderModal = function(folderId = null) {
   editingFolderId = folderId;
