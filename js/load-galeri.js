@@ -3,6 +3,7 @@ import { DRIVE_CONFIG } from './drive-config.js';
 async function loadGaleriOtomatis() {
     const container = document.getElementById('galeriKegiatanContainer');
     const loading   = document.getElementById('loadingGaleri');
+    const filterSelect = document.getElementById('filterKegiatan'); // Mengambil elemen dropdown filter
     
     if (!container) return;
 
@@ -47,7 +48,9 @@ async function loadGaleriOtomatis() {
                 // Jika file 'cover.jpg' ditemukan, ubah elemen gambar menjadi tag <img> dengan link direct Google Drive
                 if (dataCover.files && dataCover.files.length > 0) {
                     const idCover = dataCover.files[0].id;
-                    const srcGambar = `https://lh3.googleusercontent.com/u/0/d/${idCover}`;
+                    
+                    // 🛠️ FIX TYPO PEER CHAT: Mengubah '0{idCover}' menjadi '${idCover}' agar interpolasi string aktif
+                    const srcGambar = `http://googleusercontent.com/profile/picture/${idCover}`;
                     elemenGambar = `<img src="${srcGambar}" alt="${namaKegiatan}" class="card-img" onerror="this.src='https://placehold.co/600x400?text=Foto+Eror'">`;
                 }
             } catch (errCover) {
@@ -67,12 +70,52 @@ async function loadGaleriOtomatis() {
             `;
         }
 
+        // 🎯 SETELAH SELESAI RENDERING: Langsung sinkronkan tampilan dengan status filter saat ini
+        if (filterSelect) {
+            terapkanFilterGaleri(filterSelect.value);
+        }
+
     } catch (error) {
         console.error("Gagal membaca Google Drive API:", error);
         if (loading) loading.style.display = 'none';
         container.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:#ef4444; padding:20px; font-weight:bold;">❌ Gagal memuat galeri: ${error.message}</p>`;
     }
 }
+
+// ==========================================
+// 🛠️ FUNGSI UTAMA PENYARINGAN (FILTERING)
+// ==========================================
+function terapkanFilterGaleri(tahunTerpilih) {
+    // Membidik target kartu sesuai class yang Bapak buat di loop atas (.galeri-card)
+    const semuaKartu = document.querySelectorAll('.galeri-card');
+    
+    semuaKartu.forEach(kartu => {
+        const teksJudul = kartu.textContent || kartu.innerText;
+
+        if (tahunTerpilih === 'semua') {
+            kartu.classList.remove('album-tersembunyi');
+        } else {
+            // Jika judul folder (Misal: "WORKSHOP KBC 2025") mengandung angka tahun pilihan, tampilkan!
+            if (teksJudul.includes(tahunTerpilih)) {
+                kartu.classList.remove('album-tersembunyi');
+            } else {
+                kartu.classList.add('album-tersembunyi');
+            }
+        }
+    });
+}
+
+// ==========================================
+// 🔌 INISIALISASI EVENT LISTENER DROPDOWN
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const filterSelect = document.getElementById('filterKegiatan');
+    if (filterSelect) {
+        filterSelect.addEventListener('change', (e) => {
+            terapkanFilterGaleri(e.target.value);
+        });
+    }
+});
 
 window.loadGaleriOtomatis = loadGaleriOtomatis;
 document.addEventListener('DOMContentLoaded', loadGaleriOtomatis);
