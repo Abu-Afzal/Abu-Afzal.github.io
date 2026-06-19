@@ -3,7 +3,7 @@ import { DRIVE_CONFIG } from './drive-config.js';
 async function loadGaleriOtomatis() {
     const container = document.getElementById('galeriKegiatanContainer');
     const loading   = document.getElementById('loadingGaleri');
-    const filterSelect = document.getElementById('filterKegiatan'); // Mengambil elemen dropdown filter
+    const filterSelect = document.getElementById('filterKegiatan');
     
     if (!container) return;
 
@@ -11,7 +11,7 @@ async function loadGaleriOtomatis() {
         if (loading) loading.style.display = 'block';
         container.innerHTML = '';
 
-        // 1. Ambil daftar sub-folder kegiatan
+        // 1. Ambil daftar sub-folder kegiatan dari Google Drive
         const queryDrive = `'${DRIVE_CONFIG.FOLDER_ID_UTAMA}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
         const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(queryDrive)}&orderBy=createdTime%20desc&fields=files(id,name)&key=${DRIVE_CONFIG.DRIVE_CONFIG ? DRIVE_CONFIG.DRIVE_CONFIG.API_KEY : DRIVE_CONFIG.API_KEY}`;
 
@@ -33,31 +33,31 @@ async function loadGaleriOtomatis() {
             const linkDriveFolder = `https://drive.google.com/drive/folders/${folder.id}?usp=sharing`;
             const namaKegiatan    = folder.name;
             
-            // Default gambar jika guru belum mengunggah file cover.jpg (menggunakan gradasi elegan)
+            // Default placeholder berupa folder gradasi jika file 'cover.jpg' absen
             let gambarSampul = `background: linear-gradient(135deg, #4f46e5, #9333ea); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem;`;
             let elemenGambar = `<div class="card-image-placeholder" style="${gambarSampul}">📂</div>`;
 
             try {
-                // Query untuk mencari file bernama 'cover.jpg' di dalam folder kegiatan terkait
+                // Query pencarian file 'cover.jpg' di dalam sub-folder terkait
                 const queryCover = `'${folder.id}' in parents and name = 'cover.jpg' and trashed = false`;
                 const urlCover = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(queryCover)}&fields=files(id)&key=${DRIVE_CONFIG.API_KEY}`;
                 
                 const resCover = await fetch(urlCover);
                 const dataCover = await resCover.json();
                 
-                // Jika file 'cover.jpg' ditemukan, ubah elemen gambar menjadi tag <img> dengan link direct Google Drive
+                // Jika file 'cover.jpg' terdeteksi, tembak langsung ke sistem render thumbnail Google Drive
                 if (dataCover.files && dataCover.files.length > 0) {
                     const idCover = dataCover.files[0].id;
                     
-                    // 🛠️ FIX TYPO PEER CHAT: Mengubah '0{idCover}' menjadi '${idCover}' agar interpolasi string aktif
-                    const srcGambar = `http://googleusercontent.com/profile/picture/${idCover}`;
+                    // 👑 SOLUSI UTAMA: Menggunakan URL resmi Thumbnail Google Drive dengan resolusi lebar (sz=w800)
+                    const srcGambar = `https://drive.google.com/thumbnail?sz=w800&id=${idCover}`;
                     elemenGambar = `<img src="${srcGambar}" alt="${namaKegiatan}" class="card-img" onerror="this.src='https://placehold.co/600x400?text=Foto+Eror'">`;
                 }
             } catch (errCover) {
                 console.error("Gagal memuat cover untuk folder " + namaKegiatan, errCover);
             }
 
-            // Suntikkan kartu ke dalam grid container
+            // Suntikkan kartu dengan susunan DOM terstruktur
             container.innerHTML += `
                 <a href="${linkDriveFolder}" target="_blank" class="galeri-card">
                     <div class="card-image-wrapper">
@@ -70,7 +70,7 @@ async function loadGaleriOtomatis() {
             `;
         }
 
-        // 🎯 SETELAH SELESAI RENDERING: Langsung sinkronkan tampilan dengan status filter saat ini
+        // Jalankan sinkronisasi filter saat data beres dimuat
         if (filterSelect) {
             terapkanFilterGaleri(filterSelect.value);
         }
@@ -83,10 +83,9 @@ async function loadGaleriOtomatis() {
 }
 
 // ==========================================
-// 🛠️ FUNGSI UTAMA PENYARINGAN (FILTERING)
+// 🛠️ FUNGSI FILTERING KARTU ALBUM
 // ==========================================
 function terapkanFilterGaleri(tahunTerpilih) {
-    // Membidik target kartu sesuai class yang Bapak buat di loop atas (.galeri-card)
     const semuaKartu = document.querySelectorAll('.galeri-card');
     
     semuaKartu.forEach(kartu => {
@@ -95,7 +94,6 @@ function terapkanFilterGaleri(tahunTerpilih) {
         if (tahunTerpilih === 'semua') {
             kartu.classList.remove('album-tersembunyi');
         } else {
-            // Jika judul folder (Misal: "WORKSHOP KBC 2025") mengandung angka tahun pilihan, tampilkan!
             if (teksJudul.includes(tahunTerpilih)) {
                 kartu.classList.remove('album-tersembunyi');
             } else {
@@ -106,7 +104,7 @@ function terapkanFilterGaleri(tahunTerpilih) {
 }
 
 // ==========================================
-// 🔌 INISIALISASI EVENT LISTENER DROPDOWN
+// 🔌 EVENT LISTENER DROPDOWN FILTER
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const filterSelect = document.getElementById('filterKegiatan');
