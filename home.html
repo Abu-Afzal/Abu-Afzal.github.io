@@ -114,6 +114,32 @@
 .album-tersembunyi {
     display: none !important;
 }
+        /* ==================================================================== */
+/* 🗜️ KODE PENYELARAS JARAK (ANTI-RENGGANG)                             */
+/* ==================================================================== */
+
+/* 1. Pangkas jarak atas pada section galeri */
+.galeri-album-section {
+    padding-top: 20px !important;    /* Diubah dari 60px menjadi 20px agar naik ke atas */
+    padding-bottom: 60px !important; /* Jarak bawah biarkan tetap longgar */
+}
+
+/* 2. Hilangkan margin bawaan di atas teks "Galeri Kegiatan MAN Bantaeng" */
+.galeri-album-section h2,
+.galeri-album-section .section-title,
+.galeri-album-section h1 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* 3. Pangkas jarak bawah dari section berita / tombol "Lihat Semua Berita" */
+/* (Ganti '.berita-section' sesuai dengan nama class pembungkus area berita Bapak jika berbeda) */
+.berita-section, 
+.news-section, 
+#berita {
+    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
+}
     </style>
 </head>
 <body>
