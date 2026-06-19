@@ -14,81 +14,86 @@
     <!-- ==================================================================== -->
     <style>
         .galeri-album-section {
-            padding: 50px 0;
+            padding: 60px 0;
             background-color: #f8fafc;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .galeri-filter-wrapper {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
         }
         .galeri-select-filter {
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 0.95rem;
             color: #334155;
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
-            border-radius: 8px;
+            border-radius: 50px; /* Membuat filter elips elegan */
             outline: none;
             cursor: pointer;
-            min-width: 260px;
+            min-width: 280px;
             text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
         
-        /* 1. MEMAKSA CONTAINER MENJADI GRID 5 KOLOM (DESKTOP) */
+        /* 1. GRID UTAMA: 4 KOLOM PRESISI (SEPERTI CONTOH LUWU) */
         #galeriKegiatanContainer {
             display: grid !important;
-            grid-template-columns: repeat(5, 1fr) !important;
-            gap: 20px !important;
-            margin-top: 25px !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 25px !important;
+            margin-top: 30px !important;
         }
 
-        /* 2. MEMAKSA SETIAP ITEM YANG DIHASILKAN SCRIPT MENJADI KARTU ALBUM MEMBULAT */
+        /* 2. KARTU ALBUM VERTIKAL (MEMAKSA ELEMEN MENUMPUK KE BAWAH) */
         #galeriKegiatanContainer > div, 
-        #galeriKegiatanContainer .galeri-item,
-        #galeriKegiatanContainer .album-card {
-            background: #ffffff !important;
-            border-radius: 14px !important;
-            overflow: hidden !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04) !important;
-            border: 1px solid #e2e8f0 !important;
-            transition: transform 0.25s ease !important;
+        #galeriKegiatanContainer > a,
+        #galeriKegiatanContainer .galeri-item {
             display: flex !important;
-            flex-direction: column !important;
-            cursor: pointer !important;
-        }
-        #galeriKegiatanContainer > div:hover {
-            transform: translateY(-4px) !important;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
-        }
-
-        /* 3. MENGUNCI UKURAN GAMBAR AGAR TIDAK JEBOL MEMENUHI LAYAR */
-        #galeriKegiatanContainer img {
-            width: 100% !important;
-            height: 150px !important; /* Mengunci tinggi gambar mini di desktop */
-            object-fit: cover !important;
-            display: block !important;
+            flex-direction: column !important; /* PENTING: Memaksa teks turun ke bawah foto */
+            background: #ffffff !important;
+            border-radius: 18px !important; /* Sudut melengkung halus premium */
+            overflow: hidden !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important; /* Shadow lembut ala Luwu */
+            border: 1px solid #e2e8f0 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            text-decoration: none !important;
+            height: 100% !important;
         }
         
-        /* 4. MEMBERSIHKAN LINK BIRU GARIS BAWAH MENJADI TEKS TEBAL ALBUM */
+        /* Efek Hover Mengangkat Kartu */
+        #galeriKegiatanContainer > div:hover,
+        #galeriKegiatanContainer > a:hover {
+            transform: translateY(-6px) !important;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.09) !important;
+        }
+
+        /* 3. FOTO DIATUR PENUH DI ATAS BARIS PERTAMA */
+        #galeriKegiatanContainer img {
+            width: 100% !important;
+            height: 170px !important; /* Mengunci tinggi foto agar seragam */
+            object-fit: cover !important;
+            display: block !important;
+            order: 1 !important; /* Garansi posisi foto selalu paling atas */
+        }
+        
+        /* 4. JUDUL DI BAWAH FOTO (BERSIH, TANPA LINK BIRU, HURUF KAPITAL) */
         #galeriKegiatanContainer a,
         #galeriKegiatanContainer span,
         #galeriKegiatanContainer p {
-            padding: 15px 10px !important;
+            order: 2 !important; /* Garansi posisi teks selalu di bawah foto */
+            padding: 20px 15px !important;
             text-align: center !important;
-            font-size: 0.85rem !important;
+            font-size: 0.88rem !important;
             font-weight: 700 !important;
-            color: #334155 !important;
-            text-decoration: none !important; /* Menghilangkan garis bawah biru di screenshot */
-            text-transform: uppercase !important; /* Otomatis huruf kapital */
+            color: #1e293b !important; /* Warna abu-abu gelap elegan */
+            text-decoration: none !important; 
+            text-transform: uppercase !important; /* Otomatis Kapital seperti Luwu */
+            letter-spacing: 0.3px !important;
+            line-height: 1.5 !important;
             background: #ffffff !important;
-            border-top: 1px solid #f1f5f9 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            line-height: 1.4 !important;
-            flex-grow: 1 !important;
+            margin: 0 !important;
+            display: block !important;
         }
 
         @keyframes spin {
@@ -96,23 +101,14 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 5. RESPONSIVITAS LAYAR HP AGAR JADI 2 KOLOM MINI (TIDAK MEMENUHI LAYAR) */
-        @media (max-width: 1024px) {
+        /* 5. RESPONSIVITAS MOBILE (OTOMATIS MENYESUAIKAN LAYAR HP) */
+        @media (max-width: 1200px) {
             #galeriKegiatanContainer { grid-template-columns: repeat(3, 1fr) !important; }
         }
-        @media (max-width: 640px) {
-            #galeriKegiatanContainer { 
-                grid-template-columns: repeat(2, 1fr) !important; /* Tampilan 2 kolom berdampingan di HP */
-                gap: 12px !important; 
-            }
-            #galeriKegiatanContainer img { 
-                height: 115px !important; /* Ukuran gambar dikecilkan proporsional di HP */
-            }
-            #galeriKegiatanContainer a,
-            #galeriKegiatanContainer span {
-                font-size: 0.75rem !important;
-                padding: 10px 6px !important;
-            }
+        @media (max-width: 768px) {
+            #galeriKegiatanContainer { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+            #galeriKegiatanContainer img { height: 130px !important; }
+            #galeriKegiatanContainer a, #galeriKegiatanContainer span { font-size: 0.78rem !important; padding: 12px 8px !important; }
         }
     </style>
 </head>
