@@ -77,7 +77,23 @@ tr:hover td{background:#f9fafb;}
 .toast-ok{background:#10b981 !important;}
 .toast-err{background:#ef4444 !important;}
 
-/* ═══ PERIODE BADGE ═══ */
+/* ═══ UPLOAD JADWAL GAMBAR ═══ */
+.upload-jadwal-area{background:#eff6ff;border:2px dashed #3b82f6;border-radius:12px;padding:30px 20px;text-align:center;transition:all .2s;}
+.upload-jadwal-area:hover{background:#dbeafe;border-color:#2563eb;}
+.upload-icon{font-size:4rem;margin-bottom:10px;}
+.upload-title{color:#1e40af;font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+.upload-desc{color:#6b7280;font-size:0.88rem;margin-bottom:14px;}
+.jadwal-preview-wrap{position:relative;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:16px;overflow:hidden;}
+.jadwal-preview-wrap img{max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;cursor:zoom-in;transition:transform .2s;}
+.jadwal-preview-wrap img:hover{transform:scale(1.02);}
+.jadwal-actions{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+.jadwal-info{margin-top:12px;padding:10px;background:#f9fafb;border-radius:8px;font-size:0.82rem;color:#6b7280;text-align:center;}
+.zoom-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
+.zoom-modal.active{display:flex;}
+.zoom-modal img{max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;}
+.zoom-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;width:44px;height:44px;border-radius:50%;font-size:1.5rem;cursor:pointer;transition:background .2s;}
+.zoom-close:hover{background:rgba(255,255,255,0.3);}
+
 .periode-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:0.72rem;font-weight:600;}
 .periode-active{background:#dcfce7;color:#166534;}
 .periode-expired{background:#fee2e2;color:#991b1b;}
@@ -110,7 +126,7 @@ tr:hover td{background:#f9fafb;}
 
   <!-- ALARM SETTINGS -->
   <div class="content-card">
-    <div class="section-title">🔔 Pengaturan Alarm</div>
+    <div class="section-title"> Pengaturan Alarm</div>
     <div class="alarm-box">
       <div class="alarm-row">
         <div style="flex:1;min-width:220px;">
@@ -118,7 +134,7 @@ tr:hover td{background:#f9fafb;}
           <div class="alarm-desc">Sistem akan membunyikan alarm dan mengucapkan pengingat suara tepat saat jam mengajar Anda tiba.</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="alarm-status off" id="alarmStatusBadge">🔕 Nonaktif</span>
+          <span class="alarm-status off" id="alarmStatusBadge"> Nonaktif</span>
           <label class="toggle">
             <input type="checkbox" id="toggleAlarm">
             <span class="toggle-slider"></span>
@@ -129,7 +145,7 @@ tr:hover td{background:#f9fafb;}
         <div class="alarm-desc">Izinkan notifikasi browser agar pengingat tetap muncul walau Anda sedang membuka tab lain.</div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span id="notifPermStatus" style="font-size:0.85rem;color:#6b7280;font-weight:600;">Belum diizinkan</span>
-          <button class="btn btn-secondary btn-sm" id="btnNotifPerm"> Izinkan Notifikasi</button>
+          <button class="btn btn-secondary btn-sm" id="btnNotifPerm">🔔 Izinkan Notifikasi</button>
         </div>
       </div>
       <div class="alarm-row">
@@ -139,24 +155,62 @@ tr:hover td{background:#f9fafb;}
     </div>
   </div>
 
-  <!-- JADWAL MENGAJAR -->
+  <!-- ═══ UPLOAD JADWAL MENGAJAR (GAMBAR) ═══ -->
   <div class="content-card">
-    <div class="section-title">📅 Jadwal Mengajar</div>
+    <div class="section-title"> Jadwal Mengajar Saya (Gambar)</div>
+    
+    <!-- Upload Area -->
+    <div id="uploadJadwalArea">
+      <div class="upload-jadwal-area" id="dropZone">
+        <div class="upload-icon">📤</div>
+        <div class="upload-title">Upload Gambar Jadwal Mengajar</div>
+        <div class="upload-desc">
+          Drag & drop gambar di sini, atau klik tombol di bawah<br>
+          Format: JPG, PNG • Maksimal: 5 MB<br>
+          <small style="color:#9ca3af;">Gambar akan dikompres otomatis untuk menghemat ruang</small>
+        </div>
+        <input type="file" id="inputJadwalFile" accept="image/jpeg,image/png,image/jpg" style="display:none;">
+        <button class="btn btn-primary" onclick="document.getElementById('inputJadwalFile').click()" style="width:auto;">
+          📁 Pilih Gambar Jadwal
+        </button>
+        <div id="jadwalUploadProgress" style="display:none;margin-top:14px;">
+          <div class="spinner" style="width:24px;height:24px;"></div>
+          <span style="margin-left:8px;color:#6b7280;">Mengompres & mengupload gambar...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Area -->
+    <div id="previewJadwalArea" style="display:none;">
+      <div class="jadwal-preview-wrap">
+        <img id="jadwalPreviewImg" src="" alt="Jadwal Mengajar" onclick="openZoomModal(this.src)">
+        <div class="jadwal-actions">
+          <button class="btn btn-warning btn-sm" onclick="document.getElementById('inputJadwalFile').click()">✏️ Ganti Gambar</button>
+          <button class="btn btn-primary btn-sm" onclick="openZoomModal(document.getElementById('jadwalPreviewImg').src)">🔍 Perbesar</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusJadwalMengajar()">🗑️ Hapus</button>
+        </div>
+        <div class="jadwal-info" id="jadwalInfoText"></div>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;">
+        <strong style="color:#92400e;">💡 Tips:</strong>
+        <span style="color:#78350f;font-size:0.9rem;">Gunakan jadwal ini sebagai referensi saat membuat alarm. Klik gambar untuk memperbesar.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- JADWAL MENGAJAR (TABLE) -->
+  <div class="content-card">
+    <div class="section-title">📅 Jadwal Mengajar (Alarm)</div>
     <div class="date-bar" id="currentDate"></div>
     
     <!-- Info Periode -->
     <div id="periodeInfo" style="background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.9rem;color:#1e40af;display:none;">
-      <strong> Info Periode:</strong> <span id="periodeText">-</span>
+      <strong>ℹ️ Info Periode:</strong> <span id="periodeText">-</span>
     </div>
     
     <div class="action-bar">
-      <button class="btn btn-primary" id="btnTambahJadwal">➕ Tambah Jadwal</button>
-      <button class="btn btn-success" id="btnTerapkanSemua" title="Terapkan semua jadwal ke periode tertentu">
-        📆 Terapkan ke Semua Pekan
-      </button>
-      <button class="btn btn-secondary" id="btnCopyPekan" title="Copy jadwal ke pekan berikutnya">
-        📋 Copy ke Pekan Berikutnya
-      </button>
+      <button class="btn btn-primary" id="btnTambahJadwal"> Tambah Jadwal</button>
+      <button class="btn btn-success" id="btnTerapkanSemua" title="Terapkan semua jadwal ke periode tertentu"> Terapkan ke Semua Pekan</button>
     </div>
     
     <div class="tbl-wrap">
@@ -187,49 +241,37 @@ tr:hover td{background:#f9fafb;}
     <div class="modal-title" id="modalJadwalTitle">📅 Tambah Jadwal Mengajar</div>
     <input type="hidden" id="jadwalEditKey">
     <div class="fr2">
-      <div class="fg">
-        <label>Hari *</label>
+      <div class="fg"><label>Hari *</label>
         <select id="inputHari">
           <option>Senin</option><option>Selasa</option><option>Rabu</option>
           <option>Kamis</option><option>Jumat</option><option>Sabtu</option>
         </select>
       </div>
-      <div class="fg">
-        <label>Kelas *</label>
-        <select id="inputJadwalKelas"></select>
-      </div>
+      <div class="fg"><label>Kelas *</label><select id="inputJadwalKelas"></select></div>
     </div>
     <div class="fr2">
       <div class="fg"><label>Jam Mulai *</label><input type="time" id="inputJamMulai"></div>
       <div class="fg"><label>Jam Selesai</label><input type="time" id="inputJamSelesai"></div>
     </div>
     <div class="fr2">
-      <div class="fg"><label>Mata Pelajaran</label><input type="text" id="inputMapel" placeholder="Matematika, Bahasa Indonesia..."></div>
-      <div class="fg"><label>Ruang</label><input type="text" id="inputRuang" placeholder="Ruang 12, Lab..."></div>
+      <div class="fg"><label>Mata Pelajaran</label><input type="text" id="inputMapel" placeholder="Matematika..."></div>
+      <div class="fg"><label>Ruang</label><input type="text" id="inputRuang" placeholder="Ruang 12..."></div>
     </div>
     <div class="fg"><label>Materi / Topik</label><input type="text" id="inputMateri" placeholder="Topik yang akan diajarkan"></div>
     
     <!-- PERIODE BERLAKU -->
     <div style="background:#fef3c7;border:1px solid #fde047;border-radius:8px;padding:12px;margin-top:10px;">
-      <div style="font-weight:700;color:#92400e;margin-bottom:8px;">📆 Periode Berlaku</div>
+      <div style="font-weight:700;color:#92400e;margin-bottom:8px;"> Periode Berlaku</div>
       <div class="fr2">
-        <div class="fg" style="margin-bottom:8px;">
-          <label>Berlaku Mulai *</label>
-          <input type="date" id="inputPeriodeMulai">
-        </div>
-        <div class="fg" style="margin-bottom:8px;">
-          <label>Berlaku Sampai *</label>
-          <input type="date" id="inputPeriodeSampai">
-        </div>
+        <div class="fg" style="margin-bottom:8px;"><label>Berlaku Mulai *</label><input type="date" id="inputPeriodeMulai"></div>
+        <div class="fg" style="margin-bottom:8px;"><label>Berlaku Sampai *</label><input type="date" id="inputPeriodeSampai"></div>
       </div>
-      <div style="font-size:0.8rem;color:#78350f;">
-        💡 <strong>Tips:</strong> Setting sekali untuk seluruh semester. Contoh: 1 Juli 2025 - 31 Desember 2025
-      </div>
+      <div style="font-size:0.8rem;color:#78350f;"> <strong>Tips:</strong> Setting sekali untuk seluruh semester. Contoh: 1 Juli 2025 - 31 Desember 2025</div>
     </div>
     
     <div class="modal-foot">
       <button class="btn btn-secondary" id="btnBatalJadwal">Batal</button>
-      <button class="btn btn-primary" id="btnSimpanJadwal">💾 Simpan</button>
+      <button class="btn btn-primary" id="btnSimpanJadwal"> Simpan</button>
     </div>
   </div>
 </div>
@@ -240,23 +282,14 @@ tr:hover td{background:#f9fafb;}
     <div class="modal-title">📆 Terapkan Periode ke Semua Jadwal</div>
     <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:14px;margin-bottom:16px;">
       <div style="font-weight:700;color:#1e40af;margin-bottom:6px;"> Fitur Cepat</div>
-      <div style="font-size:0.88rem;color:#6b7280;">
-        Set periode berlaku untuk <strong>SEMUA jadwal</strong> Anda sekaligus. 
-        Cocok untuk setting awal semester.
-      </div>
+      <div style="font-size:0.88rem;color:#6b7280;">Set periode berlaku untuk <strong>SEMUA jadwal</strong> Anda sekaligus. Cocok untuk setting awal semester.</div>
     </div>
     <div class="fr2">
-      <div class="fg">
-        <label>Berlaku Mulai *</label>
-        <input type="date" id="applyPeriodeMulai">
-      </div>
-      <div class="fg">
-        <label>Berlaku Sampai *</label>
-        <input type="date" id="applyPeriodeSampai">
-      </div>
+      <div class="fg"><label>Berlaku Mulai *</label><input type="date" id="applyPeriodeMulai"></div>
+      <div class="fg"><label>Berlaku Sampai *</label><input type="date" id="applyPeriodeSampai"></div>
     </div>
     <div style="background:#fef3c7;border-radius:8px;padding:12px;margin-top:10px;font-size:0.85rem;color:#78350f;">
-      <strong>⚠️ Perhatian:</strong> Tindakan ini akan mengubah periode semua jadwal mengajar Anda. Jadwal yang sudah expired akan diaktifkan kembali.
+      <strong>⚠️ Perhatian:</strong> Tindakan ini akan mengubah periode semua jadwal mengajar Anda.
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal('modalTerapkanSemua')">Batal</button>
@@ -265,29 +298,10 @@ tr:hover td{background:#f9fafb;}
   </div>
 </div>
 
-<!-- MODAL: COPY KE PEKAN BERIKUTNYA -->
-<div class="modal" id="modalCopyPekan">
-  <div class="modal-box">
-    <div class="modal-title">📋 Copy Jadwal ke Pekan Berikutnya</div>
-    <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:14px;margin-bottom:16px;">
-      <div style="font-weight:700;color:#1e40af;margin-bottom:6px;">🔄 Duplikasi Jadwal</div>
-      <div style="font-size:0.88rem;color:#6b7280;">
-        Copy semua jadwal hari ini ke <strong>pekan berikutnya</strong> dengan periode yang sama.
-        Berguna jika ada perubahan jadwal mingguan.
-      </div>
-    </div>
-    <div class="fg">
-      <label>Pekan Target (Senin pekan target)</label>
-      <input type="date" id="copyTargetDate">
-      <div style="font-size:0.8rem;color:#6b7280;margin-top:4px;">
-        Default: Senin pekan depan
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" onclick="closeModal('modalCopyPekan')">Batal</button>
-      <button class="btn btn-primary" id="btnConfirmCopy">📋 Copy Jadwal</button>
-    </div>
-  </div>
+<!-- MODAL: ZOOM GAMBAR -->
+<div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
+  <button class="zoom-close" onclick="closeZoomModal()">&times;</button>
+  <img id="zoomModalImg" src="" alt="Zoom">
 </div>
 
 <script>
@@ -308,8 +322,9 @@ const db = firebase.database();
 
 const ROOT_JADWAL = db.ref("jadwal_alarm");
 const ROOT_SIPENA = db.ref("sipena2");
+const ROOT_JADWAL_GAMBAR = db.ref("jadwal_gambar");
 
-// ═════════════════════════════════════════════
+// ══════════════════════════════════════════════
 //                   STATE
 // ══════════════════════════════════════════════
 let currentUser   = '';
@@ -321,15 +336,14 @@ let _alarmLastFiredKey = null;
 
 // ══════════════════════════════════════════════
 //                  HELPERS
-// ═════════════════════════════════════════════
+// ══════════════════════════════════════════════
 function toArr(val){ return val ? Object.keys(val).map(k=>({__key:k,...val[k]})) : []; }
 function nowISO(){ return new Date().toISOString(); }
 
 function toast(msg, type='ok'){
   const t=document.createElement('div');
   t.className = type==='ok' ? 'toast-ok' : 'toast-err';
-  t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;
-    color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:opacity .3s;`;
+  t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:opacity .3s;`;
   t.textContent=msg; document.body.appendChild(t);
   setTimeout(()=>t.style.opacity='0',2500);
   setTimeout(()=>t.remove(),2900);
@@ -343,28 +357,21 @@ function formatDateID(dateStr){
   return new Date(dateStr).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
 }
 
-// Cek apakah tanggal hari ini dalam periode jadwal
 function isJadwalActive(jadwal){
-  if(!jadwal.periode_mulai || !jadwal.periode_sampai) return true; // Jika tidak ada periode, anggap aktif
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  if(!jadwal.periode_mulai || !jadwal.periode_sampai) return true;
+  const today = new Date(); today.setHours(0,0,0,0);
   const mulai = new Date(jadwal.periode_mulai);
   const sampai = new Date(jadwal.periode_sampai);
   return today >= mulai && today <= sampai;
 }
 
-// Hitung status periode
 function getPeriodeStatus(jadwal){
   if(!jadwal.periode_mulai || !jadwal.periode_sampai) return {text:'Tanpa Batas', class:'badge-blue'};
-  const today = new Date();
-  today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0,0,0,0);
   const mulai = new Date(jadwal.periode_mulai);
   const sampai = new Date(jadwal.periode_sampai);
-  
   if(today < mulai) return {text:'Belum Aktif', class:'badge-gray'};
   if(today > sampai) return {text:'Expired', class:'badge-red'};
-  
-  // Hitung sisa hari
   const sisaHari = Math.ceil((sampai - today) / (1000 * 60 * 60 * 24));
   if(sisaHari <= 7) return {text:`${sisaHari} hari lagi`, class:'periode-soon'};
   return {text:'Aktif', class:'periode-active'};
@@ -380,13 +387,106 @@ function initApp(){
   } catch(e){ currentUser='guru'; }
 
   document.getElementById('userDisplay').textContent = currentUser;
-  document.getElementById('currentDate').textContent =
-    '📅 ' + new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
   loadAlarmPref();
   initFirebaseListeners();
   bindEvents();
   initAlarmEngine();
+  loadJadwalGambar();
+  initDragDrop();
+}
+
+// ══════════════════════════════════════════════
+//        UPLOAD JADWAL GAMBAR (BASE64 + RTDB)
+// ══════════════════════════════════════════════
+function loadJadwalGambar(){
+  const uploadArea = document.getElementById('uploadJadwalArea');
+  const previewArea = document.getElementById('previewJadwalArea');
+  const previewImg = document.getElementById('jadwalPreviewImg');
+  const infoText = document.getElementById('jadwalInfoText');
+
+  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).on('value', snap => {
+    const data = snap.val();
+    if(data && data.base64){
+      previewImg.src = data.base64;
+      uploadArea.style.display = 'none';
+      previewArea.style.display = 'block';
+      const uploadedAt = data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('id-ID') : '-';
+      const sizeKB = data.sizeKB ? data.sizeKB.toFixed(1) : '?';
+      infoText.innerHTML = ` Diupload: <strong>${uploadedAt}</strong> • 📦 Ukuran: <strong>${sizeKB} KB</strong> (sudah dikompres)`;
+    } else {
+      uploadArea.style.display = 'block';
+      previewArea.style.display = 'none';
+    }
+  });
+}
+
+function sanitizeEmail(email){ return email.replace(/[.#$\[\]]/g, '_'); }
+
+function compressImage(file, maxWidth = 1000, quality = 0.75){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width, height = img.height;
+        if(width > maxWidth){ height = (height * maxWidth) / width; width = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleJadwalFile(file){
+  if(!file) return;
+  if(!['image/jpeg','image/png','image/jpg'].includes(file.type)){ toast('❌ Format harus JPG atau PNG','err'); return; }
+  if(file.size > 5 * 1024 * 1024){ toast('❌ Ukuran maksimal 5 MB','err'); return; }
+  
+  const progressDiv = document.getElementById('jadwalUploadProgress');
+  progressDiv.style.display = 'flex'; progressDiv.style.alignItems = 'center'; progressDiv.style.justifyContent = 'center';
+  
+  try {
+    const base64 = await compressImage(file, 1000, 0.75);
+    const sizeKB = (base64.length * 0.75) / 1024;
+    if(sizeKB > 5000){ toast('❌ Gambar terlalu besar setelah kompresi','err'); progressDiv.style.display = 'none'; return; }
+    
+    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).set({
+      base64: base64, fileName: file.name, originalSizeKB: (file.size / 1024).toFixed(1),
+      sizeKB: sizeKB.toFixed(1), uploadedAt: nowISO(), uploadedBy: currentUser
+    });
+    toast('✅ Jadwal berhasil diupload!');
+  } catch(err){ toast('❌ Gagal upload: ' + err.message,'err'); }
+  finally {
+    progressDiv.style.display = 'none';
+    document.getElementById('inputJadwalFile').value = '';
+  }
+}
+
+window.hapusJadwalMengajar = async function(){
+  if(!confirm('⚠️ Hapus gambar jadwal mengajar Anda?')) return;
+  try { await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).remove(); toast('✅ Gambar jadwal dihapus'); }
+  catch(err){ toast('❌ Gagal menghapus: ' + err.message,'err'); }
+};
+
+window.openZoomModal = function(src){ document.getElementById('zoomModalImg').src = src; document.getElementById('zoomModal').classList.add('active'); };
+window.closeZoomModal = function(){ document.getElementById('zoomModal').classList.remove('active'); };
+
+function initDragDrop(){
+  const dropZone = document.getElementById('dropZone');
+  if(!dropZone) return;
+  ['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); }));
+  ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); }));
+  dropZone.addEventListener('drop', e => { const file = e.dataTransfer.files[0]; if(file) handleJadwalFile(file); });
 }
 
 // ══════════════════════════════════════════════
@@ -394,95 +494,54 @@ function initApp(){
 // ══════════════════════════════════════════════
 function initFirebaseListeners(){
   ROOT_SIPENA.on('value', snap=>{
-    const all = toArr(snap.val());
-    daftarKelas = all.filter(d=>d.type==='class' && d.user_name===currentUser);
+    daftarKelas = toArr(snap.val()).filter(d=>d.type==='class' && d.user_name===currentUser);
     populateKelasSelect();
-  }, err=>{
-    console.error(err);
-    toast('Gagal memuat daftar kelas dari SIPENA','err');
   });
-
   ROOT_JADWAL.on('value', snap=>{
-    const all = toArr(snap.val());
-    daftarJadwal = all.filter(d=>d.user_name===currentUser);
+    daftarJadwal = toArr(snap.val()).filter(d=>d.user_name===currentUser);
     renderJadwalTable();
     updatePeriodeInfo();
-  }, err=>{
-    console.error(err);
-    toast('Gagal memuat jadwal','err');
   });
 }
 
 function populateKelasSelect(){
   const sel = document.getElementById('inputJadwalKelas');
-  if(!daftarKelas.length){
-    sel.innerHTML = '<option value="">-- Belum ada kelas di SIPENA --</option>';
-    return;
-  }
+  if(!daftarKelas.length){ sel.innerHTML = '<option value="">-- Belum ada kelas di SIPENA --</option>'; return; }
   sel.innerHTML = daftarKelas.map(k=>`<option value="${k.class_name}">${k.class_name}</option>`).join('');
 }
 
-// Update info periode di header
 function updatePeriodeInfo(){
   const infoDiv = document.getElementById('periodeInfo');
   const textSpan = document.getElementById('periodeText');
-  
-  if(daftarJadwal.length === 0){
-    infoDiv.style.display = 'none';
-    return;
-  }
-  
-  // Cari periode terpanjang
+  if(daftarJadwal.length === 0){ infoDiv.style.display = 'none'; return; }
   let earliest = null, latest = null;
   daftarJadwal.forEach(j => {
-    if(j.periode_mulai){
-      if(!earliest || new Date(j.periode_mulai) < new Date(earliest)) earliest = j.periode_mulai;
-    }
-    if(j.periode_sampai){
-      if(!latest || new Date(j.periode_sampai) > new Date(latest)) latest = j.periode_sampai;
-    }
+    if(j.periode_mulai && (!earliest || new Date(j.periode_mulai) < new Date(earliest))) earliest = j.periode_mulai;
+    if(j.periode_sampai && (!latest || new Date(j.periode_sampai) > new Date(latest))) latest = j.periode_sampai;
   });
-  
   if(earliest && latest){
     const activeCount = daftarJadwal.filter(j => isJadwalActive(j)).length;
     const expiredCount = daftarJadwal.length - activeCount;
-    textSpan.innerHTML = `
-      <strong>${formatDateID(earliest)}</strong> s/d <strong>${formatDateID(latest)}</strong> • 
-      <span style="color:#166534;">✅ ${activeCount} aktif</span>
-      ${expiredCount > 0 ? ` • <span style="color:#991b1b;">⏰ ${expiredCount} expired</span>` : ''}
-    `;
+    textSpan.innerHTML = `<strong>${formatDateID(earliest)}</strong> s/d <strong>${formatDateID(latest)}</strong> • <span style="color:#166534;">✅ ${activeCount} aktif</span>${expiredCount > 0 ? ` • <span style="color:#991b1b;">⏰ ${expiredCount} expired</span>` : ''}`;
     infoDiv.style.display = 'block';
-  } else {
-    infoDiv.style.display = 'none';
-  }
+  } else { infoDiv.style.display = 'none'; }
 }
 
 // ══════════════════════════════════════════════
 //               BIND EVENTS
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 function bindEvents(){
   document.getElementById('btnTambahJadwal').onclick = () => {
-    if(!daftarKelas.length){
-      toast('Buat kelas terlebih dahulu di menu SIPENA → Kelola Kelas','err');
-      return;
-    }
+    if(!daftarKelas.length){ toast('Buat kelas terlebih dahulu di menu SIPENA → Kelola Kelas','err'); return; }
     document.getElementById('jadwalEditKey').value='';
     document.getElementById('modalJadwalTitle').textContent='📅 Tambah Jadwal Mengajar';
     document.getElementById('inputHari').value='Senin';
     populateKelasSelect();
-    document.getElementById('inputJamMulai').value='';
-    document.getElementById('inputJamSelesai').value='';
-    document.getElementById('inputMapel').value='';
-    document.getElementById('inputRuang').value='';
-    document.getElementById('inputMateri').value='';
-    
-    // Default periode: hari ini sampai akhir semester (6 bulan)
-    const today = new Date();
-    const sixMonthsLater = new Date();
-    sixMonthsLater.setMonth(today.getMonth() + 6);
+    document.getElementById('inputJamMulai').value=''; document.getElementById('inputJamSelesai').value='';
+    document.getElementById('inputMapel').value=''; document.getElementById('inputRuang').value=''; document.getElementById('inputMateri').value='';
+    const today = new Date(); const sixMonthsLater = new Date(); sixMonthsLater.setMonth(today.getMonth() + 6);
     document.getElementById('inputPeriodeMulai').value = today.toISOString().split('T')[0];
     document.getElementById('inputPeriodeSampai').value = sixMonthsLater.toISOString().split('T')[0];
-    
     openModal('modalJadwal');
   };
   document.getElementById('btnBatalJadwal').onclick = () => closeModal('modalJadwal');
@@ -490,18 +549,12 @@ function bindEvents(){
 
   document.getElementById('toggleAlarm').onchange = e => setAlarmEnabled(e.target.checked);
   document.getElementById('btnNotifPerm').onclick = requestNotifPermission;
-  document.getElementById('btnTestAlarm').onclick = () => {
-    playAlarmSound('Contoh Kelas','Contoh Mapel');
-    toast('Mencoba bunyi alarm...');
-  };
+  document.getElementById('btnTestAlarm').onclick = () => { playAlarmSound('Contoh Kelas','Contoh Mapel'); toast('Mencoba bunyi alarm...'); };
 
-  // Terapkan ke semua pekan
+  document.getElementById('inputJadwalFile').onchange = e => { const file = e.target.files[0]; if(file) handleJadwalFile(file); };
+
   document.getElementById('btnTerapkanSemua').onclick = () => {
-    if(daftarJadwal.length === 0){
-      toast('Belum ada jadwal untuk diterapkan','err');
-      return;
-    }
-    // Default: awal bulan ini sampai 6 bulan ke depan
+    if(daftarJadwal.length === 0){ toast('Belum ada jadwal untuk diterapkan','err'); return; }
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const sixMonthsLater = new Date(today.getFullYear(), today.getMonth() + 6, 0);
@@ -511,25 +564,8 @@ function bindEvents(){
   };
   document.getElementById('btnConfirmTerapkan').onclick = terapkanKeSemua;
 
-  // Copy ke pekan berikutnya
-  document.getElementById('btnCopyPekan').onclick = () => {
-    if(daftarJadwal.length === 0){
-      toast('Belum ada jadwal untuk dicopy','err');
-      return;
-    }
-    // Default: Senin pekan depan
-    const today = new Date();
-    const daysUntilMonday = (8 - today.getDay()) % 7 || 7;
-    const nextMonday = new Date(today);
-    nextMonday.setDate(today.getDate() + daysUntilMonday);
-    document.getElementById('copyTargetDate').value = nextMonday.toISOString().split('T')[0];
-    openModal('modalCopyPekan');
-  };
-  document.getElementById('btnConfirmCopy').onclick = copyKePekanBerikutnya;
-
-  document.querySelectorAll('.modal').forEach(m=>{
-    m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('active'); });
-  });
+  document.querySelectorAll('.modal').forEach(m=>{ m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('active'); }); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeZoomModal(); });
 }
 
 // ══════════════════════════════════════════════
@@ -538,101 +574,20 @@ function bindEvents(){
 async function terapkanKeSemua(){
   const mulai = document.getElementById('applyPeriodeMulai').value;
   const sampai = document.getElementById('applyPeriodeSampai').value;
-  
-  if(!mulai || !sampai){
-    toast('Tanggal periode wajib diisi!','err');
-    return;
-  }
-  if(new Date(sampai) < new Date(mulai)){
-    toast('Tanggal selesai harus setelah tanggal mulai!','err');
-    return;
-  }
-  
+  if(!mulai || !sampai){ toast('Tanggal periode wajib diisi!','err'); return; }
+  if(new Date(sampai) < new Date(mulai)){ toast('Tanggal selesai harus setelah tanggal mulai!','err'); return; }
   if(!confirm(`Terapkan periode ${formatDateID(mulai)} s/d ${formatDateID(sampai)} ke SEMUA ${daftarJadwal.length} jadwal Anda?`)) return;
   
   const btn = document.getElementById('btnConfirmTerapkan');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Menerapkan...';
-  
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menerapkan...';
   try {
     const updates = {};
-    daftarJadwal.forEach(j => {
-      updates[j.__key + '/periode_mulai'] = mulai;
-      updates[j.__key + '/periode_sampai'] = sampai;
-      updates[j.__key + '/updated_at'] = nowISO();
-    });
+    daftarJadwal.forEach(j => { updates[j.__key + '/periode_mulai'] = mulai; updates[j.__key + '/periode_sampai'] = sampai; updates[j.__key + '/updated_at'] = nowISO(); });
     await ROOT_JADWAL.update(updates);
     closeModal('modalTerapkanSemua');
     toast(`✅ Periode diterapkan ke ${daftarJadwal.length} jadwal!`);
-  } catch(e){
-    toast('Gagal menerapkan: ' + e.message,'err');
-  }
-  btn.disabled = false;
-  btn.textContent = '✅ Terapkan ke Semua';
-}
-
-// ══════════════════════════════════════════════
-//        COPY KE PEKAN BERIKUTNYA
-// ══════════════════════════════════════════════
-async function copyKePekanBerikutnya(){
-  const targetDateStr = document.getElementById('copyTargetDate').value;
-  if(!targetDateStr){
-    toast('Pilih tanggal target!','err');
-    return;
-  }
-  
-  const targetDate = new Date(targetDateStr);
-  const targetEnd = new Date(targetDate);
-  targetEnd.setDate(targetEnd.getDate() + 6); // Sabtu
-  
-  if(!confirm(`Copy semua jadwal ke periode ${formatDateID(targetDateStr)} s/d ${formatDateID(targetEnd.toISOString().split('T')[0])}?`)) return;
-  
-  const btn = document.getElementById('btnConfirmCopy');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Mengcopy...';
-  
-  try {
-    // Hapus jadwal lama di periode target (jika ada)
-    const existingInTarget = daftarJadwal.filter(j => {
-      if(!j.periode_mulai || !j.periode_sampai) return false;
-      const jMulai = new Date(j.periode_mulai);
-      const jSampai = new Date(j.periode_sampai);
-      return jMulai <= targetEnd && jSampai >= targetDate;
-    });
-    
-    if(existingInTarget.length > 0){
-      const deletePromises = existingInTarget.map(j => ROOT_JADWAL.child(j.__key).remove());
-      await Promise.all(deletePromises);
-    }
-    
-    // Copy jadwal dengan periode baru
-    const copyPromises = daftarJadwal.map(j => {
-      const newJadwal = {
-        hari: j.hari,
-        kelas: j.kelas,
-        mulai: j.mulai,
-        selesai: j.selesai,
-        mapel: j.mapel || '',
-        ruang: j.ruang || '',
-        materi: j.materi || '',
-        user_name: currentUser,
-        periode_mulai: targetDateStr,
-        periode_sampai: targetEnd.toISOString().split('T')[0],
-        created_at: nowISO(),
-        updated_at: nowISO(),
-        copied_from: j.__key
-      };
-      return ROOT_JADWAL.push().set(newJadwal);
-    });
-    
-    await Promise.all(copyPromises);
-    closeModal('modalCopyPekan');
-    toast(`✅ ${daftarJadwal.length} jadwal dicopy ke pekan target!`);
-  } catch(e){
-    toast('Gagal copy: ' + e.message,'err');
-  }
-  btn.disabled = false;
-  btn.textContent = '📋 Copy Jadwal';
+  } catch(e){ toast('Gagal menerapkan: ' + e.message,'err'); }
+  btn.disabled = false; btn.textContent = '✅ Terapkan ke Semua';
 }
 
 // ══════════════════════════════════════════════
@@ -650,44 +605,28 @@ async function simpanJadwal(){
   if(!kelas){ toast('Pilih kelas terlebih dahulu!','err'); return; }
   if(!jamMulai){ toast('Jam mulai wajib diisi!','err'); return; }
   if(!periodeMulai || !periodeSampai){ toast('Periode berlaku wajib diisi!','err'); return; }
-  if(new Date(periodeSampai) < new Date(periodeMulai)){
-    toast('Tanggal selesai harus setelah tanggal mulai!','err');
-    return;
-  }
+  if(new Date(periodeSampai) < new Date(periodeMulai)){ toast('Tanggal selesai harus setelah tanggal mulai!','err'); return; }
 
   const payload = {
-    hari: document.getElementById('inputHari').value,
-    kelas: kelas,
-    mulai: jamMulai,
-    selesai: document.getElementById('inputJamSelesai').value,
-    mapel: document.getElementById('inputMapel').value.trim(),
-    ruang: document.getElementById('inputRuang').value.trim(),
-    materi: document.getElementById('inputMateri').value.trim(),
-    user_name: currentUser,
-    periode_mulai: periodeMulai,
-    periode_sampai: periodeSampai,
-    updated_at: nowISO()
+    hari: document.getElementById('inputHari').value, kelas: kelas, mulai: jamMulai,
+    selesai: document.getElementById('inputJamSelesai').value, mapel: document.getElementById('inputMapel').value.trim(),
+    ruang: document.getElementById('inputRuang').value.trim(), materi: document.getElementById('inputMateri').value.trim(),
+    user_name: currentUser, periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
   };
 
   const btn = document.getElementById('btnSimpanJadwal');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
   try{
-    if(editKey){
-      await ROOT_JADWAL.child(editKey).update(payload);
-    } else {
-      await ROOT_JADWAL.push().set({...payload, created_at: nowISO()});
-    }
+    if(editKey){ await ROOT_JADWAL.child(editKey).update(payload); }
+    else { await ROOT_JADWAL.push().set({...payload, created_at: nowISO()}); }
     closeModal('modalJadwal');
     toast(editKey ? '✅ Jadwal berhasil diperbarui!' : '✅ Jadwal berhasil ditambahkan! Berlaku untuk seluruh periode.');
-  } catch(e){
-    toast('Gagal menyimpan: '+e.message, 'err');
-  }
-  btn.disabled = false; btn.textContent = '💾 Simpan';
+  } catch(e){ toast('Gagal menyimpan: '+e.message, 'err'); }
+  btn.disabled = false; btn.textContent = ' Simpan';
 }
 
 function editJadwal(key){
-  const j = daftarJadwal.find(d=>d.__key===key);
-  if(!j) return;
+  const j = daftarJadwal.find(d=>d.__key===key); if(!j) return;
   document.getElementById('jadwalEditKey').value = key;
   document.getElementById('modalJadwalTitle').textContent = '✏️ Edit Jadwal Mengajar';
   populateKelasSelect();
@@ -705,30 +644,8 @@ function editJadwal(key){
 
 async function hapusJadwal(key, label){
   if(!confirm(`Hapus jadwal "${label}"?`)) return;
-  try{
-    await ROOT_JADWAL.child(key).remove();
-    toast('✅ Jadwal dihapus.');
-  } catch(e){
-    toast('Gagal menghapus: '+e.message, 'err');
-  }
-}
-
-async function perpanjangJadwal(key){
-  const j = daftarJadwal.find(d=>d.__key===key);
-  if(!j) return;
-  
-  const newSampai = prompt(`Perpanjang jadwal "${j.kelas} (${j.hari} ${j.mulai})" sampai tanggal berapa?\n\nFormat: YYYY-MM-DD\nContoh: 2026-12-31`, j.periode_sampai);
-  if(!newSampai) return;
-  
-  try{
-    await ROOT_JADWAL.child(key).update({
-      periode_sampai: newSampai,
-      updated_at: nowISO()
-    });
-    toast('✅ Jadwal diperpanjang!');
-  } catch(e){
-    toast('Gagal memperpanjang: ' + e.message,'err');
-  }
+  try{ await ROOT_JADWAL.child(key).remove(); toast('✅ Jadwal dihapus.'); }
+  catch(e){ toast('Gagal menghapus: '+e.message, 'err'); }
 }
 
 function renderJadwalTable(){
@@ -737,16 +654,13 @@ function renderJadwalTable(){
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="ei">📅</div><p>Belum ada jadwal mengajar. Klik "➕ Tambah Jadwal".</p></div></td></tr>`;
     return;
   }
-  const sorted = [...daftarJadwal].sort((a,b)=>
-    HARI_ORDER.indexOf(a.hari) - HARI_ORDER.indexOf(b.hari) || (a.mulai||'').localeCompare(b.mulai||'')
-  );
+  const sorted = [...daftarJadwal].sort((a,b)=> HARI_ORDER.indexOf(a.hari) - HARI_ORDER.indexOf(b.hari) || (a.mulai||'').localeCompare(b.mulai||''));
   const hariBadge = {Senin:'badge-blue',Selasa:'badge-purple',Rabu:'badge-amber',Kamis:'badge-green',Jumat:'badge-red',Sabtu:'badge-gray'};
 
   tbody.innerHTML = sorted.map(j=>{
     const isActive = isJadwalActive(j);
     const periodeStatus = getPeriodeStatus(j);
     const rowStyle = isActive ? '' : 'opacity:0.6;';
-    
     return `
     <tr style="${rowStyle}">
       <td><span class="badge ${hariBadge[j.hari]||'badge-gray'}">${j.hari}</span></td>
@@ -763,85 +677,57 @@ function renderJadwalTable(){
       <td>
         <div style="display:flex;gap:4px;flex-wrap:wrap;">
           <button class="btn btn-warning btn-sm" data-action="edit" data-key="${j.__key}" title="Edit">✏️</button>
-          ${!isActive ? `<button class="btn btn-success btn-sm" data-action="perpanjang" data-key="${j.__key}" title="Perpanjang">📆</button>` : ''}
-          <button class="btn btn-danger btn-sm" data-action="hapus" data-key="${j.__key}" data-label="${j.kelas} (${j.hari} ${j.mulai})" title="Hapus">️</button>
+          <button class="btn btn-danger btn-sm" data-action="hapus" data-key="${j.__key}" data-label="${j.kelas} (${j.hari} ${j.mulai})" title="Hapus">🗑️</button>
         </div>
       </td>
-    </tr>
-  `}).join('');
+    </tr>`;
+  }).join('');
 
-  tbody.querySelectorAll('[data-action="edit"]').forEach(btn=>{
-    btn.onclick = () => editJadwal(btn.dataset.key);
-  });
-  tbody.querySelectorAll('[data-action="hapus"]').forEach(btn=>{
-    btn.onclick = () => hapusJadwal(btn.dataset.key, btn.dataset.label);
-  });
-  tbody.querySelectorAll('[data-action="perpanjang"]').forEach(btn=>{
-    btn.onclick = () => perpanjangJadwal(btn.dataset.key);
-  });
+  tbody.querySelectorAll('[data-action="edit"]').forEach(btn=>{ btn.onclick = () => editJadwal(btn.dataset.key); });
+  tbody.querySelectorAll('[data-action="hapus"]').forEach(btn=>{ btn.onclick = () => hapusJadwal(btn.dataset.key, btn.dataset.label); });
 }
 
-// ═════════════════════════════════════════════
+// ══════════════════════════════════════════════
 //             ALARM ENGINE
 // ══════════════════════════════════════════════
 function loadAlarmPref(){
-  try{
-    alarmEnabled = localStorage.getItem('sipelita_alarm_'+currentUser) === 'true';
-  } catch(e){ alarmEnabled = false; }
+  try{ alarmEnabled = localStorage.getItem('sipelita_alarm_'+currentUser) === 'true'; } catch(e){ alarmEnabled = false; }
   document.getElementById('toggleAlarm').checked = alarmEnabled;
   renderAlarmStatusBadge();
 }
-
 function setAlarmEnabled(val){
   alarmEnabled = val;
   try{ localStorage.setItem('sipelita_alarm_'+currentUser, val ? 'true':'false'); }catch(e){}
   renderAlarmStatusBadge();
   toast(val ? '🔔 Alarm jadwal diaktifkan' : '🔕 Alarm jadwal dinonaktifkan');
 }
-
 function renderAlarmStatusBadge(){
   const badge = document.getElementById('alarmStatusBadge');
-  if(alarmEnabled){
-    badge.textContent = '🔔 Aktif';
-    badge.className = 'alarm-status on';
-  } else {
-    badge.textContent = '🔕 Nonaktif';
-    badge.className = 'alarm-status off';
-  }
+  if(alarmEnabled){ badge.textContent = '🔔 Aktif'; badge.className = 'alarm-status on'; }
+  else { badge.textContent = '🔕 Nonaktif'; badge.className = 'alarm-status off'; }
 }
-
 function renderNotifPermStatus(){
   const el = document.getElementById('notifPermStatus');
-  if(!('Notification' in window)){
-    el.textContent = 'Tidak didukung browser ini';
-    return;
-  }
+  if(!('Notification' in window)){ el.textContent = 'Tidak didukung browser ini'; return; }
   const perm = Notification.permission;
   el.textContent = perm==='granted' ? '✅ Sudah diizinkan' : perm==='denied' ? '❌ Ditolak' : 'Belum diizinkan';
 }
-
 function requestNotifPermission(){
-  if(!('Notification' in window)){
-    toast('Browser ini tidak mendukung notifikasi','err');
-    return;
-  }
+  if(!('Notification' in window)){ toast('Browser ini tidak mendukung notifikasi','err'); return; }
   Notification.requestPermission().then(perm=>{
     renderNotifPermStatus();
     if(perm==='granted') toast('✅ Notifikasi berhasil diizinkan!');
     else if(perm==='denied') toast('❌ Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
   });
 }
-
 function playAlarmBeep(){
   return new Promise((resolve)=>{
     try{
       if(!_alarmAudioCtx) _alarmAudioCtx = new (window.AudioContext||window.webkitAudioContext)();
       const ctx = _alarmAudioCtx;
       const playBeep = (startTime, freq) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = freq;
         gain.gain.setValueAtTime(0.0001, startTime);
         gain.gain.exponentialRampToValueAtTime(0.35, startTime+0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime+0.35);
@@ -849,54 +735,34 @@ function playAlarmBeep(){
         osc.start(startTime); osc.stop(startTime+0.4);
       };
       const now = ctx.currentTime;
-      for(let i=0;i<2;i++){
-        playBeep(now+i*0.55, 880);
-        playBeep(now+i*0.55+0.25, 660);
-      }
+      for(let i=0;i<2;i++){ playBeep(now+i*0.55, 880); playBeep(now+i*0.55+0.25, 660); }
       setTimeout(resolve, 1300);
     } catch(e){ console.error('Gagal memutar beep:', e); resolve(); }
   });
 }
-
 function speakAlarmMessage(kelasNama, mapel){
-  if(!('speechSynthesis' in window)){
-    console.warn('Browser ini tidak mendukung suara bicara (Web Speech API)');
-    return;
-  }
+  if(!('speechSynthesis' in window)) return;
   const mapelText = mapel ? `, mata pelajaran ${mapel},` : '';
   const kalimat = `Sekarang saatnya Anda mengajar di kelas ${kelasNama}${mapelText} Terima kasih!`;
   try{
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(kalimat);
-    utter.lang = 'id-ID';
-    utter.rate = 0.95;
-    utter.pitch = 1;
-    utter.volume = 1;
+    utter.lang = 'id-ID'; utter.rate = 0.95; utter.pitch = 1; utter.volume = 1;
     const voices = window.speechSynthesis.getVoices();
     const idVoice = voices.find(v=>v.lang==='id-ID') || voices.find(v=>v.lang.startsWith('id'));
     if(idVoice) utter.voice = idVoice;
     window.speechSynthesis.speak(utter);
   } catch(e){ console.error('Gagal memutar suara bicara:', e); }
 }
-
-async function playAlarmSound(kelasNama, mapel){
-  await playAlarmBeep();
-  speakAlarmMessage(kelasNama||'Anda', mapel||'');
-}
-
+async function playAlarmSound(kelasNama, mapel){ await playAlarmBeep(); speakAlarmMessage(kelasNama||'Anda', mapel||''); }
 function fireScheduleAlarm(jadwalItem){
   playAlarmSound(jadwalItem.kelas, jadwalItem.mapel);
-  toast(` Saatnya mengajar ${jadwalItem.kelas} (${jadwalItem.mulai})`,'err');
+  toast(`🔔 Saatnya mengajar ${jadwalItem.kelas} (${jadwalItem.mulai})`,'err');
   if('Notification' in window && Notification.permission==='granted'){
-    try{
-      new Notification('Waktunya Mengajar!',{
-        body:`${jadwalItem.kelas} · ${jadwalItem.mapel||''} · ${jadwalItem.mulai}${jadwalItem.ruang?' · '+jadwalItem.ruang:''}`,
-        tag:'sipelita-jadwal-alarm'
-      });
-    } catch(e){ console.error('Gagal menampilkan notifikasi:', e); }
+    try{ new Notification('Waktunya Mengajar!',{ body:`${jadwalItem.kelas} · ${jadwalItem.mapel||''} · ${jadwalItem.mulai}${jadwalItem.ruang?' · '+jadwalItem.ruang:''}`, tag:'sipelita-jadwal-alarm' }); }
+    catch(e){ console.error('Gagal menampilkan notifikasi:', e); }
   }
 }
-
 function checkScheduleAlarms(){
   if(!alarmEnabled) return;
   const now = new Date();
@@ -906,22 +772,15 @@ function checkScheduleAlarms(){
   const fireKey = now.toISOString().slice(0,10)+'_'+jamSekarang;
   if(_alarmLastFiredKey===fireKey) return;
   _alarmLastFiredKey = fireKey;
-
-  // ✅ FILTER: Hanya alarm yang masih dalam periode aktif
   daftarJadwal.forEach(j=>{
-    if(j.hari===hariIni && j.mulai===jamSekarang && isJadwalActive(j)){
-      fireScheduleAlarm(j);
-    }
+    if(j.hari===hariIni && j.mulai===jamSekarang && isJadwalActive(j)){ fireScheduleAlarm(j); }
   });
 }
-
 function initAlarmEngine(){
   renderNotifPermStatus();
   setInterval(checkScheduleAlarms, 15000);
   checkScheduleAlarms();
-  if('speechSynthesis' in window){
-    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
-  }
+  if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); }; }
 }
 
 // ══════════════════════════════════════════════
