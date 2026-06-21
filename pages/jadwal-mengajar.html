@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jadwal Mengajar & Alarm - SIPELITA</title>
-<link rel="icon" href="assets/images/sipelita-app.png">
+<link rel="icon" href="../assets/images/icon-app.png">
 
 <!-- Firebase CDN (compat version) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -12,97 +12,108 @@
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;}
+body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f3f4f6;min-height:100vh;}
 
-/* ── HEADER ── */
-.header{background:#fff;padding:16px 24px;border-radius:14px;box-shadow:0 4px 15px rgba(0,0,0,0.1);margin-bottom:18px;display:flex;align-items:center;gap:16px;}
-.header-logo{width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid #667eea;}
+/* ── HEADER (Senada dengan SIPELITA) ── */
+.header{background:#3b82f6;color:white;padding:20px 24px;border-radius:0 0 16px 16px;margin-bottom:24px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 15px rgba(59,130,246,0.2);}
+.header-logo{width:60px;height:60px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.3);background:white;}
 .header-info{flex:1;}
-.header-title{font-size:1.5rem;font-weight:800;color:#086d22;margin-bottom:2px;}
-.header-subtitle{font-size:0.85rem;color:#64748b;}
+.header-title{font-size:1.6rem;font-weight:800;color:white;margin-bottom:2px;}
+.header-subtitle{font-size:0.9rem;color:rgba(255,255,255,0.9);}
 .header-user{text-align:right;}
-.user-name{font-size:0.95rem;font-weight:700;color:#334155;margin-bottom:6px;}
-.btn-dashboard{padding:8px 16px;background:#e74c3c;color:#fff;border:none;border-radius:8px;font-size:0.85rem;cursor:pointer;font-weight:600;transition:background .2s;}
-.btn-dashboard:hover{background:#c0392b;}
+.user-name{font-size:0.95rem;font-weight:700;color:white;margin-bottom:6px;}
+.btn-dashboard{padding:8px 16px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:8px;font-size:0.85rem;cursor:pointer;font-weight:600;transition:background .2s;text-decoration:none;display:inline-block;}
+.btn-dashboard:hover{background:rgba(255,255,255,0.3);}
 
 /* ── CONTAINER ── */
-.app-wrap{max-width:1400px;margin:0 auto;padding:20px;}
+.app-wrap{max-width:1200px;margin:0 auto;padding:0 20px 40px;}
 
-.content-card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 4px 14px rgba(0,0,0,0.07);margin-bottom:18px;}
-.section-title{font-size:1.2rem;font-weight:800;color:#1e293b;margin-bottom:18px;padding-bottom:10px;border-bottom:3px solid #667eea;display:flex;align-items:center;gap:8px;}
-.date-bar{background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 16px;font-weight:700;color:#854d0e;margin-bottom:16px;text-align:center;}
+.content-card{background:white;border-radius:14px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:24px;}
+.section-title{font-size:1.3rem;font-weight:800;color:#1e40af;margin-bottom:18px;padding-bottom:10px;border-bottom:3px solid #3b82f6;display:flex;align-items:center;gap:8px;}
+.date-bar{background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:12px 16px;font-weight:700;color:#1e40af;margin-bottom:16px;text-align:center;}
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:8px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit;}
-.btn-primary{background:#4f46e5;color:#fff;} .btn-primary:hover{background:#3730a3;}
-.btn-success{background:#10b981;color:#fff;} .btn-success:hover{background:#059669;}
-.btn-danger{background:#ef4444;color:#fff;}  .btn-danger:hover{background:#dc2626;}
-.btn-warning{background:#f59e0b;color:#fff;} .btn-warning:hover{background:#d97706;}
-.btn-secondary{background:#94a3b8;color:#fff;}.btn-secondary:hover{background:#64748b;}
-.btn-sm{padding:5px 11px;font-size:0.78rem;}
+/* ── BUTTONS (Senada SIPELITA) ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;text-decoration:none;}
+.btn-primary{background:#3b82f6;color:white;}
+.btn-primary:hover{background:#2563eb;}
+.btn-success{background:#10b981;color:white;}
+.btn-success:hover{background:#059669;}
+.btn-danger{background:#ef4444;color:white;}
+.btn-danger:hover{background:#dc2626;}
+.btn-warning{background:#f59e0b;color:white;}
+.btn-warning:hover{background:#d97706;}
+.btn-secondary{background:#6b7280;color:white;}
+.btn-secondary:hover{background:#4b5563;}
+.btn-sm{padding:7px 14px;font-size:0.82rem;}
 .action-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 
 /* ── TABLE ── */
 .tbl-wrap{overflow-x:auto;margin-top:10px;}
-table{width:100%;border-collapse:collapse;font-size:0.88rem;}
-th{background:#f8fafc;color:#334155;font-weight:700;padding:11px 13px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;}
-td{padding:11px 13px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
-tr:hover td{background:#fafbff;}
+table{width:100%;border-collapse:collapse;font-size:0.9rem;}
+th{background:#eff6ff;color:#1e40af;font-weight:700;padding:12px 13px;text-align:left;border-bottom:2px solid #dbeafe;}
+td{padding:12px 13px;border-bottom:1px solid #e5e7eb;vertical-align:middle;}
+tr:hover td{background:#f9fafb;}
 
 /* ── MODAL ── */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;padding:16px;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:16px;}
 .modal.active{display:flex;animation:fadeIn .2s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.modal-box{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
-.modal-title{font-size:1.1rem;font-weight:800;color:#1e293b;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #f1f5f9;}
-.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid #f1f5f9;}
+.modal-box{background:white;border-radius:14px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.25);}
+.modal-title{font-size:1.15rem;font-weight:800;color:#1e40af;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #e5e7eb;}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid #e5e7eb;}
 
 /* ── FORM ── */
 .fg{margin-bottom:14px;}
-.fg label{display:block;font-size:0.82rem;font-weight:600;color:#475569;margin-bottom:5px;}
-.fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:0.9rem;font-family:inherit;outline:none;transition:border-color .2s;}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1);}
+.fg label{display:block;font-size:0.88rem;font-weight:600;color:#374151;margin-bottom:6px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:11px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:0.95rem;font-family:inherit;outline:none;transition:border-color .2s;background:white;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.1);}
 .fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
 /* ── EMPTY STATE ── */
-.empty{text-align:center;padding:40px 20px;color:#94a3b8;}
-.empty .ei{font-size:2.5rem;margin-bottom:10px;}
+.empty{text-align:center;padding:40px 20px;color:#9ca3af;}
+.empty .ei{font-size:3rem;margin-bottom:10px;}
 
 /* ── BADGE ── */
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;}
-.badge-green{background:#dcfce7;color:#065f46;}
+.badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;}
+.badge-green{background:#dcfce7;color:#166534;}
 .badge-red{background:#fee2e2;color:#991b1b;}
-.badge-amber{background:#fef3c7;color:#78350f;}
+.badge-amber{background:#fef3c7;color:#92400e;}
 .badge-blue{background:#dbeafe;color:#1e40af;}
-.badge-purple{background:#ede9fe;color:#4c1d95;}
+.badge-purple{background:#ede9fe;color:#5b21b6;}
 .badge-gray{background:#f1f5f9;color:#475569;}
 
-/* ── ALARM SETTINGS CARD ── */
-.alarm-box{background:#f8fafc;border-radius:10px;padding:18px;border:1px solid #e2e8f0;margin-bottom:18px;}
-.alarm-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:12px;}
+/* ── ALARM SETTINGS CARD (Senada SIPELITA) ── */
+.alarm-box{background:#eff6ff;border-radius:10px;padding:20px;border:1px solid #dbeafe;margin-bottom:18px;}
+.alarm-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
 .alarm-row:last-child{margin-bottom:0;}
-.alarm-desc{font-size:0.82rem;color:#64748b;line-height:1.5;}
-.alarm-desc strong{color:#334155;}
+.alarm-desc{font-size:0.85rem;color:#6b7280;line-height:1.5;}
+.alarm-desc strong{color:#1e40af;}
 
 .toggle{position:relative;width:46px;height:25px;flex-shrink:0;}
 .toggle input{opacity:0;width:0;height:0;}
 .toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:25px;cursor:pointer;transition:.3s;}
 .toggle-slider::before{content:'';position:absolute;height:19px;width:19px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
-.toggle input:checked + .toggle-slider{background:#4f46e5;}
+.toggle input:checked + .toggle-slider{background:#3b82f6;}
 .toggle input:checked + .toggle-slider::before{transform:translateX(21px);}
 
 .alarm-status{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:0.8rem;font-weight:700;}
-.alarm-status.on{background:#dcfce7;color:#065f46;}
-.alarm-status.off{background:#f1f5f9;color:#64748b;}
+.alarm-status.on{background:#dcfce7;color:#166534;}
+.alarm-status.off{background:#f1f5f9;color:#6b7280;}
 
 /* ── LOADING ── */
-.spinner{display:inline-block;width:16px;height:16px;border:3px solid #f3f3f3;border-top:3px solid #667eea;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;}
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid #f3f3f3;border-top:3px solid #3b82f6;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* ── TOAST (Senada SIPELITA) ── */
+.toast-ok{background:#10b981 !important;}
+.toast-err{background:#ef4444 !important;}
+
 @media(max-width:768px){
-  .header{flex-wrap:wrap;}
-  .header-user{width:100%;text-align:left;}
+  .header{flex-wrap:wrap;padding:16px;}
+  .header-title{font-size:1.3rem;}
+  .header-user{width:100%;text-align:left;margin-top:10px;}
   .fr2{grid-template-columns:1fr;}
+  .content-card{padding:20px;}
 }
 </style>
 </head>
@@ -111,14 +122,14 @@ tr:hover td{background:#fafbff;}
 
   <!-- ── HEADER ── -->
   <div class="header">
-    <img src="https://iili.io/KSGDE9s.jpg" alt="Logo" class="header-logo" onerror="this.style.display='none'">
+    <img src="../assets/images/icon-app.png" alt="Logo" class="header-logo" onerror="this.style.display='none'">
     <div class="header-info">
       <div class="header-title">MAN BANTAENG</div>
       <div class="header-subtitle">Jadwal Mengajar &amp; Alarm Pengingat</div>
     </div>
     <div class="header-user">
       <div class="user-name" id="userDisplay">–</div>
-      <button class="btn-dashboard" id="btnDashboard">← Dashboard</button>
+      <a href="../index.html" class="btn-dashboard">← Dashboard SIPELITA</a>
     </div>
   </div>
 
@@ -128,7 +139,7 @@ tr:hover td{background:#fafbff;}
     <div class="alarm-box">
       <div class="alarm-row">
         <div style="flex:1;min-width:220px;">
-          <div style="font-weight:700;color:#334155;margin-bottom:3px;">Aktifkan Alarm Jadwal Mengajar</div>
+          <div style="font-weight:700;color:#1e40af;margin-bottom:3px;">Aktifkan Alarm Jadwal Mengajar</div>
           <div class="alarm-desc">Sistem akan membunyikan alarm dan mengucapkan pengingat suara tepat saat jam mengajar Anda tiba. Alarm hanya berfungsi selama halaman ini tetap terbuka di browser (boleh diminimize, tidak boleh ditutup).</div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
@@ -142,7 +153,7 @@ tr:hover td{background:#fafbff;}
       <div class="alarm-row">
         <div class="alarm-desc">Izinkan notifikasi browser agar pengingat tetap muncul walau Anda sedang membuka tab atau aplikasi lain.</div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span id="notifPermStatus" style="font-size:0.8rem;color:#94a3b8;font-weight:600;">Belum diizinkan</span>
+          <span id="notifPermStatus" style="font-size:0.85rem;color:#6b7280;font-weight:600;">Belum diizinkan</span>
           <button class="btn btn-secondary btn-sm" id="btnNotifPerm">🔔 Izinkan Notifikasi</button>
         </div>
       </div>
@@ -158,7 +169,7 @@ tr:hover td{background:#fafbff;}
     <div class="section-title">📅 Jadwal Mengajar</div>
     <div class="date-bar" id="currentDate"></div>
     <div class="action-bar">
-      <button class="btn btn-primary" id="btnTambahJadwal">+ Tambah Jadwal</button>
+      <button class="btn btn-primary" id="btnTambahJadwal">➕ Tambah Jadwal</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -201,14 +212,14 @@ tr:hover td{background:#fafbff;}
     <div class="fg"><label>Materi / Topik</label><input type="text" id="inputMateri" placeholder="Topik yang akan diajarkan"></div>
     <div class="modal-foot">
       <button class="btn btn-secondary" id="btnBatalJadwal">Batal</button>
-      <button class="btn btn-primary" id="btnSimpanJadwal">Simpan</button>
+      <button class="btn btn-primary" id="btnSimpanJadwal">💾 Simpan</button>
     </div>
   </div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════
-//            FIREBASE CONFIG (sama dengan SIPENA)
+//            FIREBASE CONFIG
 // ══════════════════════════════════════════════
 const firebaseConfig = {
   apiKey:"AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
@@ -222,17 +233,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// Node terpisah khusus jadwal & alarm (tidak campur dengan data SIPENA)
 const ROOT_JADWAL = db.ref("jadwal_alarm");
-// Node SIPENA — hanya dibaca untuk ambil daftar kelas (read-only dari sini)
 const ROOT_SIPENA = db.ref("sipena2");
 
 // ══════════════════════════════════════════════
 //                   STATE
 // ══════════════════════════════════════════════
 let currentUser   = '';
-let daftarKelas   = [];   // dari SIPENA, type:'class' milik guru ini
-let daftarJadwal  = [];   // dari node jadwal_alarm, milik guru ini
+let daftarKelas   = [];
+let daftarJadwal  = [];
 let alarmEnabled  = false;
 let _alarmAudioCtx = null;
 let _alarmLastFiredKey = null;
@@ -245,8 +254,9 @@ function nowISO(){ return new Date().toISOString(); }
 
 function toast(msg, type='ok'){
   const t=document.createElement('div');
+  t.className = type==='ok' ? 'toast-ok' : 'toast-err';
   t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;
-    background:${type==='ok'?'#10b981':'#ef4444'};color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);`;
+    color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:opacity .3s;`;
   t.textContent=msg; document.body.appendChild(t);
   setTimeout(()=>t.style.opacity='0',2500);
   setTimeout(()=>t.remove(),2900);
@@ -278,7 +288,6 @@ function initApp(){
 //          FIREBASE LISTENERS
 // ══════════════════════════════════════════════
 function initFirebaseListeners(){
-  // Dengarkan daftar kelas dari SIPENA (read-only)
   ROOT_SIPENA.on('value', snap=>{
     const all = toArr(snap.val());
     daftarKelas = all.filter(d=>d.type==='class' && d.user_name===currentUser);
@@ -288,7 +297,6 @@ function initFirebaseListeners(){
     toast('Gagal memuat daftar kelas dari SIPENA','err');
   });
 
-  // Dengarkan jadwal milik guru ini
   ROOT_JADWAL.on('value', snap=>{
     const all = toArr(snap.val());
     daftarJadwal = all.filter(d=>d.user_name===currentUser);
@@ -312,8 +320,6 @@ function populateKelasSelect(){
 //               BIND EVENTS
 // ══════════════════════════════════════════════
 function bindEvents(){
-  document.getElementById('btnDashboard').onclick = () => window.location.href='index.html';
-
   document.getElementById('btnTambahJadwal').onclick = () => {
     if(!daftarKelas.length){
       toast('Buat kelas terlebih dahulu di menu SIPENA → Kelola Kelas','err');
@@ -379,11 +385,11 @@ async function simpanJadwal(){
       await ROOT_JADWAL.push().set({...payload, created_at: nowISO()});
     }
     closeModal('modalJadwal');
-    toast(editKey ? 'Jadwal berhasil diperbarui!' : 'Jadwal berhasil ditambahkan!');
+    toast(editKey ? '✅ Jadwal berhasil diperbarui!' : '✅ Jadwal berhasil ditambahkan!');
   } catch(e){
     toast('Gagal menyimpan: '+e.message, 'err');
   }
-  btn.disabled = false; btn.textContent = 'Simpan';
+  btn.disabled = false; btn.textContent = '💾 Simpan';
 }
 
 function editJadwal(key){
@@ -406,7 +412,7 @@ async function hapusJadwal(key, label){
   if(!confirm(`Hapus jadwal "${label}"?`)) return;
   try{
     await ROOT_JADWAL.child(key).remove();
-    toast('Jadwal dihapus.');
+    toast('✅ Jadwal dihapus.');
   } catch(e){
     toast('Gagal menghapus: '+e.message, 'err');
   }
@@ -415,7 +421,7 @@ async function hapusJadwal(key, label){
 function renderJadwalTable(){
   const tbody = document.getElementById('jadwalTableBody');
   if(!daftarJadwal.length){
-    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📅</div><p>Belum ada jadwal mengajar. Klik "+ Tambah Jadwal".</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">📅</div><p>Belum ada jadwal mengajar. Klik "➕ Tambah Jadwal".</p></div></td></tr>`;
     return;
   }
   const sorted = [...daftarJadwal].sort((a,b)=>
@@ -426,14 +432,14 @@ function renderJadwalTable(){
   tbody.innerHTML = sorted.map(j=>`
     <tr>
       <td><span class="badge ${hariBadge[j.hari]||'badge-gray'}">${j.hari}</span></td>
-      <td>${j.mulai||'?'}${j.selesai?'–'+j.selesai:''}</td>
-      <td><b>${j.kelas}</b></td>
+      <td>${j.mulai||'?'}${j.selesai?' – '+j.selesai:''}</td>
+      <td><b style="color:#1e40af;">${j.kelas}</b></td>
       <td>${j.ruang||'-'}</td>
       <td>${j.materi||j.mapel||'-'}</td>
       <td>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-primary btn-sm" data-action="edit" data-key="${j.__key}">✏️ Edit</button>
-          <button class="btn btn-danger btn-sm" data-action="hapus" data-key="${j.__key}" data-label="${j.kelas} (${j.hari} ${j.mulai})">🗑 Hapus</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-warning btn-sm" data-action="edit" data-key="${j.__key}">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" data-action="hapus" data-key="${j.__key}" data-label="${j.kelas} (${j.hari} ${j.mulai})">🗑️ Hapus</button>
         </div>
       </td>
     </tr>
@@ -493,12 +499,11 @@ function requestNotifPermission(){
   }
   Notification.requestPermission().then(perm=>{
     renderNotifPermStatus();
-    if(perm==='granted') toast('Notifikasi berhasil diizinkan!');
-    else if(perm==='denied') toast('Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
+    if(perm==='granted') toast('✅ Notifikasi berhasil diizinkan!');
+    else if(perm==='denied') toast('❌ Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
   });
 }
 
-// Bunyikan beep singkat (penarik perhatian) sebelum suara bicara
 function playAlarmBeep(){
   return new Promise((resolve)=>{
     try{
@@ -525,7 +530,6 @@ function playAlarmBeep(){
   });
 }
 
-// Ucapkan kalimat pengingat lewat suara bicara (Web Speech API)
 function speakAlarmMessage(kelasNama, mapel){
   if(!('speechSynthesis' in window)){
     console.warn('Browser ini tidak mendukung suara bicara (Web Speech API)');
