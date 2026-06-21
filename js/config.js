@@ -61,6 +61,7 @@ const CONFIG = {
         },
         { icon: '🧾', title: 'PMBM', desc: '', color: '#00695c', page: 'pages/pmbm.html' },
         { icon: '📖', title: 'SIPENA', desc: '', color: '#3949ab', page: 'pages/sipena.html' },
+        { icon: '⏱️', title: 'Jadwal Mengajar', desc: '', color: '#a704c8', page: 'pages/jadwal-mengajar.html' },
         { icon: '✅', title: 'SiTaat', desc: '', color: '#f57c00', page: 'pages/sitaat.html' },
         { 
             icon: '📷', 
