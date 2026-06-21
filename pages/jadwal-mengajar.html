@@ -9,7 +9,6 @@
 <!-- Firebase CDN (compat version) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -101,6 +100,27 @@ tr:hover td{background:#f9fafb;}
 .alarm-status.on{background:#dcfce7;color:#166534;}
 .alarm-status.off{background:#f1f5f9;color:#6b7280;}
 
+/* ── UPLOAD JADWAL ── */
+.upload-jadwal-area{background:#eff6ff;border:2px dashed #3b82f6;border-radius:12px;padding:30px 20px;text-align:center;transition:all .2s;}
+.upload-jadwal-area:hover{background:#dbeafe;border-color:#2563eb;}
+.upload-jadwal-area.dragover{background:#dbeafe;border-color:#2563eb;transform:scale(1.01);}
+.upload-icon{font-size:4rem;margin-bottom:10px;}
+.upload-title{color:#1e40af;font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+.upload-desc{color:#6b7280;font-size:0.88rem;margin-bottom:14px;}
+
+.jadwal-preview-wrap{position:relative;background:white;border:2px solid #e5e7eb;border-radius:12px;padding:16px;overflow:hidden;}
+.jadwal-preview-wrap img{max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;cursor:zoom-in;transition:transform .2s;}
+.jadwal-preview-wrap img:hover{transform:scale(1.02);}
+.jadwal-actions{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+.jadwal-info{margin-top:12px;padding:10px;background:#f9fafb;border-radius:8px;font-size:0.82rem;color:#6b7280;text-align:center;}
+
+/* Image Zoom Modal */
+.zoom-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;align-items:center;justify-content:center;padding:20px;cursor:zoom-out;}
+.zoom-modal.active{display:flex;}
+.zoom-modal img{max-width:95%;max-height:95%;object-fit:contain;border-radius:8px;}
+.zoom-close{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;width:44px;height:44px;border-radius:50%;font-size:1.5rem;cursor:pointer;transition:background .2s;}
+.zoom-close:hover{background:rgba(255,255,255,0.3);}
+
 /* ── LOADING ── */
 .spinner{display:inline-block;width:16px;height:16px;border:3px solid #f3f3f3;border-top:3px solid #3b82f6;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -165,9 +185,65 @@ tr:hover td{background:#f9fafb;}
     </div>
   </div>
 
-  <!-- ── JADWAL MENGAJAR ── -->
+  <!-- ═══ UPLOAD JADWAL MENGAJAR (GAMBAR) ═══ -->
   <div class="content-card">
-    <div class="section-title">📅 Jadwal Mengajar</div>
+    <div class="section-title">📊 Jadwal Mengajar Saya (Gambar)</div>
+    
+    <!-- Upload Area (ditampilkan jika belum ada jadwal) -->
+    <div id="uploadJadwalArea">
+      <div class="upload-jadwal-area" id="dropZone">
+        <div class="upload-icon">📤</div>
+        <div class="upload-title">Upload Gambar Jadwal Mengajar</div>
+        <div class="upload-desc">
+          Drag & drop gambar di sini, atau klik tombol di bawah<br>
+          Format: JPG, PNG • Maksimal: 5 MB<br>
+          <small style="color:#9ca3af;">Gambar akan dikompres otomatis untuk menghemat ruang</small>
+        </div>
+        <input type="file" id="inputJadwalFile" accept="image/jpeg,image/png,image/jpg" style="display:none;">
+        <button class="btn btn-primary" onclick="document.getElementById('inputJadwalFile').click()" style="width:auto;">
+          📁 Pilih Gambar Jadwal
+        </button>
+        <div id="jadwalUploadProgress" style="display:none;margin-top:14px;">
+          <div class="spinner" style="width:24px;height:24px;"></div>
+          <span style="margin-left:8px;color:#6b7280;">Mengompres & mengupload gambar...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Area (ditampilkan jika sudah ada jadwal) -->
+    <div id="previewJadwalArea" style="display:none;">
+      <div class="jadwal-preview-wrap">
+        <img id="jadwalPreviewImg" src="" alt="Jadwal Mengajar" onclick="openZoomModal(this.src)">
+        <div class="jadwal-actions">
+          <button class="btn btn-warning btn-sm" onclick="document.getElementById('inputJadwalFile').click()">
+            ✏️ Ganti Gambar
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openZoomModal(document.getElementById('jadwalPreviewImg').src)">
+            🔍 Perbesar
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="hapusJadwalMengajar()">
+            🗑️ Hapus
+          </button>
+        </div>
+        <div class="jadwal-info" id="jadwalInfoText">
+          <!-- Info akan diisi oleh JS -->
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;">
+        <strong style="color:#92400e;">💡 Tips:</strong>
+        <span style="color:#78350f;font-size:0.9rem;">
+          Gunakan jadwal ini sebagai referensi saat membuat alarm. Klik gambar untuk memperbesar agar lebih jelas dibaca.
+        </span>
+      </div>
+    </div>
+
+    <!-- Hidden input untuk ganti gambar -->
+    <input type="file" id="inputJadwalFileReplace" accept="image/jpeg,image/png,image/jpg" style="display:none;">
+  </div>
+
+  <!-- ── JADWAL MENGAJAR (TABLE) ── -->
+  <div class="content-card">
+    <div class="section-title">📅 Jadwal Mengajar (Alarm)</div>
     <div class="date-bar" id="currentDate"></div>
     <div class="action-bar">
       <button class="btn btn-primary" id="btnTambahJadwal">➕ Tambah Jadwal</button>
@@ -179,63 +255,6 @@ tr:hover td{background:#f9fafb;}
           <tr><td colspan="6"><div class="empty"><div class="ei">📅</div><p>Memuat data...</p></div></td></tr>
         </tbody>
       </table>
-    </div>
-  </div>
-
-  <!-- ═══ UPLOAD JADWAL MENGAJAR ═══ -->
-  <div class="content-card" style="margin-top:20px;">
-    <div class="section-title">📊 Jadwal Mengajar Saya (Upload Gambar)</div>
-    
-    <!-- Upload Form -->
-    <div id="uploadJadwalSection" style="margin-bottom:20px;">
-      <div style="background:#eff6ff;padding:16px;border-radius:8px;border:2px dashed #3b82f6;text-align:center;">
-        <div style="font-size:3rem;margin-bottom:10px;">📤</div>
-        <h3 style="color:#1e40af;margin-bottom:8px;">Upload Jadwal Mengajar</h3>
-        <p style="color:#6b7280;font-size:0.9rem;margin-bottom:16px;">
-          Upload gambar jadwal mengajar Anda (format: JPG, PNG, atau PDF)<br>
-          Ukuran maksimal: 5 MB
-        </p>
-        <input type="file" id="inputJadwalFile" accept="image/*,.pdf" style="display:none;" onchange="handleJadwalFileSelect(event)">
-        <button class="btn btn-primary" onclick="document.getElementById('inputJadwalFile').click()">
-          📁 Pilih File Jadwal
-        </button>
-        <div id="jadwalUploadProgress" style="display:none;margin-top:12px;">
-          <div class="spinner" style="width:24px;height:24px;"></div>
-          <span style="margin-left:8px;color:#6b7280;">Mengupload jadwal...</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Preview Jadwal -->
-    <div id="previewJadwalSection" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="color:#1e40af;margin:0;">📅 Preview Jadwal</h3>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-warning btn-sm" onclick="editJadwalMengajar()">
-            ✏️ Ganti Jadwal
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="hapusJadwalMengajar()">
-            🗑️ Hapus Jadwal
-          </button>
-        </div>
-      </div>
-      <div style="background:white;border:2px solid #e5e7eb;border-radius:8px;padding:16px;overflow:hidden;">
-        <div id="jadwalPreviewContainer" style="text-align:center;">
-          <!-- Preview akan muncul di sini -->
-        </div>
-      </div>
-      <div style="margin-top:12px;padding:12px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;">
-        <strong style="color:#92400e;">💡 Tips:</strong>
-        <span style="color:#78350f;font-size:0.9rem;">
-          Gunakan jadwal ini sebagai referensi saat membuat alarm. Cocokkan jam dan hari dengan jadwal yang tertera.
-        </span>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div id="emptyJadwalSection" style="text-align:center;padding:40px;color:#9ca3af;">
-      <div style="font-size:4rem;margin-bottom:10px;">📅</div>
-      <p>Belum ada jadwal mengajar. Silakan upload jadwal Anda.</p>
     </div>
   </div>
 
@@ -275,6 +294,12 @@ tr:hover td{background:#f9fafb;}
   </div>
 </div>
 
+<!-- ══ MODAL: ZOOM GAMBAR ══ -->
+<div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
+  <button class="zoom-close" onclick="closeZoomModal()">&times;</button>
+  <img id="zoomModalImg" src="" alt="Zoom">
+</div>
+
 <script>
 // ══════════════════════════════════════════════
 //            FIREBASE CONFIG
@@ -290,11 +315,10 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const storage = firebase.storage();
 
 const ROOT_JADWAL = db.ref("jadwal_alarm");
 const ROOT_SIPENA = db.ref("sipena2");
-const jadwalStorageRef = storage.ref('jadwal_mengajar');
+const ROOT_JADWAL_GAMBAR = db.ref("jadwal_gambar"); // Path baru untuk gambar jadwal
 
 // ══════════════════════════════════════════════
 //                   STATE
@@ -342,7 +366,190 @@ function initApp(){
   initFirebaseListeners();
   bindEvents();
   initAlarmEngine();
-  loadJadwalMengajar();
+  loadJadwalGambar(); // Load gambar jadwal
+  initDragDrop(); // Init drag & drop
+}
+
+// ══════════════════════════════════════════════
+//        UPLOAD JADWAL GAMBAR (BASE64 + RTDB)
+// ══════════════════════════════════════════════
+
+// Load gambar jadwal dari RTDB
+function loadJadwalGambar(){
+  const uploadArea = document.getElementById('uploadJadwalArea');
+  const previewArea = document.getElementById('previewJadwalArea');
+  const previewImg = document.getElementById('jadwalPreviewImg');
+  const infoText = document.getElementById('jadwalInfoText');
+
+  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).on('value', snap => {
+    const data = snap.val();
+    if(data && data.base64){
+      previewImg.src = data.base64;
+      uploadArea.style.display = 'none';
+      previewArea.style.display = 'block';
+      
+      // Tampilkan info
+      const uploadedAt = data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('id-ID') : '-';
+      const sizeKB = data.sizeKB ? data.sizeKB.toFixed(1) : '?';
+      infoText.innerHTML = `📅 Diupload: <strong>${uploadedAt}</strong> • 📦 Ukuran: <strong>${sizeKB} KB</strong> (sudah dikompres)`;
+    } else {
+      uploadArea.style.display = 'block';
+      previewArea.style.display = 'none';
+    }
+  }, err => {
+    console.error('Error load jadwal gambar:', err);
+  });
+}
+
+// Sanitize email untuk path RTDB (ganti karakter invalid)
+function sanitizeEmail(email){
+  return email.replace(/[.#$\[\]]/g, '_');
+}
+
+// Kompres gambar menggunakan canvas
+function compressImage(file, maxWidth = 1000, quality = 0.75){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        // Hitung dimensi baru (pertahankan aspect ratio)
+        let width = img.width;
+        let height = img.height;
+        
+        if(width > maxWidth){
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        // Buat canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        // Gambar ulang dengan kualitas lebih baik
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert ke base64 (JPEG)
+        const base64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(base64);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Handle file selection
+async function handleJadwalFile(file){
+  if(!file) return;
+  
+  // Validasi tipe
+  if(!['image/jpeg','image/png','image/jpg'].includes(file.type)){
+    toast('❌ Format harus JPG atau PNG','err');
+    return;
+  }
+  
+  // Validasi ukuran (5 MB)
+  const maxSize = 5 * 1024 * 1024;
+  if(file.size > maxSize){
+    toast('❌ Ukuran maksimal 5 MB','err');
+    return;
+  }
+  
+  const progressDiv = document.getElementById('jadwalUploadProgress');
+  progressDiv.style.display = 'flex';
+  progressDiv.style.alignItems = 'center';
+  progressDiv.style.justifyContent = 'center';
+  
+  try {
+    // Kompres gambar
+    const base64 = await compressImage(file, 1000, 0.75);
+    
+    // Hitung ukuran base64 dalam KB
+    const sizeKB = (base64.length * 0.75) / 1024;
+    
+    // Cek ukuran base64 (max ~5MB untuk RTDB)
+    if(sizeKB > 5000){
+      toast('❌ Gambar terlalu besar setelah kompresi','err');
+      progressDiv.style.display = 'none';
+      return;
+    }
+    
+    // Simpan ke RTDB
+    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).set({
+      base64: base64,
+      fileName: file.name,
+      originalSizeKB: (file.size / 1024).toFixed(1),
+      sizeKB: sizeKB.toFixed(1),
+      uploadedAt: nowISO(),
+      uploadedBy: currentUser
+    });
+    
+    toast('✅ Jadwal berhasil diupload!');
+  } catch(err){
+    console.error('Error upload:', err);
+    toast('❌ Gagal upload: ' + err.message,'err');
+  } finally {
+    progressDiv.style.display = 'none';
+    // Reset input file
+    document.getElementById('inputJadwalFile').value = '';
+    document.getElementById('inputJadwalFileReplace').value = '';
+  }
+}
+
+// Hapus jadwal gambar
+window.hapusJadwalMengajar = async function(){
+  if(!confirm('⚠️ Hapus gambar jadwal mengajar Anda?\n\nTindakan ini tidak dapat dibatalkan.')) return;
+  
+  try {
+    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).remove();
+    toast('✅ Gambar jadwal dihapus');
+  } catch(err){
+    toast('❌ Gagal menghapus: ' + err.message,'err');
+  }
+};
+
+// Zoom modal
+window.openZoomModal = function(src){
+  const modal = document.getElementById('zoomModal');
+  const img = document.getElementById('zoomModalImg');
+  img.src = src;
+  modal.classList.add('active');
+};
+
+window.closeZoomModal = function(){
+  document.getElementById('zoomModal').classList.remove('active');
+};
+
+// Drag & drop
+function initDragDrop(){
+  const dropZone = document.getElementById('dropZone');
+  if(!dropZone) return;
+  
+  ['dragenter','dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+  });
+  
+  ['dragleave','drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+    });
+  });
+  
+  dropZone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if(file) handleJadwalFile(file);
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -407,8 +614,25 @@ function bindEvents(){
     toast('Mencoba bunyi alarm...');
   };
 
+  // Upload jadwal gambar
+  document.getElementById('inputJadwalFile').onchange = e => {
+    const file = e.target.files[0];
+    if(file) handleJadwalFile(file);
+  };
+  document.getElementById('inputJadwalFileReplace').onchange = e => {
+    const file = e.target.files[0];
+    if(file) handleJadwalFile(file);
+  };
+
   document.querySelectorAll('.modal').forEach(m=>{
     m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('active'); });
+  });
+  
+  // ESC untuk tutup zoom modal
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape'){
+      closeZoomModal();
+    }
   });
 }
 
@@ -513,153 +737,6 @@ function renderJadwalTable(){
     btn.onclick = () => hapusJadwal(btn.dataset.key, btn.dataset.label);
   });
 }
-
-// ══════════════════════════════════════════════
-//        UPLOAD JADWAL MENGAJAR (GAMBAR)
-// ══════════════════════════════════════════════
-
-// Load jadwal mengajar saat init
-function loadJadwalMengajar() {
-  const previewSection = document.getElementById('previewJadwalSection');
-  const uploadSection = document.getElementById('uploadJadwalSection');
-  const emptySection = document.getElementById('emptyJadwalSection');
-  const previewContainer = document.getElementById('jadwalPreviewContainer');
-  
-  // Check if user has uploaded schedule
-  jadwalStorageRef.child(currentUser).getDownloadUrl()
-    .then(url => {
-      // Schedule exists, show preview
-      previewContainer.innerHTML = `
-        <img src="${url}" alt="Jadwal Mengajar" 
-             style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-      `;
-      previewSection.style.display = 'block';
-      uploadSection.style.display = 'none';
-      emptySection.style.display = 'none';
-    })
-    .catch(error => {
-      // No schedule uploaded yet
-      previewSection.style.display = 'none';
-      uploadSection.style.display = 'block';
-      emptySection.style.display = 'block';
-    });
-}
-
-// Handle file selection
-window.handleJadwalFileSelect = function(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  // Validate file type
-  const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-  if (!validTypes.includes(file.type)) {
-    alert('❌ Format file tidak didukung. Gunakan JPG, PNG, atau PDF.');
-    return;
-  }
-  
-  // Validate file size (5MB)
-  const maxSize = 5 * 1024 * 1024;
-  if (file.size > maxSize) {
-    alert('❌ Ukuran file terlalu besar. Maksimal 5 MB.');
-    return;
-  }
-  
-  // Confirm upload
-  if (!confirm(`Upload jadwal "${file.name}"?\n\nFile akan disimpan dan dapat dilihat di halaman ini.`)) {
-    event.target.value = '';
-    return;
-  }
-  
-  uploadJadwalMengajar(file);
-};
-
-// Upload jadwal to Firebase Storage
-function uploadJadwalMengajar(file) {
-  const progressDiv = document.getElementById('jadwalUploadProgress');
-  const uploadSection = document.getElementById('uploadJadwalSection');
-  
-  progressDiv.style.display = 'block';
-  
-  // Create unique filename
-  const timestamp = Date.now();
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${currentUser}_${timestamp}.${fileExt}`;
-  const fileRef = jadwalStorageRef.child(fileName);
-  
-  // Upload file
-  const uploadTask = fileRef.put(file);
-  
-  uploadTask.on('state_changed',
-    (snapshot) => {
-      // Progress monitoring
-      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-      console.log(`Upload progress: ${progress}%`);
-    },
-    (error) => {
-      // Error handling
-      console.error('Upload error:', error);
-      alert('❌ Gagal mengupload jadwal: ' + error.message);
-      progressDiv.style.display = 'none';
-    },
-    () => {
-      // Success - get download URL
-      uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
-        // Save URL to database
-        db.ref('jadwal_mengajar_info').child(currentUser).set({
-          url: downloadURL,
-          fileName: fileName,
-          uploadedAt: new Date().toISOString(),
-          fileType: file.type
-        }).then(() => {
-          alert('✅ Jadwal berhasil diupload!');
-          progressDiv.style.display = 'none';
-          loadJadwalMengajar();
-        }).catch(error => {
-          alert('❌ Gagal menyimpan informasi jadwal: ' + error.message);
-          progressDiv.style.display = 'none';
-        });
-      }).catch(error => {
-        alert('❌ Gagal mendapatkan link jadwal: ' + error.message);
-        progressDiv.style.display = 'none';
-      });
-    }
-  );
-}
-
-// Edit/Replace jadwal
-window.editJadwalMengajar = function() {
-  document.getElementById('inputJadwalFile').click();
-};
-
-// Delete jadwal
-window.hapusJadwalMengajar = function() {
-  if (!confirm('⚠️ Hapus jadwal mengajar Anda?\n\nTindakan ini tidak dapat dibatalkan.')) {
-    return;
-  }
-  
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner" style="width:16px;height:16px;"></span> Menghapus...';
-  
-  // Delete from Storage
-  jadwalStorageRef.child(currentUser).delete()
-    .then(() => {
-      // Also delete from database
-      return db.ref('jadwal_mengajar_info').child(currentUser).remove();
-    })
-    .then(() => {
-      alert('✅ Jadwal berhasil dihapus.');
-      loadJadwalMengajar();
-    })
-    .catch(error => {
-      alert('❌ Gagal menghapus jadwal: ' + error.message);
-    })
-    .finally(() => {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-    });
-};
 
 // ══════════════════════════════════════════════
 //             ALARM ENGINE
