@@ -60,7 +60,7 @@ const CONFIG = {
             url: 'https://www.manbantaeng.sch.id/' 
         },
         { icon: '🧾', title: 'PMBM', desc: '', color: '#00695c', page: 'pages/pmbm.html' },
-        { icon: '⏱️', title: 'jadwal Mengajar', desc: '', color: '#49b2df, page: 'pages/jadwal-mengajar.html' },
+        { icon: '⏱️', title: 'Jadwal Mengajar', desc: '', color: '#49b2df, page: 'pages/jadwal-mengajar.html' },
         { icon: '📖', title: 'SIPENA', desc: '', color: '#3949ab', page: 'pages/sipena.html' },
         { icon: '✅', title: 'SiTaat', desc: '', color: '#f57c00', page: 'pages/sitaat.html' },
         { 
