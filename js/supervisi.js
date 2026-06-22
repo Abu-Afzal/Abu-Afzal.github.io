@@ -573,23 +573,29 @@ window.deleteFolder = async function(folderId, folderName, docCount) {
   } catch(e) { alert('❌ Gagal menghapus folder: ' + e.message); }
 };
 
-// Hapus folder dan semua isinya secara recursive
+// Hapus folder dan semua isinya secara recursive (Sudah Diperbaiki 🛠️)
 async function deleteFolderRecursive(folderId) {
-  // Hapus semua dokumen di folder ini
-  const docsSnap = await db.collection('supervision_documents')
-    .where('folderId', '==', folderId).get();
+  // 1. Tentukan query dasar untuk mencari dokumen di dalam folder
+  let docQuery = db.collection('supervision_documents').where('folderId', '==', folderId);
+  
+  // ✨ KUNCI ISOLASI DATA: Jika yang login adalah guru, kunci query menggunakan emailnya agar lolos Security Rules
+  if (currentUser.role === 'guru') {
+    docQuery = docQuery.where('userEmail', '==', currentUser.email);
+  }
+  
+  // Ambil dokumennya
+  const docsSnap = await docQuery.get();
   const batch1 = db.batch();
   docsSnap.docs.forEach(doc => batch1.delete(doc.ref));
   await batch1.commit();
   
-  // Hapus semua sub-folder secara recursive
+  // 2. Hapus semua sub-folder secara recursive
   const subFolders = userFolders.filter(f => f.parentId === folderId);
   for (const sub of subFolders) {
     await deleteFolderRecursive(sub.id);
     await db.collection('supervision_folders').doc(sub.id).delete();
   }
 }
-
 window.uploadDokumen = async function() {
   const kategori = document.getElementById('docKategori').value;
   const nama = document.getElementById('docNama').value.trim();
