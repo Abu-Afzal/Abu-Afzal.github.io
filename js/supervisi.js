@@ -456,7 +456,13 @@ async function loadFolderContents() {
     container.innerHTML = html;
     
     // 6. Update tabel semua dokumen
-    loadMyDocs();//
+    loadMyDocs();
+    
+  } catch(e) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;grid-column:1/-1;">❌ ${e.message}</div>`;
+    console.error('Error loading folder contents:', e);
+  }
+}
 
 // Override loadFolders to use new system
 async function loadFolders() {
@@ -664,6 +670,25 @@ window.uploadDokumen = async function() {
   btn.textContent = '💾 Simpan Dokumen';
 };
 
+async function loadMyDocs() {
+  const tbody = document.getElementById('myDocsList');
+  
+  // 🌟 TAMBAHKAN BARIS PENGAMAN INI DI SINI:
+  if (!tbody) return;
+  const tbody = document.getElementById('myDocsList'); tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</td></tr>';
+  try {
+    const snap = await db.collection('supervision_documents').where('userEmail', '==', currentUser.email).get();
+    if(snap.empty){ tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:20px;"> Belum ada dokumen</td></tr>'; return; }
+    let docs = snap.docs.map(d => ({id: d.id, ...d.data()})); docs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    tbody.innerHTML = docs.map(d => {
+      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
+      const folder = userFolders.find(f => f.id === d.folderId); const folderColor = folder?.color || '#6b7280'; const folderName = d.folderName || 'Tanpa Folder';
+      let btnLihat = d.type === 'link' ? `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>` : (d.fileExt === 'pdf' ? `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>` : `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`);
+      let btnUnduh = d.type !== 'link' ? `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇️</button>` : '';
+      return `<tr><td><span class="folder-badge" style="background:${folderColor};">📁 ${folderName}</span></td><td>${icon} ${d.nama}</td><td>${d.kategori}</td><td>${new Date(d.createdAt).toLocaleDateString('id-ID')}</td><td><div style="display:flex;gap:4px;flex-wrap:wrap;">${btnLihat}${btnUnduh}<button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button></div></td></tr>`;
+    }).join('');
+  } catch(e) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:20px;">❌ ${e.message}</td></tr>`; }
+}
 window.downloadMyDoc = async function(docId, nama, ext){ const snap = await db.collection('supervision_documents').doc(docId).get(); const data = snap.data(); const a = document.createElement('a'); a.href = data.fileData; a.download = nama + '.' + ext; a.click(); };
 window.downloadDoc = window.downloadMyDoc;
 window.deleteMyDoc = async function(docId){ if(!confirm('Hapus dokumen ini?')) return; await db.collection('supervision_documents').doc(docId).delete(); loadMyDocs(); loadFolders(); };
