@@ -670,11 +670,7 @@ window.uploadDokumen = async function() {
   btn.textContent = '💾 Simpan Dokumen';
 };
 
-async function loadMyDocs() {
-  const tbody = document.getElementById('myDocsList');
-  
-  // 🌟 TAMBAHKAN BARIS PENGAMAN INI DI SINI:
-  if (!tbody) return;
+async function loadMyDocs(){
   const tbody = document.getElementById('myDocsList'); tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</td></tr>';
   try {
     const snap = await db.collection('supervision_documents').where('userEmail', '==', currentUser.email).get();
