@@ -398,7 +398,7 @@ async function loadFolderContents() {
     subFolders.forEach(f => {
       const count = folderCounts[f.id] || 0;
       html += `
-        <div class="folder-card" style="border-left:4px solid ${f.color || '#3b82f6'};cursor:pointer;" onclick="navigateFolder('${f.id}')">
+        <div class="folder-card" style="--fc:${f.color || '#3b82f6'};cursor:pointer;" onclick="navigateFolder('${f.id}')">
           <div class="folder-icon">📁</div>
           <div class="folder-info">
             <div class="folder-name">${f.name}</div>
