@@ -753,4 +753,4 @@ function openModal(id) { document.getElementById(id).classList.add('active'); }
 function formatDate(dateStr) { if (!dateStr) return '-'; const date = new Date(dateStr); return date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}); }
 
 window.addEventListener('load', async () => { showLoading(); await new Promise(resolve => setTimeout(resolve, 500)); const isValid = await checkSipelitaSession(); if (isValid) { showDashboard(); } });
-window.viewDetail = viewDetail; window.downloadPDF = downloadPDF; ini js saya
+window.viewDetail = viewDetail; window.downloadPDF = downloadPDF;
