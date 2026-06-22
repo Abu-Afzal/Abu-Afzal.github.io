@@ -2007,3 +2007,4 @@ window.addEventListener('load', async () => {
 
 window.viewDetail = viewDetail;
 window.downloadPDF = downloadPDF;
+
