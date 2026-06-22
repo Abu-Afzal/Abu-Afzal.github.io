@@ -10,13 +10,11 @@ const firebaseConfig = {
   messagingSenderId:"787840817745",
   appId:"1:787840817745:web:e6b5237cfbb5e51be93670"
 };
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ══════════════════════════════════════════════
-//            GLOBAL VARIABLES
-// ══════════════════════════════════════════════
 let currentUser = null;
 let currentSupervision = null;
 let selectedScheduleId = null;
@@ -27,10 +25,10 @@ let componentCounter = 0;
 // Folder variables
 let editingFolderId = null;
 let userFolders = [];
-let currentFolderId = null; // null = root level
+let currentOpenFolderId = null;
 
 // ══════════════════════════════════════════════
-//   🔐 INTEGRASI SESSION SIPELITA
+//    INTEGRASI SESSION SIPELITA
 // ══════════════════════════════════════════════
 function showLoading() {
   document.getElementById('loadingPage').style.display = 'block';
@@ -46,8 +44,12 @@ function showAccessDenied(message) {
 }
 
 async function checkSipelitaSession() {
+  console.log('🔍 Memeriksa session SIPELITA...');
+  
   let sipelitaUser = sessionStorage.getItem('sipelita_user');
-  if (!sipelitaUser) sipelitaUser = localStorage.getItem('sipelita_user');
+  if (!sipelitaUser) {
+    sipelitaUser = localStorage.getItem('sipelita_user');
+  }
   
   if (!sipelitaUser) {
     showAccessDenied(`<strong>⛔ Session SIPELITA tidak ditemukan!</strong><br><br>Anda belum login ke portal SIPELITA.`);
@@ -55,18 +57,22 @@ async function checkSipelitaSession() {
   }
   
   let userData;
-  try { userData = JSON.parse(sipelitaUser); } 
-  catch(e) { showAccessDenied('<strong>⚠️ Session SIPELITA tidak valid!</strong>'); return false; }
+  try {
+    userData = JSON.parse(sipelitaUser);
+  } catch(e) {
+    showAccessDenied('<strong>⚠️ Session SIPELITA tidak valid!</strong><br>Silakan login ulang.');
+    return false;
+  }
   
   if (!userData.email || !userData.nama) {
-    showAccessDenied('<strong>⚠️ Data user tidak lengkap!</strong>');
+    showAccessDenied('<strong>⚠️ Data user tidak lengkap!</strong><br>Silakan login ulang.');
     return false;
   }
   
   try {
     const userDoc = await db.collection('users').doc(userData.email).get();
     if (!userDoc.exists) {
-      showAccessDenied(`<strong>⚠️ Akun tidak ditemukan!</strong><br>Email: ${userData.email}`);
+      showAccessDenied(`<strong>️ Akun tidak ditemukan!</strong><br>Email: ${userData.email}`);
       return false;
     }
     const firestoreData = userDoc.data();
@@ -79,7 +85,7 @@ async function checkSipelitaSession() {
     };
   } catch(e) {
     currentUser = {
-      uid: userData.uid || userData.email,
+      uid: userData.uid || userData.id || userData.email,
       email: userData.email,
       nama: userData.nama,
       role: userData.role || 'guru',
@@ -88,12 +94,14 @@ async function checkSipelitaSession() {
   }
   
   if (!currentUser.fitur || !Array.isArray(currentUser.fitur) || !currentUser.fitur.includes('supervisi')) {
-    showAccessDenied(`<strong>⛔ Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})`);
+    showAccessDenied(`<strong> Akun Anda tidak memiliki akses ke fitur Supervisi!</strong><br><br>Login sebagai: <strong>${currentUser.nama}</strong> (${currentUser.email})`);
     return false;
   }
   
   sessionStorage.setItem('sipelita_user', JSON.stringify(currentUser));
   localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
+  
+  console.log('✅ Session valid:', currentUser);
   return true;
 }
 
@@ -104,6 +112,7 @@ window.switchTab = function(tabId) {
   const parent = document.getElementById(tabId).closest('.card');
   parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  
   event.target.classList.add('active');
   document.getElementById(tabId).classList.add('active');
   
@@ -112,7 +121,7 @@ window.switchTab = function(tabId) {
   if (tabId === 'tabSupervisi') { loadPendingSchedules(); loadInstruments(); }
   if (tabId === 'tabRiwayat') loadSupervisionList();
   if (tabId === 'tabJadwalSaya') loadMySchedule();
-  if (tabId === 'tabUpload') { currentFolderId = null; loadFolderContents(); }
+  if (tabId === 'tabUpload') loadFolders();
   if (tabId === 'tabHasil') loadMySupervisionList();
   if (tabId === 'tabKelolaInstrumen') loadInstrumentsList();
 };
@@ -124,6 +133,7 @@ function showDashboard(){
   document.getElementById('loadingPage').style.display = 'none';
   document.getElementById('accessDeniedPage').style.display = 'none';
   document.getElementById('dashboardPage').style.display = 'block';
+  
   document.getElementById('userNameDisplay').textContent = currentUser.nama;
   document.getElementById('userRoleDisplay').textContent = getRoleLabel(currentUser.role);
   
@@ -142,26 +152,24 @@ function showDashboard(){
     document.getElementById('teacherTabs').style.display = 'block';
     loadScheduleList();
     loadMySchedule();
-    currentFolderId = null;
-    loadFolderContents();
+    loadFolders();
     loadMySupervisionList();
   }
   else {
     document.getElementById('supervisorTabs').style.display = 'none';
     document.getElementById('teacherTabs').style.display = 'block';
     loadMySchedule();
-    currentFolderId = null;
-    loadFolderContents();
+    loadFolders();
     loadMySupervisionList();
   }
 }
 
 function getRoleLabel(role){
-  return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role;
+  return {kepala:' Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role;
 }
 
 window.doLogout = function(){
-  if(confirm('Apakah Anda yakin ingin keluar?')){
+  if(confirm('Apakah Anda yakin ingin keluar dari Supervisi?\n\nAnda akan kembali ke portal SIPELITA.')){
     sessionStorage.removeItem('supervisi_user');
     currentUser = null;
     window.location.href = '../index.html';
@@ -174,9 +182,12 @@ window.doLogout = function(){
 async function loadAvailableTeachers() {
   const select = document.getElementById('scheduleTeacher');
   select.innerHTML = '<option value="">-- Memuat data... --</option>';
+  
   try {
     let roleFilter = ['guru'];
-    if (currentUser.role === 'kepala') roleFilter = ['guru', 'wakil'];
+    if (currentUser.role === 'kepala') {
+      roleFilter = ['guru', 'wakil'];
+    }
     
     const allUsersSnap = await db.collection('users').get();
     const allUsers = allUsersSnap.docs.map(d => ({id: d.id, ...d.data()}));
@@ -198,7 +209,8 @@ async function loadAvailableTeachers() {
       select.innerHTML += `<option value="${u.id}" data-nama="${u.nama}" data-email="${u.email}">${u.nama} (${roleLabel})</option>`;
     });
   } catch(e) {
-    select.innerHTML = '<option value="">-- Error --</option>';
+    console.error('Error loading teachers:', e);
+    select.innerHTML = '<option value="">-- Error memuat data --</option>';
   }
 }
 
@@ -243,12 +255,14 @@ window.createSchedule = async function() {
       updatedAt: new Date().toISOString()
     });
     
-    alert.textContent = `✅ Jadwal berhasil dibuat! ${teacherName} akan disupervisi pada ${formatDate(scheduledDate)}`;
+    const roleLabel = teacherRole === 'wakil' ? 'Wakil Kepala' : 'Guru';
+    alert.textContent = `✅ Jadwal berhasil dibuat! ${teacherName} (${roleLabel}) akan disupervisi pada ${formatDate(scheduledDate)}`;
     alert.className = 'alert alert-success show';
     
     teacherSelect.value = '';
     document.getElementById('scheduleDate').value = '';
     document.getElementById('scheduleNotes').value = '';
+    
     loadAvailableTeachers();
   } catch(e) {
     alert.textContent = '❌ ' + e.message;
@@ -261,6 +275,7 @@ window.createSchedule = async function() {
 async function loadScheduleList() {
   const container = document.getElementById('scheduleList');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
   try {
     const snap = await db.collection('supervision_schedule')
       .where('supervisorEmail', '==', currentUser.email).get();
@@ -275,18 +290,18 @@ async function loadScheduleList() {
     
     container.innerHTML = schedules.map(s => {
       const statusBadge = {
-        'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>',
-        'in-progress': '<span class="badge badge-progress">🔄 Berlangsung</span>',
+        'scheduled': '<span class="badge badge-scheduled"> Dijadwalkan</span>',
+        'in-progress': '<span class="badge badge-progress"> Berlangsung</span>',
         'completed': '<span class="badge badge-done">✅ Selesai</span>'
       }[s.status] || '<span class="badge badge-info">' + s.status + '</span>';
       
-      const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '👨‍🏫';
+      const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '‍🏫';
       
       return `
         <div class="schedule-card">
           <div class="schedule-info">
             <div class="schedule-title">${roleIcon} ${s.teacherName}</div>
-            <div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>
+            <div class="schedule-detail"> ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>
             ${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}
           </div>
           <div class="schedule-actions">
@@ -304,6 +319,7 @@ async function loadScheduleList() {
 async function loadPendingSchedules() {
   const select = document.getElementById('supervisionSchedule');
   select.innerHTML = '<option value="">-- Memuat... --</option>';
+  
   try {
     const snap = await db.collection('supervision_schedule')
       .where('supervisorEmail', '==', currentUser.email)
@@ -330,7 +346,10 @@ window.loadScheduleDetail = async function() {
   const scheduleId = select.value;
   const detailArea = document.getElementById('scheduleDetailArea');
   
-  if (!scheduleId) { detailArea.style.display = 'none'; return; }
+  if (!scheduleId) {
+    detailArea.style.display = 'none';
+    return;
+  }
   
   selectedScheduleId = scheduleId;
   detailArea.style.display = 'block';
@@ -341,7 +360,8 @@ window.loadScheduleDetail = async function() {
   
   try {
     const snap = await db.collection('supervision_documents')
-      .where('userEmail', '==', teacherEmail).get();
+      .where('userEmail', '==', teacherEmail)
+      .get();
     
     if (snap.empty) {
       docContainer.innerHTML = '<div class="empty-state" style="padding:20px;"><div class="icon">📭</div><p>Belum ada dokumen yang diupload</p></div>';
@@ -351,7 +371,6 @@ window.loadScheduleDetail = async function() {
     const docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
     docContainer.innerHTML = docs.map(d => {
       const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'📗':'📄');
-      
       let btnLihat = '';
       if (d.type === 'link') {
         btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
@@ -363,7 +382,7 @@ window.loadScheduleDetail = async function() {
       
       let btnUnduh = '';
       if (d.type !== 'link') {
-        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇️ Unduh</button>`;
+        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇ Unduh</button>`;
       }
       
       const roleBadge = d.userRole === 'wakil' ? '<span class="badge" style="background:#ede9fe;color:#5b21b6;margin-left:5px;">⭐ Wakamad</span>' : '';
@@ -395,15 +414,19 @@ window.updateScheduleStatus = async function(scheduleId, status) {
       updatedAt: new Date().toISOString()
     });
     loadScheduleList();
-  } catch(e) { alert('❌ ' + e.message); }
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
 };
 
 window.deleteSchedule = async function(scheduleId) {
-  if (!confirm('Hapus jadwal ini?')) return;
+  if (!confirm('Hapus jadwal ini? Guru akan bisa dijadwalkan ulang.')) return;
   try {
     await db.collection('supervision_schedule').doc(scheduleId).delete();
     loadScheduleList();
-  } catch(e) { alert('❌ ' + e.message); }
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
 };
 
 // ══════════════════════════════════════════════
@@ -433,15 +456,27 @@ window.addComponent = function() {
     </div>
     <div class="form-group">
       <label>Nama Komponen *</label>
-      <input type="text" class="component-name" placeholder="Nama komponen">
+      <input type="text" class="component-name" placeholder="Contoh: Kalender pendidikan dan analisisnya">
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Level 1 (Kurang)</label><textarea class="component-level1"></textarea></div>
-      <div class="form-group"><label>Level 2 (Cukup)</label><textarea class="component-level2"></textarea></div>
+      <div class="form-group">
+        <label>Level 1 (Kurang)</label>
+        <textarea class="component-level1" placeholder="Deskripsi level 1..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Level 2 (Cukup)</label>
+        <textarea class="component-level2" placeholder="Deskripsi level 2..."></textarea>
+      </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Level 3 (Baik)</label><textarea class="component-level3"></textarea></div>
-      <div class="form-group"><label>Level 4 (Sangat Baik)</label><textarea class="component-level4"></textarea></div>
+      <div class="form-group">
+        <label>Level 3 (Baik)</label>
+        <textarea class="component-level3" placeholder="Deskripsi level 3..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Level 4 (Sangat Baik)</label>
+        <textarea class="component-level4" placeholder="Deskripsi level 4..."></textarea>
+      </div>
     </div>
   `;
   container.appendChild(div);
@@ -457,7 +492,10 @@ window.saveInstrument = async function() {
   const type = document.getElementById('instrumentType').value;
   const desc = document.getElementById('instrumentDesc').value.trim();
   
-  if (!name || !type) { alert('❌ Nama dan jenis instrumen wajib diisi!'); return; }
+  if (!name || !type) {
+    alert('❌ Nama dan jenis instrumen wajib diisi!');
+    return;
+  }
   
   const components = [];
   document.querySelectorAll('#componentsContainer .assessment-item').forEach((item, index) => {
@@ -474,10 +512,16 @@ window.saveInstrument = async function() {
     }
   });
   
-  if (components.length === 0) { alert('❌ Minimal tambahkan 1 komponen!'); return; }
+  if (components.length === 0) {
+    alert('❌ Minimal tambahkan 1 komponen!');
+    return;
+  }
   
   const instrumentData = {
-    name, type, description: desc, components,
+    name,
+    type,
+    description: desc,
+    components,
     isActive: true,
     createdBy: currentUser.email,
     createdAt: new Date().toISOString(),
@@ -492,21 +536,34 @@ window.saveInstrument = async function() {
       await db.collection('supervision_instruments').add(instrumentData);
       alert('✅ Instrumen berhasil ditambahkan!');
     }
+    
     closeModal('instrumentModal');
     loadInstrumentsList();
-  } catch(e) { alert('❌ ' + e.message); }
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
 };
 
 async function loadInstrumentsList() {
   const container = document.getElementById('instrumentsList');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
   try {
     const snap = await db.collection('supervision_instruments').orderBy('createdAt', 'desc').get();
+    
     if (snap.empty) {
-      container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Belum ada instrumen.</p></div>';
+      container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Belum ada instrumen. Klik "Tambah Instrumen Baru" atau "Import Instrumen Default"</p></div>';
       return;
     }
-    const typeLabels = {'administrasi': 'Administrasi', 'perencanaan': 'Perencanaan', 'pelaksanaan': 'Pelaksanaan', 'asesmen': 'Asesmen', 'bk': 'Bimbingan Konseling'};
+    
+    const typeLabels = {
+      'administrasi': 'Administrasi',
+      'perencanaan': 'Perencanaan',
+      'pelaksanaan': 'Pelaksanaan',
+      'asesmen': 'Asesmen',
+      'bk': 'Bimbingan Konseling'
+    };
+    
     container.innerHTML = snap.docs.map(doc => {
       const data = doc.data();
       return `
@@ -533,14 +590,18 @@ async function loadInstrumentsList() {
 window.editInstrument = async function(docId) {
   const snap = await db.collection('supervision_instruments').doc(docId).get();
   if (!snap.exists) return;
+  
   const data = snap.data();
   editingInstrumentId = docId;
+  
   document.getElementById('instrumentModalTitle').textContent = '✏️ Edit Instrumen';
   document.getElementById('instrumentName').value = data.name;
   document.getElementById('instrumentType').value = data.type;
   document.getElementById('instrumentDesc').value = data.description || '';
+  
   document.getElementById('componentsContainer').innerHTML = '';
   componentCounter = 0;
+  
   data.components.forEach(comp => {
     componentCounter++;
     const container = document.getElementById('componentsContainer');
@@ -552,67 +613,203 @@ window.editInstrument = async function(docId) {
         <strong>Komponen #${componentCounter}</strong>
         <button type="button" class="btn btn-danger btn-sm" onclick="removeComponent(${componentCounter})">🗑️ Hapus</button>
       </div>
-      <div class="form-group"><label>Nama Komponen *</label><input type="text" class="component-name" value="${comp.name}"></div>
-      <div class="form-row">
-        <div class="form-group"><label>Level 1</label><textarea class="component-level1">${comp.level1 || ''}</textarea></div>
-        <div class="form-group"><label>Level 2</label><textarea class="component-level2">${comp.level2 || ''}</textarea></div>
+      <div class="form-group">
+        <label>Nama Komponen *</label>
+        <input type="text" class="component-name" value="${comp.name}">
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Level 3</label><textarea class="component-level3">${comp.level3 || ''}</textarea></div>
-        <div class="form-group"><label>Level 4</label><textarea class="component-level4">${comp.level4 || ''}</textarea></div>
+        <div class="form-group">
+          <label>Level 1 (Kurang)</label>
+          <textarea class="component-level1">${comp.level1 || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Level 2 (Cukup)</label>
+          <textarea class="component-level2">${comp.level2 || ''}</textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Level 3 (Baik)</label>
+          <textarea class="component-level3">${comp.level3 || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Level 4 (Sangat Baik)</label>
+          <textarea class="component-level4">${comp.level4 || ''}</textarea>
+        </div>
       </div>
     `;
     container.appendChild(div);
   });
+  
   openModal('instrumentModal');
 };
 
 window.deleteInstrument = async function(docId) {
-  if (!confirm('Hapus instrumen ini?')) return;
+  if (!confirm('Hapus instrumen ini? Tindakan tidak dapat dibatalkan.')) return;
   try {
     await db.collection('supervision_instruments').doc(docId).delete();
     loadInstrumentsList();
-  } catch(e) { alert('❌ ' + e.message); }
+  } catch(e) {
+    alert('❌ ' + e.message);
+  }
 };
 
+// Import instrumen default dari Excel KBC
 window.importDefaultInstruments = async function() {
-  if (!confirm('Import 5 instrumen default KBC?')) return;
+  if (!confirm('Import instrumen default dari Kurikulum Berbasis Cinta (KBC)? Ini akan menambahkan 5 instrumen standar dengan rubrik lengkap.')) return;
+  
   const defaultInstruments = [
-    { name: "Supervisi Administrasi Pembelajaran", type: "administrasi", description: "Menilai kelengkapan administrasi pembelajaran", components: [
-      { name: "Kalender pendidikan", level1: "Tidak tersedia", level2: "Tersedia belum lengkap", level3: "Tersedia dan lengkap", level4: "Lengkap dan berkualitas" },
-      { name: "Program Tahunan/Semester", level1: "Tidak tersedia", level2: "Tersedia belum lengkap", level3: "Tersedia dan lengkap", level4: "Lengkap dan berkualitas" },
-      { name: "Capaian Pembelajaran", level1: "Tidak tersedia", level2: "Tersedia belum lengkap", level3: "Tersedia dan lengkap", level4: "Lengkap dan berkualitas" },
-      { name: "Modul Ajar", level1: "Tidak tersedia", level2: "Tersedia belum lengkap", level3: "Tersedia dan lengkap", level4: "Lengkap dan berkualitas" },
-      { name: "Daftar Penilaian", level1: "Tidak tersedia", level2: "Tersedia belum lengkap", level3: "Tersedia dan lengkap", level4: "Lengkap dan berkualitas" }
-    ]},
-    { name: "Supervisi Perencanaan Pembelajaran", type: "perencanaan", description: "Menilai perencanaan pembelajaran berbasis KBC", components: [
-      { name: "Identifikasi Murid", level1: "Tidak sesuai", level2: "Sebagian sesuai", level3: "Sesuai dengan baik", level4: "Sangat sesuai dan empatik" },
-      { name: "Dimensi Profil Lulusan", level1: "Tidak sesuai", level2: "Sebagian sesuai", level3: "Sesuai dengan baik", level4: "Sangat sesuai dan humanis" },
-      { name: "Topik Panca Cinta", level1: "Tidak ada integrasi", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi sangat baik" },
-      { name: "Tujuan Pembelajaran", level1: "Tidak jelas", level2: "Cukup jelas", level3: "Jelas dan terukur", level4: "Sangat jelas dan bermakna" },
-      { name: "Praktek Pedagogis", level1: "Tidak sesuai", level2: "Sebagian sesuai", level3: "Sesuai dengan baik", level4: "Sangat sesuai dan aktif" }
-    ]},
-    { name: "Supervisi Pelaksanaan Pembelajaran", type: "pelaksanaan", description: "Menilai pelaksanaan pembelajaran dengan nilai KBC", components: [
-      { name: "Penyampaian Tujuan", level1: "Tanpa integrasi", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi optimal" },
-      { name: "Apersepsi & Motivasi", level1: "Tidak ada", level2: "Minimal", level3: "Baik", level4: "Sangat baik" },
-      { name: "Penyajian Materi", level1: "Tidak runtut", level2: "Cukup runtut", level3: "Runtut dan jelas", level4: "Sangat runtut dan menarik" },
-      { name: "Media Pembelajaran", level1: "Tidak relevan", level2: "Cukup relevan", level3: "Relevan dan interaktif", level4: "Sangat relevan dan optimal" },
-      { name: "Keterlibatan Siswa", level1: "Tidak ada", level2: "Minimal", level3: "Aktif baik", level4: "Sangat aktif dan empatik" }
-    ]},
-    { name: "Supervisi Asesmen Pembelajaran", type: "asesmen", description: "Menilai asesmen pembelajaran berbasis KBC", components: [
-      { name: "Instrumen Penilaian", level1: "Tidak selaras", level2: "Selaras umum", level3: "Selaras dengan nilai cinta", level4: "Sangat selaras dan humanis" },
-      { name: "Penilaian Proses & Hasil", level1: "Hanya hasil", level2: "Proses & hasil minimal", level3: "Proses & hasil baik", level4: "Komprehensif dan konsisten" },
-      { name: "Umpan Balik", level1: "Minimal", level2: "Diberikan", level3: "Membangun", level4: "Sangat membangun dan holistik" },
-      { name: "Pemanfaatan Hasil", level1: "Tidak dimanfaatkan", level2: "Terbatas", level3: "Untuk perbaikan", level4: "Sistematis dan berkelanjutan" },
-      { name: "Suasana Penilaian", level1: "Tidak aman", level2: "Cukup aman", level3: "Aman dan inklusif", level4: "Sangat aman dan berkarakter" }
-    ]},
-    { name: "Supervisi Guru BK", type: "bk", description: "Menilai layanan BK berbasis deep learning dan KBC", components: [
-      { name: "Perencanaan Layanan", level1: "Tidak berbasis deep learning", level2: "Sebagian berbasis", level3: "Berbasis baik", level4: "Sepenuhnya berbasis optimal" },
-      { name: "Program BK dengan KBC", level1: "Tanpa prinsip KBC", level2: "Prinsip minimal", level3: "Prinsip baik", level4: "Prinsip sangat baik" },
-      { name: "Asesmen Kebutuhan", level1: "Tanpa humanis", level2: "Humanis minimal", level3: "Humanis baik", level4: "Humanis sangat baik" },
-      { name: "Kolaborasi", level1: "Tidak ada", level2: "Minimal", level3: "Baik", level4: "Sangat baik dan komprehensif" },
-      { name: "Ruang Konseling", level1: "Tidak aman", level2: "Cukup aman", level3: "Aman dan nyaman", level4: "Sangat aman dan penuh cinta" }
-    ]}
+    {
+      name: "Supervisi Administrasi Pembelajaran",
+      type: "administrasi",
+      description: "Instrumen supervisi untuk menilai kelengkapan administrasi pembelajaran guru",
+      components: [
+        { name: "Kalender pendidikan dan analisisnya", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Program Tahunan/ Program Semester", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Capaian Pembelajaran (CP) - TP dan ATP", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Modul Ajar/ Perencanaan Pembelajaran", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Daftar Penilaian/ Asesmen", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Data Analisis Hasil Penilaian/ Asesmen", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Program Remedial dan Pengayaan", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Absensi Siswa", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" },
+        { name: "Buku Teks Pelajaran", level1: "Tidak tersedia", level2: "Tersedia namun belum lengkap", level3: "Tersedia dan lengkap", level4: "Tersedia, lengkap, dan berkualitas tinggi" }
+      ]
+    },
+    {
+      name: "Supervisi Perencanaan Pembelajaran",
+      type: "perencanaan",
+      description: "Instrumen supervisi untuk menilai perencanaan pembelajaran berbasis Kurikulum Berbasis Cinta (KBC)",
+      components: [
+        { 
+          name: "Identifikasi Murid: Sesuai kondisi objektif, menunjukkan kesiapan belajar, serta membangun empati dan kasih sayang terhadap keberagaman siswa berdasarkan nilai cinta kepada sesama.", 
+          level1: "Identifikasi murid tidak sesuai kondisi objektif, tidak menunjukkan kesiapan belajar, dan tidak ada elemen empati atau kasih sayang.", 
+          level2: "Identifikasi murid sebagian sesuai kondisi objektif, menunjukkan kesiapan belajar secara minimal, dengan sedikit elemen empati.", 
+          level3: "Identifikasi murid sesuai kondisi objektif, menunjukkan kesiapan belajar dengan baik, dan membangun empati serta kasih sayang secara moderat.", 
+          level4: "Identifikasi murid sangat sesuai kondisi objektif, menunjukkan kesiapan belajar yang optimal, dan secara kuat membangun empati serta kasih sayang terhadap keberagaman siswa berdasarkan nilai cinta." 
+        },
+        { 
+          name: "Dimensi Profil Lulusan yang dipilih sesuai dengan materi pelajaran, dengan penekanan pada pembentukan karakter humanis dan berbudaya melalui nilai-nilai cinta sebagai fondasi pendidikan.", 
+          level1: "Dimensi profil lulusan tidak sesuai dengan materi pelajaran, tanpa penekanan pada karakter humanis atau nilai cinta.", 
+          level2: "Dimensi profil lulusan sebagian sesuai dengan materi pelajaran, dengan penekanan minimal pada karakter humanis melalui nilai cinta.", 
+          level3: "Dimensi profil lulusan sesuai dengan materi pelajaran, dengan penekanan baik pada pembentukan karakter humanis dan berbudaya melalui nilai cinta.", 
+          level4: "Dimensi profil lulusan sangat sesuai dengan materi pelajaran, dengan penekanan kuat dan terintegrasi pada pembentukan karakter humanis dan berbudaya berbasis nilai cinta sebagai fondasi pendidikan." 
+        },
+        { 
+          name: "Mengintegrasikan Topik Panca Cinta dalam pembelajaran, yang selaras dengan ruh Kurikulum Berbasis Cinta untuk menumbuhkan kasih sayang dan empati di antara siswa.", 
+          level1: "Tidak ada integrasi Topik Panca Cinta dalam pembelajaran, tidak selaras dengan KBC.", 
+          level2: "Integrasi Topik Panca Cinta minimal, dengan sedikit keselarasan dengan ruh KBC untuk menumbuhkan kasih sayang.", 
+          level3: "Integrasi Topik Panca Cinta baik, selaras dengan ruh KBC, dan menumbuhkan kasih sayang serta empati secara efektif.", 
+          level4: "Integrasi Topik Panca Cinta sangat baik, sepenuhnya selaras dengan ruh KBC, dan secara mendalam menumbuhkan kasih sayang serta empati di antara siswa." 
+        },
+        { 
+          name: "Tujuan Pembelajaran dikembangkan dari analisis Capaian Pembelajaran, dengan mengintegrasikan nilai-nilai cinta kepada Tuhan, Rasul, dan sesama untuk menciptakan pendidikan bermakna dan humanis.", 
+          level1: "Tujuan pembelajaran tidak dikembangkan dari analisis Capaian Pembelajaran, tanpa integrasi nilai cinta.", 
+          level2: "Tujuan pembelajaran sebagian dikembangkan dari analisis Capaian Pembelajaran, dengan integrasi nilai cinta yang minimal.", 
+          level3: "Tujuan pembelajaran dikembangkan dengan baik dari analisis Capaian Pembelajaran, mengintegrasikan nilai cinta secara relevan untuk pendidikan bermakna.", 
+          level4: "Tujuan pembelajaran sangat baik dikembangkan dari analisis Capaian Pembelajaran, sepenuhnya mengintegrasikan nilai cinta kepada Tuhan, Rasul, dan sesama untuk pendidikan humanis yang mendalam." 
+        },
+        { 
+          name: "Tujuan Pembelajaran jelas, terukur, relevan, serta mengandung komponen minimal yakni kompetensi dan materi, yang dirancang untuk membangun generasi utuh berlandaskan empati dan kemanusiaan.", 
+          level1: "Tujuan pembelajaran tidak jelas, tidak terukur, tidak relevan, dan tidak mengandung komponen minimal, tanpa elemen empati.", 
+          level2: "Tujuan pembelajaran cukup jelas dan terukur, relevan secara minimal, dengan komponen dasar, dan sedikit elemen empati.", 
+          level3: "Tujuan pembelajaran jelas, terukur, relevan, mengandung komponen minimal, dan dirancang untuk membangun empati serta kemanusiaan dengan baik.", 
+          level4: "Tujuan pembelajaran sangat jelas, terukur, relevan, mengandung komponen minimal secara lengkap, dan secara kuat dirancang untuk membangun generasi utuh berbasis empati dan kemanusiaan." 
+        },
+        { 
+          name: "Praktek Pedagogis sesuai prinsip berkesadaran, bermakna, menggembirakan (mendukung pembelajaran siswa aktif), serta dijiwai oleh nilai-nilai cinta untuk menciptakan proses belajar yang penuh kasih sayang.", 
+          level1: "Praktek pedagogis tidak sesuai prinsip, tidak mendukung siswa aktif, dan tidak dijiwai nilai cinta.", 
+          level2: "Praktek pedagogis sebagian sesuai prinsip, mendukung siswa aktif secara minimal, dengan nilai cinta yang sedikit.", 
+          level3: "Praktek pedagogis sesuai prinsip berkesadaran, bermakna, menggembirakan, mendukung siswa aktif, dan dijiwai nilai cinta dengan baik.", 
+          level4: "Praktek pedagogis sangat sesuai prinsip, sepenuhnya mendukung pembelajaran aktif, dan dijiwai nilai cinta untuk proses belajar penuh kasih sayang yang optimal." 
+        },
+        { 
+          name: "Kemitraan Pembelajaran melibatkan stakeholder yang mendukung tercapainya tujuan pembelajaran, dengan kolaborasi berbasis empati dan cinta sesama untuk memperkuat pendidikan keagamaan yang humanis.", 
+          level1: "Tidak ada kemitraan dengan stakeholder, tanpa kolaborasi berbasis empati.", 
+          level2: "Kemitraan dengan stakeholder minimal, dengan kolaborasi empati yang sedikit untuk pendidikan humanis.", 
+          level3: "Kemitraan melibatkan stakeholder secara baik, dengan kolaborasi berbasis empati dan cinta sesama untuk memperkuat pendidikan keagamaan.", 
+          level4: "Kemitraan sangat baik melibatkan stakeholder, dengan kolaborasi kuat berbasis empati dan cinta sesama untuk pendidikan keagamaan humanis yang optimal." 
+        },
+        { 
+          name: "Lingkungan Pembelajaran mendukung suasana aman, inklusif, serta menumbuhkan nilai-nilai cinta dan kemanusiaan guna membentuk siswa yang berkarakter dan berperadaban.", 
+          level1: "Lingkungan pembelajaran tidak aman atau inklusif, tidak menumbuhkan nilai cinta.", 
+          level2: "Lingkungan pembelajaran cukup aman dan inklusif, dengan penumbuhan nilai cinta yang minimal.", 
+          level3: "Lingkungan pembelajaran mendukung suasana aman, inklusif, dan menumbuhkan nilai cinta serta kemanusiaan dengan baik.", 
+          level4: "Lingkungan pembelajaran sangat mendukung suasana aman, inklusif, dan secara kuat menumbuhkan nilai cinta serta kemanusiaan untuk siswa berkarakter berperadaban." 
+        },
+        { 
+          name: "Pemanfaatan teknologi/digital mendukung pembelajaran interaktif, yang diintegrasikan dengan nilai-nilai Kurikulum Berbasis Cinta untuk memfasilitasi ekspresi empati dan kasih sayang dalam era digital.", 
+          level1: "Tidak ada pemanfaatan teknologi, tanpa integrasi nilai KBC.", 
+          level2: "Pemanfaatan teknologi minimal untuk pembelajaran interaktif, dengan integrasi nilai KBC yang sedikit.", 
+          level3: "Pemanfaatan teknologi mendukung pembelajaran interaktif dengan baik, diintegrasikan dengan nilai KBC untuk ekspresi empati.", 
+          level4: "Pemanfaatan teknologi sangat baik mendukung interaktif, sepenuhnya diintegrasikan dengan nilai KBC untuk memfasilitasi empati dan kasih sayang di era digital." 
+        },
+        { 
+          name: "Langkah-langkah pembelajaran runtut, sesuai waktu, dan sesuai dengan tahapan pengalaman belajar (Memahami, Mengaplikasi, dan Merefleksi), serta diarahkan pada penguatan nilai cinta sebagai poros utama pendidikan.", 
+          level1: "Langkah pembelajaran tidak runtut, tidak sesuai waktu atau tahapan, tanpa penguatan nilai cinta.", 
+          level2: "Langkah pembelajaran cukup runtut, sesuai waktu minimal, dengan tahapan dasar dan sedikit penguatan nilai cinta.", 
+          level3: "Langkah pembelajaran runtut, sesuai waktu dan tahapan (Memahami, Mengaplikasi, Merefleksi), dengan penguatan nilai cinta yang baik.", 
+          level4: "Langkah pembelajaran sangat runtut, sesuai waktu optimal, sepenuhnya sesuai tahapan, dan diarahkan kuat pada penguatan nilai cinta sebagai poros pendidikan." 
+        }
+      ]
+    },
+    {
+      name: "Supervisi Pelaksanaan Pembelajaran",
+      type: "pelaksanaan",
+      description: "Instrumen supervisi untuk menilai pelaksanaan pembelajaran dengan nilai-nilai KBC",
+      components: [
+        { name: "Guru menyampaikan tujuan pembelajaran dengan integrasi nilai cinta", level1: "Tanpa integrasi nilai cinta", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi optimal, fondasi humanis mendalam" },
+        { name: "Guru membuka pembelajaran dengan apersepsi dan motivasi dijiwai nilai cinta", level1: "Tanpa apersepsi/motivasi", level2: "Apersepsi minimal", level3: "Apersepsi baik, empati tumbuh", level4: "Apersepsi sangat baik, empati kuat sejak awal" },
+        { name: "Menyajikan materi runtut, jelas, menarik dengan nilai KBC", level1: "Tidak runtut, tanpa KBC", level2: "Cukup runtut, KBC minimal", level3: "Runtut, jelas, KBC baik", level4: "Sangat runtut, menarik, KBC optimal" },
+        { name: "Memfasilitasi pertanyaan dan penggalian pengetahuan awal dengan empati", level1: "Tidak ada fasilitasi", level2: "Fasilitasi minimal", level3: "Fasilitasi baik, empati terbangun", level4: "Fasilitasi sangat baik, empati kuat" },
+        { name: "Mengimplementasikan prinsip pembelajaran (Berkesadaran, Bermakna, Menggembirakan)", level1: "Prinsip tidak diimplementasi", level2: "Implementasi minimal", level3: "Implementasi baik", level4: "Implementasi optimal, selaras KBC" },
+        { name: "Menggunakan media pembelajaran relevan dan interaktif dengan nilai cinta", level1: "Media tidak relevan", level2: "Media cukup relevan", level3: "Media relevan, interaktif baik", level4: "Media sangat relevan, interaktif optimal" },
+        { name: "Memberikan pengalaman nyata (kontekstualisasi) dengan nilai KBC", level1: "Tidak ada pengalaman nyata", level2: "Pengalaman minimal", level3: "Pengalaman nyata baik", level4: "Pengalaman nyata sangat baik, karakter humanis" },
+        { name: "Melibatkan siswa aktif dalam kolaborasi berbasis empati", level1: "Tidak ada keterlibatan", level2: "Keterlibatan minimal", level3: "Keterlibatan aktif baik", level4: "Keterlibatan sangat aktif, empati kuat" },
+        { name: "Mengarahkan berpikir kritis dan kreatif dijiwai nilai cinta", level1: "Tidak ada pengarahan", level2: "Pengarahan minimal", level3: "Pengarahan baik, nilai cinta", level4: "Pengarahan sangat baik, generasi berkarakter" },
+        { name: "Mengimplementasikan prinsip pembelajaran dalam aplikasi dengan KBC", level1: "Prinsip tidak diimplementasi", level2: "Implementasi minimal", level3: "Implementasi baik, KBC", level4: "Implementasi optimal, kasih sayang mendalam" },
+        { name: "Mengajak murid merefleksikan proses dan hasil belajar dengan nilai cinta", level1: "Tidak ada refleksi", level2: "Refleksi minimal", level3: "Refleksi baik, nilai cinta", level4: "Refleksi sangat baik, humanis optimal" },
+        { name: "Memberikan umpan balik berbasis empati sesuai KBC", level1: "Umpan balik tidak diberikan", level2: "Umpan balik minimal", level3: "Umpan balik baik, empati", level4: "Umpan balik sangat baik, sesuai KBC" },
+        { name: "Mengintegrasikan topik Panca Cinta dalam refleksi pembelajaran", level1: "Tidak ada integrasi", level2: "Integrasi minimal", level3: "Integrasi baik", level4: "Integrasi sangat baik, holistik" },
+        { name: "Mengimplementasikan prinsip pembelajaran dalam refleksi untuk penguatan nilai cinta", level1: "Prinsip tidak diimplementasi", level2: "Implementasi minimal", level3: "Implementasi baik", level4: "Implementasi optimal, poros pendidikan" }
+      ]
+    },
+    {
+      name: "Supervisi Asesmen Pembelajaran",
+      type: "asesmen",
+      description: "Instrumen supervisi untuk menilai asesmen pembelajaran berbasis KBC",
+      components: [
+        { name: "Instrumen penilaian sesuai tujuan pembelajaran dengan integrasi nilai cinta", level1: "Tidak selaras, tanpa nilai cinta", level2: "Selaras, integrasi umum", level3: "Selaras, nilai cinta jelas", level4: "Sangat selaras, humanis bermakna" },
+        { name: "Penilaian mencakup proses dan hasil belajar dijiwai KBC", level1: "Hanya hasil, tanpa empati", level2: "Proses & hasil, empati minimal", level3: "Proses & hasil, empati tampak", level4: "Komprehensif, KBC konsisten" },
+        { name: "Penilaian berorientasi Profil Lulusan dan Panca Cinta", level1: "Tidak mengacu", level2: "Mulai mengacu, belum utuh", level3: "Berorientasi jelas", level4: "Sangat selaras, ruh humanis" },
+        { name: "Menggunakan teknik beragam (tes, non-tes, observasi, portofolio) berbasis empati", level1: "Satu teknik, tanpa empati", level2: "Lebih dari satu, belum empati", level3: "Beragam, mulai empati", level4: "Beragam, inklusif sesuai KBC" },
+        { name: "Memberikan umpan balik membangun penuh kasih sayang", level1: "Minimal, menilai kesalahan", level2: "Diberikan, belum konsisten", level3: "Membangun, bahasa empatik", level4: "Sangat membangun, holistik" },
+        { name: "Memanfaatkan hasil asesmen untuk perbaikan pembelajaran", level1: "Tidak dimanfaatkan", level2: "Terbatas untuk teknis", level3: "Untuk perbaikan & penguatan nilai", level4: "Sistematis, berkelanjutan, humanis" },
+        { name: "Penilaian mendukung suasana aman dan inklusif", level1: "Tidak aman/inklusif", level2: "Mulai aman, belum konsisten", level3: "Aman, inklusif, KBC", level4: "Sadar menumbuhkan karakter utuh" },
+        { name: "Mengintegrasikan refleksi diri siswa dalam penilaian berbasis spiritual", level1: "Tidak ada refleksi", level2: "Ada, belum spiritual", level3: "Terintegrasi, nilai cinta", level4: "Kuat, mendalam, spiritual, bermakna" }
+      ]
+    },
+    {
+      name: "Supervisi Guru Bimbingan dan Konseling",
+      type: "bk",
+      description: "Instrumen supervisi untuk menilai layanan BK berbasis deep learning dan KBC",
+      components: [
+        { name: "Merencanakan layanan berbasis deep learning (bermakna, mendalam, menyenangkan)", level1: "Tidak berbasis deep learning", level2: "Sebagian berbasis", level3: "Berbasis baik", level4: "Sepenuhnya berbasis optimal" },
+        { name: "Merancang program BK dengan prinsip KBC (kasih sayang, humanis, menghargai martabat)", level1: "Tanpa prinsip KBC", level2: "Prinsip minimal", level3: "Prinsip baik", level4: "Prinsip sangat baik, martabat dihargai" },
+        { name: "Melakukan asesmen kebutuhan belajar dengan pendekatan humanis", level1: "Tanpa pendekatan humanis", level2: "Humanis minimal", level3: "Humanis baik, empati", level4: "Humanis sangat baik, penuh empati" },
+        { name: "Kolaborasi dengan guru & orang tua untuk memetakan potensi", level1: "Tidak ada kolaborasi", level2: "Kolaborasi minimal", level3: "Kolaborasi baik", level4: "Kolaborasi sangat baik, komprehensif" },
+        { name: "Membantu siswa memahami emosi & membangun kepercayaan diri", level1: "Tidak membantu", level2: "Membantu minimal", level3: "Membantu baik", level4: "Membantu sangat baik, percaya diri kuat" },
+        { name: "Mengembangkan rasa cinta diri (self-love) sesuai KBC", level1: "Tidak ada pengembangan", level2: "Pengembangan minimal", level3: "Pengembangan baik", level4: "Pengembangan sangat baik, self-love kuat" },
+        { name: "Menstimulasi siswa berpikir kritis & kreatif melalui pemecahan masalah", level1: "Tidak menstimulasi", level2: "Stimulasi minimal", level3: "Stimulasi baik", level4: "Stimulasi sangat baik, kritis kreatif" },
+        { name: "Menumbuhkan rasa cinta belajar & pengetahuan", level1: "Tidak menumbuhkan", level2: "Menumbuhkan minimal", level3: "Menumbuhkan baik", level4: "Menumbuhkan sangat baik, cinta pengetahuan" },
+        { name: "Menyediakan ruang konseling yang mendukung rasa aman", level1: "Tidak aman", level2: "Cukup aman", level3: "Aman, nyaman", level4: "Sangat aman, penuh cinta" },
+        { name: "Membangun iklim penuh cinta, saling menghargai, dan empati", level1: "Tidak ada iklim positif", level2: "Iklim minimal", level3: "Iklim baik, empati", level4: "Iklim sangat baik, cinta & hormat" },
+        { name: "Kolaborasi dengan guru untuk mengatasi hambatan belajar", level1: "Tidak ada kolaborasi", level2: "Kolaborasi minimal", level3: "Kolaborasi baik", level4: "Kolaborasi sangat baik, holistik" },
+        { name: "Melibatkan orang tua dengan penuh penghargaan & komunikasi cinta kasih", level1: "Tidak melibatkan", level2: "Melibatkan minimal", level3: "Melibatkan baik", level4: "Melibatkan sangat baik, cinta kasih" },
+        { name: "Mengevaluasi layanan BK berbasis deep learning & KBC", level1: "Tidak mengevaluasi", level2: "Evaluasi minimal", level3: "Evaluasi baik", level4: "Evaluasi sangat baik, berbasis" },
+        { name: "Menyusun tindak lanjut untuk peningkatan layanan penuh cinta kasih", level1: "Tidak ada tindak lanjut", level2: "Tindak lanjut minimal", level3: "Tindak lanjut baik", level4: "Tindak lanjut sangat baik, cinta kasih" }
+      ]
+    }
   ];
   
   try {
@@ -625,26 +822,33 @@ window.importDefaultInstruments = async function() {
         updatedAt: new Date().toISOString()
       });
     }
-    alert('✅ 5 instrumen default berhasil diimport!');
+    alert('✅ 5 instrumen default KBC berhasil diimport dengan rubrik lengkap!');
     loadInstrumentsList();
-  } catch(e) { alert('❌ Gagal import: ' + e.message); }
+  } catch(e) {
+    alert('❌ Gagal import: ' + e.message);
+  }
 };
 
 async function loadInstruments() {
   const select = document.getElementById('instrumentSelect');
   select.innerHTML = '<option value="">-- Memuat... --</option>';
+  
   try {
     const snap = await db.collection('supervision_instruments').where('isActive', '==', true).get();
+    
     if (snap.empty) {
-      select.innerHTML = '<option value="">-- Belum ada instrumen --</option>';
+      select.innerHTML = '<option value="">-- Belum ada instrumen tersedia --</option>';
       return;
     }
+    
     const instruments = snap.docs.map(d => ({id: d.id, ...d.data()}));
     select.innerHTML = '<option value="">-- Pilih Instrumen --</option>';
     instruments.forEach(inst => {
       select.innerHTML += `<option value="${inst.id}" data-name="${inst.name}" data-type="${inst.type}">${inst.name}</option>`;
     });
-  } catch(e) { select.innerHTML = '<option value="">-- Error --</option>'; }
+  } catch(e) {
+    select.innerHTML = '<option value="">-- Error --</option>';
+  }
 }
 
 window.loadInstrumentForm = function() {
@@ -652,16 +856,28 @@ window.loadInstrumentForm = function() {
   const instrumentId = select.value;
   const formArea = document.getElementById('assessmentFormArea');
   
-  if (!instrumentId) { formArea.style.display = 'none'; currentInstrument = null; return; }
+  if (!instrumentId) {
+    formArea.style.display = 'none';
+    currentInstrument = null;
+    return;
+  }
   
   const instrumentData = select.options[select.selectedIndex];
-  currentInstrument = { id: instrumentId, name: instrumentData.dataset.name, type: instrumentData.dataset.type };
+  currentInstrument = {
+    id: instrumentId,
+    name: instrumentData.dataset.name,
+    type: instrumentData.dataset.type
+  };
   
   formArea.style.display = 'block';
-  formArea.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat form...</div>';
+  formArea.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat form penilaian...</div>';
   
   db.collection('supervision_instruments').doc(instrumentId).get().then(doc => {
-    if (!doc.exists) { formArea.innerHTML = '<div class="alert alert-error">❌ Instrumen tidak ditemukan</div>'; return; }
+    if (!doc.exists) {
+      formArea.innerHTML = '<div class="alert alert-error">❌ Instrumen tidak ditemukan</div>';
+      return;
+    }
+    
     const data = doc.data();
     currentInstrument = { ...currentInstrument, ...data };
     
@@ -669,12 +885,24 @@ window.loadInstrumentForm = function() {
       <div class="card" style="background:#f9fafb;margin-bottom:20px;">
         <h3 style="color:#1e40af;margin-bottom:15px;">📋 ${data.name}</h3>
         <div class="form-row">
-          <div class="form-group"><label>Nama Madrasah</label><input type="text" id="schoolName" value="MAN Bantaeng"></div>
-          <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="subject" placeholder="Contoh: Matematika"></div>
+          <div class="form-group">
+            <label>Nama Madrasah</label>
+            <input type="text" id="schoolName" value="MAN Bantaeng">
+          </div>
+          <div class="form-group">
+            <label>Mata Pelajaran</label>
+            <input type="text" id="subject" placeholder="Contoh: Matematika">
+          </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Kelas/Semester</label><input type="text" id="classSemester" placeholder="Contoh: VII/1"></div>
-          <div class="form-group"><label>Jumlah Jam</label><input type="number" id="meetingHours" placeholder="Contoh: 4"></div>
+          <div class="form-group">
+            <label>Kelas/Semester</label>
+            <input type="text" id="classSemester" placeholder="Contoh: VII/1">
+          </div>
+          <div class="form-group">
+            <label>Jumlah Jam Tatap Muka</label>
+            <input type="number" id="meetingHours" placeholder="Contoh: 4">
+          </div>
         </div>
       </div>
       <div class="table-wrap">
@@ -683,7 +911,7 @@ window.loadInstrumentForm = function() {
             <tr style="background:#4CAF50;color:white;">
               <th style="border:1px solid #ddd;padding:10px;text-align:center;width:5%;">No</th>
               <th style="border:1px solid #ddd;padding:10px;text-align:left;width:55%;">Komponen</th>
-              <th colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;background:#81C784;">Skor</th>
+              <th colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;background:#81C784;">Skor Nilai</th>
             </tr>
             <tr style="background:#81C784;">
               <th style="border:1px solid #ddd;"></th>
@@ -702,10 +930,18 @@ window.loadInstrumentForm = function() {
         <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
           <td style="border:1px solid #ddd;padding:8px;text-align:center;">${index + 1}</td>
           <td style="border:1px solid #ddd;padding:8px;">${comp.name}</td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="1" onchange="handleCheckbox(${index}, 1)"></td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="2" onchange="handleCheckbox(${index}, 2)"></td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="3" onchange="handleCheckbox(${index}, 3)"></td>
-          <td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="4" onchange="handleCheckbox(${index}, 4)"></td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_row_${index}" data-row="${index}" value="1" onchange="handleCheckbox(${index}, 1)">
+          </td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_row_${index}" data-row="${index}" value="2" onchange="handleCheckbox(${index}, 2)">
+          </td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_row_${index}" data-row="${index}" value="3" onchange="handleCheckbox(${index}, 3)">
+          </td>
+          <td style="border:1px solid #ddd;padding:8px;text-align:center;">
+            <input type="checkbox" name="score_row_${index}" data-row="${index}" value="4" onchange="handleCheckbox(${index}, 4)">
+          </td>
         </tr>
       `;
     });
@@ -725,7 +961,7 @@ window.loadInstrumentForm = function() {
               <td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="totalScore">0</td>
             </tr>
             <tr style="background:#81C784;font-weight:bold;">
-              <td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Persentase</td>
+              <td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Persentase Capaian</td>
               <td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="percentage">0%</td>
             </tr>
             <tr style="background:#4CAF50;color:white;font-weight:bold;">
@@ -743,21 +979,37 @@ window.loadInstrumentForm = function() {
         • < 70% = Kurang
       </div>
     `;
+    
     formArea.innerHTML = html;
-  }).catch(e => { formArea.innerHTML = '<div class="alert alert-error">❌ Gagal memuat form: ' + e.message + '</div>'; });
+  }).catch(e => {
+    formArea.innerHTML = '<div class="alert alert-error">❌ Gagal memuat form: ' + e.message + '</div>';
+  });
 };
 
 window.handleCheckbox = function(rowIndex, value) {
+  console.log('Checkbox clicked - Row:', rowIndex, 'Value:', value);
+  
   const rowCheckboxes = document.querySelectorAll(`input[data-row="${rowIndex}"]`);
-  rowCheckboxes.forEach(cb => { if (parseInt(cb.value) !== value) cb.checked = false; });
+  rowCheckboxes.forEach(cb => {
+    const cbValue = parseInt(cb.value);
+    if (cbValue !== value) {
+      cb.checked = false;
+    }
+  });
+  
   calculateScores();
 };
 
 function calculateScores() {
   const instrument = currentInstrument;
-  if (!instrument) return;
+  if (!instrument) {
+    console.log('No instrument loaded');
+    return;
+  }
   
-  let count1 = 0, count2 = 0, count3 = 0, count4 = 0, totalScore = 0, scores = {};
+  let count1 = 0, count2 = 0, count3 = 0, count4 = 0;
+  let totalScore = 0;
+  let scores = {};
   
   instrument.components.forEach((comp, index) => {
     const selected = document.querySelector(`input[data-row="${index}"]:checked`);
@@ -765,6 +1017,7 @@ function calculateScores() {
       const value = parseInt(selected.value);
       scores[comp.id] = value;
       totalScore += value;
+      
       if (value === 1) count1++;
       else if (value === 2) count2++;
       else if (value === 3) count3++;
@@ -800,10 +1053,15 @@ function calculateScores() {
   else if (percentage > 0) predicate = 'Kurang';
   
   if (predicateEl) predicateEl.textContent = predicate;
+  
+  console.log('Scores calculated:', { count1, count2, count3, count4, totalScore, percentage, predicate });
 }
 
 window.saveSupervision = async function() {
-  if (!selectedScheduleId || !currentInstrument) { alert('❌ Pilih jadwal dan instrumen!'); return; }
+  if (!selectedScheduleId || !currentInstrument) {
+    alert(' Pilih jadwal dan instrumen penilaian!');
+    return;
+  }
   
   const notes = document.getElementById('supervisionNotes').value.trim();
   const actionPlan = document.getElementById('actionPlan').value.trim();
@@ -819,7 +1077,7 @@ window.saveSupervision = async function() {
   currentInstrument.components.forEach((comp, index) => {
     const selected = document.querySelector(`input[data-row="${index}"]:checked`);
     if (!selected) {
-      alert.textContent = `❌ Lengkapi penilaian: ${comp.name}`;
+      alert.textContent = `❌ Lengkapi penilaian untuk komponen: ${comp.name}`;
       alert.className = 'alert alert-error show';
       return;
     }
@@ -828,6 +1086,7 @@ window.saveSupervision = async function() {
   });
   
   const percentage = ((totalScore / maxScore) * 100).toFixed(0);
+  
   let predicate = '-';
   if (percentage >= 91) predicate = 'Sangat Baik';
   else if (percentage >= 81) predicate = 'Baik';
@@ -909,6 +1168,7 @@ async function loadSupervisionList(){
   }
   
   const docs = snap.docs.sort((a,b) => new Date(b.data().createdAt) - new Date(a.data().createdAt));
+  
   tbody.innerHTML = docs.map(d => {
     const data = d.data();
     return `
@@ -919,7 +1179,7 @@ async function loadSupervisionList(){
         <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
         <td><span class="badge badge-done">Selesai</span></td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
+          <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">️ Lihat</button>
           <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')">📥 PDF</button>
         </td>
       </tr>
@@ -927,118 +1187,88 @@ async function loadSupervisionList(){
   }).join('');
 }
 
-// ══════════════════════════════════════════════
-//   📅 JADWAL & DOKUMEN (GURU/WAKAMAD)
-// ══════════════════════════════════════════════
 async function loadMySchedule() {
   const container = document.getElementById('myScheduleArea');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
   try {
     const snap = await db.collection('supervision_schedule').where('teacherEmail', '==', currentUser.email).get();
+    
     if (snap.empty) {
       container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Anda belum dijadwalkan untuk supervisi</p></div>';
       return;
     }
-    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+    
+    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()}))
+      .sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+    
     container.innerHTML = schedules.map(s => {
-      const statusBadge = {'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>', 'in-progress': '<span class="badge badge-progress">🔄 Sedang Disupervisi</span>', 'completed': '<span class="badge badge-done">✅ Selesai</span>'}[s.status] || s.status;
+      const statusBadge = {
+        'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>',
+        'in-progress': '<span class="badge badge-progress">🔄 Sedang Disupervisi</span>',
+        'completed': '<span class="badge badge-done">✅ Selesai</span>'
+      }[s.status] || '<span class="badge badge-info">' + s.status + '</span>';
+      
       return `
         <div class="schedule-card">
           <div class="schedule-info">
             <div class="schedule-title">👤 Supervisor: ${s.supervisorName}</div>
-            <div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | ${statusBadge}</div>
-            ${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}
-            <div class="schedule-detail" style="margin-top:6px;"><strong>💡 Upload dokumen di tab "Upload Dokumen"</strong></div>
+            <div class="schedule-detail">📅 Tanggal: ${formatDate(s.scheduledDate)} | ${statusBadge}</div>
+            ${s.notes ? `<div class="schedule-detail">📝 Catatan: ${s.notes}</div>` : ''}
+            <div class="schedule-detail" style="margin-top:6px;"><strong>💡 Silakan upload dokumen pendukung Anda di tab "Upload Dokumen"</strong></div>
           </div>
         </div>
       `;
     }).join('');
-  } catch(e) { container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>'; }
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>';
+  }
 }
 
-// ══════════════════════════════════════════════
-//   📁 FOLDER MANAGEMENT (NESTED - GOOGLE DRIVE STYLE)
-// ══════════════════════════════════════════════
-
-window.navigateFolder = function(folderId) {
-  currentFolderId = folderId;
-  loadFolderContents();
+window.toggleDocType = function(){
+  const type = document.querySelector('input[name=docType]:checked').value;
+  document.getElementById('fileInputWrap').style.display = type==='file'?'block':'none';
+  document.getElementById('linkInputWrap').style.display = type==='link'?'block':'none';
 };
 
-window.toggleUploadForm = function() {
-  const form = document.getElementById('uploadFormArea');
-  form.style.display = form.style.display === 'none' ? 'block' : 'none';
-};
-
-async function loadFolderContents() {
-  const container = document.getElementById('folderFileList');
-  const breadcrumb = document.getElementById('breadcrumbNav');
-  const breadcrumbPath = document.getElementById('breadcrumbPath');
-  const viewTitle = document.getElementById('folderViewTitle');
-  const btnUpload = document.getElementById('btnToggleUpload');
-  const uploadForm = document.getElementById('uploadFormArea');
+// ══════════════════════════════════════════════
+//   📁 KELOLA FOLDER
+// ══════════════════════════════════════════════
+async function loadFolders() {
+  const container = document.getElementById('folderList');
+  if (!container) {
+    console.error('Element folderList tidak ditemukan!');
+    return;
+  }
   
-  container.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;grid-column:1/-1;"><span class="spinner"></span> Memuat...</div>';
+  container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat folder...</div>';
   
   try {
-    const foldersSnap = await db.collection('supervision_folders').where('userEmail', '==', currentUser.email).get();
-    userFolders = foldersSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    const snap = await db.collection('supervision_folders')
+      .where('userEmail', '==', currentUser.email)
+      .get();
     
-    let subFolders = userFolders.filter(f => (f.parentId || null) === currentFolderId);
-    subFolders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    userFolders = snap.docs.map(d => ({id: d.id, ...d.data()}));
     
-    let files = [];
-    if (currentFolderId) {
-      const docsSnap = await db.collection('supervision_documents')
-        .where('userEmail', '==', currentUser.email)
-        .where('folderId', '==', currentFolderId).get();
-      files = docsSnap.docs.map(d => ({id: d.id, ...d.data()}));
-      files.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (userFolders.length === 0) {
+      container.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;">📭 Belum ada folder. Klik "Buat Folder Baru" untuk memulai.</p>';
+      return;
     }
     
-    if (currentFolderId) {
-      breadcrumb.style.display = 'block';
-      btnUpload.style.display = 'inline-flex';
-      uploadForm.style.display = 'none';
-      
-      let pathParts = [];
-      let current = userFolders.find(f => f.id === currentFolderId);
-      while (current) {
-        pathParts.unshift(current);
-        current = current.parentId ? userFolders.find(f => f.id === current.parentId) : null;
-      }
-      
-      let pathHTML = '';
-      pathParts.forEach((p, i) => {
-        if (i > 0) pathHTML += ' <span style="color:#9ca3af;">›</span> ';
-        if (i < pathParts.length - 1) {
-          pathHTML += `<a href="#" onclick="navigateFolder('${p.id}');return false;" style="color:#3b82f6;text-decoration:none;font-weight:600;">${p.name}</a>`;
-        } else {
-          pathHTML += `<strong>${p.name}</strong>`;
-        }
-      });
-      breadcrumbPath.innerHTML = pathHTML;
-      viewTitle.textContent = '📂 Isi Folder: ' + pathParts[pathParts.length - 1].name;
-    } else {
-      breadcrumb.style.display = 'none';
-      btnUpload.style.display = 'none';
-      uploadForm.style.display = 'none';
-      viewTitle.textContent = '📁 Semua Folder';
-    }
+    const docsSnap = await db.collection('supervision_documents')
+      .where('userEmail', '==', currentUser.email)
+      .get();
     
-    const allDocsSnap = await db.collection('supervision_documents').where('userEmail', '==', currentUser.email).get();
     const folderCounts = {};
-    allDocsSnap.docs.forEach(d => {
+    docsSnap.docs.forEach(d => {
       const fid = d.data().folderId;
       if (fid) folderCounts[fid] = (folderCounts[fid] || 0) + 1;
     });
     
-    let html = '';
-    
-    subFolders.forEach(f => {
+    container.innerHTML = userFolders.map(f => {
       const count = folderCounts[f.id] || 0;
-      html += `
-        <div class="folder-card" style="border-left:4px solid ${f.color || '#3b82f6'};cursor:pointer;" onclick="navigateFolder('${f.id}')">
+      return `
+        <div class="folder-card" style="border-left:4px solid ${f.color || '#3b82f6'};">
           <div class="folder-icon">📁</div>
           <div class="folder-info">
             <div class="folder-name">${f.name}</div>
@@ -1050,51 +1280,10 @@ async function loadFolderContents() {
           </div>
         </div>
       `;
-    });
-    
-    files.forEach(d => {
-      const icon = d.type === 'link' ? '🔗' : (d.fileExt === 'pdf' ? '📕' : ['doc', 'docx'].includes(d.fileExt) ? '📘' : ['xls', 'xlsx'].includes(d.fileExt) ? '📗' : '📄');
-      
-      let btnLihat = '';
-      if (d.type === 'link') {
-        btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️</a>`;
-      } else if (d.fileExt === 'pdf') {
-        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️</button>`;
-      } else {
-        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️</button>`;
-      }
-      
-      let btnUnduh = '';
-      if (d.type !== 'link') {
-        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇️</button>`;
-      }
-      
-      html += `
-        <div class="file-grid-item">
-          <div class="file-grid-icon">${icon}</div>
-          <div class="file-grid-name">${d.nama}</div>
-          <div class="file-grid-meta">${d.kategori}</div>
-          <div class="file-grid-meta">${new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
-          <div class="file-grid-actions">
-            ${btnLihat}
-            ${btnUnduh}
-            <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
-          </div>
-        </div>
-      `;
-    });
-    
-    if (subFolders.length === 0 && files.length === 0) {
-      if (currentFolderId) {
-        html = '<div style="text-align:center;padding:60px;color:#9ca3af;grid-column:1/-1;"><div style="font-size:4rem;margin-bottom:10px;">📭</div><p>Folder ini kosong.<br>Klik "Upload File" untuk menambahkan dokumen.</p></div>';
-      } else {
-        html = '<div style="text-align:center;padding:60px;color:#9ca3af;grid-column:1/-1;"><div style="font-size:4rem;margin-bottom:10px;">📁</div><p>Belum ada folder.<br>Klik "Folder Baru" untuk memulai.</p></div>';
-      }
-    }
-    
-    container.innerHTML = html;
+    }).join('');
   } catch(e) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;grid-column:1/-1;">❌ ${e.message}</div>`;
+    container.innerHTML = `<p style="color:#ef4444;text-align:center;padding:20px;">❌ ${e.message}</p>`;
+    console.error('Error loading folders:', e);
   }
 }
 
@@ -1109,7 +1298,8 @@ window.openFolderModal = function(folderId = null) {
     if (folder) {
       nameInput.value = folder.name;
       document.querySelectorAll('input[name=folderColor]').forEach(radio => {
-        const div = radio.parentElement.querySelector('div');
+        const label = radio.parentElement;
+        const div = label.querySelector('div');
         if (radio.value === folder.color) {
           radio.checked = true;
           div.style.border = '3px solid #1e40af';
@@ -1128,6 +1318,7 @@ window.openFolderModal = function(folderId = null) {
       div.style.border = radio.value === '#3b82f6' ? '3px solid #1e40af' : '3px solid transparent';
     });
   }
+  
   openModal('folderModal');
 };
 
@@ -1151,18 +1342,23 @@ window.saveFolder = async function() {
   const name = document.getElementById('folderName').value.trim();
   const color = document.querySelector('input[name=folderColor]:checked')?.value || '#3b82f6';
   
-  if (!name) { alert('❌ Nama folder wajib diisi!'); return; }
+  if (!name) {
+    alert('❌ Nama folder wajib diisi!');
+    return;
+  }
   
   try {
     if (editingFolderId) {
       await db.collection('supervision_folders').doc(editingFolderId).update({
-        name: name, color: color, updatedAt: new Date().toISOString()
+        name: name,
+        color: color,
+        updatedAt: new Date().toISOString()
       });
       alert('✅ Folder berhasil diupdate!');
     } else {
       await db.collection('supervision_folders').add({
-        name: name, color: color,
-        parentId: currentFolderId,
+        name: name,
+        color: color,
         userEmail: currentUser.email,
         userName: currentUser.nama,
         createdAt: new Date().toISOString(),
@@ -1170,44 +1366,47 @@ window.saveFolder = async function() {
       });
       alert('✅ Folder berhasil dibuat!');
     }
+    
     closeModal('folderModal');
-    loadFolderContents();
-  } catch(e) { alert('❌ Gagal menyimpan folder: ' + e.message); }
+    loadFolders();
+  } catch(e) {
+    alert('❌ Gagal menyimpan folder: ' + e.message);
+  }
 };
 
 window.deleteFolder = async function(folderId, folderName, docCount) {
-  const subFolders = userFolders.filter(f => f.parentId === folderId);
   let confirmMsg = `Hapus folder "${folderName}"?`;
-  if (subFolders.length > 0) {
-    confirmMsg = `⚠️ Folder "${folderName}" memiliki ${subFolders.length} sub-folder.\nSemua akan terhapus!\nYakin?`;
-  } else if (docCount > 0) {
-    confirmMsg = `⚠️ Folder berisi ${docCount} dokumen.\nSemua akan terhapus!\nYakin?`;
+  
+  if (docCount > 0) {
+    confirmMsg = `⚠️ Folder "${folderName}" masih berisi ${docCount} dokumen.\n\nSemua dokumen di folder ini akan ikut terhapus!\n\nApakah Anda yakin?`;
   }
+  
   if (!confirm(confirmMsg)) return;
   
   try {
-    await deleteFolderRecursive(folderId);
+    if (docCount > 0) {
+      const docsSnap = await db.collection('supervision_documents')
+        .where('folderId', '==', folderId)
+        .get();
+      
+      const batch = db.batch();
+      docsSnap.docs.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log(`✅ ${docsSnap.size} dokumen dihapus dari folder`);
+    }
+    
     await db.collection('supervision_folders').doc(folderId).delete();
-    if (currentFolderId === folderId) currentFolderId = null;
     alert('✅ Folder berhasil dihapus!');
-    loadFolderContents();
-  } catch(e) { alert('❌ Gagal menghapus: ' + e.message); }
+    loadFolders();
+  } catch(e) {
+    console.error('Error deleting folder:', e);
+    alert('❌ Gagal menghapus folder: ' + e.message);
+  }
 };
 
-async function deleteFolderRecursive(folderId) {
-  const docsSnap = await db.collection('supervision_documents').where('folderId', '==', folderId).get();
-  const batch1 = db.batch();
-  docsSnap.docs.forEach(doc => batch1.delete(doc.ref));
-  await batch1.commit();
-  
-  const subFolders = userFolders.filter(f => f.parentId === folderId);
-  for (const sub of subFolders) {
-    await deleteFolderRecursive(sub.id);
-    await db.collection('supervision_folders').doc(sub.id).delete();
-  }
-}
-
-window.uploadDokumen = async function() {
+window.uploadDokumen = async function(){
   const kategori = document.getElementById('docKategori').value;
   const nama = document.getElementById('docNama').value.trim();
   const type = document.querySelector('input[name=docType]:checked').value;
@@ -1216,20 +1415,31 @@ window.uploadDokumen = async function() {
   
   alert.classList.remove('show');
   
-  if (!currentFolderId) { alert.textContent = '❌ Buka folder terlebih dahulu!'; alert.className = 'alert alert-error show'; return; }
-  if (!kategori || !nama) { alert.textContent = '❌ Kategori dan nama wajib diisi!'; alert.className = 'alert alert-error show'; return; }
+  if (!currentOpenFolderId) {
+    alert.textContent = '❌ Klik folder terlebih dahulu untuk membuka, lalu upload dokumen di dalamnya!';
+    alert.className = 'alert alert-error show';
+    return;
+  }
+  
+  if(!kategori || !nama){
+    alert.textContent = '❌ Kategori dan nama dokumen wajib diisi!';
+    alert.className = 'alert alert-error show';
+    return;
+  }
   
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
   
   try {
     let fileData = null, fileExt = '', fileSize = 0, link = '';
-    if (type === 'file') {
+    
+    if(type === 'file'){
       const file = document.getElementById('docFile').files[0];
-      if (!file) throw new Error('Pilih file!');
-      if (file.size > 5 * 1024 * 1024) throw new Error('Maksimal 5MB!');
+      if(!file) throw new Error('Pilih file terlebih dahulu!');
+      if(file.size > 5*1024*1024) throw new Error('Ukuran file maksimal 5MB!');
+      
       const reader = new FileReader();
-      fileData = await new Promise((res, rej) => {
+      fileData = await new Promise((res,rej) => {
         reader.onload = e => res(e.target.result);
         reader.onerror = rej;
         reader.readAsDataURL(file);
@@ -1238,15 +1448,20 @@ window.uploadDokumen = async function() {
       fileSize = file.size;
     } else {
       link = document.getElementById('docLink').value.trim();
-      if (!link) throw new Error('Masukkan link!');
+      if(!link) throw new Error('Masukkan link Google Drive!');
     }
     
-    const folder = userFolders.find(f => f.id === currentFolderId);
+    const folder = userFolders.find(f => f.id === currentOpenFolderId);
+    
     await db.collection('supervision_documents').add({
-      userId: currentUser.uid, userEmail: currentUser.email,
-      userName: currentUser.nama, userRole: currentUser.role,
-      folderId: currentFolderId, folderName: folder?.name || '',
-      kategori, nama, type, fileData, fileExt, fileSize, link,
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      userName: currentUser.nama,
+      userRole: currentUser.role,
+      folderId: currentOpenFolderId,
+      folderName: folder?.name || '',
+      kategori, nama,
+      type, fileData, fileExt, fileSize, link,
       createdAt: new Date().toISOString()
     });
     
@@ -1258,8 +1473,8 @@ window.uploadDokumen = async function() {
     document.getElementById('docFile').value = '';
     document.getElementById('docLink').value = '';
     
-    loadFolderContents();
-  } catch(e) {
+    loadFolderContents(currentOpenFolderId);
+  } catch(e){
     alert.textContent = '❌ ' + e.message;
     alert.className = 'alert alert-error show';
   }
@@ -1267,11 +1482,64 @@ window.uploadDokumen = async function() {
   btn.textContent = '💾 Simpan Dokumen';
 };
 
-window.toggleDocType = function(){
-  const type = document.querySelector('input[name=docType]:checked').value;
-  document.getElementById('fileInputWrap').style.display = type==='file'?'block':'none';
-  document.getElementById('linkInputWrap').style.display = type==='link'?'block':'none';
-};
+async function loadMyDocs(){
+  const tbody = document.getElementById('myDocsList');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</td></tr>';
+  
+  try {
+    const snap = await db.collection('supervision_documents')
+      .where('userEmail', '==', currentUser.email)
+      .get();
+    
+    if(snap.empty){
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:20px;">📭 Belum ada dokumen</td></tr>';
+      return;
+    }
+    
+    let docs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    docs.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    tbody.innerHTML = docs.map(d => {
+      const icon = d.type==='link' ? '🔗' : (d.fileExt==='pdf'?'📕':['doc','docx'].includes(d.fileExt)?'📘':['xls','xlsx'].includes(d.fileExt)?'':'📄');
+      
+      const folder = userFolders.find(f => f.id === d.folderId);
+      const folderColor = folder?.color || '#6b7280';
+      const folderName = d.folderName || 'Tanpa Folder';
+      
+      let btnLihat = '';
+      if (d.type === 'link') {
+        btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
+      } else if (d.fileExt === 'pdf') {
+        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+      } else {
+        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`;
+      }
+      
+      let btnUnduh = '';
+      if (d.type !== 'link') {
+        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇️</button>`;
+      }
+      
+      return `
+        <tr>
+          <td><span class="folder-badge" style="background:${folderColor};"> ${folderName}</span></td>
+          <td>${icon} ${d.nama}</td>
+          <td>${d.kategori}</td>
+          <td>${new Date(d.createdAt).toLocaleDateString('id-ID')}</td>
+          <td>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              ${btnLihat}
+              ${btnUnduh}
+              <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#ef4444;padding:20px;">❌ ${e.message}</td></tr>`;
+  }
+}
 
 window.downloadMyDoc = async function(docId, nama, ext){
   const snap = await db.collection('supervision_documents').doc(docId).get();
@@ -1287,17 +1555,22 @@ window.downloadDoc = window.downloadMyDoc;
 window.deleteMyDoc = async function(docId){
   if(!confirm('Hapus dokumen ini?')) return;
   await db.collection('supervision_documents').doc(docId).delete();
-  loadFolderContents();
+  loadMyDocs();
 };
 
 async function loadMySupervisionList(){
-  const snap = await db.collection('supervisions').where('superviseeEmail', '==', currentUser.email).get();
+  const snap = await db.collection('supervisions')
+    .where('superviseeEmail', '==', currentUser.email)
+    .get();
   const tbody = document.getElementById('mySupervisionList');
+  
   if(snap.empty){
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">Belum ada supervisi</td></tr>';
     return;
   }
+  
   const docs = snap.docs.sort((a,b) => new Date(b.data().createdAt) - new Date(a.data().createdAt));
+  
   tbody.innerHTML = docs.map(d => {
     const data = d.data();
     return `
@@ -1309,57 +1582,130 @@ async function loadMySupervisionList(){
         <td><span class="badge badge-done">${data.predicate || 'Selesai'}</span></td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-          <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')">📥 PDF</button>
+          <button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')"> PDF</button>
         </td>
       </tr>
     `;
   }).join('');
 }
 
-// ══════════════════════════════════════════════
-//   👁️ DETAIL & PDF
-// ══════════════════════════════════════════════
 window.viewDetail = async function(docId) {
   try {
     const snap = await db.collection('supervisions').doc(docId).get();
-    if (!snap.exists) { alert('Data tidak ditemukan'); return; }
+    if (!snap.exists) {
+      alert('Data tidak ditemukan');
+      return;
+    }
+    
     currentSupervision = { id: docId, ...snap.data() };
+    
     if (currentSupervision.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(currentSupervision.instrumentId).get();
-      if (instSnap.exists) currentInstrument = { id: instSnap.id, ...instSnap.data() };
+      if (instSnap.exists) {
+        const instrumentData = instSnap.data();
+        currentInstrument = { id: instSnap.id, ...instrumentData };
+      }
     }
+    
     showDetailModal();
-  } catch (error) { alert('❌ Gagal memuat detail: ' + error.message); }
+  } catch (error) {
+    console.error('Error loading detail:', error);
+    alert('❌ Gagal memuat detail: ' + error.message);
+  }
 };
 
 function showDetailModal() {
   const data = currentSupervision;
+  const statusText = '✅ Sudah Dinilai';
+  
   let tableHTML = '';
+  
   if (currentInstrument && currentInstrument.components && currentInstrument.components.length > 0) {
-    tableHTML = `<div class="table-wrap" style="margin:15px 0;"><table style="border-collapse:collapse;width:100%;font-size:0.85rem;"><thead><tr style="background:#4CAF50;color:white;"><th style="border:1px solid #ddd;padding:8px;text-align:center;width:5%;">No</th><th style="border:1px solid #ddd;padding:8px;text-align:left;width:60%;">Komponen</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">1</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">2</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">3</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">4</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">Skor</th></tr></thead><tbody>`;
+    tableHTML = `
+      <div class="table-wrap" style="margin:15px 0;">
+        <table style="border-collapse:collapse;width:100%;font-size:0.85rem;">
+          <thead>
+            <tr style="background:#4CAF50;color:white;">
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:5%;">No</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:left;width:60%;">Komponen</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">1</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">2</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">3</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">4</th>
+              <th style="border:1px solid #ddd;padding:8px;text-align:center;width:7%;">Skor</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
     currentInstrument.components.forEach((comp, index) => {
       const score = data.scores[`comp_${index}`] || 0;
-      tableHTML += `<tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};"><td style="border:1px solid #ddd;padding:6px;text-align:center;">${index + 1}</td><td style="border:1px solid #ddd;padding:6px;">${comp.name}</td><td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 1 ? '✓' : ''}</td><td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 2 ? '✓' : ''}</td><td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 3 ? '✓' : ''}</td><td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 4 ? '✓' : ''}</td><td style="border:1px solid #ddd;padding:6px;text-align:center;font-weight:bold;">${score}/4</td></tr>`;
+      tableHTML += `
+        <tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};">
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">${index + 1}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${comp.name}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 1 ? '✓' : ''}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 2 ? '✓' : ''}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 3 ? '✓' : ''}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">${score === 4 ? '✓' : ''}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;font-weight:bold;">${score}/4</td>
+        </tr>
+      `;
     });
-    tableHTML += `</tbody><tfoot><tr style="background:#C8E6C9;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:right;">Jumlah</td><td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 1).length}</td><td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 2).length}</td><td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 3).length}</td><td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 4).length}</td><td style="border:1px solid #ddd;padding:8px;text-align:center;">${data.totalScore}/${data.maxScore}</td></tr><tr style="background:#A5D6A7;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:right;">Persentase</td><td colspan="5" style="border:1px solid #ddd;padding:8px;text-align:center;font-size:1.1rem;">${data.percentage}%</td></tr><tr style="background:#81C784;color:white;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:right;">Predikat</td><td colspan="5" style="border:1px solid #ddd;padding:8px;text-align:center;font-size:1.1rem;">${data.predicate || '-'}</td></tr></tfoot></table></div>`;
-  } else { tableHTML = '<p style="color:#999;text-align:center;padding:20px;">Detail tidak tersedia</p>'; }
+    
+    tableHTML += `
+          </tbody>
+          <tfoot>
+            <tr style="background:#C8E6C9;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:right;">Jumlah</td>
+              <td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 1).length}</td>
+              <td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 2).length}</td>
+              <td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 3).length}</td>
+              <td style="border:1px solid #ddd;padding:8px;text-align:center;">${Object.values(data.scores).filter(s => s === 4).length}</td>
+              <td style="border:1px solid #ddd;padding:8px;text-align:center;">${data.totalScore}/${data.maxScore}</td>
+            </tr>
+            <tr style="background:#A5D6A7;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:right;">Persentase Capaian</td>
+              <td colspan="5" style="border:1px solid #ddd;padding:8px;text-align:center;font-size:1.1rem;">${data.percentage}%</td>
+            </tr>
+            <tr style="background:#81C784;color:white;font-weight:bold;">
+              <td colspan="2" style="border:1px solid #ddd;padding:8px;text-align:right;">Predikat</td>
+              <td colspan="5" style="border:1px solid #ddd;padding:8px;text-align:center;font-size:1.1rem;">${data.predicate || '-'}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div style="margin-top:15px;background:#FFF3E0;padding:12px;border-radius:8px;border-left:4px solid #FF9800;font-size:0.85rem;">
+        <strong>Keterangan:</strong><br>
+        • 91% - 100% = Sangat Baik<br>
+        • 81% - 90% = Baik<br>
+        • 71% - 80% = Cukup<br>
+        • < 70% = Kurang
+      </div>
+    `;
+  } else {
+    tableHTML = '<p style="color:#999;text-align:center;padding:20px;">Detail penilaian tidak tersedia</p>';
+  }
   
   const date = new Date(data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt);
+  
   document.getElementById('detailContent').innerHTML = `
     <div style="margin-bottom:18px;">
       <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</span></div>
-      <div class="detail-row"><span class="detail-label">Madrasah</span><span class="detail-value">${data.schoolName || 'MAN BANTAENG'}</span></div>
+      <div class="detail-row"><span class="detail-label">Nama Madrasah</span><span class="detail-value">${data.schoolName || 'MAN BANTAENG'}</span></div>
       <div class="detail-row"><span class="detail-label">Supervisor</span><span class="detail-value">${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</span></div>
       <div class="detail-row"><span class="detail-label">Yang Disupervisi</span><span class="detail-value">${data.superviseeName}</span></div>
       <div class="detail-row"><span class="detail-label">Mata Pelajaran</span><span class="detail-value">${data.subject || '-'}</span></div>
       <div class="detail-row"><span class="detail-label">Kelas/Semester</span><span class="detail-value">${data.classSemester || '-'}</span></div>
       <div class="detail-row"><span class="detail-label">Instrumen</span><span class="detail-value">${data.instrumentName || '-'}</span></div>
+      <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${statusText}</span></div>
     </div>
     <h4 style="color:#1e40af;margin-bottom:10px;">Detail Penilaian</h4>
     ${tableHTML}
-    ${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}
+    ${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan Khusus</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}
     ${data.actionPlan ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Rencana Tindak Lanjut</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.actionPlan}</div>` : ''}
   `;
+  
   document.getElementById('detailModal').classList.add('active');
 }
 
@@ -1367,49 +1713,77 @@ window.downloadPDF = async function(docId) {
   try {
     const id = docId || currentSupervision.id;
     const snap = await db.collection('supervisions').doc(id).get();
-    if (!snap.exists) { alert('Data tidak ditemukan'); return; }
+    if (!snap.exists) {
+      alert('Data tidak ditemukan');
+      return;
+    }
+    
     const data = snap.data();
+    
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
-      if (instSnap.exists) components = instSnap.data().components;
+      if (instSnap.exists) {
+        components = instSnap.data().components;
+      }
     }
-    if (!window.jspdf) { alert('Library PDF sedang dimuat'); return; }
+    
+    if (!window.jspdf) {
+      alert('Library PDF sedang dimuat. Silakan coba lagi.');
+      return;
+    }
+    
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p', 'mm', 'a4');
+    
     const pageWidth = pdf.internal.pageSize.getWidth();
     const margin = 15;
     let y = 15;
     
-    pdf.setFontSize(14); pdf.setFont(undefined, 'bold');
+    pdf.setFontSize(14);
+    pdf.setFont(undefined, 'bold');
     pdf.text('HASIL SUPERVISI PEMBELAJARAN', pageWidth / 2, y, { align: 'center' });
     y += 7;
     pdf.setFontSize(11);
     pdf.text('KURIKULUM BERBASIS CINTA (KBC)', pageWidth / 2, y, { align: 'center' });
     y += 10;
     
-    pdf.setFontSize(9); pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(9);
+    pdf.setFont(undefined, 'normal');
     const date = new Date(data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt);
-    pdf.text(`Tanggal: ${date.toLocaleDateString('id-ID')}`, margin, y); y += 5;
-    pdf.text(`Madrasah: ${data.schoolName || 'MAN BANTAENG'}`, margin, y); y += 5;
-    pdf.text(`Supervisor: ${data.supervisorName}`, margin, y); y += 5;
-    pdf.text(`Yang Disupervisi: ${data.superviseeName}`, margin, y); y += 5;
-    pdf.text(`Mata Pelajaran: ${data.subject || '-'}`, margin, y); y += 5;
-    pdf.text(`Kelas/Semester: ${data.classSemester || '-'}`, margin, y); y += 5;
-    pdf.text(`Instrumen: ${data.instrumentName || '-'}`, margin, y); y += 10;
+    pdf.text(`Tanggal: ${date.toLocaleDateString('id-ID')}`, margin, y);
+    y += 5;
+    pdf.text(`Nama Madrasah: ${data.schoolName || 'MAN BANTAENG'}`, margin, y);
+    y += 5;
+    pdf.text(`Supervisor: ${data.supervisorName}`, margin, y);
+    y += 5;
+    pdf.text(`Yang Disupervisi: ${data.superviseeName}`, margin, y);
+    y += 5;
+    pdf.text(`Mata Pelajaran: ${data.subject || '-'}`, margin, y);
+    y += 5;
+    pdf.text(`Kelas/Semester: ${data.classSemester || '-'}`, margin, y);
+    y += 5;
+    pdf.text(`Instrumen: ${data.instrumentName || '-'}`, margin, y);
+    y += 10;
     
     if (components.length > 0) {
-      pdf.setFontSize(8); pdf.setFont(undefined, 'bold');
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'bold');
+      
       const colWidths = [8, 82, 11, 11, 11, 11, 14];
       const headers = ['No', 'Komponen', '1', '2', '3', '4', 'Skor'];
+      
       const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2;
       const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2;
       const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2;
       const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2;
       const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
       
-      pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255);
-      pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3);
+      pdf.setFillColor(76, 175, 80);
+      pdf.setTextColor(255, 255, 255);
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.3);
+      
       for (let i = 0; i < headers.length; i++) {
         const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
         pdf.rect(xPos, y, colWidths[i], 7, 'FD');
@@ -1417,13 +1791,20 @@ window.downloadPDF = async function(docId) {
       }
       y += 7;
       
-      pdf.setTextColor(0, 0, 0); pdf.setFont(undefined, 'normal');
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFont(undefined, 'normal');
+      
       components.forEach((comp, index) => {
         const score = data.scores[`comp_${index}`] || 0;
         const rowHeight = 7;
+        
         if (y > 245) {
-          pdf.addPage(); y = 15;
-          pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255);
+          pdf.addPage();
+          y = 15;
+          pdf.setFillColor(76, 175, 80);
+          pdf.setTextColor(255, 255, 255);
+          pdf.setDrawColor(0, 0, 0);
+          pdf.setLineWidth(0.3);
           for (let i = 0; i < headers.length; i++) {
             const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0);
             pdf.rect(xPos, y, colWidths[i], 7, 'FD');
@@ -1432,62 +1813,99 @@ window.downloadPDF = async function(docId) {
           y += 7;
           pdf.setTextColor(0, 0, 0);
         }
+        
         if (index % 2 === 0) {
           pdf.setFillColor(232, 245, 233);
-          pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+          const totalWidth = colWidths.reduce((a, b) => a + b, 0);
+          pdf.rect(margin, y, totalWidth, rowHeight, 'F');
         }
-        pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3);
-        pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), rowHeight, 'S');
+        
+        pdf.setDrawColor(0, 0, 0);
+        pdf.setLineWidth(0.3);
+        const totalWidth = colWidths.reduce((a, b) => a + b, 0);
+        pdf.rect(margin, y, totalWidth, rowHeight, 'S');
+        
         pdf.text(String(index + 1), margin + 4, y + 4.5);
+        
         const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2);
         pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
         
         const boxSize = 4;
         [col1X, col2X, col3X, col4X].forEach((cx, idx) => {
-          if (score === idx + 1) {
+          const value = idx + 1;
+          if (score === value) {
             pdf.setFillColor(76, 175, 80);
             pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
-            pdf.setDrawColor(255, 255, 255); pdf.setLineWidth(0.6);
+            pdf.setDrawColor(255, 255, 255);
+            pdf.setLineWidth(0.6);
             pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8);
             pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0);
-            pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3);
+            pdf.setDrawColor(0, 0, 0);
+            pdf.setLineWidth(0.3);
           } else {
             pdf.setFillColor(255, 255, 255);
             pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD');
           }
         });
+        
         pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' });
         y += rowHeight;
       });
       
       y += 2;
+      pdf.setDrawColor(0, 0, 0);
+      pdf.setLineWidth(0.3);
       pdf.setFillColor(200, 230, 201);
-      pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 7, 'FD');
+      const footerWidth = colWidths.reduce((a, b) => a + b, 0);
+      pdf.rect(margin, y, footerWidth, 7, 'FD');
       pdf.setFont(undefined, 'bold');
       pdf.text('Jumlah', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
-      pdf.text(String(Object.values(data.scores).filter(s => s === 1).length), col1X, y + 4.5, { align: 'center' });
-      pdf.text(String(Object.values(data.scores).filter(s => s === 2).length), col2X, y + 4.5, { align: 'center' });
-      pdf.text(String(Object.values(data.scores).filter(s => s === 3).length), col3X, y + 4.5, { align: 'center' });
-      pdf.text(String(Object.values(data.scores).filter(s => s === 4).length), col4X, y + 4.5, { align: 'center' });
+      
+      const count1 = Object.values(data.scores).filter(s => s === 1).length;
+      const count2 = Object.values(data.scores).filter(s => s === 2).length;
+      const count3 = Object.values(data.scores).filter(s => s === 3).length;
+      const count4 = Object.values(data.scores).filter(s => s === 4).length;
+      
+      pdf.text(String(count1), col1X, y + 4.5, { align: 'center' });
+      pdf.text(String(count2), col2X, y + 4.5, { align: 'center' });
+      pdf.text(String(count3), col3X, y + 4.5, { align: 'center' });
+      pdf.text(String(count4), col4X, y + 4.5, { align: 'center' });
       pdf.text(`${data.totalScore}/${data.maxScore}`, scoreX, y + 4.5, { align: 'center' });
-      y += 7;
       
+      y += 7;
       pdf.setFillColor(165, 214, 167);
-      pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 7, 'FD');
-      pdf.text('Persentase', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
+      pdf.rect(margin, y, footerWidth, 7, 'FD');
+      pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
-      y += 7;
       
-      pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255);
-      pdf.rect(margin, y, colWidths.reduce((a, b) => a + b, 0), 7, 'FD');
+      y += 7;
+      pdf.setFillColor(76, 175, 80);
+      pdf.setTextColor(255, 255, 255);
+      pdf.rect(margin, y, footerWidth, 7, 'FD');
       pdf.text('Predikat', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
       pdf.text(data.predicate || '-', margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
+      
+      y += 12;
+      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Keterangan:', margin, y);
+      y += 4;
+      pdf.text('• 91% - 100% = Sangat Baik', margin, y);
+      y += 4;
+      pdf.text('• 81% - 90% = Baik', margin, y);
+      y += 4;
+      pdf.text('• 71% - 80% = Cukup', margin, y);
+      y += 4;
+      pdf.text('• < 70% = Kurang', margin, y);
     }
     
     if (data.notes) {
-      y += 10; if (y > 200) { pdf.addPage(); y = 15; }
-      pdf.setFont(undefined, 'bold'); pdf.setTextColor(0, 0, 0);
-      pdf.text('Catatan Khusus:', margin, y); y += 5;
+      y += 10;
+      if (y > 200) { pdf.addPage(); y = 15; }
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Catatan Khusus Hasil Supervisi:', margin, y);
+      y += 5;
       pdf.setFont(undefined, 'normal');
       const splitNotes = pdf.splitTextToSize(data.notes, pageWidth - 2 * margin);
       pdf.text(splitNotes, margin, y);
@@ -1495,19 +1913,23 @@ window.downloadPDF = async function(docId) {
     }
     
     if (data.actionPlan) {
-      y += 5; if (y > 200) { pdf.addPage(); y = 15; }
+      y += 5;
+      if (y > 200) { pdf.addPage(); y = 15; }
       pdf.setFont(undefined, 'bold');
-      pdf.text('Rencana Tindak Lanjut:', margin, y); y += 5;
+      pdf.text('Rencana Tindak Lanjut:', margin, y);
+      y += 5;
       pdf.setFont(undefined, 'normal');
       const splitPlan = pdf.splitTextToSize(data.actionPlan, pageWidth - 2 * margin);
       pdf.text(splitPlan, margin, y);
       y += splitPlan.length * 4 + 15;
     }
     
-    y += 10; if (y > 220) { pdf.addPage(); y = 15; }
+    y += 10;
+    if (y > 220) { pdf.addPage(); y = 15; }
     const signY = y;
     const leftSignX = margin + 20;
     const rightSignX = pageWidth - margin - 60;
+    
     pdf.setFont(undefined, 'normal');
     pdf.text('Bantaeng, ' + date.toLocaleDateString('id-ID'), rightSignX, signY);
     pdf.text('Guru yang disupervisi', leftSignX, signY + 20);
@@ -1518,8 +1940,21 @@ window.downloadPDF = async function(docId) {
     pdf.text(data.superviseeName, leftSignX, signY + 43);
     pdf.text(data.supervisorName, rightSignX, signY + 43);
     
-    pdf.save(`Supervisi_${data.superviseeName.replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`);
-  } catch (error) { alert('❌ Gagal download PDF: ' + error.message); }
+    if (data.superviseeNIP) {
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`NIP. ${data.superviseeNIP}`, leftSignX, signY + 48);
+    }
+    if (data.supervisorNIP) {
+      pdf.setFont(undefined, 'normal');
+      pdf.text(`NIP. ${data.supervisorNIP}`, rightSignX, signY + 48);
+    }
+    
+    const fileName = `Supervisi_${data.superviseeName.replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`;
+    pdf.save(fileName);
+  } catch (error) {
+    console.error('Error download PDF:', error);
+    alert('❌ Gagal mendownload PDF: ' + error.message);
+  }
 };
 
 window.previewDoc = async function(docId) {
@@ -1529,10 +1964,10 @@ window.previewDoc = async function(docId) {
     const data = snap.data();
     if (data.type === 'link') { window.open(data.link, '_blank'); }
     else if (data.fileExt === 'pdf') {
-      const w = window.open('', '_blank');
-      w.document.write(`<html><head><title>${data.nama}</title><style>body{margin:0;background:#f3f4f6;}.header{background:#3b82f6;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}iframe{width:100%;height:calc(100vh - 50px);border:none;}</style></head><body><div class="header"><h3 style="margin:0;font-size:1rem;">📄 ${data.nama}</h3><a href="${data.fileData}" download="${data.nama}.${data.fileExt}" style="color:white;text-decoration:none;background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:6px;">⬇️ Download</a></div><iframe src="${data.fileData}"></iframe></body></html>`);
-    } else { window.previewDocOffice(docId, data.fileExt); }
-  } catch(e) { alert('❌ Gagal preview: ' + e.message); }
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;}.header{background:#3b82f6;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}.header h3{margin:0;font-size:1rem;}.header a{color:white;text-decoration:none;background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:6px;font-size:0.85rem;}iframe{width:100%;height:calc(100vh - 50px);border:none;}</style></head><body><div class="header"><h3>📄 ${data.nama}</h3><a href="${data.fileData}" download="${data.nama}.${data.fileExt}">⬇ Download</a></div><iframe src="${data.fileData}"></iframe></body></html>`);
+    } else { alert(`File ${data.fileExt.toUpperCase()} tidak bisa di-preview langsung.`); window.previewDocOffice(docId, data.fileExt); }
+  } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); }
 };
 
 window.previewDocOffice = async function(docId, fileExt) {
@@ -1541,23 +1976,33 @@ window.previewDocOffice = async function(docId, fileExt) {
     if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; }
     const data = snap.data();
     if (data.type === 'link') { window.open(data.link, '_blank'); return; }
-    const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>${data.nama}</title><style>body{margin:0;background:#f3f4f6;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}.card{background:white;padding:30px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-width:500px;text-align:center;}.icon{font-size:4rem;margin-bottom:15px;}h3{color:#1e40af;margin-bottom:10px;}.btn{display:inline-block;background:#3b82f6;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;margin:5px;}</style></head><body><div class="card"><div class="icon">${fileExt==='pdf'?'📕':['doc','docx'].includes(fileExt)?'📘':['xls','xlsx'].includes(fileExt)?'📗':'📄'}</div><h3>${data.nama}</h3><p style="color:#6b7280;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung.</p><a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn">⬇️ Download</a><br><button onclick="window.close()" class="btn" style="background:#6b7280;">Tutup</button></div></body></html>`);
-  } catch(e) { alert('❌ Gagal preview: ' + e.message); }
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}.card{background:white;padding:30px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-width:500px;text-align:center;}.icon{font-size:4rem;margin-bottom:15px;}h3{color:#1e40af;margin-bottom:10px;}p{color:#6b7280;margin-bottom:20px;}.btn{display:inline-block;background:#3b82f6;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;margin:5px;}.btn:hover{background:#2563eb;}.btn-secondary{background:#6b7280;}.btn-secondary:hover{background:#4b5563;}</style></head><body><div class="card"><div class="icon">${fileExt==='pdf'?'📕':['doc','docx'].includes(fileExt)?'📘':['xls','xlsx'].includes(fileExt)?'📗':'📄'}</div><h3>${data.nama}</h3><p>${data.kategori} • ${data.fileSize?(data.fileSize/1024/1024).toFixed(2)+' MB':''}</p><p style="font-size:0.85rem;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung.</p><a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn"> Download untuk Melihat</a><br><button onclick="window.close()" class="btn btn-secondary">Tutup</button></div></body></html>`);
+  } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); }
 };
 
-window.closeModal = function(id){ document.getElementById(id).classList.remove('active'); };
-function openModal(id) { document.getElementById(id).classList.add('active'); }
+window.closeModal = function(id){
+  document.getElementById(id).classList.remove('active');
+};
+
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 }
 
 window.addEventListener('load', async () => {
   showLoading();
   await new Promise(resolve => setTimeout(resolve, 500));
+  
   const isValid = await checkSipelitaSession();
-  if (isValid) showDashboard();
+  if (isValid) {
+    showDashboard();
+  }
 });
 
 window.viewDetail = viewDetail;
