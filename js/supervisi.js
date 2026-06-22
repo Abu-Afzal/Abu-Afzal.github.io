@@ -455,9 +455,6 @@ async function loadFolderContents() {
     
     container.innerHTML = html;
     
-    // 6. Update tabel semua dokumen
-    loadMyDocs();
-    
   } catch(e) {
     container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;grid-column:1/-1;">❌ ${e.message}</div>`;
     console.error('Error loading folder contents:', e);
@@ -664,6 +661,39 @@ window.uploadDokumen = async function() {
   btn.textContent = '💾 Simpan Dokumen';
 };
 
+// ══════════════════════════════════════════════
+// DOWNLOAD & HAPUS DOKUMEN (Fungsi yang hilang)
+// ══════════════════════════════════════════════
+window.downloadMyDoc = async function(docId, nama, ext) {
+  try {
+    const snap = await db.collection('supervision_documents').doc(docId).get();
+    if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; }
+    const data = snap.data();
+    if (data.type === 'link') {
+      window.open(data.link, '_blank');
+    } else {
+      const a = document.createElement('a');
+      a.href = data.fileData;
+      a.download = nama + '.' + ext;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  } catch(e) {
+    alert('❌ Gagal mendownload: ' + e.message);
+  }
+};
+window.downloadDoc = window.downloadMyDoc; // Alias untuk supervisor
+
+window.deleteMyDoc = async function(docId) {
+  if (!confirm('Hapus dokumen ini?')) return;
+  try {
+    await db.collection('supervision_documents').doc(docId).delete();
+    loadFolderContents();
+  } catch(e) {
+    alert('❌ Gagal menghapus dokumen: ' + e.message);
+  }
+};
 
 async function loadMySupervisionList(){ const snap = await db.collection('supervisions').where('superviseeEmail', '==', currentUser.email).get(); const tbody = document.getElementById('mySupervisionList'); if(snap.empty){ tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">Belum ada supervisi</td></tr>'; return; } const docs = snap.docs.sort((a,b) => new Date(b.data().createdAt) - new Date(a.data().createdAt)); tbody.innerHTML = docs.map(d => { const data = d.data(); return `<tr><td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td><td>${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</td><td>${data.instrumentName || '-'}</td><td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td><td><span class="badge badge-done">${data.predicate || 'Selesai'}</span></td><td><button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button><button class="btn btn-primary btn-sm" onclick="downloadPDF('${d.id}')"> PDF</button></td></tr>`; }).join(''); }
 
