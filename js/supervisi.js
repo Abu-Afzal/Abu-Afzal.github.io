@@ -237,12 +237,65 @@ window.loadInstrumentForm = function() {
   if (!instrumentId) { formArea.style.display = 'none'; currentInstrument = null; return; }
   const instrumentData = select.options[select.selectedIndex]; currentInstrument = { id: instrumentId, name: instrumentData.dataset.name, type: instrumentData.dataset.type };
   formArea.style.display = 'block'; formArea.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat form penilaian...</div>';
+  
   db.collection('supervision_instruments').doc(instrumentId).get().then(doc => {
     if (!doc.exists) { formArea.innerHTML = '<div class="alert alert-error">❌ Instrumen tidak ditemukan</div>'; return; }
     const data = doc.data(); currentInstrument = { ...currentInstrument, ...data };
-    let html = `<div class="card" style="background:#f9fafb;margin-bottom:20px;"><h3 style="color:#1e40af;margin-bottom:15px;">📋 ${data.name}</h3><div class="form-row"><div class="form-group"><label>Nama Madrasah</label><input type="text" id="schoolName" value="MAN Bantaeng"></div><div class="form-group"><label>Mata Pelajaran</label><input type="text" id="subject" placeholder="Contoh: Matematika"></div></div><div class="form-row"><div class="form-group"><label>Kelas/Semester</label><input type="text" id="classSemester" placeholder="Contoh: VII/1"></div><div class="form-group"><label>Jumlah Jam Tatap Muka</label><input type="number" id="meetingHours" placeholder="Contoh: 4"></div></div></div><div class="table-wrap"><table style="border-collapse:collapse;width:100%;"><thead><tr style="background:#4CAF50;color:white;"><th style="border:1px solid #ddd;padding:10px;text-align:center;width:5%;">No</th><th style="border:1px solid #ddd;padding:10px;text-align:left;width:55%;">Komponen</th><th colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;background:#81C784;">Skor Nilai</th></tr><tr style="background:#81C784;"><th style="border:1px solid #ddd;"></th><th style="border:1px solid #ddd;"></th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">1</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">2</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">3</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">4</th></tr></thead><tbody>`;
-    data.components.forEach((comp, index) => { html += `<tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};"><td style="border:1px solid #ddd;padding:8px;text-align:center;">${index + 1}</td><td style="border:1px solid #ddd;padding:8px;">${comp.name}</td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="1" onchange="handleCheckbox(${index}, 1)"></td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="2" onchange="handleCheckbox(${index}, 2)"></td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="3" onchange="handleCheckbox(${index}, 3)"></td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" data-row="${index}" value="4" onchange="handleCheckbox(${index}, 4)"></td></tr>`; });
-    html += `</tbody><tfoot><tr style="background:#C8E6C9;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Jumlah</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_1">0</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_2">0</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_3">0</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_4">0</td></tr><tr style="background:#A5D6A7;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Skor Total</td><td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="totalScore">0</td></tr><tr style="background:#81C784;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Persentase Capaian</td><td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="percentage">0%</td></tr><tr style="background:#4CAF50;color:white;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Predikat</td><td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="predicate">-</td></tr></tfoot></table></div><div style="margin-top:15px;background:#FFF3E0;padding:12px;border-radius:8px;border-left:4px solid #FF9800;"><strong>Keterangan:</strong><br>• 91% - 100% = Sangat Baik<br>• 81% - 90% = Baik<br>• 71% - 80% = Cukup<br>• < 70% = Kurang</div>`;
+    
+    let html = `
+    <div class="card" style="background:#f9fafb;margin-bottom:20px;">
+      <h3 style="color:#1e40af;margin-bottom:15px;">📋 ${data.name}</h3>
+      
+      <!-- ✨ TAMBAHAN INPUT UTAMA: Email Guru yang Dinilai -->
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label style="font-weight:bold; color:#b91c1c;">Email Guru yang Dinilai *</label>
+        <input type="email" id="superviseeEmail" placeholder="Contoh: elis.harianto@gmail.com" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label>Nama Madrasah</label><input type="text" id="schoolName" value="MAN Bantaeng"></div>
+        <div class="form-group"><label>Mata Pelajaran</label><input type="text" id="subject" placeholder="Contoh: Matematika"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Kelas/Semester</label><input type="text" id="classSemester" placeholder="Contoh: VII/1"></div>
+        <div class="form-group"><label>Jumlah Jam Tatap Muka</label><input type="number" id="meetingHours" placeholder="Contoh: 4"></div>
+      </div>
+    </div>
+    
+    <div class="table-wrap">
+      <table style="border-collapse:collapse;width:100%;">
+        <thead>
+          <tr style="background:#4CAF50;color:white;"><th style="border:1px solid #ddd;padding:10px;text-align:center;width:5%;">No</th><th style="border:1px solid #ddd;padding:10px;text-align:left;width:55%;">Komponen</th><th colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;background:#81C784;">Skor Nilai</th></tr>
+          <tr style="background:#81C784;"><th style="border:1px solid #ddd;"></th><th style="border:1px solid #ddd;"></th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">1</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">2</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">3</th><th style="border:1px solid #ddd;padding:8px;text-align:center;width:10%;">4</th></tr>
+        </thead>
+        <tbody>`;
+        
+    data.components.forEach((comp, index) => { 
+      html += `<tr style="background:${index % 2 === 0 ? '#E8F5E9' : 'white'};"><td style="border:1px solid #ddd;padding:8px;text-align:center;">${index + 1}</td><td style="border:1px solid #ddd;padding:8px;">${comp.name}</td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" value="1" onchange="handleCheckbox(${index}, 1)"></td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" value="2" onchange="handleCheckbox(${index}, 2)"></td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" value="3" onchange="handleCheckbox(${index}, 3)"></td><td style="border:1px solid #ddd;padding:8px;text-align:center;"><input type="checkbox" name="score_row_${index}" value="4" onchange="handleCheckbox(${index}, 4)"></td></tr>`; 
+    });
+    
+    html += `
+        </tbody>
+        <tfoot>
+          <tr style="background:#C8E6C9;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Jumlah Ceklis</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_1">0</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_2">0</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_3">0</td><td style="border:1px solid #ddd;padding:10px;text-align:center;" id="count_4">0</td></tr>
+          <tr style="background:#A5D6A7;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Skor Total (Akumulasi)</td><td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="totalScore">0</td></tr>
+          <tr style="background:#81C784;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Persentase Capaian</td><td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="percentage">0%</td></tr>
+          <tr style="background:#4CAF50;color:white;font-weight:bold;"><td colspan="2" style="border:1px solid #ddd;padding:10px;text-align:right;">Predikat</td><td colspan="4" style="border:1px solid #ddd;padding:10px;text-align:center;font-size:1.1rem;" id="predicate">-</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    
+    <div style="margin-top:15px;background:#FFF3E0;padding:12px;border-radius:8px;border-left:4px solid #FF9800;"><strong>Keterangan:</strong><br>• 91% - 100% = Sangat Baik<br>• 81% - 90% = Baik<br>• 71% - 80% = Cukup<br>• < 70% = Kurang</div>
+    
+    <!-- ✨ TAMBAHAN FORM: Kolom Catatan Tindak Lanjut & Tombol Submit -->
+    <div class="card" style="margin-top:20px; padding:15px; background:#fff;">
+      <div class="form-group">
+        <label style="font-weight:bold;">Catatan / Rekomendasi Tindak Lanjut</label>
+        <textarea id="catatanSupervisor" rows="3" placeholder="Masukkan rekomendasi perbaikan untuk guru..." style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></textarea>
+      </div>
+      <button type="button" class="btn btn-success" onclick="simpanPenilaianSupervisi()" style="width:100%; padding:12px; font-weight:bold; font-size:1rem; margin-top:10px; background:#4CAF50; color:white; border:none; border-radius:4px; cursor:pointer;">💾 SIMPAN & KIRIM HASIL SUPERVISI</button>
+    </div>`;
+    
     formArea.innerHTML = html;
   }).catch(e => { formArea.innerHTML = '<div class="alert alert-error">❌ Gagal memuat form: ' + e.message + '</div>'; });
 };
