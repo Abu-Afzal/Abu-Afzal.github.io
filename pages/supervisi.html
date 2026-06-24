@@ -180,28 +180,30 @@
 
       <!-- TAB: Upload Dokumen (Nested Folder System) -->
 <div id="tabUpload" class="tab-content">
-  
+
   <!-- Breadcrumb Navigation -->
-  <div id="breadcrumbNav" style="display:none;margin-bottom:15px;">
-    <div style="display:flex;align-items:center;gap:6px;padding:12px 16px;background:#eff6ff;border-radius:8px;flex-wrap:wrap;">
-      <button class="btn btn-secondary btn-sm" onclick="navigateFolder(null)" style="width:auto;padding:6px 12px;">🏠 Root</button>
-      <span id="breadcrumbPath" style="font-size:0.9rem;color:#1e40af;"></span>
+  <div id="breadcrumbNav" style="display:none;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:#eff6ff;border-radius:8px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="navigateFolder(null)" style="width:auto;padding:5px 12px;">🏠 Root</button>
+      <span id="breadcrumbPath" style="font-size:0.88rem;color:#1e40af;"></span>
     </div>
   </div>
 
-  <!-- Folder & File List -->
-  <div class="card" style="background:#eff6ff;border:1px solid #dbeafe;margin-bottom:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px;">
-      <h3 style="color:#1e40af;margin:0;" id="folderViewTitle">📁 Semua Folder</h3>
+  <!-- Folder & File Area -->
+  <div class="card" style="background:#eff6ff;border:1px solid #dbeafe;margin-bottom:0;">
+
+    <!-- Header: judul + tombol -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <h3 style="color:#1e40af;margin:0;font-size:1rem;" id="folderViewTitle">📁 Semua Folder</h3>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-primary" onclick="openFolderModal()" style="width:auto;padding:8px 16px;">➕ Folder Baru</button>
-        <button class="btn btn-success" onclick="toggleUploadForm()" id="btnToggleUpload" style="width:auto;padding:8px 16px;display:none;">📤 Upload File</button>
+        <button class="btn btn-primary" onclick="openFolderModal()" style="width:auto;padding:7px 14px;font-size:0.85rem;">➕ Folder Baru</button>
+        <button class="btn btn-success" onclick="toggleUploadForm()" id="btnToggleUpload" style="width:auto;padding:7px 14px;font-size:0.85rem;display:none;">📤 Upload File</button>
       </div>
     </div>
 
-    <!-- Upload Form (hidden by default, shown inside folder) -->
-    <div id="uploadFormArea" style="display:none;background:white;padding:16px;border-radius:10px;border:1px solid #dbeafe;margin-bottom:15px;">
-      <h4 style="color:#1e40af;margin-bottom:12px;">📤 Upload Dokumen ke Folder Ini</h4>
+    <!-- Upload Form (tersembunyi, muncul saat dalam folder) -->
+    <div id="uploadFormArea" style="display:none;background:white;padding:14px;border-radius:10px;border:1px solid #dbeafe;margin-bottom:14px;">
+      <h4 style="color:#1e40af;margin-bottom:12px;font-size:0.95rem;">📤 Upload Dokumen ke Folder Ini</h4>
       <div class="form-row">
         <div class="form-group" style="margin:0;">
           <label>📂 Kategori *</label>
@@ -229,28 +231,16 @@
       <div class="warning">⚠️ Maksimal Ukuran File: 5 MB</div>
       <div id="fileInputWrap"><input type="file" id="docFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"></div>
       <div id="linkInputWrap" style="display:none;"><input type="url" id="docLink" placeholder="https://drive.google.com/..."></div>
-      <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc" style="width:auto;padding:10px 24px;margin-top:10px;">💾 Simpan Dokumen</button>
+      <button class="btn btn-primary" onclick="uploadDokumen()" id="btnUploadDoc"
+        style="width:auto;padding:9px 22px;margin-top:10px;">💾 Simpan Dokumen</button>
       <div id="alertUpload" class="alert alert-success" style="margin-top:10px;"></div>
     </div>
 
-    <!-- Folder & File Grid -->
-    <div id="folderFileList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;"></div>
-  </div>
+    <!-- Folder & File List (render oleh loadFolderContents) -->
+    <div id="folderFileList"></div>
 
-  <!-- Semua Dokumen (Tabel) -->
-  <div class="card" style="margin-top:20px;">
-    <h2 class="section-title">📂 Semua Dokumen Saya</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr><th>Folder</th><th>Nama Dokumen</th><th>Kategori</th><th>Tanggal</th><th>Aksi</th></tr>
-        </thead>
-        <tbody id="myDocsList"></tbody>
-      </table>
-    </div>
   </div>
 </div>
-
       <!-- TAB: Hasil Supervisi -->
       <div id="tabHasil" class="tab-content">
         <h2 class="section-title">📊 Hasil Supervisi Saya</h2>
