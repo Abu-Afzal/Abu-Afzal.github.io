@@ -99,126 +99,168 @@ tr:hover td{background:#f9fafb;}
 @media(max-width:768px){.form-row,.form-row-3{grid-template-columns:1fr;}.header h1{font-size:1.6rem;}.tabs{flex-wrap:wrap;}.schedule-card{flex-direction:column;align-items:flex-start;}}
 
 /* ═══════════════════════════════════════════════════
-   FOLDER & FILE — GOOGLE DRIVE STYLE GRID
+   FOLDER — COMPACT HORIZONTAL LIST (Google Drive style)
    ═══════════════════════════════════════════════════ */
 
-/* Grid container sudah diset inline di HTML (auto-fill minmax(220px,1fr))
-   kita hanya perlu perbaiki .folder-card dari flex-row menjadi card vertikal */
+/* Container folder: list vertikal, bukan grid */
+#folderFileList {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
 
+/* Setiap folder row: horizontal compact */
 .folder-card {
   background: white;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 9px 14px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s, box-shadow 0.15s;
   position: relative;
-  overflow: hidden;
-  min-height: 120px;
-  border-left: none; /* override inline style dari JS */
-}
-
-/* Strip warna di atas card (dari border-left yang sebelumnya, kita jadikan top bar) */
-.folder-card::before {
-  content: '';
-  display: block;
+  min-height: unset;
   width: 100%;
-  height: 6px;
-  flex-shrink: 0;
-  border-radius: 10px 10px 0 0;
 }
-
-/* Warna top bar ikut border-left color yang diset inline via JS.
-   Kita pakai filter karena border-left-color tidak bisa diakses ::before.
-   Solusi: buat JS tetap set border-left, kita salin ke top bar via box-shadow trick */
-.folder-card[style*="border-left:4px solid #3b82f6"]::before { background: #3b82f6; }
-.folder-card[style*="border-left:4px solid #10b981"]::before { background: #10b981; }
-.folder-card[style*="border-left:4px solid #f59e0b"]::before { background: #f59e0b; }
-.folder-card[style*="border-left:4px solid #ef4444"]::before { background: #ef4444; }
-.folder-card[style*="border-left:4px solid #8b5cf6"]::before { background: #8b5cf6; }
-.folder-card[style*="border-left:4px solid #ec4899"]::before { background: #ec4899; }
-/* fallback jika warna tidak cocok */
-.folder-card::before { background: #3b82f6; }
 
 .folder-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 16px rgba(59,130,246,0.15);
-  transform: translateY(-3px);
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  box-shadow: none;
+  transform: none;
 }
 
-/* Body card (tengah: ikon + nama + count) */
+/* Warna aksen kiri tipis */
+.folder-card {
+  border-left: 3px solid #3b82f6;
+}
+.folder-card[style*="#10b981"] { border-left-color: #10b981; }
+.folder-card[style*="#f59e0b"] { border-left-color: #f59e0b; }
+.folder-card[style*="#ef4444"] { border-left-color: #ef4444; }
+.folder-card[style*="#8b5cf6"] { border-left-color: #8b5cf6; }
+.folder-card[style*="#ec4899"] { border-left-color: #ec4899; }
+
 .folder-icon {
-  font-size: 2.8rem;
-  margin: 16px 0 8px;
+  font-size: 1.35rem;
   line-height: 1;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .folder-info {
   flex: 1;
-  text-align: center;
-  padding: 0 12px 6px;
-  width: 100%;
+  min-width: 0;
+  text-align: left;
+  padding: 0;
 }
 
 .folder-name {
-  font-weight: 700;
-  color: #1e40af;
+  font-weight: 600;
+  color: #1e293b;
   font-size: 0.88rem;
-  line-height: 1.3;
-  word-break: break-word;
-  margin-bottom: 3px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 1px;
 }
 
 .folder-count {
-  font-size: 0.75rem;
-  color: #6b7280;
+  font-size: 0.72rem;
+  color: #9ca3af;
 }
 
-/* Tombol aksi: muncul di bawah card, tersembunyi default, tampil saat hover */
+/* Tombol aksi selalu terlihat di kanan, compact */
 .folder-actions {
-  width: 100%;
   display: flex;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 12px 12px;
+  gap: 5px;
+  flex-shrink: 0;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.18s, transform 0.18s;
+  transition: opacity 0.15s;
 }
 
 .folder-card:hover .folder-actions {
   opacity: 1;
-  transform: translateY(0);
 }
 
-.folder-actions .btn-sm {
-  padding: 5px 10px;
+.folder-actions button {
+  padding: 4px 9px;
+  font-size: 0.75rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.folder-actions .btn-warning { background: #fef3c7; color: #92400e; }
+.folder-actions .btn-warning:hover { background: #fde68a; }
+.folder-actions .btn-danger  { background: #fee2e2; color: #991b1b; }
+.folder-actions .btn-danger:hover  { background: #fecaca; }
+
+/* ═══════════════════════════════════════════════════
+   FILE LIST (dalam folder) — tabel seperti Google Drive list view
+   ═══════════════════════════════════════════════════ */
+
+/* Tabel file di dalam folder — override grid jadi tabel biasa */
+.file-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  margin-top: 6px;
+}
+
+.file-list-table th {
+  background: #f8fafc;
+  color: #374151;
+  font-weight: 700;
+  padding: 9px 12px;
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
   font-size: 0.78rem;
-  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.folder-actions .btn-warning {
-  background: #f59e0b;
-  color: white;
+.file-list-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #1e293b;
+}
+
+.file-list-table tr:last-child td { border-bottom: none; }
+.file-list-table tr:hover td { background: #f9fafb; }
+
+.file-list-icon { font-size: 1.2rem; margin-right: 6px; vertical-align: middle; }
+
+.file-list-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.88rem;
+}
+
+.file-list-meta { font-size: 0.78rem; color: #6b7280; }
+
+.file-list-actions { display: flex; gap: 5px; }
+.file-list-actions button,
+.file-list-actions a {
+  padding: 4px 9px;
+  font-size: 0.75rem;
+  border-radius: 5px;
   border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-decoration: none;
 }
-.folder-actions .btn-warning:hover { background: #d97706; }
 
-.folder-actions .btn-danger {
-  background: #ef4444;
-  color: white;
-  border: none;
-}
-.folder-actions .btn-danger:hover { background: #dc2626; }
-
-/* Badge folder name di tabel semua dokumen */
+/* Badge folder */
 .folder-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -226,66 +268,4 @@ tr:hover td{background:#f9fafb;}
   font-size: 0.72rem;
   font-weight: 600;
   color: white;
-}
-
-/* ═══ FILE ITEM (dalam folder) — sudah Google Drive-like ═══ */
-.file-grid-item {
-  background: white;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 16px 12px 12px;
-  cursor: default;
-  transition: all 0.2s;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 120px;
-  position: relative;
-}
-
-.file-grid-item:hover {
-  border-color: #10b981;
-  box-shadow: 0 4px 12px rgba(16,185,129,0.15);
-  transform: translateY(-3px);
-}
-
-.file-grid-icon {
-  font-size: 2.4rem;
-  margin-bottom: 8px;
-  line-height: 1;
-}
-
-.file-grid-name {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 0.85rem;
-  margin-bottom: 3px;
-  word-break: break-word;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.file-grid-meta {
-  font-size: 0.72rem;
-  color: #6b7280;
-  margin-bottom: 2px;
-}
-
-.file-grid-actions {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.file-grid-actions button,
-.file-grid-actions a {
-  padding: 5px 8px;
-  font-size: 0.75rem;
-  border-radius: 6px;
 }
