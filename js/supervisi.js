@@ -322,22 +322,22 @@ async function loadFolderContents() {
   const viewTitle = document.getElementById('folderViewTitle');
   const btnUpload = document.getElementById('btnToggleUpload');
   const uploadForm = document.getElementById('uploadFormArea');
-  
-  container.innerHTML = '<div style="text-align:center;padding:40px;color:#6b7280;grid-column:1/-1;"><span class="spinner"></span> Memuat...</div>';
-  
+
+  container.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280;"><span class="spinner"></span> Memuat...</div>';
+
   try {
     // 1. Load semua folder user
     const foldersSnap = await db.collection('supervision_folders')
       .where('userEmail', '==', currentUser.email)
       .get();
-    
+
     userFolders = foldersSnap.docs.map(d => ({id: d.id, ...d.data()}));
-    
+
     // Filter sub-folder berdasarkan parentId
     let subFolders = userFolders.filter(f => (f.parentId || null) === currentFolderId);
-    subFolders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    // 2. Load file di folder ini
+    subFolders.sort((a, b) => a.name.localeCompare(b.name));
+
+    // 2. Load file di folder ini (hanya jika sedang dalam folder)
     let files = [];
     if (currentFolderId) {
       const docsSnap = await db.collection('supervision_documents')
@@ -347,28 +347,28 @@ async function loadFolderContents() {
       files = docsSnap.docs.map(d => ({id: d.id, ...d.data()}));
       files.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
-    
+
     // 3. Build breadcrumb
     if (currentFolderId) {
       breadcrumb.style.display = 'block';
       btnUpload.style.display = 'inline-flex';
       uploadForm.style.display = 'none';
-      
-      // Build path
+
       let pathParts = [];
       let current = userFolders.find(f => f.id === currentFolderId);
       while (current) {
         pathParts.unshift(current);
         current = current.parentId ? userFolders.find(f => f.id === current.parentId) : null;
       }
-      
+
       let pathHTML = '';
       pathParts.forEach((p, i) => {
         if (i > 0) pathHTML += ' <span style="color:#9ca3af;">›</span> ';
         if (i < pathParts.length - 1) {
-          pathHTML += `<a href="#" onclick="navigateFolder('${p.id}');return false;" style="color:#3b82f6;text-decoration:none;font-weight:600;">${p.name}</a>`;
+          pathHTML += `<a href="#" onclick="navigateFolder('${p.id}');return false;"
+            style="color:#3b82f6;text-decoration:none;font-weight:600;">${p.name}</a>`;
         } else {
-          pathHTML += `<strong>${p.name}</strong>`;
+          pathHTML += `<strong style="color:#1e293b;">${p.name}</strong>`;
         }
       });
       breadcrumbPath.innerHTML = pathHTML;
@@ -379,96 +379,122 @@ async function loadFolderContents() {
       uploadForm.style.display = 'none';
       viewTitle.textContent = '📁 Semua Folder';
     }
-    
-    // 4. Hitung dokumen per sub-folder
+
+    // 4. Hitung dokumen per folder
     const allDocsSnap = await db.collection('supervision_documents')
       .where('userEmail', '==', currentUser.email)
       .get();
-    
+
     const folderCounts = {};
     allDocsSnap.docs.forEach(d => {
       const fid = d.data().folderId;
       if (fid) folderCounts[fid] = (folderCounts[fid] || 0) + 1;
     });
-    
+
     // 5. Render
     let html = '';
-    
-    // Render sub-folders
+
+    // ── Render sub-folders (compact horizontal list) ──
     subFolders.forEach(f => {
       const count = folderCounts[f.id] || 0;
+      const color = f.color || '#3b82f6';
       html += `
-        <div class="folder-card" style="--fc:${f.color || '#3b82f6'};cursor:pointer;" onclick="navigateFolder('${f.id}')">
+        <div class="folder-card" style="--fc:${color};" onclick="navigateFolder('${f.id}')">
           <div class="folder-icon">📁</div>
           <div class="folder-info">
             <div class="folder-name">${f.name}</div>
             <div class="folder-count">${count} dokumen</div>
           </div>
           <div class="folder-actions">
-            <button class="btn btn-warning btn-sm" onclick="event.stopPropagation();openFolderModal('${f.id}')" title="Edit">✏️</button>
-            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteFolder('${f.id}', '${f.name.replace(/'/g, "\\'")}', ${count})" title="Hapus">🗑️</button>
+            <button class="btn btn-warning" onclick="event.stopPropagation();openFolderModal('${f.id}')" title="Edit">✏️ Edit</button>
+            <button class="btn btn-danger" onclick="event.stopPropagation();deleteFolder('${f.id}','${f.name.replace(/'/g,"\\'")}',${count})" title="Hapus">🗑️ Hapus</button>
           </div>
-        </div>
-      `;
+        </div>`;
     });
-    
-    // Render files
-    files.forEach(d => {
-      const icon = d.type === 'link' ? '🔗' : (d.fileExt === 'pdf' ? '📕' : ['doc', 'docx'].includes(d.fileExt) ? '📘' : ['xls', 'xlsx'].includes(d.fileExt) ? '📗' : '📄');
-      
-      let btnLihat = '';
-      if (d.type === 'link') {
-        btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️</a>`;
-      } else if (d.fileExt === 'pdf') {
-        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️</button>`;
-      } else {
-        btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️</button>`;
-      }
-      
-      let btnUnduh = '';
-      if (d.type !== 'link') {
-        btnUnduh = `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇️</button>`;
-      }
-      
+
+    // ── Render files sebagai tabel list ──
+    if (files.length > 0) {
       html += `
-        <div class="file-grid-item">
-          <div class="file-grid-icon">${icon}</div>
-          <div class="file-grid-name">${d.nama}</div>
-          <div class="file-grid-meta">${d.kategori}</div>
-          <div class="file-grid-meta">${new Date(d.createdAt).toLocaleDateString('id-ID')}</div>
-          <div class="file-grid-actions">
-            ${btnLihat}
-            ${btnUnduh}
-            <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
-          </div>
-        </div>
-      `;
-    });
-    
-    if (subFolders.length === 0 && files.length === 0) {
-      if (currentFolderId) {
-        html = '<div style="text-align:center;padding:60px;color:#9ca3af;grid-column:1/-1;"><div style="font-size:4rem;margin-bottom:10px;">📭</div><p>Folder ini kosong.<br>Klik "Upload File" untuk menambahkan dokumen.</p></div>';
-      } else {
-        html = '<div style="text-align:center;padding:60px;color:#9ca3af;grid-column:1/-1;"><div style="font-size:4rem;margin-bottom:10px;">📁</div><p>Belum ada folder.<br>Klik "Folder Baru" untuk memulai.</p></div>';
-      }
+        <div class="tbl-wrap" style="margin-top:${subFolders.length > 0 ? '16px' : '0'};">
+          ${subFolders.length > 0 ? '<div style="font-size:0.78rem;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;padding:4px 0 6px;">Dokumen</div>' : ''}
+          <table class="file-list-table">
+            <thead>
+              <tr>
+                <th style="width:32px;"></th>
+                <th>Nama Dokumen</th>
+                <th>Kategori</th>
+                <th>Tanggal</th>
+                <th style="width:160px;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      files.forEach(d => {
+        const icon = d.type === 'link' ? '🔗'
+          : d.fileExt === 'pdf'                     ? '📕'
+          : ['doc','docx'].includes(d.fileExt)      ? '📘'
+          : ['xls','xlsx'].includes(d.fileExt)      ? '📗'
+          : ['ppt','pptx'].includes(d.fileExt)      ? '📙'
+          : '📄';
+
+        let btnLihat = '';
+        if (d.type === 'link') {
+          btnLihat = `<a href="${d.link}" target="_blank" class="btn btn-warning btn-sm">👁️ Lihat</a>`;
+        } else if (d.fileExt === 'pdf') {
+          btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDoc('${d.id}')">👁️ Lihat</button>`;
+        } else {
+          btnLihat = `<button class="btn btn-warning btn-sm" onclick="previewDocOffice('${d.id}','${d.fileExt}')">👁️ Lihat</button>`;
+        }
+
+        const btnUnduh = d.type !== 'link'
+          ? `<button class="btn btn-primary btn-sm" onclick="downloadMyDoc('${d.id}','${d.nama.replace(/'/g,"\\'")}','${d.fileExt}')">⬇️</button>`
+          : '';
+
+        html += `
+          <tr>
+            <td style="text-align:center;font-size:1.1rem;">${icon}</td>
+            <td class="file-list-name">${d.nama}</td>
+            <td class="file-list-meta">${d.kategori || '-'}</td>
+            <td class="file-list-meta">${new Date(d.createdAt).toLocaleDateString('id-ID')}</td>
+            <td>
+              <div class="file-list-actions">
+                ${btnLihat}
+                ${btnUnduh}
+                <button class="btn btn-danger btn-sm" onclick="deleteMyDoc('${d.id}')">🗑️</button>
+              </div>
+            </td>
+          </tr>`;
+      });
+
+      html += `</tbody></table></div>`;
     }
-    
+
+    // ── Empty state ──
+    if (subFolders.length === 0 && files.length === 0) {
+      html = currentFolderId
+        ? `<div class="empty-state">
+             <div class="icon">📭</div>
+             <p>Folder ini kosong.<br>Klik <strong>"Upload File"</strong> untuk menambahkan dokumen.</p>
+           </div>`
+        : `<div class="empty-state">
+             <div class="icon">📁</div>
+             <p>Belum ada folder.<br>Klik <strong>"Folder Baru"</strong> untuk memulai.</p>
+           </div>`;
+    }
+
     container.innerHTML = html;
-    
-    // 6. Update tabel semua dokumen
-    loadMyDocs();
-    
+
   } catch(e) {
-    container.innerHTML = `<div style="text-align:center;padding:40px;color:#ef4444;grid-column:1/-1;">❌ ${e.message}</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:30px;color:#ef4444;">❌ ${e.message}</div>`;
     console.error('Error loading folder contents:', e);
   }
 }
 
-// Override loadFolders to use new system
+// Override loadFolders to use new system (tetap pertahankan ini)
 async function loadFolders() {
+  currentFolderId = null;
   loadFolderContents();
 }
-
 window.openFolderModal = function(folderId = null) {
   editingFolderId = folderId;
   const title = document.getElementById('folderModalTitle');
