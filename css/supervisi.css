@@ -113,6 +113,7 @@ tr:hover td{background:#f9fafb;}
 .folder-card {
   background: white;
   border: 1px solid #e5e7eb;
+  border-left: 3px solid var(--fc, #3b82f6);
   border-radius: 8px;
   padding: 9px 14px;
   display: flex;
@@ -129,19 +130,10 @@ tr:hover td{background:#f9fafb;}
 .folder-card:hover {
   background: #eff6ff;
   border-color: #bfdbfe;
+  border-left-color: var(--fc, #3b82f6);
   box-shadow: none;
   transform: none;
 }
-
-/* Warna aksen kiri tipis */
-.folder-card {
-  border-left: 3px solid #3b82f6;
-}
-.folder-card[style*="#10b981"] { border-left-color: #10b981; }
-.folder-card[style*="#f59e0b"] { border-left-color: #f59e0b; }
-.folder-card[style*="#ef4444"] { border-left-color: #ef4444; }
-.folder-card[style*="#8b5cf6"] { border-left-color: #8b5cf6; }
-.folder-card[style*="#ec4899"] { border-left-color: #ec4899; }
 
 .folder-icon {
   font-size: 1.35rem;
