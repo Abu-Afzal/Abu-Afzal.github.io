@@ -160,11 +160,18 @@ window.simpanSesiKeFirestore = async function() {
     };
 
     try {
-        // 4. Simpan ke koleksi 'learning_sessions' dengan document ID = PIN_SESI
+        // Simpan ke koleksi 'learning_sessions' dengan dokumen ID = PIN_SESI
         await db.collection('learning_sessions').doc(PIN_SESI).set(dataSesi);
         
-        alert(`🎉 BERHASIL!\n\nSesi pembelajaran telah aktif.\nBagikan PIN ini ke Siswa: ${PIN_SESI}`);
+        // Buat link otomatis untuk dibagikan ke siswa
+        const baseLinkAplikasi = window.location.origin + window.location.pathname.replace('buat-sesi.html', 'siswa.html');
+        const linkLengkapSiswa = `${baseLinkAplikasi}?pin=${PIN_SESI}`;
+
+        // Tampilkan pesan sukses lengkap dengan Link
+        alert(`🎉 SESI PEMBELAJARAN AKTIF!\n\nPIN Sesi: ${PIN_SESI}\n\nSalin Link Otomatis untuk Siswa:\n${linkLengkapSiswa}`);
         
+        console.log("Link Siswa Terbentuk:", linkLengkapSiswa);
+
         // Reset Form setelah sukses
         document.getElementById('formSesi').reset();
         document.getElementById('quizContainer').innerHTML = '';
