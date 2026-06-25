@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siswa - Ruang E-Learning</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card" id="gerbangMasuk">
+            <h2>🚪 Masuk Ruang Belajar</h2>
+            <p class="subtitle">Silakan masukkan PIN Sesi dan Identitas Anda dengan benar.</p>
+            <hr>
+            <form id="formMasukSiswa" onsubmit="event.preventDefault(); validationDanMasukKelas();">
+                <div class="form-group">
+                    <label>PIN Sesi Pembelajaran *</label>
+                    <input type="text" id="studentPin" placeholder="Masukkan 6 Digit PIN" max-length="6" required>
+                </div>
+                <div class="form-group">
+                    <label>Nama Lengkap Siswa *</label>
+                    <input type="text" id="studentName" placeholder="Contoh: Ahmad Fauzi" required>
+                </div>
+                <div class="form-group">
+                    <label>Nomor Absen / NISN *</label>
+                    <input type="text" id="studentId" placeholder="Contoh: 12" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnMasukKelas">🚀 Masuk Kelas Belajar</button>
+            </form>
+        </div>
+
+        <div class="card" id="areaBelajar" style="display: none;">
+            <div class="soal-header">
+                <h2 id="viewJudulMateri">Judul Materi</h2>
+                <span id="badgeGuru" class="info-text" style="font-weight: 600; color: #2563eb;"></span>
+            </div>
+            <hr>
+
+            <fieldset id="sectionMateriTeks" style="display: none;">
+                <legend>📖 Ringkasan Materi</legend>
+                <p id="viewMateriTeks" style="line-height: 1.6; white-space: pre-line;"></p>
+            </fieldset>
+
+            <fieldset id="sectionMateriGambar" style="display: none;">
+                <legend>🖼️ Gambar / Buku Paket</legend>
+                <img id="viewMateriGambar" src="" alt="Gambar Materi" style="max-width:100%; height:auto; border-radius:8px;">
+            </fieldset>
+
+            <fieldset id="sectionMateriVideo" style="display: none;">
+                <legend>📺 Video Pembelajaran</legend>
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; background: #000; border-radius: 8px;">
+                    <iframe id="viewMateriVideo" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
+                </div>
+            </fieldset>
+
+            <form id="formPengerjaanSiswa" onsubmit="event.preventDefault(); submitJawabanSiswa();">
+                <fieldset id="sectionKuis" style="display: none;">
+                    <legend>📝 Kuis Pilihan Ganda</legend>
+                    <div id="tempatSoalSiswa">
+                        </div>
+                </fieldset>
+
+                <fieldset id="sectionTugas" style="display: none;">
+                    <legend>📤 Unggah Tugas Esai / Catatan</legend>
+                    <p class="subtitle" style="margin-bottom: 10px;">Silakan foto lembar jawaban/catatan Anda lalu unggah di bawah ini (Maks 5MB).</p>
+                    <input type="file" id="fileTugasSiswa" accept="image/*,application/pdf" onchange="prosesFileTugas(event)">
+                    <p id="infoFileTugas" class="info-text" style="display:none;"></p>
+                </fieldset>
+
+                <div class="action-area">
+                    <button type="submit" class="btn btn-primary" id="btnSubmitFinal">💾 Kirim Semua Jawaban & Tugas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/siswa.js"></script>
+</body>
+</html>
