@@ -29,7 +29,7 @@
             color: #334155;
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
-            border-radius: 50px; /* Membuat filter elips elegan */
+            border-radius: 50px;
             outline: none;
             cursor: pointer;
             min-width: 280px;
@@ -37,7 +37,7 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
         
-        /* 1. GRID UTAMA: 4 KOLOM PRESISI (SEPERTI CONTOH LUWU) */
+        /* 1. GRID UTAMA: 4 KOLOM PRESISI */
         #galeriKegiatanContainer {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -45,16 +45,16 @@
             margin-top: 30px !important;
         }
 
-        /* 2. KARTU ALBUM VERTIKAL (MEMAKSA ELEMEN MENUMPUK KE BAWAH) */
+        /* 2. KARTU ALBUM VERTIKAL */
         #galeriKegiatanContainer > div, 
         #galeriKegiatanContainer > a,
         #galeriKegiatanContainer .galeri-item {
             display: flex !important;
-            flex-direction: column !important; /* PENTING: Memaksa teks turun ke bawah foto */
+            flex-direction: column !important;
             background: #ffffff !important;
-            border-radius: 18px !important; /* Sudut melengkung halus premium */
+            border-radius: 18px !important;
             overflow: hidden !important;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important; /* Shadow lembut ala Luwu */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
             border: 1px solid #e2e8f0 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             text-decoration: none !important;
@@ -71,24 +71,24 @@
         /* 3. FOTO DIATUR PENUH DI ATAS BARIS PERTAMA */
         #galeriKegiatanContainer img {
             width: 100% !important;
-            height: 170px !important; /* Mengunci tinggi foto agar seragam */
+            height: 170px !important;
             object-fit: cover !important;
             display: block !important;
-            order: 1 !important; /* Garansi posisi foto selalu paling atas */
+            order: 1 !important;
         }
         
-        /* 4. JUDUL DI BAWAH FOTO (BERSIH, TANPA LINK BIRU, HURUF KAPITAL) */
+        /* 4. JUDUL DI BAWAH FOTO */
         #galeriKegiatanContainer a,
         #galeriKegiatanContainer span,
         #galeriKegiatanContainer p {
-            order: 2 !important; /* Garansi posisi teks selalu di bawah foto */
+            order: 2 !important;
             padding: 20px 15px !important;
             text-align: center !important;
             font-size: 0.88rem !important;
             font-weight: 700 !important;
-            color: #1e293b !important; /* Warna abu-abu gelap elegan */
+            color: #1e293b !important;
             text-decoration: none !important; 
-            text-transform: uppercase !important; /* Otomatis Kapital seperti Luwu */
+            text-transform: uppercase !important;
             letter-spacing: 0.3px !important;
             line-height: 1.5 !important;
             background: #ffffff !important;
@@ -101,7 +101,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 5. RESPONSIVITAS MOBILE (OTOMATIS MENYESUAIKAN LAYAR HP) */
+        /* 5. RESPONSIVITAS MOBILE */
         @media (max-width: 1200px) {
             #galeriKegiatanContainer { grid-template-columns: repeat(3, 1fr) !important; }
         }
@@ -110,36 +110,369 @@
             #galeriKegiatanContainer img { height: 130px !important; }
             #galeriKegiatanContainer a, #galeriKegiatanContainer span { font-size: 0.78rem !important; padding: 12px 8px !important; }
         }
-        /* Class pembantu untuk menyembunyikan kartu yang tidak sesuai tahun */
-.album-tersembunyi {
-    display: none !important;
-}
+        
+        .album-tersembunyi {
+            display: none !important;
+        }
+
         /* ==================================================================== */
-/* 🗜️ KODE PENYELARAS JARAK (ANTI-RENGGANG)                             */
-/* ==================================================================== */
+        /* 🗜️ KODE PENYELARAS JARAK (ANTI-RENGGANG)                             */
+        /* ==================================================================== */
+        .galeri-album-section {
+            padding-top: 20px !important;
+            padding-bottom: 60px !important;
+        }
 
-/* 1. Pangkas jarak atas pada section galeri */
-.galeri-album-section {
-    padding-top: 20px !important;    /* Diubah dari 60px menjadi 20px agar naik ke atas */
-    padding-bottom: 60px !important; /* Jarak bawah biarkan tetap longgar */
-}
+        .galeri-album-section h2,
+        .galeri-album-section .section-title,
+        .galeri-album-section h1 {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
 
-/* 2. Hilangkan margin bawaan di atas teks "Galeri Kegiatan MAN Bantaeng" */
-.galeri-album-section h2,
-.galeri-album-section .section-title,
-.galeri-album-section h1 {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+        .berita-section, 
+        .news-section, 
+        #berita {
+            padding-bottom: 10px !important;
+            margin-bottom: 10px !important;
+        }
 
-/* 3. Pangkas jarak bawah dari section berita / tombol "Lihat Semua Berita" */
-/* (Ganti '.berita-section' sesuai dengan nama class pembungkus area berita Bapak jika berbeda) */
-.berita-section, 
-.news-section, 
-#berita {
-    padding-bottom: 10px !important;
-    margin-bottom: 10px !important;
-}
+        /* ==================================================================== */
+        /* 🎨 LOGIN CARD SENA DA SIPELITA (HANYA MENYENTUH AREA LOGIN)          */
+        /* ==================================================================== */
+
+        /* 1. SECTION HERO - Background gradient biru SIPELITA */
+        section.hero {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%) !important;
+            padding: 60px 20px 50px !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Efek dekoratif lingkaran blur di background */
+        section.hero::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        section.hero::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -100px;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* 2. TEXT "SELAMAT DATANG" - Putih, tegas, modern */
+        .hero-text-center h1 {
+            color: #ffffff !important;
+            font-size: 2.5rem !important;
+            font-weight: 800 !important;
+            margin-bottom: 10px !important;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-text-center p {
+            color: rgba(255, 255, 255, 0.95) !important;
+            font-size: 1.05rem !important;
+            font-weight: 500 !important;
+            margin-bottom: 35px !important;
+        }
+
+        /* 3. LOGIN CARD - Glassmorphism ala SIPELITA */
+        .hero-login-card-wide {
+            background: rgba(255, 255, 255, 0.98) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4) !important;
+            border-radius: 20px !important;
+            padding: 35px 32px !important;
+            max-width: 480px !important;
+            margin: 0 auto !important;
+            box-shadow: 
+                0 20px 50px rgba(30, 64, 175, 0.25),
+                0 8px 20px rgba(0, 0, 0, 0.08) !important;
+            position: relative;
+            z-index: 2;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Garis aksen biru di atas card */
+        .hero-login-card-wide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 0 0 4px 4px;
+        }
+
+        /* 4. TITLE "LOGIN USER" */
+        .hero-login-card-wide h2 {
+            color: #1e40af !important;
+            font-size: 1.6rem !important;
+            font-weight: 800 !important;
+            margin-bottom: 4px !important;
+            text-align: center !important;
+            letter-spacing: -0.3px;
+        }
+
+        .hero-login-card-wide .subtitle {
+            color: #6b7280 !important;
+            font-size: 0.9rem !important;
+            text-align: center !important;
+            margin-bottom: 28px !important;
+            font-weight: 500 !important;
+        }
+
+        /* 5. FORM GROUP - Input modern */
+        .hero-login-card-wide .form-group {
+            margin-bottom: 18px !important;
+            position: relative;
+        }
+
+        /* Icon wrapper - Biru lembut */
+        .hero-login-card-wide .input-icon-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #f9fafb !important;
+            border: 1.5px solid #e5e7eb !important;
+            border-radius: 12px !important;
+            padding: 0 16px !important;
+            transition: all 0.25s ease;
+            height: 52px;
+        }
+
+        .hero-login-card-wide .input-icon-wrapper:focus-within {
+            background: #ffffff !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Icon di dalam input */
+        .hero-login-card-wide .icon-main {
+            color: #3b82f6 !important;
+            font-size: 1.05rem !important;
+            margin-right: 12px !important;
+            transition: color 0.2s;
+        }
+
+        .hero-login-card-wide .input-icon-wrapper:focus-within .icon-main {
+            color: #1e40af !important;
+        }
+
+        /* Input field */
+        .hero-login-card-wide input[type="email"],
+        .hero-login-card-wide input[type="password"],
+        .hero-login-card-wide input[type="text"] {
+            width: 100% !important;
+            border: none !important;
+            background: transparent !important;
+            padding: 0 !important;
+            font-size: 0.95rem !important;
+            color: #1f2937 !important;
+            font-family: 'Segoe UI', Tahoma, sans-serif !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        .hero-login-card-wide input::placeholder {
+            color: #9ca3af !important;
+            font-weight: 400 !important;
+        }
+
+        /* Toggle password icon */
+        .hero-login-card-wide .toggle-password {
+            color: #9ca3af !important;
+            cursor: pointer !important;
+            transition: color 0.2s !important;
+            padding: 5px !important;
+        }
+
+        .hero-login-card-wide .toggle-password:hover {
+            color: #3b82f6 !important;
+        }
+
+        /* 6. REMEMBER ME - Checkbox modern */
+        .remember-me-container {
+            margin: 20px 0 25px !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .remember-me-label {
+            display: flex !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            font-size: 0.88rem !important;
+            color: #4b5563 !important;
+            font-weight: 500 !important;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        .remember-me-label:hover {
+            color: #1e40af !important;
+        }
+
+        /* Hide native checkbox */
+        .remember-me-label input[type="checkbox"] {
+            display: none !important;
+        }
+
+        /* Custom checkbox */
+        .checkbox-custom {
+            width: 20px !important;
+            height: 20px !important;
+            border: 2px solid #d1d5db !important;
+            border-radius: 6px !important;
+            margin-right: 10px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            background: #ffffff !important;
+            flex-shrink: 0;
+        }
+
+        .remember-me-label input[type="checkbox"]:checked + .checkbox-custom {
+            background: #3b82f6 !important;
+            border-color: #3b82f6 !important;
+        }
+
+        .remember-me-label input[type="checkbox"]:checked + .checkbox-custom::after {
+            content: '✓' !important;
+            color: white !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+        }
+
+        /* 7. TOMBOL LOGIN - Gradient biru SIPELITA */
+        .btn-inline-login {
+            width: 100% !important;
+            padding: 14px 24px !important;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px !important;
+            font-size: 0.98rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.5px !important;
+            cursor: pointer !important;
+            transition: all 0.25s ease !important;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-inline-login:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45) !important;
+        }
+
+        .btn-inline-login:active:not(:disabled) {
+            transform: translateY(0) !important;
+        }
+
+        .btn-inline-login:disabled {
+            opacity: 0.7 !important;
+            cursor: not-allowed !important;
+            background: #94a3b8 !important;
+            box-shadow: none !important;
+        }
+
+        /* 8. ERROR MESSAGE - Alert merah modern */
+        .error-msg {
+            background: #fee2e2 !important;
+            color: #991b1b !important;
+            border: 1px solid #fca5a5 !important;
+            border-left: 4px solid #ef4444 !important;
+            padding: 12px 16px !important;
+            border-radius: 10px !important;
+            margin-bottom: 16px !important;
+            font-size: 0.88rem !important;
+            font-weight: 600 !important;
+            display: none;
+        }
+
+        .error-msg:not(:empty) {
+            display: block !important;
+            animation: shakeError 0.4s ease;
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* 9. RESPONSIVE MOBILE */
+        @media (max-width: 768px) {
+            section.hero {
+                padding: 40px 15px 40px !important;
+            }
+            
+            .hero-text-center h1 {
+                font-size: 1.8rem !important;
+            }
+            
+            .hero-text-center p {
+                font-size: 0.92rem !important;
+            }
+            
+            .hero-login-card-wide {
+                padding: 28px 22px !important;
+                border-radius: 16px !important;
+            }
+            
+            .hero-login-card-wide h2 {
+                font-size: 1.4rem !important;
+            }
+            
+            .hero-login-card-wide .input-icon-wrapper {
+                height: 48px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-text-center h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            .hero-login-card-wide {
+                padding: 24px 18px !important;
+            }
+        }
     </style>
 </head>
 <body>
