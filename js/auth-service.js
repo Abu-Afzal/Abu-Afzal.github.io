@@ -29,6 +29,72 @@ function dapatkanPesanError(code) {
     }
 }
 
+// ══════════════════════════════════════════════
+// 🔐 AUTO-LOGOUT SESSION TIMEOUT
+// ══════════════════════════════════════════════
+const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 jam
+const ACTIVITY_KEY = 'sipelita_last_activity';
+
+function updateActivityTimestamp() {
+    localStorage.setItem(ACTIVITY_KEY, Date.now().toString());
+}
+
+function checkSessionTimeout() {
+    const lastActivity = localStorage.getItem(ACTIVITY_KEY);
+    const sipelitaUser = localStorage.getItem('sipelita_user');
+    
+    if (!sipelitaUser) return true;
+    
+    if (!lastActivity) {
+        updateActivityTimestamp();
+        return true;
+    }
+    
+    const elapsed = Date.now() - parseInt(lastActivity);
+    
+    if (elapsed > SESSION_TIMEOUT_MS) {
+        console.log('⏰ Session timeout setelah', Math.round(elapsed / 1000 / 60 / 60), 'jam');
+        
+        localStorage.removeItem('sipelita_user');
+        localStorage.removeItem(ACTIVITY_KEY);
+        sessionStorage.removeItem('sipelita_user');
+        
+        alert('⏰ Session Anda telah berakhir karena tidak ada aktivitas selama 24 jam.\n\nSilakan login kembali.');
+        
+        // Redirect ke halaman login
+        window.location.href = 'index.html';
+        return false;
+    }
+    
+    return true;
+}
+
+function setupActivityListeners() {
+    let throttleTimer = null;
+    const activities = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    
+    activities.forEach(event => {
+        document.addEventListener(event, () => {
+            if (!throttleTimer) {
+                throttleTimer = setTimeout(() => {
+                    updateActivityTimestamp();
+                    throttleTimer = null;
+                }, 30000);
+            }
+        }, { passive: true });
+    });
+}
+
+// Jalankan saat file ini di-import
+checkSessionTimeout();
+setupActivityListeners();
+
+// ══════════════════════════════════════════════
+// AUTH SERVICE CLASS (KODE ASLI ANDA)
+// ══════════════════════════════════════════════
+export class AuthService {
+    // ... kode existing Anda ...
+}
 export const AuthService = {
     // Fungsi Login Modifikasi Otomatis (Aktivasi Mandiri) - Versi Stabil Berhasil
 async login(email, password) {
