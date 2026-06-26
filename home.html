@@ -116,11 +116,59 @@
     display: none !important;
 }
 
-        /* ==================================================================== */
-/* 🎨 LOGIN CARD SENA DA SIPELITA (HIJAU)                               */
+       /* ==================================================================== */
+/* 🟢 MARQUEE RUNNING BAR - HIJAU SIPELITA                              */
 /* ==================================================================== */
 
-/* 1. SECTION HERO - Background gradient hijau SIPELITA */
+/* Container marquee - Background putih cerah */
+.marquee-running-bar {
+    background: #ffffff !important;
+    border-top: 2px solid #10b981 !important;
+    border-bottom: 2px solid #10b981 !important;
+    padding: 10px 0 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Flex layout */
+.marquee-flex-layout {
+    background: #ffffff !important;
+}
+
+/* Badge "INFO" - Hijau */
+.info-badge {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3) !important;
+    margin-right: 12px !important;
+}
+
+/* Teks marquee berjalan - Hijau tua */
+.marquee-running-bar marquee {
+    color: #065f46 !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    font-style: italic !important;
+}
+
+/* Overflow hide */
+.marquee-overflow-hide {
+    background: #ffffff !important;
+}
+
+.marquee-container-wrapper {
+    background: #ffffff !important;
+}
+
+/* ==================================================================== */
+/* 🟢 LOGIN CARD - HIJAU SIPELITA                                       */
+/* ==================================================================== */
+
+/* Section Hero - Gradient hijau */
 section.hero {
     background: linear-gradient(135deg, #065f46 0%, #10b981 50%, #34d399 100%) !important;
     padding: 60px 20px 50px !important;
@@ -128,7 +176,7 @@ section.hero {
     overflow: hidden;
 }
 
-/* Efek dekoratif lingkaran blur di background */
+/* Efek dekoratif lingkaran blur */
 section.hero::before {
     content: '';
     position: absolute;
@@ -153,14 +201,13 @@ section.hero::after {
     pointer-events: none;
 }
 
-/* 2. TEXT "SELAMAT DATANG" - Putih, tegas, modern */
+/* Text "Selamat Datang" - Putih */
 .hero-text-center h1 {
     color: #ffffff !important;
     font-size: 2.5rem !important;
     font-weight: 800 !important;
     margin-bottom: 10px !important;
     text-shadow: 0 2px 10px rgba(0,0,0,0.15) !important;
-    letter-spacing: -0.5px;
 }
 
 .hero-text-center p {
@@ -170,7 +217,7 @@ section.hero::after {
     margin-bottom: 35px !important;
 }
 
-/* 3. LOGIN CARD - Putih bersih dengan shadow hijau */
+/* Login Card - Putih bersih dengan shadow hijau */
 .hero-login-card-wide {
     background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(10px);
@@ -189,14 +236,8 @@ section.hero::after {
 }
 
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Garis aksen hijau di atas card */
@@ -212,14 +253,13 @@ section.hero::after {
     border-radius: 0 0 4px 4px;
 }
 
-/* 4. TITLE "LOGIN USER" */
+/* Title "LOGIN USER" - Hijau tua */
 .hero-login-card-wide h2 {
     color: #065f46 !important;
     font-size: 1.6rem !important;
     font-weight: 800 !important;
     margin-bottom: 4px !important;
     text-align: center !important;
-    letter-spacing: -0.3px;
 }
 
 .hero-login-card-wide .subtitle {
@@ -227,16 +267,9 @@ section.hero::after {
     font-size: 0.9rem !important;
     text-align: center !important;
     margin-bottom: 28px !important;
-    font-weight: 500 !important;
 }
 
-/* 5. FORM GROUP - Input modern */
-.hero-login-card-wide .form-group {
-    margin-bottom: 18px !important;
-    position: relative;
-}
-
-/* Icon wrapper - Hijau lembut */
+/* Input wrapper */
 .hero-login-card-wide .input-icon-wrapper {
     position: relative;
     display: flex;
@@ -256,12 +289,11 @@ section.hero::after {
     transform: translateY(-1px);
 }
 
-/* Icon di dalam input */
+/* Icon dalam input - Hijau */
 .hero-login-card-wide .icon-main {
     color: #10b981 !important;
     font-size: 1.05rem !important;
     margin-right: 12px !important;
-    transition: color 0.2s;
 }
 
 .hero-login-card-wide .input-icon-wrapper:focus-within .icon-main {
@@ -270,64 +302,47 @@ section.hero::after {
 
 /* Input field */
 .hero-login-card-wide input[type="email"],
-.hero-login-card-wide input[type="password"],
-.hero-login-card-wide input[type="text"] {
+.hero-login-card-wide input[type="password"] {
     width: 100% !important;
     border: none !important;
     background: transparent !important;
     padding: 0 !important;
     font-size: 0.95rem !important;
     color: #1f2937 !important;
-    font-family: 'Segoe UI', Tahoma, sans-serif !important;
     outline: none !important;
     box-shadow: none !important;
 }
 
 .hero-login-card-wide input::placeholder {
     color: #9ca3af !important;
-    font-weight: 400 !important;
 }
 
-/* Toggle password icon */
+/* Toggle password */
 .hero-login-card-wide .toggle-password {
     color: #9ca3af !important;
     cursor: pointer !important;
     transition: color 0.2s !important;
-    padding: 5px !important;
 }
 
 .hero-login-card-wide .toggle-password:hover {
     color: #10b981 !important;
 }
 
-/* 6. REMEMBER ME - Checkbox modern */
-.remember-me-container {
-    margin: 20px 0 25px !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
+/* Remember me */
 .remember-me-label {
-    display: flex !important;
-    align-items: center !important;
-    cursor: pointer !important;
-    font-size: 0.88rem !important;
     color: #4b5563 !important;
-    font-weight: 500 !important;
-    user-select: none;
-    transition: color 0.2s;
+    font-size: 0.88rem !important;
+    cursor: pointer !important;
 }
 
 .remember-me-label:hover {
     color: #065f46 !important;
 }
 
-/* Hide native checkbox */
 .remember-me-label input[type="checkbox"] {
     display: none !important;
 }
 
-/* Custom checkbox */
 .checkbox-custom {
     width: 20px !important;
     height: 20px !important;
@@ -339,7 +354,6 @@ section.hero::after {
     justify-content: center !important;
     transition: all 0.2s ease !important;
     background: #ffffff !important;
-    flex-shrink: 0;
 }
 
 .remember-me-label input[type="checkbox"]:checked + .checkbox-custom {
@@ -352,10 +366,9 @@ section.hero::after {
     color: white !important;
     font-size: 0.8rem !important;
     font-weight: 700 !important;
-    line-height: 1 !important;
 }
 
-/* 7. TOMBOL LOGIN - Gradient hijau SIPELITA */
+/* Tombol MASUK PORTAL - Hijau gradient */
 .btn-inline-login {
     width: 100% !important;
     padding: 14px 24px !important;
@@ -369,8 +382,6 @@ section.hero::after {
     cursor: pointer !important;
     transition: all 0.25s ease !important;
     box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35) !important;
-    position: relative;
-    overflow: hidden;
 }
 
 .btn-inline-login:hover:not(:disabled) {
@@ -379,18 +390,13 @@ section.hero::after {
     box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45) !important;
 }
 
-.btn-inline-login:active:not(:disabled) {
-    transform: translateY(0) !important;
-}
-
 .btn-inline-login:disabled {
     opacity: 0.7 !important;
     cursor: not-allowed !important;
     background: #94a3b8 !important;
-    box-shadow: none !important;
 }
 
-/* 8. ERROR MESSAGE - Alert merah modern */
+/* Error message */
 .error-msg {
     background: #fee2e2 !important;
     color: #991b1b !important;
@@ -401,56 +407,16 @@ section.hero::after {
     margin-bottom: 16px !important;
     font-size: 0.88rem !important;
     font-weight: 600 !important;
-    display: none;
 }
 
-.error-msg:not(:empty) {
-    display: block !important;
-    animation: shakeError 0.4s ease;
-}
-
-@keyframes shakeError {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-
-/* 9. RESPONSIVE MOBILE */
+/* Responsive mobile */
 @media (max-width: 768px) {
-    section.hero {
-        padding: 40px 15px 40px !important;
-    }
-    
-    .hero-text-center h1 {
-        font-size: 1.8rem !important;
-    }
-    
-    .hero-text-center p {
-        font-size: 0.92rem !important;
-    }
-    
-    .hero-login-card-wide {
-        padding: 28px 22px !important;
-        border-radius: 16px !important;
-    }
-    
-    .hero-login-card-wide h2 {
-        font-size: 1.4rem !important;
-    }
-    
-    .hero-login-card-wide .input-icon-wrapper {
-        height: 48px !important;
-    }
-}
-
-@media (max-width: 480px) {
-    .hero-text-center h1 {
-        font-size: 1.5rem !important;
-    }
-    
-    .hero-login-card-wide {
-        padding: 24px 18px !important;
-    }
+    section.hero { padding: 40px 15px 40px !important; }
+    .hero-text-center h1 { font-size: 1.8rem !important; }
+    .hero-text-center p { font-size: 0.92rem !important; }
+    .hero-login-card-wide { padding: 28px 22px !important; }
+    .hero-login-card-wide h2 { font-size: 1.4rem !important; }
+    .hero-login-card-wide .input-icon-wrapper { height: 48px !important; }
 }
         /* ==================================================================== */
 /* 🗜️ KODE PENYELARAS JARAK (ANTI-RENGGANG)                             */
