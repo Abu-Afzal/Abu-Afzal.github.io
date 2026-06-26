@@ -383,11 +383,7 @@ function getPeriodeStatus(jadwal){
 function initApp(){
   try{
     const s = localStorage.getItem('sipelita_user');
-    const userData = s ? JSON.parse(s) : null;
-    
-    // ✅ PRIORITAS: nama > email > 'guru'
-    currentUser = userData ? (userData.nama || userData.email || 'guru') : 'guru';
-    
+    currentUser = s ? (JSON.parse(s).email||JSON.parse(s).nama||'guru') : 'guru';
   } catch(e){ currentUser='guru'; }
 
   document.getElementById('userDisplay').textContent = currentUser;
@@ -400,7 +396,7 @@ function initApp(){
   loadJadwalGambar();
   initDragDrop();
 }
-
+  
 // ══════════════════════════════════════════════
 //        UPLOAD JADWAL GAMBAR (BASE64 + RTDB)
 // ══════════════════════════════════════════════
