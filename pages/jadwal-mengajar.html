@@ -383,7 +383,11 @@ function getPeriodeStatus(jadwal){
 function initApp(){
   try{
     const s = localStorage.getItem('sipelita_user');
-    currentUser = s ? (JSON.parse(s).email||JSON.parse(s).nama||'guru') : 'guru';
+    const userData = s ? JSON.parse(s) : null;
+    
+    // ✅ PRIORITAS: nama > email > 'guru'
+    currentUser = userData ? (userData.nama || userData.email || 'guru') : 'guru';
+    
   } catch(e){ currentUser='guru'; }
 
   document.getElementById('userDisplay').textContent = currentUser;
