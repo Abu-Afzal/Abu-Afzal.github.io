@@ -29,9 +29,6 @@ function dapatkanPesanError(code) {
     }
 }
 
-export class AuthService {
-    // ... kode existing Anda ...
-}
 export const AuthService = {
     // Fungsi Login Modifikasi Otomatis (Aktivasi Mandiri) - Versi Stabil Berhasil
 async login(email, password) {
