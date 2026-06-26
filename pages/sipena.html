@@ -479,15 +479,17 @@ function showContent(id){
 //               INIT APP
 // ══════════════════════════════════════════════
 function initApp(){
-  // Ambil user dari localStorage SIPELITA
   try{
     const s = localStorage.getItem('sipelita_user');
-    currentUser = s ? (JSON.parse(s).email||JSON.parse(s).nama||'guru') : 'guru';
+    const userData = s ? JSON.parse(s) : null;
+    
+    // ✅ PRIORITAS: nama > email > 'guru'
+    currentUser = userData ? (userData.nama || userData.email || 'guru') : 'guru';
+    
   } catch(e){ currentUser='guru'; }
 
   document.getElementById('userDisplay').textContent = currentUser;
-  document.getElementById('currentDate').textContent =
-    '📅 ' + new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
   initFirebase();
   bindEvents();
