@@ -20,7 +20,7 @@
         }
 
         .container{
-            max-width:1100px;
+            max-width:1200px; /* Diperlebar sedikit agar kolom baru muat dengan lega */
             margin:0 auto;
             padding:24px 20px;
         }
@@ -178,6 +178,7 @@
         td{
             padding:11px 13px;
             border-bottom:1px solid #f1f5f9;
+            vertical-align: middle;
         }
 
         tr:hover td{
@@ -189,6 +190,7 @@
             border-radius:20px;
             font-size:0.75rem;
             font-weight:700;
+            display: inline-block;
         }
 
         .badge-admin{
@@ -254,6 +256,20 @@
             background:#f8fafc;
         }
 
+        .fitur-badge-list {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .badge-fitur {
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
         @media(max-width:600px){
             .form-row{
                 grid-template-columns:1fr;
@@ -272,7 +288,6 @@
 
 <div class="container">
 
-    <!-- HEADER -->
     <div class="page-header">
         <div>
             <h1>👥 Kelola User</h1>
@@ -284,112 +299,61 @@
         </a>
     </div>
 
-    <!-- FORM TAMBAH USER -->
     <div class="card">
-
         <h2>➕ Tambah User Baru</h2>
-
         <div id="alertTambah" class="alert"></div>
 
         <form id="formTambahUser">
-
             <div class="form-row">
-
                 <div class="form-group">
                     <label>Email *</label>
-                    <input
-                        type="email"
-                        id="email"
-                        placeholder="nama@manbantaeng.sch.id"
-                        required
-                    >
+                    <input type="email" id="email" placeholder="nama@manbantaeng.sch.id" required>
                 </div>
-
                 <div class="form-group">
                     <label>Nama Lengkap *</label>
-                    <input
-                        type="text"
-                        id="nama"
-                        placeholder="Nama lengkap user"
-                        required
-                    >
+                    <input type="text" id="nama" placeholder="Nama lengkap user" required>
                 </div>
-
             </div>
 
             <div class="form-row">
-
                 <div class="form-group">
                     <label>Password *</label>
-                    <input
-                        type="password"
-                        id="password"
-                        minlength="6"
-                        required
-                    >
+                    <input type="password" id="password" minlength="6" required>
                 </div>
-
                 <div class="form-group">
                     <label>Role *</label>
-
                     <select id="role" required>
                         <option value="guru">👤 Guru</option>
                         <option value="admin">👑 Admin</option>
                     </select>
                 </div>
-
             </div>
 
-            <!-- FITUR -->
             <div class="form-group">
-
-                <label>
-                    Akses Fitur
-                </label>
-
-                <div
-                    class="fitur-grid"
-                    id="checkboxFitur">
-                </div>
-
+                <label>Akses Fitur</label>
+                <div class="fitur-grid" id="checkboxFitur"></div>
             </div>
 
-            <button
-                type="submit"
-                class="btn btn-primary"
-                id="btnTambah">
-
-                💾 Simpan User
-
-            </button>
-
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="submit" class="btn btn-primary" id="btnTambah" style="flex: 1;">
+                    💾 Simpan User
+                </button>
+                <button type="button" class="btn" id="btnExportExcel" style="background: #107c41; color: white;">
+                    📥 Ekspor ke Excel
+                </button>
+            </div>
         </form>
+    </div>
 
-  <button type="button" class="btn" id="btnExportExcel" style="background: #107c41; color: white;">
-        📥 Ekspor ke Excel
-    </button>
-</div>
-
-    <!-- DAFTAR USER -->
     <div class="card">
-
         <h2>📋 Daftar User Terdaftar</h2>
 
-        <div
-            id="loadingUsers"
-            style="text-align:center;padding:24px;color:#64748b;">
-
+        <div id="loadingUsers" style="text-align:center;padding:24px;color:#64748b;">
             Memuat data...
-
         </div>
 
-        <div
-            class="tbl-wrap"
-            id="tableUsers"
-            style="display:none;">
-
+        <div class="tbl-wrap" id="tableUsers" style="display:none;">
             <table>
-
                 <thead>
                     <tr>
                         <th>Nama</th>
@@ -400,23 +364,18 @@
                         <th>Aksi</th>
                     </tr>
                 </thead>
-
                 <tbody id="userTableBody"></tbody>
-
             </table>
-
         </div>
-
     </div>
 
 </div>
 
-<!-- MODAL EDIT -->
 <div id="modalEdit" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h3>✏️ Edit User</h3>
-            </div>
+        </div>
         <div id="alertEdit" class="alert"></div>
         <form id="formEditUser">
             <input type="hidden" id="editDocId">
@@ -437,22 +396,19 @@
             </div>
             
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-    <button type="submit" class="btn btn-primary" style="flex: 1;" id="btnSimpanEdit">
-        💾 Simpan Perubahan
-    </button>
-    <button type="button" class="btn btn-danger" id="btnBatalEdit" style="flex: 1; background: #64748b;">
-        ❌ Batal
-    </button>
-</div>
+                <button type="submit" class="btn btn-primary" style="flex: 1;" id="btnSimpanEdit">
+                    💾 Simpan Perubahan
+                </button>
+                <button type="button" class="btn btn-danger" id="btnBatalEdit" style="flex: 1; background: #64748b;">
+                    ❌ Batal
+                </button>
+            </div>
         </form>
     </div>
 </div>
     
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module" src="../users/users.js"></script>
-<!-- MODULE USERS -->
-<script type="module" src="../users/users.js"></script>
 
 </body>
 </html>
-```
