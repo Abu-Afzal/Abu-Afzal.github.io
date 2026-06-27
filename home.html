@@ -3,6 +3,151 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <!-- ══════════════════════════════════════════════ -->
+<!-- 📱 PWA META TAGS -->
+<!-- ══════════════════════════════════════════════ -->
+<meta name="theme-color" content="#10b981">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SIPELITA">
+<meta name="application-name" content="SIPELITA">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./assets/images/sipelita-app.png">
+<link rel="icon" type="image/png" href="./assets/images/sipelita-app.png">
+
+<!-- ═════════════════════════════════════════════ -->
+<!-- 📱 PWA INSTALL PROMPT SCRIPT -->
+<!-- ══════════════════════════════════════════════ -->
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        console.log('✅ Service Worker registered:', reg.scope);
+      })
+      .catch(err => {
+        console.log('️ Service Worker registration failed:', err);
+      });
+  });
+}
+
+// PWA Install Prompt
+let deferredPrompt;
+const installButton = document.getElementById('btnInstallPWA'); // Optional: tombol install manual
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  // Tampilkan banner install custom (opsional)
+  showInstallBanner();
+  
+  // Atau tampilkan tombol install jika ada
+  if (installButton) {
+    installButton.style.display = 'block';
+    installButton.onclick = () => {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ User installed PWA');
+        }
+        deferredPrompt = null;
+        hideInstallBanner();
+      });
+    };
+  }
+});
+
+// Deteksi setelah install
+window.addEventListener('appinstalled', () => {
+  console.log('🎉 SIPELITA di-install!');
+  hideInstallBanner();
+  deferredPrompt = null;
+});
+
+// Fungsi untuk tampilkan banner install
+function showInstallBanner() {
+  // Cek apakah sudah pernah ditutup
+  if (localStorage.getItem('sipelita_install_dismissed')) return;
+  
+  const banner = document.createElement('div');
+  banner.id = 'pwaInstallBanner';
+  banner.style.cssText = `
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 16px 20px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 9999;
+    border-radius: 16px 16px 0 0;
+    animation: slideUp 0.3s ease;
+  `;
+  
+  banner.innerHTML = `
+    <div style="width:48px;height:48px;background:linear-gradient(135deg,#10b981,#059669);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <img src="./assets/images/sipelita-app.png" style="width:36px;height:36px;border-radius:8px;" onerror="this.outerHTML='📱'">
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:700;color:#1e293b;font-size:0.95rem;">PWA TERSEDIA</div>
+      <div style="font-weight:700;color:#0f172a;font-size:1rem;margin:2px 0;">Install aplikasi ini</div>
+      <div style="font-size:0.82rem;color:#64748b;">Pasang SIPELITA ke layar utama agar lebih cepat dibuka seperti aplikasi Android.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button id="btnInstallNow" style="padding:10px 20px;background:#10b981;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Install</button>
+      <button id="btnInstallLater" style="padding:10px 20px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Nanti</button>
+    </div>
+  `;
+  
+  // Tambahkan style animation
+  if (!document.getElementById('pwaBannerStyle')) {
+    const style = document.createElement('style');
+    style.id = 'pwaBannerStyle';
+    style.textContent = `
+      @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  document.body.appendChild(banner);
+  
+  // Event listeners
+  document.getElementById('btnInstallNow').onclick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('✅ User installed PWA');
+        }
+        deferredPrompt = null;
+        hideInstallBanner();
+      });
+    }
+  };
+  
+  document.getElementById('btnInstallLater').onclick = () => {
+    localStorage.setItem('sipelita_install_dismissed', 'true');
+    hideInstallBanner();
+  };
+}
+
+function hideInstallBanner() {
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) {
+    banner.style.animation = 'slideUp 0.3s ease reverse';
+    setTimeout(() => banner.remove(), 300);
+  }
+}
+</script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIPELITA – MAN Bantaeng</title>
     <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
