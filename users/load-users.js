@@ -92,9 +92,10 @@ async function loadUsers(){
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-warning btn-sm" onclick="if(window.bukaModalEdit){ window.bukaModalEdit('${docSnap.id}') }">✏️ Edit</button>
-                            <button class="btn btn-danger btn-sm" onclick="if(window.hapusUser){ window.hapusUser('${docSnap.id}') }" style="margin-left:5px;">🗑️ Hapus</button>
-                        </td>
+    <button class="btn btn-warning btn-sm" onclick="if(window.bukaModalEdit){ window.bukaModalEdit('${docSnap.id}') }">✏️ Edit</button>
+    <button class="btn btn-primary btn-sm" onclick="setPassword('${docSnap.id}', '${data.email.replace(/'/g, "\\'")}')" style="margin-left:5px;background:#10b981;">🔑 Set Password</button>
+    <button class="btn btn-danger btn-sm" onclick="if(window.hapusUser){ window.hapusUser('${docSnap.id}') }" style="margin-left:5px;">🗑️ Hapus</button>
+</td>
                     </tr>
                 `;
             });
