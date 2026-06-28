@@ -2,422 +2,412 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="theme-color" content="#10b981">
-    <link rel="manifest" href="../manifest.json">
-    <link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola User - SIPELITA</title>
+
     <link rel="icon" type="image/png" href="assets/images/icon-app.png">
-    <link rel="stylesheet" href="css/style.css">
+
     <style>
-        body { background: #f5f7fa; margin: 0; font-family: 'Segoe UI', sans-serif; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        
-        /* Header */
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:'Segoe UI',sans-serif;
+            background:#f5f7fa;
+        }
+
+        .container{
+            max-width:1200px; /* Diperlebar sedikit agar kolom baru muat dengan lega */
+            margin:0 auto;
+            padding:24px 20px;
+        }
+
+        /* HEADER */
+        .page-header{
+            background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+            color:white;
+            padding:26px 30px;
+            border-radius:14px;
+            margin-bottom:26px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .page-header h1{
+            margin:0;
+            font-size:1.6rem;
+        }
+
+        .page-header p{
+            margin:5px 0 0;
+            opacity:0.85;
+            font-size:0.88rem;
+        }
+
+        .back-btn{
+            background:rgba(255,255,255,0.18);
+            color:white;
+            padding:9px 18px;
+            border-radius:8px;
+            text-decoration:none;
+            font-weight:600;
+            font-size:0.85rem;
+            border:1px solid rgba(255,255,255,0.3);
+            transition:background .2s;
+        }
+
+        .back-btn:hover{
+            background:rgba(255,255,255,0.3);
+        }
+
+        /* CARD */
+        .card{
+            background:white;
+            border-radius:13px;
+            padding:24px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.07);
+            margin-bottom:24px;
+        }
+
+        .card h2{
+            margin:0 0 18px;
+            color:#1a237e;
+            font-size:1.15rem;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+
+        /* FORM */
+        .form-row{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:14px;
+        }
+
+        .form-group{
+            margin-bottom:14px;
+        }
+
+        .form-group label{
+            display:block;
+            margin-bottom:5px;
+            font-weight:600;
+            color:#475569;
+            font-size:0.85rem;
+        }
+
+        .form-group input,
+        .form-group select{
+            width:100%;
+            padding:10px 12px;
+            border:1.5px solid #e2e8f0;
+            border-radius:8px;
+            font-size:0.9rem;
+            outline:none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus{
+            border-color:#667eea;
+            box-shadow:0 0 0 3px rgba(102,126,234,.1);
+        }
+
+        /* BUTTON */
+        .btn{
+            padding:10px 20px;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:600;
+            font-size:0.88rem;
+        }
+
+        .btn-primary{
+            background:#667eea;
+            color:white;
+        }
+
+        .btn-warning{
+            background:#f59e0b;
+            color:white;
+        }
+
+        .btn-danger{
+            background:#ef4444;
+            color:white;
+        }
+
+        .btn-sm{
+            padding:6px 12px;
+            font-size:0.8rem;
+        }
+
+        /* ALERT */
+        .alert{
+            padding:11px 14px;
+            border-radius:8px;
+            margin-bottom:14px;
+            display:none;
+        }
+
+        /* TABLE */
+        .tbl-wrap{
+            overflow-x:auto;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            font-size:0.88rem;
+        }
+
+        th{
+            background:#f8fafc;
+            color:#1a237e;
+            font-weight:700;
+            padding:11px 13px;
+            text-align:left;
+            border-bottom:2px solid #e2e8f0;
+        }
+
+        td{
+            padding:11px 13px;
+            border-bottom:1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        tr:hover td{
+            background:#fafbff;
+        }
+
+        .badge{
+            padding:4px 11px;
+            border-radius:20px;
+            font-size:0.75rem;
+            font-weight:700;
+            display: inline-block;
+        }
+
+        .badge-admin{
+            background:#fef3c7;
+            color:#92400e;
+        }
+
+        .badge-guru{
+            background:#dcfce7;
+            color:#065f46;
+        }
+
+        /* MODAL */
+        .modal{
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.45);
+            z-index:9999;
+            align-items:center;
+            justify-content:center;
+            padding:166px;
+        }
+
+        .modal-content{
+            background:white;
+            padding:28px;
+            border-radius:14px;
+            max-width:480px;
+            width:100%;
+        }
+
+        .modal-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:18px;
+            padding-bottom:12px;
+            border-bottom:2px solid #f1f5f9;
+        }
+
+        .close-btn{
+            background:none;
+            border:none;
+            font-size:1.5rem;
+            cursor:pointer;
+        }
+
+        /* FITUR */
+        .fitur-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+            gap:10px;
+        }
+
+        .fitur-item{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            padding:10px 12px;
+            border:1.5px solid #e2e8f0;
+            border-radius:8px;
+            background:#f8fafc;
+        }
+
+        .fitur-badge-list {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
         }
-        .page-header h1 { margin: 0; font-size: 1.8rem; }
-        .back-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: 0.3s;
-        }
-        .back-btn:hover { background: rgba(255,255,255,0.3); }
 
-        /* Card */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
+        .badge-fitur {
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
         }
-        .card h2 { margin: 0 0 20px; color: #1a237e; font-size: 1.3rem; }
 
-        /* Form */
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-        }
-        .form-group input:focus, .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+        @media(max-width:600px){
+            .form-row{
+                grid-template-columns:1fr;
+            }
 
-        /* Button */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.3s;
+            .page-header{
+                flex-direction:column;
+                gap:14px;
+                text-align:center;
+            }
         }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5568d3; transform: translateY(-2px); }
-        .btn-danger { background: #f44336; color: white; }
-        .btn-danger:hover { background: #d32f2f; }
-        .btn-warning { background: #ff9800; color: white; }
-        .btn-warning:hover { background: #f57c00; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        /* Table */
-        .table-responsive { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; font-weight: 600; color: #1a237e; }
-        tr:hover { background: #f8f9fa; }
-        .badge { padding: 4px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
-        .badge-admin { background: #ffd700; color: #1a237e; }
-        .badge-guru { background: #4caf50; color: white; }
-
-        /* Alert */
-        .alert { padding: 12px; border-radius: 8px; margin-bottom: 15px; display: none; }
-        .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
-        .alert-error { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
-        .alert.show { display: block; }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .modal-header h3 { margin: 0; color: #1a237e; }
-        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
-        .close-btn:hover { color: #333; }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="page-header">
-            <div>
-                <h1>👥 Kelola User</h1>
-                <p style="margin: 5px 0 0; opacity: 0.9;">Manajemen akun Guru & StaffSIPELITA</p>
-            </div>
-            <a href="index.html" class="back-btn">← Kembali</a>
+
+<div class="container">
+
+    <div class="page-header">
+        <div>
+            <h1>👥 Kelola User</h1>
+            <p>Manajemen akun Guru & Staff SIPELITA</p>
         </div>
 
-        <div class="card">
-            <h2>➕ Tambah User Baru</h2>
-            <div id="alertTambah" class="alert"></div>
-            <form id="formTambahUser">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Email *</label>
-                        <input type="email" id="email" placeholder="nama@manbantaeng.sch.id" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Nama Lengkap *</label>
-                        <input type="text" id="nama" placeholder="Nama lengkap user" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Password *</label>
-                        <input type="password" id="password" placeholder="Minimal 6 karakter" minlength="6" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Role *</label>
-                        <select id="role" required>
-                            <option value="guru">👤 Guru</option>
-                            <option value="admin">👑 Admin</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="btnTambah">💾 Simpan User</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <h2>📋 Daftar User Terdaftar</h2>
-            <div id="loadingUsers" style="text-align: center; padding: 20px; color: #666;">⏳ Memuat data...</div>
-            <div class="table-responsive" id="tableUsers" style="display: none;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Email</th>
-                            <th>Nama</th>
-                            <th>Password</th> <th>Role</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTableBody"></tbody>
-                </table>
-            </div>
-        </div>
+        <a href="../index.html" class="back-btn">
+            ← Kembali
+        </a>
     </div>
 
-    <div id="modalEdit" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>✏️ Edit User</h3>
-                <button class="close-btn" onclick="tutupModalEdit()">&times;</button>
-            </div>
-            <div id="alertEdit" class="alert"></div>
-            <form id="formEditUser">
-                <input type="hidden" id="editEmail">
+    <div class="card">
+        <h2>➕ Tambah User Baru</h2>
+        <div id="alertTambah" class="alert"></div>
+
+        <form id="formTambahUser">
+            <div class="form-row">
                 <div class="form-group">
-                    <label>Nama Lengkap</label>
-                    <input type="text" id="editNama" required>
+                    <label>Email *</label>
+                    <input type="email" id="email" placeholder="nama@manbantaeng.sch.id" required>
                 </div>
                 <div class="form-group">
-                    <label>Role</label>
-                    <select id="editRole" required>
+                    <label>Nama Lengkap *</label>
+                    <input type="text" id="nama" placeholder="Nama lengkap user" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" id="password" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label>Role *</label>
+                    <select id="role" required>
                         <option value="guru">👤 Guru</option>
                         <option value="admin">👑 Admin</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Password Baru (kosongkan jika tidak ingin ubah)</label>
-                    <input type="password" id="editPassword" placeholder="Minimal 6 karakter" minlength="6">
-                </div>
-                <button type="submit" class="btn btn-primary">💾 Update User</button>
-            </form>
+            </div>
+
+            <div class="form-group">
+                <label>Akses Fitur</label>
+                <div class="fitur-grid" id="checkboxFitur"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="submit" class="btn btn-primary" id="btnTambah" style="flex: 1;">
+                    💾 Simpan User
+                </button>
+                <button type="button" class="btn" id="btnExportExcel" style="background: #107c41; color: white;">
+                    📥 Ekspor ke Excel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>📋 Daftar User Terdaftar</h2>
+
+        <div id="loadingUsers" style="text-align:center;padding:24px;color:#64748b;">
+            Memuat data...
+        </div>
+
+        <div class="tbl-wrap" id="tableUsers" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Password</th> <th>Role</th>
+                        <th>Fitur</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+</div>
 
-        // Firebase Config (sama dengan firebase-config.js)
-        const firebaseConfig = {
-            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-            authDomain: "sipelita-digital.firebaseapp.com",
-            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sipelita-digital",
-            storageBucket: "sipelita-digital.firebasestorage.app",
-            messagingSenderId: "787840817745",
-            appId: "1:787840817745:web:e6b5237cfbb5e51be93670",
-            measurementId: "G-1D5DWJV54E"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Cek Auth - Hanya Admin
-        const userStr = localStorage.getItem('sipelita_user');
-        const currentUser = userStr ? JSON.parse(userStr) : null;
-        if (!currentUser || currentUser.role !== 'admin') {
-            alert('⛔ Akses ditolak! Hanya Admin yang bisa mengakses halaman ini.');
-            window.location.href = 'index.html';
-        }
-
-        // ===== TAMBAH USER =====
-document.getElementById('formTambahUser').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const alertEl = document.getElementById('alertTambah');
-    const btn = document.getElementById('btnTambah');
-    
-    const email = document.getElementById('email').value;
-    const nama = document.getElementById('nama').value;
-    const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
-
-    btn.disabled = true;
-    btn.textContent = '⏳ Menyimpan...';
-    alertEl.classList.remove('show');
-
-    try {
-        // 1. Buat akun di Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        // 2. Simpan data user ke Firestore dengan email sebagai Document ID
-        await setDoc(doc(db, "users", email), {
-            email: email,
-            nama: nama,
-            password: password, // BARIS INI DITAMBAHKAN UNTUK MENYIMPAN PASSWORD DI FIRESTORE
-            role: role,
-            createdAt: new Date().toISOString(),
-            uid: user.uid
-        });
-
-        alertEl.textContent = '✅ User berhasil ditambahkan!';
-        alertEl.className = 'alert alert-success show';
-        
-        // Reset form
-        document.getElementById('formTambahUser').reset();
-        
-        // Reload daftar user
-        loadUsers();
-
-    } catch (error) {
-        alertEl.textContent = '❌ Gagal: ' + getErrorMessage(error.code);
-        alertEl.className = 'alert alert-error show';
-    } finally {
-        btn.disabled = false;
-        btn.textContent = '💾 Simpan User';
-    }
-});
-        // ===== LOAD DAFTAR USER =====
-        async function loadUsers() {
-            const loadingEl = document.getElementById('loadingUsers');
-            const tableEl = document.getElementById('tableUsers');
-            const tbody = document.getElementById('userTableBody');
-
-            loadingEl.style.display = 'block';
-            tableEl.style.display = 'none';
-
-            try {
-                const querySnapshot = await getDocs(collection(db, "users"));
-                const users = [];
-                querySnapshot.forEach((doc) => {
-                    users.push({ id: doc.id, ...doc.data() });
-                });
-
-                loadingEl.style.display = 'none';
-                
-                if (users.length === 0) {
-                    tableEl.style.display = 'none';
-                    loadingEl.textContent = '📭 Belum ada user terdaftar';
-                    loadingEl.style.display = 'block';
-                    return;
-                }
-
-                tableEl.style.display = 'block';
-                loadingEl.style.display = 'none';
-
-                tbody.innerHTML = users.map(u => `
-                    <tr>
-                        <td>${u.email}</td>
-                        <td>${u.nama}</td>
-                        <td style="font-family: monospace;">${u.password || '&nbsp;'}</td> <td><span class="badge ${u.role === 'admin' ? 'badge-admin' : 'badge-guru'}">${u.role === 'admin' ? '👑 Admin' : '👤 Guru'}</span></td>
-                        <td>
-                            <button class="btn btn-warning" onclick="editUser('${u.email}', '${u.nama}', '${u.role}')" style="padding: 6px 12px; font-size: 0.85rem;">✏️ Edit</button>
-                            <button class="btn btn-danger" onclick="hapusUser('${u.id}', '${u.email}')" style="padding: 6px 12px; font-size: 0.85rem; margin-left: 5px;">🗑️ Hapus</button>
-                        </td>
-                    </tr>
-                `).join('');
-
-            } catch (error) {
-                loadingEl.textContent = '❌ Gagal memuat data: ' + error.message;
-            }
-        }
-
-        // ===== EDIT USER =====
-        window.editUser = (email, nama, role) => {
-            document.getElementById('editEmail').value = email;
-            document.getElementById('editNama').value = nama;
-            document.getElementById('editRole').value = role;
-            document.getElementById('editPassword').value = '';
-            document.getElementById('modalEdit').classList.add('show');
-        };
-
-        window.tutupModalEdit = () => {
-            document.getElementById('modalEdit').classList.remove('show');
-        };
-
-        document.getElementById('formEditUser').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const alertEl = document.getElementById('alertEdit');
+<div id="modalEdit" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ Edit User</h3>
+        </div>
+        <div id="alertEdit" class="alert"></div>
+        <form id="formEditUser">
+            <input type="hidden" id="editDocId">
+            <div class="form-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="editNama" required>
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <select id="editRole">
+                    <option value="guru">👤 Guru</option>
+                    <option value="admin">👑 Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Akses Fitur</label>
+                <div class="fitur-grid" id="editCheckboxFitur"></div>
+            </div>
             
-            const email = document.getElementById('editEmail').value;
-            const nama = document.getElementById('editNama').value;
-            const role = document.getElementById('editRole').value;
-            const newPassword = document.getElementById('editPassword').value;
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;" id="btnSimpanEdit">
+                    💾 Simpan Perubahan
+                </button>
+                <button type="button" class="btn btn-danger" id="btnBatalEdit" style="flex: 1; background: #64748b;">
+                    ❌ Batal
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+    
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module" src="../users/users.js"></script>
 
-            alertEl.classList.remove('show');
-
-            try {
-                // Update Firestore
-                const q = query(collection(db, "users"), where("email", "==", email));
-                const querySnapshot = await getDocs(q);
-                
-                querySnapshot.forEach(async (docSnap) => {
-                    await updateDoc(doc(db, "users", docSnap.id), {
-                        nama: nama,
-                        role: role
-                    });
-                });
-
-                // Update password jika diisi
-                if (newPassword) {
-                    // Cari user di Auth
-                    // Note: Firebase tidak bisa update password user lain langsung
-                    // Admin harus reset password user tersebut
-                    alert('ℹ️ Password tidak bisa diubah dari sini. User harus reset password sendiri atau hubungi developer.');
-                }
-
-                alertEl.textContent = '✅ User berhasil diupdate!';
-                alertEl.className = 'alert alert-success show';
-                
-                setTimeout(() => {
-                    tutupModalEdit();
-                    loadUsers();
-                }, 1500);
-
-            } catch (error) {
-                alertEl.textContent = '❌ Gagal update: ' + error.message;
-                alertEl.className = 'alert alert-error show';
-            }
-        });
-
-        // ===== HAPUS USER =====
-        window.hapusUser = async (docId, email) => {
-            if (!confirm(`⚠️ Yakin ingin menghapus user ${email}?\n\nUser tidak akan bisa login lagi.`)) return;
-
-            try {
-                await deleteDoc(doc(db, "users", docId));
-                alert('✅ User berhasil dihapus dari database.\n\n⚠️ Catatan: Akun di Authentication masih ada. Hapus manual di Firebase Console jika perlu.');
-                loadUsers();
-            } catch (error) {
-                alert('❌ Gagal menghapus: ' + error.message);
-            }
-        };
-
-        // Helper error message
-        function getErrorMessage(code) {
-            switch(code) {
-                case 'auth/email-already-in-use': return 'Email sudah terdaftar';
-                case 'auth/invalid-email': return 'Format email tidak valid';
-                case 'auth/weak-password': return 'Password terlalu lemah (minimal 6 karakter)';
-                case 'auth/operation-not-allowed': return 'Email/password tidak diaktifkan di Firebase Console';
-                default: return 'Terjadi kesalahan';
-            }
-        }
-
-        // Load users saat halaman dibuka
-        loadUsers();
-    </script>
 </body>
 </html>
