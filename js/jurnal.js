@@ -20,6 +20,7 @@ const db = firebase.firestore();
 let currentUser = null;
 let uploadedPhotos = [];
 let daftarJurnal = [];
+let activityCounter = 0;
 
 // ══════════════════════════════════════════════
 // INIT
@@ -29,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFormSubmit();
     setupPhotoUpload();
     setDefaultDate();
+    addActivity(); // Tambah 1 kegiatan awal
 });
 
 function loadUserInfo() {
@@ -43,7 +45,6 @@ function loadUserInfo() {
             window.location.href = '../index.html';
         }
     } catch (e) {
-        console.error('Error loading user:', e);
         window.location.href = '../index.html';
     }
 }
@@ -61,16 +62,53 @@ function setDefaultDate() {
 window.switchTab = function(tabName) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     event.target.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById(`tab-${tabName}`).style.display = 'block';
+    if (tabName === 'daftar') loadDaftarJurnal();
+};
+
+// ══════════════════════════════════════════════
+// ACTIVITY MANAGEMENT (Tambah/Hapus Kegiatan)
+// ══════════════════════════════════════════════
+window.addActivity = function() {
+    activityCounter++;
+    const container = document.getElementById('activitiesContainer');
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+    div.id = `activity-${activityCounter}`;
+    div.innerHTML = `
+        <h4>Kegiatan #${activityCounter}</h4>
+        <button type="button" class="activity-remove" onclick="removeActivity(${activityCounter})">×</button>
+        <div class="form-row">
+            <div class="form-group" style="margin:0;">
+                <label>Waktu *</label>
+                <input type="text" class="act-waktu" placeholder="Contoh: 07.30-08.50" required>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label>Uraian Kegiatan *</label>
+                <input type="text" class="act-kegiatan" placeholder="Contoh: Mengajar Mapel Sejarah Kelas X.2" required>
+            </div>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label>Hasil/Output</label>
+            <input type="text" class="act-hasil" placeholder="Contoh: Terlaksananya PBM di kelas X.2">
+        </div>
+    `;
+    container.appendChild(div);
+};
+
+window.removeActivity = function(id) {
+    const el = document.getElementById(`activity-${id}`);
+    if (el) el.remove();
     
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.style.display = 'none';
+    // Renumber remaining activities
+    const items = document.querySelectorAll('.activity-item');
+    items.forEach((item, index) => {
+        item.querySelector('h4').textContent = `Kegiatan #${index + 1}`;
     });
     
-    document.getElementById(`tab-${tabName}`).style.display = 'block';
-    
-    if (tabName === 'daftar') {
-        loadDaftarJurnal();
-    }
+    // Pastikan minimal ada 1 kegiatan
+    if (items.length === 0) addActivity();
 };
 
 // ══════════════════════════════════════════════
@@ -81,53 +119,28 @@ function setupPhotoUpload() {
     const photoInput = document.getElementById('photoInput');
     
     uploadArea.addEventListener('click', () => photoInput.click());
-    
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
-    
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
-    
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
     uploadArea.addEventListener('drop', (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         handleFiles(e.dataTransfer.files);
     });
-    
-    photoInput.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
-    });
+    photoInput.addEventListener('change', (e) => handleFiles(e.target.files));
 }
 
 function handleFiles(files) {
-    const remainingSlots = 3 - uploadedPhotos.length;
+    const remaining = 3 - uploadedPhotos.length;
+    if (remaining <= 0) { alert('⚠️ Maksimal 3 foto!'); return; }
     
-    if (remainingSlots <= 0) {
-        alert('⚠️ Maksimal 3 foto per jurnal!');
-        return;
-    }
-    
-    Array.from(files).slice(0, remainingSlots).forEach(file => {
-        if (file.size > 2 * 1024 * 1024) {
-            alert(`⚠️ File ${file.name} terlalu besar (maks 2 MB)`);
-            return;
-        }
-        
-        if (!file.type.startsWith('image/')) {
-            alert(`⚠️ File ${file.name} bukan gambar`);
-            return;
-        }
+    Array.from(files).slice(0, remaining).forEach(file => {
+        if (file.size > 2 * 1024 * 1024) { alert(`⚠️ ${file.name} terlalu besar (maks 2 MB)`); return; }
+        if (!file.type.startsWith('image/')) return;
         
         const reader = new FileReader();
         reader.onload = (e) => {
             compressImage(e.target.result, 800, 0.7).then(compressed => {
-                uploadedPhotos.push({
-                    name: file.name,
-                    base64: compressed
-                });
+                uploadedPhotos.push({ name: file.name, base64: compressed });
                 renderPhotoPreview();
             });
         };
@@ -139,21 +152,14 @@ function compressImage(base64, maxWidth, quality) {
     return new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > maxWidth) {
-                height = (height * maxWidth) / width;
-                width = maxWidth;
-            }
-            
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = (h * maxWidth) / w; w = maxWidth; }
             const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
             resolve(canvas.toDataURL('image/jpeg', quality));
         };
         img.src = base64;
@@ -162,31 +168,23 @@ function compressImage(base64, maxWidth, quality) {
 
 function renderPhotoPreview() {
     const preview = document.getElementById('photoPreview');
-    preview.innerHTML = uploadedPhotos.map((photo, index) => `
+    preview.innerHTML = uploadedPhotos.map((p, i) => `
         <div class="photo-item">
-            <img src="${photo.base64}" alt="Preview">
-            <button type="button" class="photo-remove" onclick="removePhoto(${index})">✕</button>
+            <img src="${p.base64}" alt="Preview">
+            <button type="button" class="photo-remove" onclick="removePhoto(${i})">✕</button>
         </div>
     `).join('');
 }
 
-window.removePhoto = function(index) {
-    uploadedPhotos.splice(index, 1);
-    renderPhotoPreview();
-};
+window.removePhoto = function(i) { uploadedPhotos.splice(i, 1); renderPhotoPreview(); };
 
 // ══════════════════════════════════════════════
-// FORM SUBMIT
+// FORM SUBMIT - Simpan semua kegiatan hari itu
 // ══════════════════════════════════════════════
 function setupFormSubmit() {
     document.getElementById('formJurnal').addEventListener('submit', async (e) => {
         e.preventDefault();
         await simpanJurnal();
-    });
-    
-    document.getElementById('formEdit').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        await updateJurnal();
     });
 }
 
@@ -200,22 +198,39 @@ async function simpanJurnal() {
     
     try {
         const tanggal = document.getElementById('jurnalTanggal').value;
-        const waktu = document.getElementById('jurnalWaktu').value;
-        const kegiatan = document.getElementById('jurnalKegiatan').value;
-        const hasil = document.getElementById('jurnalHasil').value;
         const keterangan = document.getElementById('jurnalKeterangan').value;
+        
+        // Kumpulkan semua kegiatan
+        const activities = [];
+        document.querySelectorAll('.activity-item').forEach(item => {
+            const waktu = item.querySelector('.act-waktu').value.trim();
+            const kegiatan = item.querySelector('.act-kegiatan').value.trim();
+            const hasil = item.querySelector('.act-hasil').value.trim();
+            
+            if (waktu && kegiatan) {
+                activities.push({ waktu, kegiatan, hasil });
+            }
+        });
+        
+        if (activities.length === 0) {
+            alertEl.textContent = '❌ Minimal 1 kegiatan harus diisi!';
+            alertEl.className = 'alert alert-error show';
+            btn.disabled = false;
+            btn.innerHTML = '💾 Simpan Jurnal';
+            return;
+        }
         
         const photoBase64Array = uploadedPhotos.map(p => p.base64);
         
+        // Simpan 1 dokumen per hari (semua kegiatan dalam array)
         await db.collection('jurnal_mengajar').add({
             userEmail: currentUser.email,
             userName: currentUser.nama,
             userRole: currentUser.role,
             tanggal: tanggal,
-            waktu: waktu,
-            kegiatan: kegiatan,
-            hasil: hasil,
             keterangan: keterangan,
+            activities: activities, // Array of {waktu, kegiatan, hasil}
+            vol: activities.length,
             fotoBase64: photoBase64Array,
             fotoCount: photoBase64Array.length,
             createdAt: new Date().toISOString(),
@@ -226,12 +241,8 @@ async function simpanJurnal() {
         alertEl.className = 'alert alert-success show';
         resetForm();
         
-        setTimeout(() => {
-            alertEl.classList.remove('show');
-        }, 3000);
-        
     } catch (error) {
-        console.error('Error saving jurnal:', error);
+        console.error('Error saving:', error);
         alertEl.textContent = '❌ Gagal menyimpan: ' + error.message;
         alertEl.className = 'alert alert-error show';
     } finally {
@@ -242,13 +253,16 @@ async function simpanJurnal() {
 
 function resetForm() {
     document.getElementById('formJurnal').reset();
+    document.getElementById('activitiesContainer').innerHTML = '';
+    activityCounter = 0;
     uploadedPhotos = [];
     renderPhotoPreview();
     setDefaultDate();
+    addActivity();
 }
 
 // ══════════════════════════════════════════════
-// LOAD DAFTAR JURNAL
+// LOAD DAFTAR JURNAL (Format LCKH)
 // ══════════════════════════════════════════════
 async function loadDaftarJurnal() {
     const loading = document.getElementById('loadingDaftar');
@@ -264,56 +278,74 @@ async function loadDaftarJurnal() {
             .get();
         
         daftarJurnal = [];
-        snapshot.forEach(doc => {
-            daftarJurnal.push({ id: doc.id, ...doc.data() });
-        });
+        snapshot.forEach(doc => daftarJurnal.push({ id: doc.id, ...doc.data() }));
         
-        // Sort by tanggal asc, waktu asc
-        daftarJurnal.sort((a, b) => {
-            if (a.tanggal !== b.tanggal) return a.tanggal.localeCompare(b.tanggal);
-            return a.waktu.localeCompare(b.waktu);
-        });
+        // Sort by tanggal asc
+        daftarJurnal.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
         
-        // Filter
+        // Filter bulan/tahun
         const filterBulan = document.getElementById('filterBulan').value;
         const filterTahun = document.getElementById('filterTahun').value;
         
-        let filtered = daftarJurnal;
-        if (filterBulan) {
-            filtered = filtered.filter(j => new Date(j.tanggal).getMonth() + 1 === parseInt(filterBulan));
-        }
-        if (filterTahun) {
-            filtered = filtered.filter(j => new Date(j.tanggal).getFullYear() === parseInt(filterTahun));
-        }
+        let filtered = daftarJurnal.filter(j => {
+            const d = new Date(j.tanggal);
+            const monthMatch = !filterBulan || (d.getMonth() + 1) === parseInt(filterBulan);
+            const yearMatch = !filterTahun || d.getFullYear() === parseInt(filterTahun);
+            return monthMatch && yearMatch;
+        });
         
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#64748b;">📭 Tidak ada data</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:#64748b;">📭 Tidak ada data jurnal</td></tr>`;
         } else {
             tbody.innerHTML = filtered.map((j, index) => {
-                const badgeClass = {
-                    'Hadir': 'badge-hadir',
-                    'Izin': 'badge-izin',
-                    'Sakit': 'badge-sakit',
-                    'Alpha': 'badge-alpha'
-                }[j.keterangan] || '';
+                // Support format lama (field tunggal) dan format baru (array activities)
+                let activities = j.activities || [];
                 
+                // Fallback untuk data lama yang belum punya array activities
+                if (activities.length === 0 && j.kegiatan) {
+                    activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
+                }
+                
+                const vol = activities.length || j.vol || 1;
+                
+                // Format Jam: 1. 07.30-08.50  2. 10.00-12.00
+                const jamText = activities.map((a, i) => `${i + 1}. ${a.waktu}`).join('<br>');
+                
+                // Format Kegiatan: 1. Mengajar...  2. Rapat...
+                const kegiatanText = activities.map((a, i) => `${i + 1}. ${a.kegiatan}`).join('<br>');
+                
+                // Format Output: 1. Terlaksana...  2. Terlaksana...
+                const outputText = activities.map((a, i) => {
+                    const h = a.hasil || '-';
+                    return `${i + 1}. ${h}`;
+                }).join('<br>');
+                
+                // Foto thumbnail
                 const fotoCount = j.fotoCount || (j.fotoBase64 ? j.fotoBase64.length : 0);
-                let fotoThumb = '-';
-                if (fotoCount > 0 && j.fotoBase64[0]) {
-                    fotoThumb = `<img src="${j.fotoBase64[0]}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="viewPhoto('${j.id}', 0)">`;
+                let fotoHtml = '-';
+                if (fotoCount > 0 && j.fotoBase64) {
+                    fotoHtml = j.fotoBase64.map((foto, fi) => 
+                        `<img src="${foto}" style="max-width:80px;max-height:60px;border-radius:4px;margin:2px;cursor:pointer;" onclick="viewPhoto('${j.id}', ${fi})">`
+                    ).join('');
+                }
+                
+                // Keterangan badge
+                let badgeHtml = '';
+                if (j.keterangan) {
+                    const badgeClass = { 'Hadir': 'badge-hadir', 'Izin': 'badge-izin', 'Sakit': 'badge-sakit', 'Alpha': 'badge-alpha' }[j.keterangan] || '';
+                    badgeHtml = `<span class="badge ${badgeClass}">${j.keterangan}</span>`;
                 }
                 
                 return `
                     <tr>
-                        <td>${index + 1}</td>
-                        <td>${formatDate(j.tanggal)}</td>
-                        <td>${j.waktu}</td>
-                        <td>${j.kegiatan}</td>
-                        <td>${j.hasil || '-'}</td>
-                        <td>${j.keterangan ? `<span class="badge ${badgeClass}">${j.keterangan}</span>` : '-'}</td>
-                        <td>${fotoThumb}</td>
+                        <td style="text-align:center;font-weight:700;">${index + 1}</td>
+                        <td>${formatDate(j.tanggal)}${badgeHtml ? '<br>' + badgeHtml : ''}</td>
+                        <td style="font-size:0.82rem;">${jamText}</td>
+                        <td style="font-size:0.82rem;">${kegiatanText}</td>
+                        <td style="text-align:center;font-weight:700;">${vol}</td>
+                        <td style="font-size:0.82rem;">${outputText}</td>
+                        <td style="text-align:center;">${fotoHtml}</td>
                         <td>
-                            <button class="btn btn-warning btn-sm" onclick="editJurnal('${j.id}')">✏️</button>
                             <button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>
                         </td>
                     </tr>
@@ -325,11 +357,14 @@ async function loadDaftarJurnal() {
         table.style.display = 'block';
         
     } catch (error) {
-        console.error('Error loading:', error);
+        console.error('Error:', error);
         loading.innerHTML = `<div style="color:red;padding:20px;">❌ ${error.message}</div>`;
     }
 }
 
+// ══════════════════════════════════════════════
+// VIEW PHOTO
+// ══════════════════════════════════════════════
 window.viewPhoto = function(jurnalId, photoIndex) {
     const jurnal = daftarJurnal.find(j => j.id === jurnalId);
     if (!jurnal || !jurnal.fotoBase64[photoIndex]) return;
@@ -344,61 +379,42 @@ window.viewPhoto = function(jurnalId, photoIndex) {
     document.body.appendChild(modal);
 };
 
-window.editJurnal = function(id) {
-    const jurnal = daftarJurnal.find(j => j.id === id);
-    if (!jurnal) return;
-    
-    document.getElementById('editId').value = id;
-    document.getElementById('editTanggal').value = jurnal.tanggal;
-    document.getElementById('editWaktu').value = jurnal.waktu;
-    document.getElementById('editKegiatan').value = jurnal.kegiatan;
-    document.getElementById('editHasil').value = jurnal.hasil || '';
-    document.getElementById('editKeterangan').value = jurnal.keterangan || '';
-    
-    document.getElementById('modalEdit').classList.add('show');
-};
-
-async function updateJurnal() {
-    const id = document.getElementById('editId').value;
-    
-    try {
-        await db.collection('jurnal_mengajar').doc(id).update({
-            tanggal: document.getElementById('editTanggal').value,
-            waktu: document.getElementById('editWaktu').value,
-            kegiatan: document.getElementById('editKegiatan').value,
-            hasil: document.getElementById('editHasil').value,
-            keterangan: document.getElementById('editKeterangan').value,
-            updatedAt: new Date().toISOString()
-        });
-        
-        alert('✅ Jurnal berhasil diupdate!');
-        document.getElementById('modalEdit').classList.remove('show');
-        loadDaftarJurnal();
-        
-    } catch (error) {
-        alert('❌ Gagal update: ' + error.message);
-    }
-}
-
+// ══════════════════════════════════════════════
+// HAPUS
+// ══════════════════════════════════════════════
 window.hapusJurnal = async function(id) {
-    if (!confirm('⚠️ Yakin ingin menghapus jurnal ini?')) return;
-    
+    if (!confirm('⚠️ Hapus jurnal ini?')) return;
     try {
         await db.collection('jurnal_mengajar').doc(id).delete();
-        alert('✅ Jurnal berhasil dihapus!');
         loadDaftarJurnal();
-    } catch (error) {
-        alert('❌ Gagal hapus: ' + error.message);
-    }
+    } catch (error) { alert('❌ ' + error.message); }
 };
 
-window.tutupModal = function() {
-    document.getElementById('modalEdit').classList.remove('show');
+window.hapusSemuaJurnal = async function() {
+    const filterBulan = document.getElementById('filterBulan').value;
+    const filterTahun = document.getElementById('filterTahun').value;
+    const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    
+    if (!confirm(`⚠️ Hapus SEMUA jurnal bulan ${monthNames[filterBulan]} ${filterTahun}?\n\nTindakan ini TIDAK bisa dibatalkan!`)) return;
+    
+    try {
+        const filtered = daftarJurnal.filter(j => {
+            const d = new Date(j.tanggal);
+            return (d.getMonth() + 1) === parseInt(filterBulan) && d.getFullYear() === parseInt(filterTahun);
+        });
+        
+        for (const j of filtered) {
+            await db.collection('jurnal_mengajar').doc(j.id).delete();
+        }
+        
+        alert(`✅ ${filtered.length} jurnal berhasil dihapus!`);
+        loadDaftarJurnal();
+    } catch (error) { alert('❌ ' + error.message); }
 };
 
 // ══════════════════════════════════════════════
-// EXPORT PDF DENGAN FOTO EMBEDDED
-// ═════════════════════════════════════════════
+// EXPORT PDF (Format LCKH dengan Foto)
+// ══════════════════════════════════════════════
 window.exportPDF = async function() {
     const btn = event.target;
     const originalText = btn.innerHTML;
@@ -406,76 +422,95 @@ window.exportPDF = async function() {
     btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
     
     try {
-        // Filter data sesuai bulan/tahun yang dipilih
         const filterBulan = document.getElementById('filterBulan').value;
         const filterTahun = document.getElementById('filterTahun').value;
+        const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
         
-        let filtered = [...daftarJurnal];
-        if (filterBulan) {
-            filtered = filtered.filter(j => new Date(j.tanggal).getMonth() + 1 === parseInt(filterBulan));
-        }
-        if (filterTahun) {
-            filtered = filtered.filter(j => new Date(j.tanggal).getFullYear() === parseInt(filterTahun));
-        }
+        let filtered = daftarJurnal.filter(j => {
+            const d = new Date(j.tanggal);
+            return (d.getMonth() + 1) === parseInt(filterBulan) && d.getFullYear() === parseInt(filterTahun);
+        });
         
         if (filtered.length === 0) {
-            alert('️ Tidak ada data untuk diekspor!');
+            alert('⚠️ Tidak ada data untuk diekspor!');
             btn.disabled = false;
             btn.innerHTML = originalText;
             return;
         }
         
-        // Buat tabel HTML tersembunyi dengan foto embedded
-        const pdfTable = document.getElementById('pdfExportTable');
-        pdfTable.innerHTML = `
-            <div style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2 style="text-align: center; margin-bottom: 5px;">LAPORAN CATATAN KINERJA HARIAN GURU</h2>
-                <h3 style="text-align: center; margin-bottom: 20px;">MAN BANTAENG</h3>
+        // Build HTML table untuk PDF
+        const pdfArea = document.getElementById('pdfExportArea');
+        pdfArea.innerHTML = `
+            <div style="font-family: Arial, sans-serif; padding: 15px; width: 1050px; background: white;">
+                <h2 style="text-align:center; font-size:14px; margin-bottom:3px;">LAPORAN CAPAIAN KINERJA HARIAN (LCKH)</h2>
+                <h3 style="text-align:center; font-size:12px; margin-bottom:3px;">BULAN ${monthNames[filterBulan].toUpperCase()} TP. ${filterTahun}/${parseInt(filterTahun)+1}</h3>
+                <h3 style="text-align:center; font-size:12px; margin-bottom:15px;">MAN BANTAENG</h3>
                 
-                <div style="margin-bottom: 20px;">
-                    <p><strong>Nama:</strong> ${currentUser.nama}</p>
-                    <p><strong>Mata Pelajaran:</strong> Sejarah</p>
-                </div>
+                <table style="width:100%; margin-bottom:15px; font-size:11px;">
+                    <tr>
+                        <td><strong>NAMA</strong></td>
+                        <td>: ${currentUser.nama}</td>
+                        <td style="text-align:right;"><strong>MATA PELAJARAN</strong></td>
+                        <td>: Sejarah</td>
+                    </tr>
+                </table>
                 
-                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                <table style="width:100%; border-collapse:collapse; font-size:10px;">
                     <thead>
-                        <tr style="background: #10b981; color: white;">
-                            <th style="border: 1px solid #333; padding: 8px; width: 30px;">No</th>
-                            <th style="border: 1px solid #333; padding: 8px; width: 120px;">Hari, Tanggal</th>
-                            <th style="border: 1px solid #333; padding: 8px; width: 80px;">Waktu</th>
-                            <th style="border: 1px solid #333; padding: 8px;">Uraian Kegiatan</th>
-                            <th style="border: 1px solid #333; padding: 8px;">Hasil/Output</th>
-                            <th style="border: 1px solid #333; padding: 8px; width: 100px;">Keterangan/Gambar</th>
+                        <tr style="background:#10b981; color:white;">
+                            <th style="border:1px solid #333; padding:6px; width:25px;">NO</th>
+                            <th style="border:1px solid #333; padding:6px; width:140px;">HARI, TANGGAL</th>
+                            <th style="border:1px solid #333; padding:6px; width:130px;">JAM</th>
+                            <th style="border:1px solid #333; padding:6px;">URAIAN KEGIATAN</th>
+                            <th style="border:1px solid #333; padding:6px; width:35px;">VOL</th>
+                            <th style="border:1px solid #333; padding:6px;">OUTPUT</th>
+                            <th style="border:1px solid #333; padding:6px; width:100px;">KETERANGAN/<br>GAMBAR</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${filtered.map((j, index) => `
-                            <tr>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">${index + 1}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${formatDate(j.tanggal)}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${j.waktu}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${j.kegiatan}</td>
-                                <td style="border: 1px solid #333; padding: 6px;">${j.hasil || '-'}</td>
-                                <td style="border: 1px solid #333; padding: 6px; text-align: center;">
-                                    ${j.fotoBase64 && j.fotoBase64.length > 0 ? 
-                                        j.fotoBase64.map(foto => `<img src="${foto}" style="max-width: 80px; max-height: 80px; margin: 2px;">`).join('') 
-                                        : '-'}
-                                </td>
-                            </tr>
-                        `).join('')}
+                        ${filtered.map((j, index) => {
+                            let activities = j.activities || [];
+                            if (activities.length === 0 && j.kegiatan) {
+                                activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
+                            }
+                            
+                            const vol = activities.length || 1;
+                            const jamText = activities.map((a, i) => `${i+1}. ${a.waktu}`).join('<br>');
+                            const kegiatanText = activities.map((a, i) => `${i+1}. ${a.kegiatan}`).join('<br>');
+                            const outputText = activities.map((a, i) => `${i+1}. ${a.hasil || '-'}`).join('<br>');
+                            
+                            let fotoHtml = '';
+                            if (j.fotoBase64 && j.fotoBase64.length > 0) {
+                                fotoHtml = j.fotoBase64.map(f => `<img src="${f}" style="max-width:80px;max-height:60px;margin:2px;display:block;">`).join('');
+                            } else {
+                                fotoHtml = '-';
+                            }
+                            
+                            return `
+                                <tr>
+                                    <td style="border:1px solid #333; padding:5px; text-align:center; vertical-align:top;">${index + 1}</td>
+                                    <td style="border:1px solid #333; padding:5px; vertical-align:top;">${formatDate(j.tanggal)}</td>
+                                    <td style="border:1px solid #333; padding:5px; font-size:9px; vertical-align:top;">${jamText}</td>
+                                    <td style="border:1px solid #333; padding:5px; font-size:9px; vertical-align:top;">${kegiatanText}</td>
+                                    <td style="border:1px solid #333; padding:5px; text-align:center; vertical-align:top; font-weight:bold;">${vol}</td>
+                                    <td style="border:1px solid #333; padding:5px; font-size:9px; vertical-align:top;">${outputText}</td>
+                                    <td style="border:1px solid #333; padding:5px; text-align:center; vertical-align:top;">${fotoHtml}</td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>
                 
-                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
-                    <div style="text-align: center;">
+                <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:11px;">
+                    <div style="text-align:center;">
                         <p>Mengetahui,</p>
                         <p>Kepala Madrasah</p>
                         <br><br><br>
                         <p><strong>Muhammad Arief Pither, S.Ag.,MM.,M.Pd</strong></p>
                         <p>NIP. 19710930 200710 1 001</p>
                     </div>
-                    <div style="text-align: center;">
-                        <p>Bantaeng, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    <div style="text-align:center;">
+                        <p>Bantaeng, ${new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</p>
                         <p>Guru Mata Pelajaran</p>
                         <br><br><br>
                         <p><strong>${currentUser.nama}</strong></p>
@@ -486,40 +521,47 @@ window.exportPDF = async function() {
         `;
         
         // Tunggu gambar load
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
-        // Convert HTML ke canvas menggunakan html2canvas
-        const canvas = await html2canvas(pdfTable, {
+        const canvas = await html2canvas(pdfArea.firstElementChild, {
             scale: 2,
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff'
         });
         
-        // Convert canvas ke PDF
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape
+        const pdf = new jsPDF('l', 'mm', 'a4');
         
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const pdfW = pdf.internal.pageSize.getWidth();
+        const pdfH = pdf.internal.pageSize.getHeight();
+        const imgW = canvas.width;
+        const imgH = canvas.height;
         
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        // Hitung rasio agar muat di halaman
+        const ratio = pdfW / imgW;
+        const scaledH = imgH * ratio;
         
-        const imgX = (pdfWidth - imgWidth * ratio) / 2;
-        const imgY = 10;
+        // Jika lebih tinggi dari 1 halaman, bagi jadi beberapa halaman
+        if (scaledH <= pdfH) {
+            pdf.addImage(imgData, 'JPEG', 0, 5, pdfW, scaledH);
+        } else {
+            // Multi-page
+            const pageH = pdfH - 10;
+            const totalPages = Math.ceil(scaledH / pageH);
+            
+            for (let p = 0; p < totalPages; p++) {
+                if (p > 0) pdf.addPage();
+                const yOffset = -(p * pageH) + 5;
+                pdf.addImage(imgData, 'JPEG', 0, yOffset, pdfW, scaledH);
+            }
+        }
         
-        pdf.addImage(imgData, 'JPEG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-        
-        const fileName = `Jurnal_${currentUser.nama}_${filterTahun || new Date().getFullYear()}_${filterBulan || 'all'}.pdf`;
-        pdf.save(fileName);
-        
-        alert('✅ PDF berhasil diekspor dengan foto!');
+        pdf.save(`LCKH_${monthNames[filterBulan]}_${filterTahun}_${currentUser.nama}.pdf`);
         
     } catch (error) {
-        console.error('Error exporting PDF:', error);
+        console.error('Error export:', error);
         alert('❌ Gagal export PDF: ' + error.message);
     } finally {
         btn.disabled = false;
@@ -529,13 +571,8 @@ window.exportPDF = async function() {
 
 // ══════════════════════════════════════════════
 // HELPERS
-// ═════════════════════════════════════════════
+// ══════════════════════════════════════════════
 function formatDate(dateStr) {
     if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('id-ID', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
+    return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
