@@ -15,7 +15,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ══════════════════════════════════════════════
-// STATE
+// STATE GLOBALS
 // ═════════════════════════════════════════════
 let currentUser = null;
 let uploadedPhotos = [];
@@ -23,14 +23,14 @@ let daftarJurnal = [];
 let activityCounter = 0;
 
 // ══════════════════════════════════════════════
-// INIT
+// INIT & DOM READY
 // ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
     loadUserInfo();
     setupFormSubmit();
     setupPhotoUpload();
     setDefaultDate();
-    addActivity();
+    addActivity(); // Membuat baris input kegiatan pertama otomatis
 });
 
 function loadUserInfo() {
@@ -38,8 +38,12 @@ function loadUserInfo() {
         const userStr = localStorage.getItem('sipelita_user');
         if (userStr) {
             currentUser = JSON.parse(userStr);
-            document.getElementById('userName').textContent = currentUser.nama || 'User';
-            document.getElementById('userRole').textContent = currentUser.role || 'Guru';
+            
+            const nameEl = document.getElementById('userName');
+            if (nameEl) nameEl.textContent = currentUser.nama || 'User';
+            
+            const roleEl = document.getElementById('userRole');
+            if (roleEl) roleEl.textContent = currentUser.role || 'Guru';
             
             const nipElement = document.getElementById('userNip');
             if (nipElement) {
@@ -62,28 +66,49 @@ function loadUserInfo() {
 
 function setDefaultDate() {
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById('jurnalTanggal').value = today;
-    document.getElementById('filterTahun').value = new Date().getFullYear();
-    document.getElementById('filterBulan').value = new Date().getMonth() + 1;
+    
+    const tglEl = document.getElementById('jurnalTanggal');
+    if (tglEl) tglEl.value = today;
+    
+    const thnEl = document.getElementById('filterTahun');
+    if (thnEl) thnEl.value = new Date().getFullYear();
+    
+    const blnEl = document.getElementById('filterBulan');
+    if (blnEl) blnEl.value = new Date().getMonth() + 1;
 }
 
 // ══════════════════════════════════════════════
-// TAB SWITCHING
+// TAB SWITCHING (Safe Event Handling)
 // ══════════════════════════════════════════════
-window.switchTab = function(tabName) {
+function switchTab(tabName, element) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    event.target.classList.add('active');
+    
+    if (element && element.classList) {
+        element.classList.add('active');
+    } else {
+        const evt = window.event;
+        if (evt && evt.target) {
+            const closestTab = evt.target.closest('.tab');
+            if (closestTab) closestTab.classList.add('active');
+        }
+    }
+    
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    document.getElementById('tab-' + tabName).style.display = 'block';
+    const targetContent = document.getElementById('tab-' + tabName);
+    if (targetContent) targetContent.style.display = 'block';
+    
     if (tabName === 'daftar') loadDaftarJurnal();
-};
+}
+window.switchTab = switchTab;
 
 // ══════════════════════════════════════════════
-// ACTIVITY MANAGEMENT
+// ACTIVITY MANAGEMENT (Fixed Hoisting)
 // ══════════════════════════════════════════════
-window.addActivity = function() {
+function addActivity() {
     activityCounter++;
     const container = document.getElementById('activitiesContainer');
+    if (!container) return; // Mencegah crash jika kontainer form tidak ditemukan
+    
     const div = document.createElement('div');
     div.className = 'activity-item';
     div.id = 'activity-' + activityCounter;
@@ -104,35 +129,50 @@ window.addActivity = function() {
             '<input type="text" class="act-hasil" placeholder="Contoh: Terlaksananya PBM di kelas X.2">' +
         '</div>';
     container.appendChild(div);
-};
+}
+window.addActivity = addActivity;
 
-window.removeActivity = function(id) {
+function removeActivity(id) {
     const el = document.getElementById('activity-' + id);
     if (el) el.remove();
+    
     const items = document.querySelectorAll('.activity-item');
     items.forEach((item, index) => {
-        item.querySelector('h4').textContent = 'Kegiatan #' + (index + 1);
+        const h4 = item.querySelector('h4');
+        if (h4) h4.textContent = 'Kegiatan #' + (index + 1);
     });
     if (items.length === 0) addActivity();
-};
+}
+window.removeActivity = removeActivity;
 
 // ═════════════════════════════════════════════
-// PHOTO UPLOAD
+// PHOTO UPLOAD (Clean Event Rewriting)
 // ══════════════════════════════════════════════
 function setupPhotoUpload() {
     const uploadArea = document.getElementById('photoUploadArea');
     const photoInput = document.getElementById('photoInput');
     if (!uploadArea || !photoInput) return;
     
-    uploadArea.addEventListener('click', () => photoInput.click());
-    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
-    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-    uploadArea.addEventListener('drop', (e) => {
+    uploadArea.onclick = () => photoInput.click();
+    
+    uploadArea.ondragover = (e) => { 
+        e.preventDefault(); 
+        uploadArea.classList.add('dragover'); 
+    };
+    
+    uploadArea.ondragleave = () => { 
+        uploadArea.classList.remove('dragover'); 
+    };
+    
+    uploadArea.ondrop = (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         handleFiles(e.dataTransfer.files);
-    });
-    photoInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    };
+    
+    photoInput.onchange = (e) => { 
+        handleFiles(e.target.files); 
+    };
 }
 
 function handleFiles(files) {
@@ -163,6 +203,7 @@ function compressImage(base64, maxWidth, quality) {
             const canvas = document.createElement('canvas');
             canvas.width = w; canvas.height = h;
             const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(base64); return; }
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, w, h);
             ctx.drawImage(img, 0, 0, w, h);
@@ -175,23 +216,31 @@ function compressImage(base64, maxWidth, quality) {
 function renderPhotoPreview() {
     const preview = document.getElementById('photoPreview');
     if (!preview) return;
+    
     preview.innerHTML = uploadedPhotos.map((p, i) => 
-        '<div class="photo-item"><img src="' + p.base64 + '" alt="Preview"><button type="button" class="photo-remove" onclick="removePhoto(' + i + ')"></button></div>'
+        '<div class="photo-item">' +
+            '<img src="' + p.base64 + '" alt="Preview">' +
+            '<button type="button" class="photo-remove" onclick="removePhoto(' + i + ')">×</button>' +
+        '</div>'
     ).join('');
 }
 
-window.removePhoto = function(i) { uploadedPhotos.splice(i, 1); renderPhotoPreview(); };
+function removePhoto(i) { 
+    uploadedPhotos.splice(i, 1); 
+    renderPhotoPreview(); 
+}
+window.removePhoto = removePhoto;
 
 // ══════════════════════════════════════════════
-// FORM SUBMIT
+// FORM SUBMIT & DATABASE ENGINE
 // ═════════════════════════════════════════════
 function setupFormSubmit() {
     const form = document.getElementById('formJurnal');
     if (form) {
-        form.addEventListener('submit', async (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
             await simpanJurnal();
-        });
+        };
     }
 }
 
@@ -199,29 +248,44 @@ async function simpanJurnal() {
     const btn = document.getElementById('btnSimpan');
     const alertEl = document.getElementById('alertInput');
     
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
-    alertEl.classList.remove('show');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+    }
+    if (alertEl) alertEl.classList.remove('show');
     
     try {
-        const tanggal = document.getElementById('jurnalTanggal').value;
-        const keterangan = document.getElementById('jurnalKeterangan').value;
+        const tglEl = document.getElementById('jurnalTanggal');
+        const ketEl = document.getElementById('jurnalKeterangan');
+        const tanggal = tglEl ? tglEl.value : new Date().toISOString().split('T')[0];
+        const keterangan = ketEl ? ketEl.value : '';
         
         const activities = [];
         document.querySelectorAll('.activity-item').forEach(item => {
-            const waktu = item.querySelector('.act-waktu').value.trim();
-            const kegiatan = item.querySelector('.act-kegiatan').value.trim();
-            const hasil = item.querySelector('.act-hasil').value.trim();
+            const waktuEl = item.querySelector('.act-waktu');
+            const kegiatanEl = item.querySelector('.act-kegiatan');
+            const hasilEl = item.querySelector('.act-hasil');
+            
+            const waktu = waktuEl ? waktuEl.value.trim() : '';
+            const kegiatan = kegiatanEl ? kegiatanEl.value.trim() : '';
+            const hasil = hasilEl ? hasilEl.value.trim() : '';
+            
             if (waktu && kegiatan) {
                 activities.push({ waktu: waktu, kegiatan: kegiatan, hasil: hasil });
             }
         });
         
         if (activities.length === 0) {
-            alertEl.textContent = '❌ Minimal 1 kegiatan harus diisi!';
-            alertEl.className = 'alert alert-error show';
-            btn.disabled = false;
-            btn.innerHTML = '💾 Simpan Jurnal';
+            if (alertEl) {
+                alertEl.textContent = '❌ Minimal 1 kegiatan harus diisi!';
+                alertEl.className = 'alert alert-error show';
+            } else {
+                alert('❌ Minimal 1 kegiatan harus diisi!');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Simpan Jurnal';
+            }
             return;
         }
         
@@ -242,23 +306,37 @@ async function simpanJurnal() {
             updatedAt: new Date().toISOString()
         });
         
-        alertEl.textContent = '✅ Jurnal berhasil disimpan!';
-        alertEl.className = 'alert alert-success show';
+        if (alertEl) {
+            alertEl.textContent = '✅ Jurnal berhasil disimpan!';
+            alertEl.className = 'alert alert-success show';
+        } else {
+            alert('✅ Jurnal berhasil disimpan!');
+        }
         resetForm();
         
     } catch (error) {
         console.error('Error saving:', error);
-        alertEl.textContent = '❌ Gagal menyimpan: ' + error.message;
-        alertEl.className = 'alert alert-error show';
+        if (alertEl) {
+            alertEl.textContent = '❌ Gagal menyimpan: ' + error.message;
+            alertEl.className = 'alert alert-error show';
+        } else {
+            alert('❌ Gagal menyimpan: ' + error.message);
+        }
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = '💾 Simpan Jurnal';
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '💾 Simpan Jurnal';
+        }
     }
 }
 
 function resetForm() {
-    document.getElementById('formJurnal').reset();
-    document.getElementById('activitiesContainer').innerHTML = '';
+    const form = document.getElementById('formJurnal');
+    if (form) form.reset();
+    
+    const container = document.getElementById('activitiesContainer');
+    if (container) container.innerHTML = '';
+    
     activityCounter = 0;
     uploadedPhotos = [];
     renderPhotoPreview();
@@ -267,17 +345,19 @@ function resetForm() {
 }
 
 // ══════════════════════════════════════════════
-// LOAD DAFTAR JURNAL
+// LOAD DATATABLE
 // ══════════════════════════════════════════════
 async function loadDaftarJurnal() {
     const loading = document.getElementById('loadingDaftar');
     const table = document.getElementById('tableDaftar');
     const tbody = document.getElementById('jurnalTableBody');
     
-    loading.style.display = 'block';
-    table.style.display = 'none';
+    if (loading) loading.style.display = 'block';
+    if (table) table.style.display = 'none';
     
     try {
+        if (!currentUser || !currentUser.email) return;
+        
         const snapshot = await db.collection('jurnal_mengajar')
             .where('userEmail', '==', currentUser.email)
             .get();
@@ -287,8 +367,10 @@ async function loadDaftarJurnal() {
         
         daftarJurnal.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
         
-        const filterBulan = document.getElementById('filterBulan').value;
-        const filterTahun = document.getElementById('filterTahun').value;
+        const blnEl = document.getElementById('filterBulan');
+        const thnEl = document.getElementById('filterTahun');
+        const filterBulan = blnEl ? blnEl.value : '';
+        const filterTahun = thnEl ? thnEl.value : '';
         
         let filtered = daftarJurnal.filter(j => {
             const d = new Date(j.tanggal);
@@ -297,57 +379,60 @@ async function loadDaftarJurnal() {
             return monthMatch && yearMatch;
         });
         
-        if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#64748b;"> Tidak ada data jurnal</td></tr>';
-        } else {
-            tbody.innerHTML = filtered.map((j, index) => {
-                let activities = j.activities || [];
-                if (activities.length === 0 && j.kegiatan) {
-                    activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
-                }
-                
-                const vol = activities.length || j.vol || 1;
-                const jamText = activities.map((a, i) => (i + 1) + '. ' + a.waktu).join('<br>');
-                const kegiatanText = activities.map((a, i) => (i + 1) + '. ' + a.kegiatan).join('<br>');
-                const outputText = activities.map((a, i) => (i + 1) + '. ' + (a.hasil || '-')).join('<br>');
-                
-                const fotoCount = j.fotoCount || (j.fotoBase64 ? j.fotoBase64.length : 0);
-                let fotoHtml = '-';
-                if (fotoCount > 0 && j.fotoBase64) {
-                    fotoHtml = j.fotoBase64.map((foto, fi) => 
-                        '<img src="' + foto + '" style="max-width:80px;max-height:60px;border-radius:4px;margin:2px;cursor:pointer;" onclick="viewPhoto(\'' + j.id + '\', ' + fi + ')">'
-                    ).join('');
-                }
-                
-                let badgeHtml = '';
-                if (j.keterangan) {
-                    const badgeClass = { 'Hadir': 'badge-hadir', 'Izin': 'badge-izin', 'Sakit': 'badge-sakit', 'Alpha': 'badge-alpha' }[j.keterangan] || '';
-                    badgeHtml = '<span class="badge ' + badgeClass + '">' + j.keterangan + '</span>';
-                }
-                
-                return '<tr>' +
-                    '<td style="text-align:center;font-weight:700;">' + (index + 1) + '</td>' +
-                    '<td>' + formatDate(j.tanggal) + (badgeHtml ? '<br>' + badgeHtml : '') + '</td>' +
-                    '<td style="font-size:0.82rem;">' + jamText + '</td>' +
-                    '<td style="font-size:0.82rem;">' + kegiatanText + '</td>' +
-                    '<td style="text-align:center;font-weight:700;">' + vol + '</td>' +
-                    '<td style="font-size:0.82rem;">' + outputText + '</td>' +
-                    '<td style="text-align:center;">' + fotoHtml + '</td>' +
-                    '<td><button class="btn btn-danger btn-sm" onclick="hapusJurnal(\'' + j.id + '\')">️</button></td>' +
-                '</tr>';
-            }).join('');
+        if (tbody) {
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#64748b;"> Tidak ada data jurnal</td></tr>';
+            } else {
+                tbody.innerHTML = filtered.map((j, index) => {
+                    let activities = j.activities || [];
+                    if (activities.length === 0 && j.kegiatan) {
+                        activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
+                    }
+                    
+                    const vol = activities.length || j.vol || 1;
+                    const jamText = activities.map((a, i) => (i + 1) + '. ' + a.waktu).join('<br>');
+                    const kegiatanText = activities.map((a, i) => (i + 1) + '. ' + a.kegiatan).join('<br>');
+                    const outputText = activities.map((a, i) => (i + 1) + '. ' + (a.hasil || '-')).join('<br>');
+                    
+                    const fotoCount = j.fotoCount || (j.fotoBase64 ? j.fotoBase64.length : 0);
+                    let fotoHtml = '-';
+                    if (fotoCount > 0 && j.fotoBase64) {
+                        fotoHtml = j.fotoBase64.map((foto, fi) => 
+                            '<img src="' + foto + '" style="max-width:80px;max-height:60px;border-radius:4px;margin:2px;cursor:pointer;" onclick="viewPhoto(\'' + j.id + '\', ' + fi + ')">'
+                        ).join('');
+                    }
+                    
+                    let badgeHtml = '';
+                    if (j.keterangan) {
+                        const badgeClass = { 'Hadir': 'badge-hadir', 'Izin': 'badge-izin', 'Sakit': 'badge-sakit', 'Alpha': 'badge-alpha' }[j.keterangan] || '';
+                        badgeHtml = '<span class="badge ' + badgeClass + '">' + j.keterangan + '</span>';
+                    }
+                    
+                    return '<tr>' +
+                        '<td style="text-align:center;font-weight:700;">' + (index + 1) + '</td>' +
+                        '<td>' + formatDate(j.tanggal) + (badgeHtml ? '<br>' + badgeHtml : '') + '</td>' +
+                        '<td style="font-size:0.82rem;">' + jamText + '</td>' +
+                        '<td style="font-size:0.82rem;">' + kegiatanText + '</td>' +
+                        '<td style="text-align:center;font-weight:700;">' + vol + '</td>' +
+                        '<td style="font-size:0.82rem;">' + outputText + '</td>' +
+                        '<td style="text-align:center;">' + fotoHtml + '</td>' +
+                        '<td><button class="btn btn-danger btn-sm" onclick="hapusJurnal(\'' + j.id + '\')">🗑️</button></td>' +
+                    '</tr>';
+                }).join('');
+            }
         }
         
-        loading.style.display = 'none';
-        table.style.display = 'block';
+        if (loading) loading.style.display = 'none';
+        if (table) table.style.display = 'block';
         
     } catch (error) {
         console.error('Error:', error);
-        loading.innerHTML = '<div style="color:red;padding:20px;">❌ ' + error.message + '</div>';
+        if (loading) loading.innerHTML = '<div style="color:red;padding:20px;">❌ ' + error.message + '</div>';
     }
 }
+window.loadDaftarJurnal = loadDaftarJurnal;
 
-window.viewPhoto = function(jurnalId, photoIndex) {
+function viewPhoto(jurnalId, photoIndex) {
     const jurnal = daftarJurnal.find(j => j.id === jurnalId);
     if (!jurnal || !jurnal.fotoBase64[photoIndex]) return;
     
@@ -359,22 +444,28 @@ window.viewPhoto = function(jurnalId, photoIndex) {
     modal.appendChild(img);
     modal.onclick = () => modal.remove();
     document.body.appendChild(modal);
-};
+}
+window.viewPhoto = viewPhoto;
 
-window.hapusJurnal = async function(id) {
-    if (!confirm('️ Hapus jurnal ini?')) return;
+async function hapusJurnal(id) {
+    if (!confirm('⚠️ Hapus jurnal ini?')) return;
     try {
         await db.collection('jurnal_mengajar').doc(id).delete();
         loadDaftarJurnal();
     } catch (error) { alert('❌ ' + error.message); }
-};
+}
+window.hapusJurnal = hapusJurnal;
 
-window.hapusSemuaJurnal = async function() {
-    const filterBulan = document.getElementById('filterBulan').value;
-    const filterTahun = document.getElementById('filterTahun').value;
+async function hapusSemuaJurnal() {
+    const blnEl = document.getElementById('filterBulan');
+    const thnEl = document.getElementById('filterTahun');
+    if (!blnEl || !thnEl) return;
+    
+    const filterBulan = blnEl.value;
+    const filterTahun = thnEl.value;
     const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     
-    if (!confirm('️ Hapus SEMUA jurnal bulan ' + monthNames[filterBulan] + ' ' + filterTahun + '?\n\nTindakan ini TIDAK bisa dibatalkan!')) return;
+    if (!confirm('⚠️ Hapus SEMUA jurnal bulan ' + monthNames[filterBulan] + ' ' + filterTahun + '?\n\nTindakan ini TIDAK bisa dibatalkan!')) return;
     
     try {
         const filtered = daftarJurnal.filter(j => {
@@ -389,36 +480,47 @@ window.hapusSemuaJurnal = async function() {
         alert('✅ ' + filtered.length + ' jurnal berhasil dihapus!');
         loadDaftarJurnal();
     } catch (error) { alert('❌ ' + error.message); }
-};
+}
+window.hapusSemuaJurnal = hapusSemuaJurnal;
 
 // ══════════════════════════════════════════════
-// PREVIEW PDF
+// EXPORT SYSTEM & REPORT GENERATOR
 // ══════════════════════════════════════════════
-window.previewPDF = async function() {
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Loading...';
+async function previewPDF(e) {
+    const evt = e || window.event;
+    const btn = (evt && evt.target) ? evt.target.closest('button') : null;
+    let originalText = "Preview";
+    
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Loading...';
+    }
     
     try {
         await generatePDF(true);
     } catch (error) {
         console.error('Error preview:', error);
-        alert(' Gagal preview PDF: ' + error.message);
+        alert('⚠️ Gagal preview PDF: ' + error.message);
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
-};
+}
+window.previewPDF = previewPDF;
 
-// ══════════════════════════════════════════════
-// EXPORT PDF
-// ══════════════════════════════════════════════
-window.exportPDF = async function() {
-    const btn = event.target;
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
+async function exportPDF(e) {
+    const evt = e || window.event;
+    const btn = (evt && evt.target) ? evt.target.closest('button') : null;
+    let originalText = "Export";
+    
+    if (btn) {
+        originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
+    }
     
     try {
         await generatePDF(false);
@@ -426,17 +528,19 @@ window.exportPDF = async function() {
         console.error('Error export:', error);
         alert('❌ Gagal export PDF: ' + error.message);
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
-};
+}
+window.exportPDF = exportPDF;
 
-// ══════════════════════════════════════════════
-// GENERATE PDF (Shared function)
-// ══════════════════════════════════════════════
 async function generatePDF(isPreview) {
-    const filterBulan = document.getElementById('filterBulan').value;
-    const filterTahun = document.getElementById('filterTahun').value;
+    const blnEl = document.getElementById('filterBulan');
+    const thnEl = document.getElementById('filterTahun');
+    const filterBulan = blnEl ? blnEl.value : (new Date().getMonth() + 1);
+    const filterTahun = thnEl ? thnEl.value : new Date().getFullYear();
     const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     
     let filtered = daftarJurnal.filter(j => {
@@ -450,24 +554,44 @@ async function generatePDF(isPreview) {
     }
     
     const pdfArea = document.getElementById('pdfExportArea');
-    pdfArea.innerHTML = '<div style="font-family:Arial,sans-serif;padding:20px 30px;width:1050px;background:white;">' +
+    if (!pdfArea) return;
+    
+    pdfArea.innerHTML = '<div style="font-family:Arial,sans-serif;padding:20px 30px;width:1050px;background:white;box-sizing:border-box;">' +
         '<h2 style="text-align:center;font-size:16px;margin-bottom:5px;font-weight:bold;">LAPORAN CAPAIAN KINERJA HARIAN (LCKH)</h2>' +
         '<h3 style="text-align:center;font-size:13px;margin-bottom:3px;">BULAN ' + monthNames[filterBulan].toUpperCase() + ' TP. ' + filterTahun + '/' + (parseInt(filterTahun)+1) + '</h3>' +
         '<h3 style="text-align:center;font-size:13px;margin-bottom:20px;font-weight:bold;">MAN BANTAENG</h3>' +
-        '<table style="width:100%;margin-bottom:20px;font-size:11px;">' +
-            '<tr>' +
-                '<td style="width:150px;"><strong>NAMA</strong></td>' +
-                '<td style="width:350px;">: ' + (currentUser.nama || '') + '</td>' +
-                '<td style="width:200px;text-align:right;"><strong>MATA PELAJARAN</strong></td>' +
-                '<td style="width:350px;">: Sejarah</td>' +
-            '</tr>' +
-            '<tr>' +
-                '<td><strong>NIP</strong></td>' +
-                '<td>: ' + (currentUser.nip || '-') + '</td>' +
-                '<td style="text-align:right;"><strong>JABATAN</strong></td>' +
-                '<td>: Guru</td>' +
-            '</tr>' +
-        '</table>' +
+        
+        '<div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px; font-size: 11px;">' +
+            '<div style="width: 45%;">' +
+                '<table style="width: 100%; border-collapse: collapse; border: none;">' +
+                    '<tr>' +
+                        '<td style="width: 60px; padding: 3px 0; font-weight: bold; border: none;">NAMA</td>' +
+                        '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">' + (currentUser.nama || '') + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td style="padding: 3px 0; font-weight: bold; border: none;">NIP</td>' +
+                        '<td style="padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">' + (currentUser.nip || '-') + '</td>' +
+                    '</tr>' +
+                '</table>' +
+            '</div>' +
+            '<div style="width: 45%; margin-left: auto;">' +
+                '<table style="width: 100%; border-collapse: collapse; border: none;">' +
+                    '<tr>' +
+                        '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
+                        '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">Sejarah</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td style="padding: 3px 0; font-weight: bold; border: none;">JABATAN</td>' +
+                        '<td style="padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">Guru</td>' +
+                    '</tr>' +
+                '</table>' +
+            '</div>' +
+        '</div>' +
+        
         '<table style="width:100%;border-collapse:collapse;font-size:10px;">' +
             '<thead><tr style="background:#1e40af;color:white;">' +
                 '<th style="border:1px solid #333;padding:8px;width:30px;text-align:center;">NO</th>' +
@@ -504,20 +628,22 @@ async function generatePDF(isPreview) {
                 '</tr>';
             }).join('') +
         '</tbody></table>' +
-        '<div style="margin-top:40px;display:flex;justify-content:space-between;font-size:11px;min-height:150px;">' +
-            '<div style="text-align:left;width:45%;">' +
-                '<p style="margin-bottom:8px;">Mengetahui,</p>' +
-                '<p style="margin-bottom:8px;font-weight:bold;">Kepala Madrasah</p>' +
-                '<br><br><br>' +
-                '<p style="font-weight:bold;margin-bottom:4px;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>' +
-                '<p>NIP. 19710930 200710 1 001</p>' +
+        
+        '<div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; align-items: flex-start;">' +
+            '<div style="text-align:left; width:40%; margin-top: 22px;">' +
+                '<p style="margin: 0 0 8px 0; padding: 0;">Mengetahui,</p>' +
+                '<p style="margin: 0 0 8px 0; padding: 0; font-weight:bold;">Kepala Madrasah</p>' +
+                '<div style="height: 75px;"></div>' +
+                '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>' +
+                '<p style="margin: 0; padding: 0;">NIP. 19710930 200710 1 001</p>' +
             '</div>' +
-            '<div style="text-align:left;width:45%;">' +
-                '<p style="margin-bottom:8px;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
-                '<p style="margin-bottom:8px;">Guru Mata Pelajaran</p>' +
-                '<br><br><br>' +
-                '<p style="font-weight:bold;margin-bottom:4px;">' + (currentUser.nama || '') + '</p>' +
-                '<p>NIP. ' + (currentUser.nip || '-') + '</p>' +
+            
+            '<div style="text-align:left; width:40%; margin-left: auto;">' +
+                '<p style="margin: 0 0 8px 0; padding: 0;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
+                '<p style="margin: 0 0 8px 0; padding: 0; font-weight:bold;">Guru Mata Pelajaran</p>' +
+                '<div style="height: 75px;"></div>' +
+                '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">' + (currentUser.nama || '') + '</p>' +
+                '<p style="margin: 0; padding: 0;">NIP. ' + (currentUser.nip || '-') + '</p>' +
             '</div>' +
         '</div>' +
     '</div>';
@@ -526,9 +652,11 @@ async function generatePDF(isPreview) {
     
     if (isPreview) {
         const printWindow = window.open('', '_blank');
-        const pdfContent = pdfArea.innerHTML;
-        printWindow.document.write('<!DOCTYPE html><html><head><title>Preview LCKH - ' + monthNames[filterBulan] + ' ' + filterTahun + '</title><style>body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f5f5f5;}.preview-container{background:white;box-shadow:0 0 20px rgba(0,0,0,0.1);}.print-btn{position:fixed;top:20px;right:20px;padding:12px 24px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}.print-btn:hover{background:#059669;}@media print{body{background:white;}.preview-container{box-shadow:none;}.print-btn{display:none;}}</style></head><body><button class="print-btn" onclick="window.print()">️ Cetak / Simpan PDF</button><div class="preview-container">' + pdfContent + '</div></body></html>');
-        printWindow.document.close();
+        if (printWindow) {
+            const pdfContent = pdfArea.innerHTML;
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Preview LCKH - ' + monthNames[filterBulan] + ' ' + filterTahun + '</title><style>body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f5f5f5;}.preview-container{background:white;box-shadow:0 0 20px rgba(0,0,0,0.1);}.print-btn{position:fixed;top:20px;right:20px;padding:12px 24px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}.print-btn:hover{background:#059669;}@media print{body{background:white;}.preview-container{box-shadow:none;}.print-btn{display:none;}}</style></head><body><button class="print-btn" onclick="window.print()">🖨️ Cetak / Simpan PDF</button><div class="preview-container">' + pdfContent + '</div></body></html>');
+            printWindow.document.close();
+        }
     } else {
         const canvas = await html2canvas(pdfArea.firstElementChild, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
         const { jsPDF } = window.jspdf;
@@ -558,7 +686,7 @@ async function generatePDF(isPreview) {
 }
 
 // ══════════════════════════════════════════════
-// HELPERS
+// SYSTEM HELPERS
 // ══════════════════════════════════════════════
 function formatDate(dateStr) {
     if (!dateStr) return '-';
