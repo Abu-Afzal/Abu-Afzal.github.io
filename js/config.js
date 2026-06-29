@@ -87,7 +87,7 @@ const CONFIG = {
             url: 'https://manbantaeng.rdmnet.my.id/',
             logo: 'assets/images/rapor-app.png'  // ← Path ke logo
         },
-        { icon: '📈', title: 'LCKH!', desc: '', color: '#c62828', page: 'pages/jurnal.html' },
+        { icon: '📈', title: 'LCKH', desc: 'Laporan Capaian Kinerja Harian', color: '#c62828', page: 'pages/jurnal.html' },
         { 
             icon: '📊', 
             title: 'Rekap Absensi', 
