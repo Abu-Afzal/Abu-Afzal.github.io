@@ -153,6 +153,7 @@ export const AuthService = {
                 email: user.email,
                 nama: userData.nama,
                 role: userData.role,
+                nip: userData.nip || '',
                 fitur: userData.fitur || []
             };
             
