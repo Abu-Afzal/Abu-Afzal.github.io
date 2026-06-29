@@ -423,6 +423,26 @@ window.hapusSemuaJurnal = async function() {
     } catch (error) { alert('❌ ' + error.message); }
 };
 
+/ ══════════════════════════════════════════════
+// PREVIEW PDF (Sebelum Export)
+// ══════════════════════════════════════════════
+window.previewPDF = async function() {
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Loading...';
+    
+    try {
+        await generatePDF(true); // true = mode preview
+    } catch (error) {
+        console.error('Error preview:', error);
+        alert('❌ Gagal preview PDF: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+};
+
 // ══════════════════════════════════════════════
 // EXPORT PDF (Format LCKH dengan Foto)
 // ══════════════════════════════════════════════
