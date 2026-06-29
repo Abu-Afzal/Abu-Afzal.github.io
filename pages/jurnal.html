@@ -9,11 +9,13 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
     
-    <!-- jsPDF untuk Export PDF -->
+    <!-- jsPDF & Plugins -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- html2canvas untuk embed foto di PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -402,6 +404,16 @@
             to { transform: rotate(360deg); }
         }
         
+        /* HIDDEN TABLE FOR PDF EXPORT */
+        #pdfExportTable {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            background: white;
+            padding: 20px;
+            width: 1000px;
+        }
+        
         /* RESPONSIVE */
         @media (max-width: 768px) {
             .page-header {
@@ -452,7 +464,6 @@
     <div class="tabs">
         <button class="tab active" onclick="switchTab('input')">📝 Input Jurnal</button>
         <button class="tab" onclick="switchTab('daftar')">📋 Daftar Jurnal</button>
-        <button class="tab" onclick="switchTab('laporan')">📊 Laporan</button>
     </div>
 
     <!-- Tab: Input Jurnal -->
@@ -468,33 +479,19 @@
                         <input type="date" id="jurnalTanggal" required>
                     </div>
                     <div class="form-group">
-                        <label>Jam Ke- *</label>
-                        <select id="jurnalJamKe" required>
-                            <option value="">Pilih Jam</option>
-                            <option value="1">Jam ke-1</option>
-                            <option value="2">Jam ke-2</option>
-                            <option value="3">Jam ke-3</option>
-                            <option value="4">Jam ke-4</option>
-                            <option value="5">Jam ke-5</option>
-                            <option value="6">Jam ke-6</option>
-                            <option value="7">Jam ke-7</option>
-                            <option value="8">Jam ke-8</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Waktu *</label>
-                        <input type="text" id="jurnalWaktu" placeholder="07.30-08.50" required>
+                        <label>Waktu Kegiatan *</label>
+                        <input type="text" id="jurnalWaktu" placeholder="Contoh: 07.30-08.50" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Uraian Kegiatan *</label>
-                    <textarea id="jurnalKegiatan" placeholder="Contoh: Mengajar Mapel Sejarah Kelas X.2" required></textarea>
+                    <textarea id="jurnalKegiatan" placeholder="Contoh: Menjemput siswa MAN Bantaeng" required></textarea>
                 </div>
 
                 <div class="form-group">
                     <label>Hasil/Output</label>
-                    <textarea id="jurnalHasil" placeholder="Contoh: Siswa memahami materi Revolusi Kemerdekaan"></textarea>
+                    <textarea id="jurnalHasil" placeholder="Contoh: Terlaksananya penjemputan siswa"></textarea>
                 </div>
 
                 <div class="form-group">
@@ -569,9 +566,6 @@
                     <button class="btn btn-primary" onclick="exportPDF()">
                         📄 Export PDF
                     </button>
-                    <button class="btn btn-warning" onclick="exportExcel()">
-                        📊 Export Excel
-                    </button>
                 </div>
             </div>
 
@@ -585,7 +579,6 @@
                         <tr>
                             <th>No</th>
                             <th>Tanggal</th>
-                            <th>Jam</th>
                             <th>Waktu</th>
                             <th>Kegiatan</th>
                             <th>Hasil</th>
@@ -596,18 +589,6 @@
                     </thead>
                     <tbody id="jurnalTableBody"></tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tab: Laporan -->
-    <div id="tab-laporan" class="tab-content" style="display: none;">
-        <div class="card">
-            <h2>📊 Laporan Bulanan</h2>
-            <div id="laporanContent">
-                <p style="color: #64748b; text-align: center; padding: 40px;">
-                    Pilih bulan dan tahun di tab "Daftar Jurnal" untuk melihat laporan
-                </p>
             </div>
         </div>
     </div>
@@ -626,19 +607,6 @@
                 <div class="form-group">
                     <label>Tanggal</label>
                     <input type="date" id="editTanggal" required>
-                </div>
-                <div class="form-group">
-                    <label>Jam Ke-</label>
-                    <select id="editJamKe" required>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                    </select>
                 </div>
                 <div class="form-group">
                     <label>Waktu</label>
@@ -671,6 +639,9 @@
         </form>
     </div>
 </div>
+
+<!-- Hidden Table for PDF Export -->
+<div id="pdfExportTable"></div>
 
 <script src="../js/jurnal.js"></script>
 
