@@ -423,7 +423,7 @@ window.hapusSemuaJurnal = async function() {
     } catch (error) { alert('❌ ' + error.message); }
 };
 
-/ ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // PREVIEW PDF (Sebelum Export)
 // ══════════════════════════════════════════════
 window.previewPDF = async function() {
@@ -444,7 +444,7 @@ window.previewPDF = async function() {
 };
 
 // ══════════════════════════════════════════════
-// EXPORT PDF (Format LCKH dengan Foto)
+// EXPORT PDF
 // ══════════════════════════════════════════════
 window.exportPDF = async function() {
     const btn = event.target;
@@ -453,113 +453,168 @@ window.exportPDF = async function() {
     btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
     
     try {
-        const filterBulan = document.getElementById('filterBulan').value;
-        const filterTahun = document.getElementById('filterTahun').value;
-        const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-        
-        let filtered = daftarJurnal.filter(j => {
-            const d = new Date(j.tanggal);
-            return (d.getMonth() + 1) === parseInt(filterBulan) && d.getFullYear() === parseInt(filterTahun);
-        });
-        
-        if (filtered.length === 0) {
-            alert('⚠️ Tidak ada data untuk diekspor!');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            return;
-        }
-        
-        // Build HTML table untuk PDF
-        const pdfArea = document.getElementById('pdfExportArea');
-        pdfArea.innerHTML = `
-            <div style="font-family: Arial, sans-serif; padding: 15px; width: 1050px; background: white;">
-                <h2 style="text-align:center; font-size:14px; margin-bottom:3px;">LAPORAN CAPAIAN KINERJA HARIAN (LCKH)</h2>
-                <h3 style="text-align:center; font-size:12px; margin-bottom:3px;">BULAN ${monthNames[filterBulan].toUpperCase()} TP. ${filterTahun}/${parseInt(filterTahun)+1}</h3>
-                <h3 style="text-align:center; font-size:12px; margin-bottom:15px;">MAN BANTAENG</h3>
-                
-               <table style="width:100%; margin-bottom:15px; font-size:11px;">
-    <tr>
-        <td style="width:150px;"><strong>NAMA</strong></td>
-        <td style="width:300px;">: ${currentUser.nama}</td>
-        <td style="width:150px; text-align:right;"><strong>MATA PELAJARAN</strong></td>
-        <td>: Sejarah</td>
-    </tr>
-    <tr>
-        <td><strong>NIP</strong></td>
-        <td>: ${currentUser.nip || '-'}</td>
-        <td style="text-align:right;"><strong>JABATAN</strong></td>
-        <td>: Guru</td>
-    </tr>
-</table>
-                
-                <table style="width:100%; border-collapse:collapse; font-size:10px;">
-                    <thead>
-                        <tr style="background:#10b981; color:white;">
-                            <th style="border:1px solid #333; padding:6px; width:25px;">NO</th>
-                            <th style="border:1px solid #333; padding:6px; width:140px;">HARI, TANGGAL</th>
-                            <th style="border:1px solid #333; padding:6px; width:130px;">JAM</th>
-                            <th style="border:1px solid #333; padding:6px;">URAIAN KEGIATAN</th>
-                            <th style="border:1px solid #333; padding:6px; width:35px;">VOL</th>
-                            <th style="border:1px solid #333; padding:6px;">OUTPUT</th>
-                            <th style="border:1px solid #333; padding:6px; width:100px;">KETERANGAN/<br>GAMBAR</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${filtered.map((j, index) => {
-                            let activities = j.activities || [];
-                            if (activities.length === 0 && j.kegiatan) {
-                                activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
-                            }
-                            
-                            const vol = activities.length || 1;
-                            const jamText = activities.map((a, i) => `${i+1}. ${a.waktu}`).join('<br>');
-                            const kegiatanText = activities.map((a, i) => `${i+1}. ${a.kegiatan}`).join('<br>');
-                            const outputText = activities.map((a, i) => `${i+1}. ${a.hasil || '-'}`).join('<br>');
-                            
-                            let fotoHtml = '';
-                            if (j.fotoBase64 && j.fotoBase64.length > 0) {
-                                fotoHtml = j.fotoBase64.map(f => `<img src="${f}" style="max-width:80px;max-height:60px;margin:2px;display:block;">`).join('');
-                            } else {
-                                fotoHtml = '-';
-                            }
-                            
-                            return `
-                                <tr>
-                                    <td style="border:1px solid #333; padding:5px; text-align:center; vertical-align:top;">${index + 1}</td>
-                                    <td style="border:1px solid #333; padding:5px; vertical-align:top;">${formatDate(j.tanggal)}</td>
-                                    <td style="border:1px solid #333; padding:5px; font-size:9px; vertical-align:top;">${jamText}</td>
-                                    <td style="border:1px solid #333; padding:5px; font-size:9px; vertical-align:top;">${kegiatanText}</td>
-                                    <td style="border:1px solid #333; padding:5px; text-align:center; vertical-align:top; font-weight:bold;">${vol}</td>
-                                    <td style="border:1px solid #333; padding:5px; font-size:9px; vertical-align:top;">${outputText}</td>
-                                    <td style="border:1px solid #333; padding:5px; text-align:center; vertical-align:top;">${fotoHtml}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-                
-                <div style="margin-top:30px; display:flex; justify-content:space-between; font-size:11px;">
-                    <div style="text-align:center;">
-                        <p>Mengetahui,</p>
-                        <p>Kepala Madrasah</p>
-                        <br><br><br>
-                        <p><strong>Muhammad Arief Pither, S.Ag.,MM.,M.Pd</strong></p>
-                        <p>NIP. 19710930 200710 1 001</p>
-                    </div>
-                    <div style="text-align:center;">
-                        <p>Bantaeng, ${new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</p>
-                        <p>Guru Mata Pelajaran</p>
-                        <br><br><br>
-                        <p><strong>${currentUser.nama}</strong></p>
-                        <p>NIP. ${currentUser.nip || '-'}</p>
-                    </div>
+        await generatePDF(false); // false = mode export
+    } catch (error) {
+        console.error('Error export:', error);
+        alert('❌ Gagal export PDF: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+};
+
+// ══════════════════════════════════════════════
+// GENERATE PDF (Shared function untuk preview & export)
+// ══════════════════════════════════════════════
+async function generatePDF(isPreview = false) {
+    const filterBulan = document.getElementById('filterBulan').value;
+    const filterTahun = document.getElementById('filterTahun').value;
+    const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    
+    let filtered = daftarJurnal.filter(j => {
+        const d = new Date(j.tanggal);
+        return (d.getMonth() + 1) === parseInt(filterBulan) && d.getFullYear() === parseInt(filterTahun);
+    });
+    
+    if (filtered.length === 0) {
+        alert('⚠️ Tidak ada data untuk diekspor!');
+        return;
+    }
+    
+    // Build HTML table untuk PDF
+    const pdfArea = document.getElementById('pdfExportArea');
+    pdfArea.innerHTML = `
+        <div style="font-family: Arial, sans-serif; padding: 20px 30px; width: 1050px; background: white;">
+            <h2 style="text-align:center; font-size:16px; margin-bottom:5px; font-weight:bold;">LAPORAN CAPAIAN KINERJA HARIAN (LCKH)</h2>
+            <h3 style="text-align:center; font-size:13px; margin-bottom:3px;">BULAN ${monthNames[filterBulan].toUpperCase()} TP. ${filterTahun}/${parseInt(filterTahun)+1}</h3>
+            <h3 style="text-align:center; font-size:13px; margin-bottom:20px; font-weight:bold;">MAN BANTAENG</h3>
+            
+            <table style="width:100%; margin-bottom:20px; font-size:11px;">
+                <tr>
+                    <td style="width:200px;"><strong>NAMA</strong></td>
+                    <td style="width:300px;">: ${currentUser.nama}</td>
+                    <td style="width:200px; text-align:right;"><strong>MATA PELAJARAN</strong></td>
+                    <td style="width:350px;">: Sejarah</td>
+                </tr>
+                <tr>
+                    <td><strong>NIP</strong></td>
+                    <td>: ${currentUser.nip || '-'}</td>
+                    <td style="text-align:right;"><strong>JABATAN</strong></td>
+                    <td>: Guru</td>
+                </tr>
+            </table>
+            
+            <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                <thead>
+                    <tr style="background:#1e40af; color:white;">
+                        <th style="border:1px solid #333; padding:8px; width:30px; text-align:center;">NO</th>
+                        <th style="border:1px solid #333; padding:8px; width:150px;">HARI, TANGGAL</th>
+                        <th style="border:1px solid #333; padding:8px; width:180px;">JAM</th>
+                        <th style="border:1px solid #333; padding:8px;">URAIAN KEGIATAN</th>
+                        <th style="border:1px solid #333; padding:8px; width:40px; text-align:center;">VOL</th>
+                        <th style="border:1px solid #333; padding:8px;">OUTPUT</th>
+                        <th style="border:1px solid #333; padding:8px; width:120px; text-align:center;">KETERANGAN/<br>GAMBAR</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtered.map((j, index) => {
+                        let activities = j.activities || [];
+                        if (activities.length === 0 && j.kegiatan) {
+                            activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
+                        }
+                        
+                        const vol = activities.length || 1;
+                        const jamText = activities.map((a, i) => `${i+1}. ${a.waktu}`).join('<br>');
+                        const kegiatanText = activities.map((a, i) => `${i+1}. ${a.kegiatan}`).join('<br>');
+                        const outputText = activities.map((a, i) => `${i+1}. ${a.hasil || '-'}`).join('<br>');
+                        
+                        let fotoHtml = '';
+                        if (j.fotoBase64 && j.fotoBase64.length > 0) {
+                            fotoHtml = j.fotoBase64.map(f => `<img src="${f}" style="max-width:100px;max-height:70px;margin:2px;display:block;border:1px solid #ddd;">`).join('');
+                        } else {
+                            fotoHtml = '-';
+                        }
+                        
+                        return `
+                            <tr>
+                                <td style="border:1px solid #333; padding:6px; text-align:center; vertical-align:top;">${index + 1}</td>
+                                <td style="border:1px solid #333; padding:6px; vertical-align:top;">${formatDate(j.tanggal)}</td>
+                                <td style="border:1px solid #333; padding:6px; font-size:9px; vertical-align:top;">${jamText}</td>
+                                <td style="border:1px solid #333; padding:6px; font-size:9px; vertical-align:top;">${kegiatanText}</td>
+                                <td style="border:1px solid #333; padding:6px; text-align:center; vertical-align:top; font-weight:bold;">${vol}</td>
+                                <td style="border:1px solid #333; padding:6px; font-size:9px; vertical-align:top;">${outputText}</td>
+                                <td style="border:1px solid #333; padding:6px; text-align:center; vertical-align:top;">${fotoHtml}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+            
+            <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; min-height:150px;">
+                <div style="text-align:left; width:45%;">
+                    <p style="margin-bottom:8px;">Mengetahui,</p>
+                    <p style="margin-bottom:8px; font-weight:bold;">Kepala Madrasah</p>
+                    <br><br><br>
+                    <p style="font-weight:bold; margin-bottom:4px;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>
+                    <p>NIP. 19710930 200710 1 001</p>
+                </div>
+                <div style="text-align:left; width:45%;">
+                    <p style="margin-bottom:8px;">Bantaeng, ${new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</p>
+                    <p style="margin-bottom:8px;">Guru Mata Pelajaran</p>
+                    <br><br><br>
+                    <p style="font-weight:bold; margin-bottom:4px;">${currentUser.nama}</p>
+                    <p>NIP. ${currentUser.nip || '-'}</p>
                 </div>
             </div>
-        `;
-        
-        // Tunggu gambar load
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
+        </div>
+    `;
+    
+    // Tunggu gambar load
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    if (isPreview) {
+        // Buka preview di tab/window baru
+        const printWindow = window.open('', '_blank');
+        const pdfContent = pdfArea.innerHTML;
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Preview LCKH - ${monthNames[filterBulan]} ${filterTahun}</title>
+                <style>
+                    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background: #f5f5f5; }
+                    .preview-container { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+                    .print-btn { 
+                        position: fixed; 
+                        top: 20px; 
+                        right: 20px; 
+                        padding: 12px 24px; 
+                        background: #10b981; 
+                        color: white; 
+                        border: none; 
+                        border-radius: 8px; 
+                        cursor: pointer; 
+                        font-weight: 600;
+                        font-size: 14px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    }
+                    .print-btn:hover { background: #059669; }
+                    @media print {
+                        body { background: white; }
+                        .preview-container { box-shadow: none; }
+                        .print-btn { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <button class="print-btn" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+                <div class="preview-container">${pdfContent}</div>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    } else {
+        // Export ke PDF file
         const canvas = await html2canvas(pdfArea.firstElementChild, {
             scale: 2,
             useCORS: true,
@@ -595,7 +650,9 @@ window.exportPDF = async function() {
             }
         }
         
-        pdf.save(`LCKH_${monthNames[filterBulan]}_${filterTahun}_${currentUser.nama}.pdf`);
+        pdf.save(`LCKH_${monthNames[filterBulan]}_${filterTahun}_${currentUser.nama.replace(/\s+/g, '_')}.pdf`);
+    }
+}
         
     } catch (error) {
         console.error('Error export:', error);
