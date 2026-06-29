@@ -450,24 +450,43 @@ async function generatePDF(isPreview) {
     }
     
     const pdfArea = document.getElementById('pdfExportArea');
-    pdfArea.innerHTML = '<div style="font-family:Arial,sans-serif;padding:20px 30px;width:1050px;background:white;">' +
+    pdfArea.innerHTML = '<div style="font-family:Arial,sans-serif;padding:20px 30px;width:1050px;background:white;box-sizing:border-box;">' +
         '<h2 style="text-align:center;font-size:16px;margin-bottom:5px;font-weight:bold;">LAPORAN CAPAIAN KINERJA HARIAN (LCKH)</h2>' +
         '<h3 style="text-align:center;font-size:13px;margin-bottom:3px;">BULAN ' + monthNames[filterBulan].toUpperCase() + ' TP. ' + filterTahun + '/' + (parseInt(filterTahun)+1) + '</h3>' +
         '<h3 style="text-align:center;font-size:13px;margin-bottom:20px;font-weight:bold;">MAN BANTAENG</h3>' +
-        '<table style="width:100%;margin-bottom:20px;font-size:11px;">' +
-            '<tr>' +
-                '<td style="width:150px;"><strong>NAMA</strong></td>' +
-                '<td style="width:350px;">: ' + (currentUser.nama || '') + '</td>' +
-                '<td style="width:200px;text-align:right;"><strong>MATA PELAJARAN</strong></td>' +
-                '<td style="width:350px;">: Sejarah</td>' +
-            '</tr>' +
-            '<tr>' +
-                '<td><strong>NIP</strong></td>' +
-                '<td>: ' + (currentUser.nip || '-') + '</td>' +
-                '<td style="text-align:right;"><strong>JABATAN</strong></td>' +
-                '<td>: Guru</td>' +
-            '</tr>' +
-        '</table>' +
+        
+        // ─── PERBAIKAN METADATA ATAS (DIBAGI MENJADI LAYOUT FLEX AGAR SEIMBANG SISI KANAN & KIRI) ───
+        '<div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px; font-size: 11px;">' +
+            '<div style="width: 45%;">' +
+                '<table style="width: 100%; border-collapse: collapse; border: none;">' +
+                    '<tr>' +
+                        '<td style="width: 60px; padding: 3px 0; font-weight: bold; border: none;">NAMA</td>' +
+                        '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">' + (currentUser.nama || '') + '</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td style="padding: 3px 0; font-weight: bold; border: none;">NIP</td>' +
+                        '<td style="padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">' + (currentUser.nip || '-') + '</td>' +
+                    '</tr>' +
+                '</table>' +
+            '</div>' +
+            '<div style="width: 45%; margin-left: auto;">' +
+                '<table style="width: 100%; border-collapse: collapse; border: none;">' +
+                    '<tr>' +
+                        '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
+                        '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">Sejarah</td>' +
+                    '</tr>' +
+                    '<tr>' +
+                        '<td style="padding: 3px 0; font-weight: bold; border: none;">JABATAN</td>' +
+                        '<td style="padding: 3px 0; border: none;">:</td>' +
+                        '<td style="padding: 3px 0; border: none;">Guru</td>' +
+                    '</tr>' +
+                '</table>' +
+            '</div>' +
+        '</div>' +
+        
         '<table style="width:100%;border-collapse:collapse;font-size:10px;">' +
             '<thead><tr style="background:#1e40af;color:white;">' +
                 '<th style="border:1px solid #333;padding:8px;width:30px;text-align:center;">NO</th>' +
@@ -504,63 +523,29 @@ async function generatePDF(isPreview) {
                 '</tr>';
             }).join('') +
         '</tbody></table>' +
-        '<div style="margin-top:40px;display:flex;justify-content:space-between;font-size:11px;min-height:150px;">' +
-            '<div style="text-align:left;width:45%;">' +
-                '<p style="margin-bottom:8px;">Mengetahui,</p>' +
-                '<p style="margin-bottom:8px;font-weight:bold;">Kepala Madrasah</p>' +
-                '<br><br><br>' +
-                '<p style="font-weight:bold;margin-bottom:4px;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>' +
-                '<p>NIP. 19710930 200710 1 001</p>' +
+        
+        // ─── PERBAIKAN TANDA TANGAN (KOTA DIGESER KANAN & LEBIH TINGGI SETINGKAT DARIPADA MENGETAHUI) ───
+        '<div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; align-items: flex-start;">' +
+            
+            // Kolom Kiri (Mengetahui) -> Diberi margin-top agar turun setingkat dibanding Kolom Kota
+            '<div style="text-align:left; width:40%; margin-top: 22px;">' +
+                '<p style="margin: 0 0 8px 0; padding: 0;">Mengetahui,</p>' +
+                '<p style="margin: 0 0 8px 0; padding: 0; font-weight:bold;">Kepala Madrasah</p>' +
+                '<div style="height: 75px;"></div>' +
+                '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>' +
+                '<p style="margin: 0; padding: 0;">NIP. 19710930 200710 1 001</p>' +
             '</div>' +
-            '<div style="text-align:left;width:45%;">' +
-                '<p style="margin-bottom:8px;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
-                '<p style="margin-bottom:8px;">Guru Mata Pelajaran</p>' +
-                '<br><br><br>' +
-                '<p style="font-weight:bold;margin-bottom:4px;">' + (currentUser.nama || '') + '</p>' +
-                '<p>NIP. ' + (currentUser.nip || '-') + '</p>' +
+            
+            // Kolom Kanan (Nama Kota & Tanggal) -> Sumbu X ditarik magnet ke kanan halaman via margin-left: auto
+            '<div style="text-align:left; width:40%; margin-left: auto;">' +
+                '<p style="margin: 0 0 8px 0; padding: 0;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
+                '<p style="margin: 0 0 8px 0; padding: 0; font-weight:bold;">Guru Mata Pelajaran</p>' +
+                '<div style="height: 75px;"></div>' +
+                '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">' + (currentUser.nama || '') + '</p>' +
+                '<p style="margin: 0; padding: 0;">NIP. ' + (currentUser.nip || '-') + '</p>' +
             '</div>' +
+            
         '</div>' +
     '</div>';
     
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    if (isPreview) {
-        const printWindow = window.open('', '_blank');
-        const pdfContent = pdfArea.innerHTML;
-        printWindow.document.write('<!DOCTYPE html><html><head><title>Preview LCKH - ' + monthNames[filterBulan] + ' ' + filterTahun + '</title><style>body{margin:0;padding:20px;font-family:Arial,sans-serif;background:#f5f5f5;}.preview-container{background:white;box-shadow:0 0 20px rgba(0,0,0,0.1);}.print-btn{position:fixed;top:20px;right:20px;padding:12px 24px;background:#10b981;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}.print-btn:hover{background:#059669;}@media print{body{background:white;}.preview-container{box-shadow:none;}.print-btn{display:none;}}</style></head><body><button class="print-btn" onclick="window.print()">️ Cetak / Simpan PDF</button><div class="preview-container">' + pdfContent + '</div></body></html>');
-        printWindow.document.close();
-    } else {
-        const canvas = await html2canvas(pdfArea.firstElementChild, { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' });
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('l', 'mm', 'a4');
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        const pdfW = pdf.internal.pageSize.getWidth();
-        const pdfH = pdf.internal.pageSize.getHeight();
-        const imgW = canvas.width;
-        const imgH = canvas.height;
-        const ratio = pdfW / imgW;
-        const scaledH = imgH * ratio;
-        
-        if (scaledH <= pdfH) {
-            pdf.addImage(imgData, 'JPEG', 0, 5, pdfW, scaledH);
-        } else {
-            const pageH = pdfH - 10;
-            const totalPages = Math.ceil(scaledH / pageH);
-            for (let p = 0; p < totalPages; p++) {
-                if (p > 0) pdf.addPage();
-                const yOffset = -(p * pageH) + 5;
-                pdf.addImage(imgData, 'JPEG', 0, yOffset, pdfW, scaledH);
-            }
-        }
-        
-        pdf.save('LCKH_' + monthNames[filterBulan] + '_' + filterTahun + '_' + (currentUser.nama || '').replace(/\s+/g, '_') + '.pdf');
-    }
-}
-
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
