@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// FIREBASE CONFIG
+// FIREBASE CONFIG (HANYA FIRESTORE, TANPA STORAGE)
 // ══════════════════════════════════════════════
 const firebaseConfig = {
     apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
@@ -13,12 +13,13 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+// ❌ JANGAN import storage: const storage = firebase.storage();
 
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
 let currentUser = null;
-let uploadedPhotos = [];
+let uploadedPhotos = []; // Array base64
 let daftarJurnal = [];
 
 // ══════════════════════════════════════════════
@@ -74,8 +75,8 @@ window.switchTab = function(tabName) {
 };
 
 // ══════════════════════════════════════════════
-// PHOTO UPLOAD (BASE64)
-// ══════════════════════════════════════════════
+// PHOTO UPLOAD (BASE64 - TANPA STORAGE)
+// ═════════════════════════════════════════════
 function setupPhotoUpload() {
     const uploadArea = document.getElementById('photoUploadArea');
     const photoInput = document.getElementById('photoInput');
@@ -123,12 +124,11 @@ function handleFiles(files) {
         
         const reader = new FileReader();
         reader.onload = (e) => {
-            // Kompres gambar
+            // Kompres gambar sebelum simpan
             compressImage(e.target.result, 800, 0.7).then(compressed => {
                 uploadedPhotos.push({
                     name: file.name,
-                    base64: compressed,
-                    size: file.size
+                    base64: compressed
                 });
                 renderPhotoPreview();
             });
@@ -137,7 +137,7 @@ function handleFiles(files) {
     });
 }
 
-// Kompres gambar
+// Kompres gambar dengan canvas
 function compressImage(base64, maxWidth, quality) {
     return new Promise((resolve) => {
         const img = new Image();
@@ -154,6 +154,8 @@ function compressImage(base64, maxWidth, quality) {
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
             resolve(canvas.toDataURL('image/jpeg', quality));
         };
@@ -178,7 +180,7 @@ window.removePhoto = function(index) {
 
 // ══════════════════════════════════════════════
 // FORM SUBMIT
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 function setupFormSubmit() {
     document.getElementById('formJurnal').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -193,11 +195,11 @@ function setupFormSubmit() {
 
 async function simpanJurnal() {
     const btn = document.getElementById('btnSimpan');
-    const alert = document.getElementById('alertInput');
+    const alertEl = document.getElementById('alertInput');
     
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
-    alert.classList.remove('show');
+    alertEl.classList.remove('show');
     
     try {
         const tanggal = document.getElementById('jurnalTanggal').value;
@@ -207,9 +209,15 @@ async function simpanJurnal() {
         const hasil = document.getElementById('jurnalHasil').value;
         const keterangan = document.getElementById('jurnalKeterangan').value;
         
-        // Simpan foto sebagai base64
+        // ✅ SIMPAN FOTO SEBAGAI BASE64 (TANPA STORAGE)
         const photoBase64Array = uploadedPhotos.map(p => p.base64);
         
+        console.log('📝 Menyimpan jurnal dengan data:', {
+            tanggal, jamKe, waktu, kegiatan,
+            fotoCount: photoBase64Array.length
+        });
+        
+        // ✅ SIMPAN KE FIRESTORE (TANPA STORAGE)
         await db.collection('jurnal_mengajar').add({
             userEmail: currentUser.email,
             userName: currentUser.nama,
@@ -226,12 +234,19 @@ async function simpanJurnal() {
             updatedAt: new Date().toISOString()
         });
         
-        showAlert('✅ Jurnal berhasil disimpan!', 'success', 'alertInput');
+        console.log('✅ Jurnal berhasil disimpan!');
+        alertEl.textContent = '✅ Jurnal berhasil disimpan!';
+        alertEl.className = 'alert alert-success show';
         resetForm();
         
+        setTimeout(() => {
+            alertEl.classList.remove('show');
+        }, 3000);
+        
     } catch (error) {
-        console.error('Error saving jurnal:', error);
-        showAlert('❌ Gagal menyimpan: ' + error.message, 'error', 'alertInput');
+        console.error(' Error saving jurnal:', error);
+        alertEl.textContent = '❌ Gagal menyimpan: ' + error.message;
+        alertEl.className = 'alert alert-error show';
     } finally {
         btn.disabled = false;
         btn.innerHTML = '💾 Simpan Jurnal';
@@ -246,7 +261,7 @@ function resetForm() {
 }
 
 // ══════════════════════════════════════════════
-// LOAD DAFTAR JURNAL (DENGAN FOTO)
+// LOAD DAFTAR JURNAL
 // ══════════════════════════════════════════════
 async function loadDaftarJurnal() {
     const loading = document.getElementById('loadingDaftar');
@@ -257,15 +272,13 @@ async function loadDaftarJurnal() {
     table.style.display = 'none';
     
     try {
-        let query = db.collection('jurnal_mengajar')
-            .where('userEmail', '==', currentUser.email);
+        const snapshot = await db.collection('jurnal_mengajar')
+            .where('userEmail', '==', currentUser.email)
+            .get();
         
-        const snapshot = await query.get();
         daftarJurnal = [];
-        
         snapshot.forEach(doc => {
-            const data = doc.data();
-            daftarJurnal.push({ id: doc.id, ...data });
+            daftarJurnal.push({ id: doc.id, ...doc.data() });
         });
         
         // Sort by tanggal desc, jamKe asc
@@ -274,53 +287,26 @@ async function loadDaftarJurnal() {
             return a.jamKe - b.jamKe;
         });
         
-        // Filter by bulan/tahun
+        // Filter
         const filterBulan = document.getElementById('filterBulan').value;
         const filterTahun = document.getElementById('filterTahun').value;
         
         let filtered = daftarJurnal;
         if (filterBulan) {
-            filtered = filtered.filter(j => {
-                const month = new Date(j.tanggal).getMonth() + 1;
-                return month === parseInt(filterBulan);
-            });
+            filtered = filtered.filter(j => new Date(j.tanggal).getMonth() + 1 === parseInt(filterBulan));
         }
         if (filterTahun) {
-            filtered = filtered.filter(j => {
-                const year = new Date(j.tanggal).getFullYear();
-                return year === parseInt(filterTahun);
-            });
+            filtered = filtered.filter(j => new Date(j.tanggal).getFullYear() === parseInt(filterTahun));
         }
         
         if (filtered.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="9" style="text-align: center; color: #64748b; padding: 20px;">
-                        📭 Tidak ada data jurnal
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:20px;color:#64748b;">📭 Tidak ada data</td></tr>`;
         } else {
             tbody.innerHTML = filtered.map((j, index) => {
-                const badgeClass = {
-                    'Hadir': 'badge-hadir',
-                    'Izin': 'badge-izin',
-                    'Sakit': 'badge-sakit',
-                    'Alpha': 'badge-alpha'
-                }[j.keterangan] || '';
-                
                 const fotoCount = j.fotoCount || (j.fotoBase64 ? j.fotoBase64.length : 0);
-                
-                // Thumbnail foto pertama (jika ada)
                 let fotoThumb = '-';
                 if (fotoCount > 0 && j.fotoBase64[0]) {
-                    fotoThumb = `
-                        <img src="${j.fotoBase64[0]}" 
-                             style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;" 
-                             onclick="viewPhoto('${j.id}', 0)"
-                             title="Klik untuk lihat foto">
-                        ${fotoCount > 1 ? `<span style="font-size:0.75rem;color:#64748b;">+${fotoCount-1}</span>` : ''}
-                    `;
+                    fotoThumb = `<img src="${j.fotoBase64[0]}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;cursor:pointer;" onclick="viewPhoto('${j.id}', 0)">`;
                 }
                 
                 return `
@@ -331,11 +317,11 @@ async function loadDaftarJurnal() {
                         <td>${j.waktu}</td>
                         <td>${j.kegiatan}</td>
                         <td>${j.hasil || '-'}</td>
-                        <td>${j.keterangan ? `<span class="badge ${badgeClass}">${j.keterangan}</span>` : '-'}</td>
+                        <td>${j.keterangan || '-'}</td>
                         <td>${fotoThumb}</td>
                         <td>
-                            <button class="btn btn-warning btn-sm" onclick="editJurnal('${j.id}')" title="Edit">✏️</button>
-                            <button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')" style="margin-left: 4px;" title="Hapus">🗑️</button>
+                            <button class="btn btn-warning btn-sm" onclick="editJurnal('${j.id}')">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -346,48 +332,25 @@ async function loadDaftarJurnal() {
         table.style.display = 'block';
         
     } catch (error) {
-        console.error('Error loading jurnal:', error);
-        loading.innerHTML = `<div style="color: red; padding: 20px;">❌ Gagal memuat data: ${error.message}</div>`;
+        console.error('Error loading:', error);
+        loading.innerHTML = `<div style="color:red;padding:20px;"> ${error.message}</div>`;
     }
 }
 
-// ══════════════════════════════════════════════
-// VIEW PHOTO (MODAL)
-// ══════════════════════════════════════════════
 window.viewPhoto = function(jurnalId, photoIndex) {
     const jurnal = daftarJurnal.find(j => j.id === jurnalId);
     if (!jurnal || !jurnal.fotoBase64[photoIndex]) return;
     
-    // Buat modal untuk lihat foto
     const modal = document.createElement('div');
-    modal.style.cssText = `
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.9);
-        z-index: 99999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: zoom-out;
-    `;
-    
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
     const img = document.createElement('img');
     img.src = jurnal.fotoBase64[photoIndex];
-    img.style.cssText = `
-        max-width: 90%;
-        max-height: 90%;
-        object-fit: contain;
-        border-radius: 8px;
-    `;
-    
+    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;';
     modal.appendChild(img);
     modal.onclick = () => modal.remove();
     document.body.appendChild(modal);
 };
 
-// ══════════════════════════════════════════════
-// EDIT & HAPUS
-// ══════════════════════════════════════════════
 window.editJurnal = function(id) {
     const jurnal = daftarJurnal.find(j => j.id === id);
     if (!jurnal) return;
@@ -418,11 +381,11 @@ async function updateJurnal() {
         });
         
         alert('✅ Jurnal berhasil diupdate!');
-        tutupModal();
+        document.getElementById('modalEdit').classList.remove('show');
         loadDaftarJurnal();
         
     } catch (error) {
-        alert('❌ Gagal update: ' + error.message);
+        alert(' Gagal update: ' + error.message);
     }
 }
 
@@ -433,7 +396,6 @@ window.hapusJurnal = async function(id) {
         await db.collection('jurnal_mengajar').doc(id).delete();
         alert('✅ Jurnal berhasil dihapus!');
         loadDaftarJurnal();
-        
     } catch (error) {
         alert('❌ Gagal hapus: ' + error.message);
     }
@@ -443,108 +405,55 @@ window.tutupModal = function() {
     document.getElementById('modalEdit').classList.remove('show');
 };
 
-// ══════════════════════════════════════════════
-// EXPORT PDF (DENGAN FOTO)
-// ══════════════════════════════════════════════
+// Export PDF & Excel (sama seperti sebelumnya)
 window.exportPDF = async function() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+    const doc = new jsPDF('l', 'mm', 'a4');
     
-    // Header
     doc.setFontSize(14);
-    doc.text('LAPORAN CATATAN KINERJA HARIAN GURU (JURNAL HARIAN)', 148, 15, { align: 'center' });
+    doc.text('LAPORAN CATATAN KINERJA HARIAN GURU', 148, 15, { align: 'center' });
     doc.setFontSize(11);
     doc.text('MAN BANTAENG', 148, 22, { align: 'center' });
     
     doc.setFontSize(10);
     doc.text(`Nama: ${currentUser.nama}`, 14, 30);
-    doc.text(`Jabatan: ${currentUser.role}`, 14, 35);
-    doc.text(`Mata Pelajaran: Sejarah`, 14, 40);
+    doc.text(`Mata Pelajaran: Sejarah`, 14, 35);
     
-    // Table dengan foto
-    const tableData = daftarJurnal.map((j, index) => {
-        // Siapkan foto untuk ditampilkan
-        let fotoInfo = '';
-        if (j.fotoBase64 && j.fotoBase64.length > 0) {
-            fotoInfo = `${j.fotoBase64.length} foto`;
-        } else {
-            fotoInfo = '-';
-        }
-        
-        return [
-            index + 1,
-            formatDate(j.tanggal),
-            j.jamKe,
-            j.waktu,
-            j.kegiatan,
-            j.hasil || '-',
-            fotoInfo
-        ];
-    });
+    const tableData = daftarJurnal.map((j, index) => [
+        index + 1,
+        formatDate(j.tanggal),
+        j.jamKe,
+        j.waktu,
+        j.kegiatan,
+        j.hasil || '-',
+        j.fotoCount || 0
+    ]);
     
     doc.autoTable({
-        startY: 45,
-        head: [['No', 'Tanggal', 'Jam', 'Waktu', 'Uraian Kegiatan', 'Hasil/Output', 'Foto']],
+        startY: 40,
+        head: [['No', 'Tanggal', 'Jam', 'Waktu', 'Kegiatan', 'Hasil', 'Foto']],
         body: tableData,
         theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 2 },
-        headStyles: { fillColor: [16, 185, 129], textColor: 255 },
-        columnStyles: {
-            6: { halign: 'center' } // Kolom foto di tengah
-        }
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [16, 185, 129] }
     });
     
-    // Signature
-    const finalY = doc.lastAutoTable.finalY + 20;
-    doc.text('Bantaeng, ' + new Date().toLocaleDateString('id-ID'), 200, finalY);
-    doc.text('Mengetahui,', 14, finalY + 15);
-    doc.text('Kepala Madrasah', 14, finalY + 25);
-    doc.text('Guru Mata Pelajaran', 200, finalY + 25);
-    doc.text('Muhammad Arief Pither, S.Ag.,MM.,M.Pd', 14, finalY + 45);
-    doc.text(currentUser.nama, 200, finalY + 45);
-    doc.text('NIP. 19710930 200710 1 001', 14, finalY + 50);
-    
-    doc.save(`Jurnal_${currentUser.nama}_${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`Jurnal_${currentUser.nama}.pdf`);
 };
 
-// ══════════════════════════════════════════════
-// EXPORT EXCEL
-// ══════════════════════════════════════════════
 window.exportExcel = function() {
-    let csv = 'No,Tanggal,Jam Ke,Waktu,Uraian Kegiatan,Hasil/Output,Keterangan,Jumlah Foto\n';
-    
-    daftarJurnal.forEach((j, index) => {
-        const fotoCount = j.fotoBase64 ? j.fotoBase64.length : 0;
-        csv += `${index + 1},${j.tanggal},${j.jamKe},"${j.waktu}","${j.kegiatan}","${j.hasil || ''}","${j.keterangan || ''}",${fotoCount}\n`;
+    let csv = 'No,Tanggal,Jam,Waktu,Kegiatan,Hasil,Keterangan,Foto\n';
+    daftarJurnal.forEach((j, i) => {
+        csv += `${i+1},${j.tanggal},${j.jamKe},"${j.waktu}","${j.kegiatan}","${j.hasil||''}","${j.keterangan||''}",${j.fotoCount||0}\n`;
     });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csv], { type: 'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `Jurnal_${currentUser.nama}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `Jurnal_${currentUser.nama}.csv`;
     link.click();
 };
 
-// ══════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════
 function formatDate(dateStr) {
     if (!dateStr) return '-';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-    });
-}
-
-function showAlert(message, type, elementId) {
-    const alert = document.getElementById(elementId);
-    alert.textContent = message;
-    alert.className = `alert alert-${type} show`;
-    
-    setTimeout(() => {
-        alert.classList.remove('show');
-    }, 4000);
+    return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
