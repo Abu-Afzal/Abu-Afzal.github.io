@@ -629,22 +629,31 @@ async function generatePDF(isPreview) {
             }).join('') +
         '</tbody></table>' +
         
-        '<div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; align-items: flex-start;">' +
-            '<div style="text-align:left; width:40%; margin-top: 22px;">' +
-                '<p style="margin: 0 0 8px 0; padding: 0;">Mengetahui,</p>' +
-                '<p style="margin: 0 0 8px 0; padding: 0; font-weight:bold;">Kepala Madrasah</p>' +
-                '<div style="height: 75px;"></div>' +
+        // ════════════════════════════════════════════════════════════
+        // PERBAIKAN STRUKTUR TATA LETAK TANDA TANGAN (FIXED)
+        // ════════════════════════════════════════════════════════════
+        '<div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; width:100%; line-height: 1.5;">' +
+            
+            // Kolom Kiri: Kepala Madrasah
+            '<div style="width: 350px; text-align:left;">' +
+                '<div style="height: 18px;"></div>' + // Spacer kosong penyeimbang baris Tanggal Kota di kanan
+                '<p style="margin: 0 0 4px 0; padding: 0;">Mengetahui,</p>' +
+                '<p style="margin: 0; padding: 0; font-weight:bold;">Kepala Madrasah</p>' +
+                '<div style="height: 75px;"></div>' + // Ruang tanda tangan
                 '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>' +
                 '<p style="margin: 0; padding: 0;">NIP. 19710930 200710 1 001</p>' +
             '</div>' +
             
-            '<div style="text-align:left; width:40%; margin-left: auto;">' +
-                '<p style="margin: 0 0 8px 0; padding: 0;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
-                '<p style="margin: 0 0 8px 0; padding: 0; font-weight:bold;">Guru Mata Pelajaran</p>' +
-                '<div style="height: 75px;"></div>' +
+            // Kolom Kanan: Guru Mata Pelajaran (Digeser penuh ke kanan margin)
+            '<div style="width: 350px; text-align:left; margin-left: auto;">' +
+                '<p style="margin: 0 0 4px 0; padding: 0;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
+                '<div style="height: 18px;"></div>' + // Spacer kosong penyeimbang kata "Mengetahui," di kiri
+                '<p style="margin: 0; padding: 0; font-weight:bold;">Guru Mata Pelajaran</p>' +
+                '<div style="height: 75px;"></div>' + // Ruang tanda tangan
                 '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">' + (currentUser.nama || '') + '</p>' +
                 '<p style="margin: 0; padding: 0;">NIP. ' + (currentUser.nip || '-') + '</p>' +
             '</div>' +
+            
         '</div>' +
     '</div>';
     
