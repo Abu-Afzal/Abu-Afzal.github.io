@@ -6,450 +6,120 @@
     <title>Jurnal Mengajar - SIPELITA</title>
     <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
     
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-    
-    <!-- jsPDF & Plugins -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    
-    <!-- html2canvas untuk embed foto di PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        /* HEADER */
         .page-header {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 24px 30px;
-            border-radius: 14px;
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            color: white; padding: 24px 30px; border-radius: 14px; margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
         }
+        .page-header h1 { font-size: 1.6rem; margin-bottom: 4px; }
+        .page-header p { opacity: 0.9; font-size: 0.9rem; }
+        .back-btn { background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s; }
+        .back-btn:hover { background: rgba(255,255,255,0.3); }
         
-        .page-header h1 {
-            font-size: 1.6rem;
-            margin-bottom: 4px;
-        }
+        .user-info { background: white; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .user-info-left h3 { color: #1e40af; font-size: 1.1rem; margin-bottom: 4px; }
+        .user-info-left p { color: #64748b; font-size: 0.88rem; }
         
-        .page-header p {
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; overflow-x: auto; }
+        .tab { padding: 12px 20px; background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; font-size: 0.95rem; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .tab.active { color: #10b981; border-bottom-color: #10b981; }
+        .tab:hover:not(.active) { color: #334155; }
         
-        .back-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.3);
-            transition: all 0.2s;
-        }
+        .card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 20px; }
+        .card h2 { color: #1e40af; font-size: 1.15rem; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
         
-        .back-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 14px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #475569; font-size: 0.88rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; font-family: inherit; outline: none; transition: all 0.2s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
         
-        /* USER INFO */
-        .user-info {
-            background: white;
-            padding: 20px 24px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        
-        .user-info-left h3 {
-            color: #1e40af;
-            font-size: 1.1rem;
-            margin-bottom: 4px;
-        }
-        
-        .user-info-left p {
-            color: #64748b;
-            font-size: 0.88rem;
-        }
-        
-        /* TABS */
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #e2e8f0;
-            overflow-x: auto;
-        }
-        
-        .tab {
-            padding: 12px 20px;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        
-        .tab.active {
-            color: #10b981;
-            border-bottom-color: #10b981;
-        }
-        
-        .tab:hover:not(.active) {
-            color: #334155;
-        }
-        
-        /* CARD */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-            margin-bottom: 20px;
-        }
-        
-        .card h2 {
-            color: #1e40af;
-            font-size: 1.15rem;
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        /* FORM */
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 14px;
-            margin-bottom: 14px;
-        }
-        
-        .form-group {
-            margin-bottom: 14px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            color: #475569;
-            font-size: 0.88rem;
-        }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-family: inherit;
-            outline: none;
-            transition: all 0.2s;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: #10b981;
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        
-        /* BUTTONS */
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.88rem;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .btn-primary { background: #10b981; color: white; }
         .btn-primary:hover { background: #059669; }
-        
         .btn-secondary { background: #64748b; color: white; }
         .btn-secondary:hover { background: #475569; }
-        
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
-        
         .btn-warning { background: #f59e0b; color: white; }
         .btn-warning:hover { background: #d97706; }
-        
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         
-        /* TABLE */
-        .table-responsive {
-            overflow-x: auto;
-            margin-top: 16px;
-        }
+        .table-responsive { overflow-x: auto; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { background: #f8fafc; color: #1e40af; font-weight: 700; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+        td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+        tr:hover td { background: #fafbff; }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }
-        
-        th {
-            background: #f8fafc;
-            color: #1e40af;
-            font-weight: 700;
-            padding: 12px;
-            text-align: left;
-            border-bottom: 2px solid #e2e8f0;
-            white-space: nowrap;
-        }
-        
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
-            vertical-align: middle;
-        }
-        
-        tr:hover td {
-            background: #fafbff;
-        }
-        
-        /* BADGE */
-        .badge {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: inline-block;
-        }
-        
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         .badge-hadir { background: #dcfce7; color: #166534; }
         .badge-izin { background: #dbeafe; color: #1e40af; }
         .badge-sakit { background: #fef3c7; color: #92400e; }
         .badge-alpha { background: #fee2e2; color: #991b1b; }
         
-        /* PHOTO UPLOAD */
-        .photo-upload-area {
-            border: 2px dashed #cbd5e1;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: #f8fafc;
-        }
+        .photo-upload-area { border: 2px dashed #cbd5e1; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; }
+        .photo-upload-area:hover { border-color: #10b981; background: #f0fdf4; }
+        .photo-upload-area.dragover { border-color: #10b981; background: #dcfce7; }
+        .photo-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 12px; }
+        .photo-item { position: relative; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .photo-item img { width: 100%; height: 100px; object-fit: cover; display: block; }
+        .photo-remove { position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; }
         
-        .photo-upload-area:hover {
-            border-color: #10b981;
-            background: #f0fdf4;
-        }
+        /* Activity Item in Form */
+        .activity-item { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-bottom: 12px; position: relative; }
+        .activity-item h4 { color: #10b981; font-size: 0.9rem; margin-bottom: 10px; }
+        .activity-remove { position: absolute; top: 10px; right: 10px; background: #fee2e2; color: #ef4444; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+        .activity-remove:hover { background: #ef4444; color: white; }
         
-        .photo-upload-area.dragover {
-            border-color: #10b981;
-            background: #dcfce7;
-        }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; padding: 16px; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 14px; padding: 28px; max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #f1f5f9; }
+        .modal-header h3 { color: #1e40af; margin: 0; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #94a3b8; }
         
-        .photo-preview {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-        }
-        
-        .photo-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-        
-        .photo-item img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            display: block;
-        }
-        
-        .photo-remove {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            background: rgba(239, 68, 68, 0.9);
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        /* MODAL */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-        }
-        
-        .modal.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 14px;
-            padding: 28px;
-            max-width: 700px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f1f5f9;
-        }
-        
-        .modal-header h3 {
-            color: #1e40af;
-            margin: 0;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #94a3b8;
-        }
-        
-        /* ALERT */
-        .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            display: none;
-        }
-        
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-weight: 600; display: none; }
         .alert.show { display: block; }
         .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
         .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         
-        /* LOADING */
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #10b981;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid #f3f3f3; border-top: 3px solid #10b981; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        #pdfExportArea { position: absolute; left: -9999px; top: 0; }
         
-        /* HIDDEN TABLE FOR PDF EXPORT */
-        #pdfExportTable {
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            background: white;
-            padding: 20px;
-            width: 1000px;
-        }
-        
-        /* RESPONSIVE */
         @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                text-align: center;
-                gap: 12px;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .tabs {
-                gap: 4px;
-            }
-            
-            .tab {
-                padding: 10px 14px;
-                font-size: 0.85rem;
-            }
+            .page-header { flex-direction: column; text-align: center; gap: 12px; }
+            .form-row { grid-template-columns: 1fr; }
+            .tabs { gap: 4px; }
+            .tab { padding: 10px 14px; font-size: 0.85rem; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Header -->
     <div class="page-header">
         <div>
-            <h1>📚 Jurnal Mengajar</h1>
-            <p>Catatan Kinerja Harian Guru</p>
+            <h1>📚 Laporan Capaian Kinerja Harian</h1>
+            <p>LCKH - MAN Bantaeng</p>
         </div>
         <a href="../index.html" class="back-btn">← Kembali</a>
     </div>
 
-    <!-- User Info -->
     <div class="user-info">
         <div class="user-info-left">
             <h3 id="userName">Memuat...</h3>
@@ -460,7 +130,6 @@
         </div>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
         <button class="tab active" onclick="switchTab('input')">📝 Input Jurnal</button>
         <button class="tab" onclick="switchTab('daftar')">📋 Daftar Jurnal</button>
@@ -473,29 +142,13 @@
             <div id="alertInput" class="alert"></div>
             
             <form id="formJurnal">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Tanggal *</label>
-                        <input type="date" id="jurnalTanggal" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Waktu Kegiatan *</label>
-                        <input type="text" id="jurnalWaktu" placeholder="Contoh: 07.30-08.50" required>
-                    </div>
+                <div class="form-group">
+                    <label>Tanggal *</label>
+                    <input type="date" id="jurnalTanggal" required>
                 </div>
 
                 <div class="form-group">
-                    <label>Uraian Kegiatan *</label>
-                    <textarea id="jurnalKegiatan" placeholder="Contoh: Menjemput siswa MAN Bantaeng" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Hasil/Output</label>
-                    <textarea id="jurnalHasil" placeholder="Contoh: Terlaksananya penjemputan siswa"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label>Keterangan</label>
+                    <label>Keterangan Hari (Opsional)</label>
                     <select id="jurnalKeterangan">
                         <option value="">-</option>
                         <option value="Hadir">Hadir</option>
@@ -506,8 +159,18 @@
                     </select>
                 </div>
 
+                <!-- Activities Container -->
                 <div class="form-group">
-                    <label>Foto Kegiatan (Opsional)</label>
+                    <label>Kegiatan *</label>
+                    <div id="activitiesContainer"></div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addActivity()" style="margin-top: 8px;">
+                        ➕ Tambah Kegiatan
+                    </button>
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="form-group">
+                    <label>Foto Kegiatan / Dokumentasi (Opsional)</label>
                     <div class="photo-upload-area" id="photoUploadArea">
                         <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
                         <div style="font-weight: 600; color: #475569;">Klik atau seret foto ke sini</div>
@@ -534,13 +197,12 @@
     <!-- Tab: Daftar Jurnal -->
     <div id="tab-daftar" class="tab-content" style="display: none;">
         <div class="card">
-            <h2>📋 Daftar Jurnal</h2>
+            <h2>📋 Laporan Capaian Kinerja Harian</h2>
             
-            <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-                <div class="form-group" style="margin: 0; flex: 1; min-width: 150px;">
-                    <label>Filter Bulan</label>
+            <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="margin: 0; min-width: 150px;">
+                    <label>Bulan</label>
                     <select id="filterBulan" onchange="loadDaftarJurnal()">
-                        <option value="">Semua Bulan</option>
                         <option value="1">Januari</option>
                         <option value="2">Februari</option>
                         <option value="3">Maret</option>
@@ -555,36 +217,31 @@
                         <option value="12">Desember</option>
                     </select>
                 </div>
-                <div class="form-group" style="margin: 0; flex: 1; min-width: 120px;">
+                <div class="form-group" style="margin: 0; min-width: 100px;">
                     <label>Tahun</label>
                     <select id="filterTahun" onchange="loadDaftarJurnal()">
                         <option value="2025">2025</option>
                         <option value="2026">2026</option>
                     </select>
                 </div>
-                <div style="display: flex; gap: 8px; align-items: flex-end;">
-                    <button class="btn btn-primary" onclick="exportPDF()">
-                        📄 Export PDF
-                    </button>
-                </div>
+                <button class="btn btn-primary" onclick="exportPDF()">📄 Export PDF</button>
+                <button class="btn btn-danger" onclick="hapusSemuaJurnal()" style="margin-left: auto;">🗑️ Hapus Semua Bulan Ini</button>
             </div>
 
-            <div id="loadingDaftar" style="text-align: center; padding: 20px; color: #64748b;">
-                Memuat data...
-            </div>
+            <div id="loadingDaftar" style="text-align: center; padding: 20px; color: #64748b;">Memuat data...</div>
 
             <div class="table-responsive" id="tableDaftar" style="display: none;">
-                <table>
+                <table id="jurnalTable">
                     <thead>
                         <tr>
-                            <th>No</th>
-                            <th>Tanggal</th>
-                            <th>Waktu</th>
-                            <th>Kegiatan</th>
-                            <th>Hasil</th>
-                            <th>Ket</th>
-                            <th>Foto</th>
-                            <th>Aksi</th>
+                            <th style="width: 40px;">NO</th>
+                            <th style="width: 180px;">HARI, TANGGAL</th>
+                            <th style="width: 160px;">JAM</th>
+                            <th>URAIAN KEGIATAN</th>
+                            <th style="width: 50px;">VOL</th>
+                            <th>OUTPUT</th>
+                            <th style="width: 120px;">KET/GAMBAR</th>
+                            <th style="width: 80px;">AKSI</th>
                         </tr>
                     </thead>
                     <tbody id="jurnalTableBody"></tbody>
@@ -594,54 +251,8 @@
     </div>
 </div>
 
-<!-- Modal Edit -->
-<div id="modalEdit" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>✏️ Edit Jurnal</h3>
-            <button class="close-btn" onclick="tutupModal()">&times;</button>
-        </div>
-        <form id="formEdit">
-            <input type="hidden" id="editId">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Tanggal</label>
-                    <input type="date" id="editTanggal" required>
-                </div>
-                <div class="form-group">
-                    <label>Waktu</label>
-                    <input type="text" id="editWaktu" required>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Kegiatan</label>
-                <textarea id="editKegiatan" required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Hasil/Output</label>
-                <textarea id="editHasil"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Keterangan</label>
-                <select id="editKeterangan">
-                    <option value="">-</option>
-                    <option value="Hadir">Hadir</option>
-                    <option value="Izin">Izin</option>
-                    <option value="Sakit">Sakit</option>
-                    <option value="Alpha">Alpha</option>
-                    <option value="Dinas Luar">Dinas Luar</option>
-                </select>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="submit" class="btn btn-primary" style="flex: 1;">💾 Simpan</button>
-                <button type="button" class="btn btn-secondary" onclick="tutupModal()">❌ Batal</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Hidden Table for PDF Export -->
-<div id="pdfExportTable"></div>
+<!-- Hidden area for PDF export -->
+<div id="pdfExportArea"></div>
 
 <script src="../js/jurnal.js"></script>
 
