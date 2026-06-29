@@ -40,6 +40,17 @@ function loadUserInfo() {
             currentUser = JSON.parse(userStr);
             document.getElementById('userName').textContent = currentUser.nama || 'User';
             document.getElementById('userRole').textContent = currentUser.role || 'Guru';
+            // ✅ Tampilkan NIP
+const nipElement = document.getElementById('userNip');
+if (nipElement) {
+    if (currentUser.nip) {
+        nipElement.textContent = `NIP: ${currentUser.nip}`;
+        nipElement.style.color = '#64748b';
+    } else {
+        nipElement.textContent = 'NIP: Belum diisi (hubungi Admin)';
+        nipElement.style.color = '#ef4444';
+    }
+}
         } else {
             alert('⛔ Anda harus login terlebih dahulu!');
             window.location.href = '../index.html';
@@ -446,14 +457,20 @@ window.exportPDF = async function() {
                 <h3 style="text-align:center; font-size:12px; margin-bottom:3px;">BULAN ${monthNames[filterBulan].toUpperCase()} TP. ${filterTahun}/${parseInt(filterTahun)+1}</h3>
                 <h3 style="text-align:center; font-size:12px; margin-bottom:15px;">MAN BANTAENG</h3>
                 
-                <table style="width:100%; margin-bottom:15px; font-size:11px;">
-                    <tr>
-                        <td><strong>NAMA</strong></td>
-                        <td>: ${currentUser.nama}</td>
-                        <td style="text-align:right;"><strong>MATA PELAJARAN</strong></td>
-                        <td>: Sejarah</td>
-                    </tr>
-                </table>
+               <table style="width:100%; margin-bottom:15px; font-size:11px;">
+    <tr>
+        <td style="width:150px;"><strong>NAMA</strong></td>
+        <td style="width:300px;">: ${currentUser.nama}</td>
+        <td style="width:150px; text-align:right;"><strong>MATA PELAJARAN</strong></td>
+        <td>: Sejarah</td>
+    </tr>
+    <tr>
+        <td><strong>NIP</strong></td>
+        <td>: ${currentUser.nip || '-'}</td>
+        <td style="text-align:right;"><strong>JABATAN</strong></td>
+        <td>: Guru</td>
+    </tr>
+</table>
                 
                 <table style="width:100%; border-collapse:collapse; font-size:10px;">
                     <thead>
