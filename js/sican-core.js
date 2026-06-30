@@ -179,6 +179,13 @@ async function onScanSuccess(decodedText){
         // Bunyikan suara sukses
         successAudio.play().catch(e => console.log("Audio diblokir browser"));
 
+        // ════════════════════════════════════════════════════════════════════
+        // TAMPILKAN NOTIFIKASI SUKSES (OVERLAY FULLSCREEN)
+        // ════════════════════════════════════════════════════════════════════
+        if (typeof window.showSuccessNotification === 'function') {
+            showSuccessNotification(payload.siswa_nama, kegiatan);
+        }
+        
         // JEDA SUKSES: Beri waktu 3 detik bagi siswa untuk menarik kartunya dari kamera
         setTimeout(() => {
             sedangMemprosesScan = false; // Buka kembali kunci kamera untuk siswa selanjutnya
