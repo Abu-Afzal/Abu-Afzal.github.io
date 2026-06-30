@@ -5,10 +5,9 @@ function renderCards() {
     // ====================================================================
     // 🔒 DETEKSI ROLE ANTI-CRASH (KEBAL PELURU)
     // ====================================================================
-    let currentRole = 'guru'; // Default fallback aman agar menu tidak hilang jika gagal deteksi
+    let currentRole = 'guru'; // Default fallback aman
     
     try {
-        // Daftar nama key yang sering digunakan oleh sistem auth
         const authKeys = ['sipelita_user', 'user', 'userData', 'auth'];
         
         for (const key of authKeys) {
@@ -21,7 +20,6 @@ function renderCards() {
                         break;
                     }
                 } catch (e) {
-                    // Jika ternyata disimpan dalam bentuk string biasa (bukan JSON object)
                     if (data === 'admin' || data === 'guru') {
                         currentRole = data;
                         break;
@@ -33,19 +31,36 @@ function renderCards() {
         console.error("Gagal mendeteksi session role, menggunakan akses standar:", err);
     }
 
-    // Daftar judul card yang HANYA boleh dilihat oleh Admin
-    const fiturKhususAdmin = ['Master PKKM', 'Admin Users', 'Kelola Berita'];
+    // Daftar judul card yang HANYA boleh dilihat oleh Admin (BACKUP)
+    const fiturKhususAdmin = ['Master PKKM', 'Admin Users', 'Kelola Berita', 'Master Siswa'];
+
+    // ══════════════════════════════════════════════
+    // 🔐 FUNGSI HELPER: CEK APAKAH MENU BOLEH DITAMPILKAN
+    // ══════════════════════════════════════════════
+    function isMenuAllowed(item, userRole) {
+        // Admin bisa lihat semua menu
+        if (userRole === 'admin') return true;
+        
+        // Cek property 'role' di config (CARA BARU - LEBIH FLEKSIBEL)
+        if (item.role) {
+            if (Array.isArray(item.role)) {
+                return item.role.includes(userRole);
+            }
+            return item.role === userRole;
+        }
+        
+        // Cek array fiturKhususAdmin (CARA LAMA - BACKUP)
+        if (fiturKhususAdmin.includes(item.title)) {
+            return false;
+        }
+        
+        return true;
+    }
 
     // ========== LAYANAN UMUM ==========
     if (umumContainer && CONFIG.layananUmum) {
         umumContainer.innerHTML = CONFIG.layananUmum
-            .filter(item => {
-                // Sembunyikan jika menu termasuk fitur admin, tapi yang login BUKAN admin
-                if (fiturKhususAdmin.includes(item.title) && currentRole !== 'admin') {
-                    return false;
-                }
-                return true;
-            })
+            .filter(item => isMenuAllowed(item, currentRole))
             .map(item => {
                 const displayContent = item.logo 
                     ? `<img src="${item.logo}" alt="${item.title}" class="card-logo" onerror="this.style.display='none'; this.parentElement.querySelector('.card-icon-fallback').style.display='flex';">
@@ -67,13 +82,7 @@ function renderCards() {
     // ========== LAYANAN MADRASAH ==========
     if (madrasahContainer && CONFIG.layananMadrasah) {
         madrasahContainer.innerHTML = CONFIG.layananMadrasah
-            .filter(item => {
-                // Sembunyikan jika menu termasuk fitur admin, tapi yang login BUKAN admin
-                if (fiturKhususAdmin.includes(item.title) && currentRole !== 'admin') {
-                    return false;
-                }
-                return true;
-            })
+            .filter(item => isMenuAllowed(item, currentRole))
             .map(item => {
                 const displayContent = item.logo 
                     ? `<img src="${item.logo}" alt="${item.title}" class="card-logo" onerror="this.style.display='none'; this.parentElement.querySelector('.card-icon-fallback').style.display='flex';">
@@ -110,7 +119,6 @@ function closeModal() {
 document.addEventListener('DOMContentLoaded', function() {
     renderCards();
     
-    // Close modal when clicking outside
     const modal = document.getElementById('integrationModal');
     if (modal) {
         modal.addEventListener('click', function(e) {
@@ -118,7 +126,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Close button
     const closeBtn = document.querySelector('.close-btn');
     if (closeBtn) {
         closeBtn.addEventListener('click', closeModal);
