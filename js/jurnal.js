@@ -576,7 +576,7 @@ async function generatePDF(isPreview) {
                     '</tr>' +
                 '</table>' +
             '</div>' +
-            '<div style="width: 45%; margin-left: auto; padding-left: 150px;">' +
+            '<div style="width: 45%; margin-left: auto; padding-left: 200px;">' +
                 '<table style="width: 100%; border-collapse: collapse; border: none;">' +
                     '<tr>' +
                         '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
@@ -645,7 +645,7 @@ async function generatePDF(isPreview) {
             '</div>' +
             
             // Kolom Kanan: Guru Mata Pelajaran (Digeser penuh ke kanan margin)
-            '<div style="width: 350px; text-align:left; margin-left: auto; padding-right: 100px;">' +
+            '<div style="width: 350px; text-align:left; margin-left: auto; padding-right: 200px;">' +
                 '<p style="margin: 0 0 4px 0; padding: 0;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
                 '<div style="height: 18px;"></div>' + // Spacer kosong penyeimbang kata "Mengetahui," di kiri
                 '<p style="margin: 0; padding: 0; font-weight:bold;">Guru Mata Pelajaran</p>' +
