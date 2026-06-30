@@ -576,7 +576,7 @@ async function generatePDF(isPreview) {
                     '</tr>' +
                 '</table>' +
             '</div>' +
-            '<div style="width: 45%; margin-left: auto; padding-left: 300px;">' +
+            '<div style="width: 45%; margin-left: auto; padding-left: 460px;">' +
                 '<table style="width: 100%; border-collapse: collapse; border: none;">' +
                     '<tr>' +
                         '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
