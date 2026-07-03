@@ -59,8 +59,8 @@ const CONFIG = {
             color: '#37474f', 
             url: 'https://www.manbantaeng.sch.id/' 
         },
-        { icon: '🧾', title: 'PMBM', desc: '', color: '#00695c', page: 'pages/pmbm.html' },
-        { icon: '📖', title: 'SIPENA', desc: '', color: '#3949ab', page: 'pages/sipena.html' },
+        { icon: '🧾', title: 'PMBM', desc: 'Penerimaan Mueid Baru Madrasah', color: '#00695c', page: 'pages/pmbm.html' },
+        { icon: '📖', title: 'SIPENA', desc: 'Sistem Penilaian dan Absensi', color: '#3949ab', page: 'pages/sipena.html' },
         { icon: '⏱️', title: 'Jadwal Mengajar', desc: '', color: '#a704c8', page: 'pages/jadwal-mengajar.html' },
         { icon: '✅', title: 'SiTaat', desc: '', color: '#f57c00', page: 'pages/sitaat.html' },
         { 
@@ -74,15 +74,15 @@ const CONFIG = {
         { icon: '📁', title: 'E-Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
         { icon: '🏥', title: 'UKSmart', desc: '', color: '#e91e63', page: 'pages/uksmart.html' },
         { icon: '📚', title: 'E-Perpus', desc: '', color: '#6d4c41', page: 'pages/eperpus.html' },
-        { icon: '👥', title: 'Master Siswa', desc: '', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
+        { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
-        { icon: '👨‍💼', title: 'PKKM', desc: '', color: '#1b5e20', page: 'pkkm.html' },
-        { icon: '🛠️', title: 'Master PKKM', desc: '', color: '#0dd940', page: '/pages/master-pkkm.html' },
+        { icon: '👨‍💼', title: 'PKKM', desc: 'Penilaian Kinerja Kepala Madrasah', color: '#1b5e20', page: 'pkkm.html' },
+        { icon: '🛠️', title: 'Master PKKM', desc: 'Kelola Instrumen PKKM', color: '#0dd940', page: '/pages/master-pkkm.html' },
         { 
             icon: '📗',  // ← Tetap tambahkan icon sebagai fallback
             title: 'RDM', 
-            desc: '', 
+            desc: 'Raport Digital Madrasah', 
             color: '#283593', 
             url: 'https://manbantaeng.rdmnet.my.id/',
             logo: 'assets/images/rapor-app.png'  // ← Path ke logo
@@ -91,8 +91,8 @@ const CONFIG = {
         { 
             icon: '📊', 
             title: 'Rekap Absensi', 
-            desc: '', 
-            color: '#37474f', 
+            desc: 'Lihat & Download Rekapitulasi Absen', 
+            color: '#d79119', 
             url: 'sican/rekap-sican.html' 
         }
     ]
