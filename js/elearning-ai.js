@@ -1,19 +1,36 @@
 // ══════════════════════════════════════════════
 // GEMINI AI INTEGRATION
 // ══════════════════════════════════════════════
-// ⚠️ PENTING: Ganti dengan API key Anda sendiri
-// Dapatkan di: https://aistudio.google.com/app/apikey
-const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
+
+// ⚠️ PENTING: Jangan commit API key ke GitHub!
+// API key disimpan di localStorage browser (aman, lokal)
+
+let GEMINI_API_KEY = localStorage.getItem('gemini_api_key');
+
+// Jika belum ada, minta user input
+if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+    const userInput = prompt(
+        '🔑 Masukkan Gemini API Key Anda:\n\n' +
+        '1. Dapatkan gratis di: https://aistudio.google.com/app/apikey\n' +
+        '2. Copy API key Anda\n' +
+        '3. Paste di bawah ini\n\n' +
+        'Key akan disimpan di browser Anda (lokal, aman)'
+    );
+    
+    if (userInput && userInput.trim().length > 0) {
+        GEMINI_API_KEY = userInput.trim();
+        localStorage.setItem('gemini_api_key', GEMINI_API_KEY);
+    } else {
+        throw new Error('API Key diperlukan untuk menggunakan fitur AI');
+    }
+}
+
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 // ══════════════════════════════════════════════
-// GENERATE SOAL DARI MATERI
+// GENERATE SOAL DARI MATERI TEKS
 // ══════════════════════════════════════════════
 window.generateSoalDariMateri = async function(materiTeks, jumlahSoal = 10) {
-    if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-        throw new Error('API Key Gemini belum diset. Silakan edit file elearning-ai.js');
-    }
-    
     const prompt = `
 Kamu adalah guru ahli yang akan membuat soal pilihan ganda dari materi berikut.
 
@@ -108,23 +125,9 @@ ATURAN:
 };
 
 // ══════════════════════════════════════════════
-// GENERATE SOAL DARI YOUTUBE (via transcript)
-// ══════════════════════════════════════════════
-window.generateSoalDariYoutube = async function(youtubeUrl, jumlahSoal = 10) {
-    // Catatan: Implementasi ini memerlukan backend untuk extract transcript
-    // Untuk sekarang, kita minta user copy-paste transcript manual
-    
-    throw new Error('Fitur generate dari YouTube akan segera hadir. Untuk sekarang, silakan copy transcript video dan paste di materi teks.');
-};
-
-// ══════════════════════════════════════════════
-// GENERATE SOAL DARI GAMBAR (OCR)
+// GENERATE SOAL DARI GAMBAR (OCR + AI)
 // ══════════════════════════════════════════════
 window.generateSoalDariGambar = async function(imageBase64, jumlahSoal = 10) {
-    if (GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-        throw new Error('API Key Gemini belum diset');
-    }
-    
     // Extract base64 data
     const base64Data = imageBase64.split(',')[1];
     const mimeType = imageBase64.match(/data:(.*?);/)[1];
@@ -178,5 +181,15 @@ HANYA output JSON, tanpa teks lain.
     } catch (error) {
         console.error('AI Error:', error);
         throw new Error('Gagal generate soal dari gambar: ' + error.message);
+    }
+};
+
+// ══════════════════════════════════════════════
+// FITUR TAMBAHAN: RESET API KEY
+// ══════════════════════════════════════════════
+window.resetGeminiApiKey = function() {
+    if (confirm('Yakin ingin mereset API Key Gemini?\nAnda akan diminta memasukkan key baru.')) {
+        localStorage.removeItem('gemini_api_key');
+        location.reload();
     }
 };
