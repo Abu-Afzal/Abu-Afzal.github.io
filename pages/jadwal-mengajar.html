@@ -381,24 +381,40 @@ function formatDateID(dateStr){
 
 function isJadwalActive(jadwal){
   if(!jadwal.periode_mulai || !jadwal.periode_sampai) return true;
-  const today = new Date(); today.setHours(0,0,0,0);
-  const mulai = new Date(jadwal.periode_mulai);
-  const sampai = new Date(jadwal.periode_sampai);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Parse tanggal YYYY-MM-DD dengan timezone lokal
+  const [startYear, startMonth, startDay] = jadwal.periode_mulai.split('-').map(Number);
+  const [endYear, endMonth, endDay] = jadwal.periode_sampai.split('-').map(Number);
+  
+  const mulai = new Date(startYear, startMonth - 1, startDay);
+  const sampai = new Date(endYear, endMonth - 1, endDay);
+  
   return today >= mulai && today <= sampai;
 }
 
 function getPeriodeStatus(jadwal){
   if(!jadwal.periode_mulai || !jadwal.periode_sampai) return {text:'Tanpa Batas', class:'badge-blue'};
-  const today = new Date(); today.setHours(0,0,0,0);
-  const mulai = new Date(jadwal.periode_mulai);
-  const sampai = new Date(jadwal.periode_sampai);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Parse tanggal YYYY-MM-DD dengan timezone lokal
+  const [startYear, startMonth, startDay] = jadwal.periode_mulai.split('-').map(Number);
+  const [endYear, endMonth, endDay] = jadwal.periode_sampai.split('-').map(Number);
+  
+  const mulai = new Date(startYear, startMonth - 1, startDay);
+  const sampai = new Date(endYear, endMonth - 1, endDay);
+  
   if(today < mulai) return {text:'Belum Aktif', class:'badge-gray'};
   if(today > sampai) return {text:'Expired', class:'badge-red'};
+  
   const sisaHari = Math.ceil((sampai - today) / (1000 * 60 * 60 * 24));
   if(sisaHari <= 7) return {text:`${sisaHari} hari lagi`, class:'periode-soon'};
   return {text:'Aktif', class:'periode-active'};
 }
-
 // ══════════════════════════════════════════════
 //              INIT APP
 // ══════════════════════════════════════════════
