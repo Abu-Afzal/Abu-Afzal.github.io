@@ -28,6 +28,7 @@ body{font-family:'Segoe UI',Tahoma,sans-serif;background:#f3f4f6;min-height:100v
 .content-card{background:white;border-radius:14px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:24px;}
 .section-title{font-size:1.3rem;font-weight:800;color:#1e40af;margin-bottom:18px;padding-bottom:10px;border-bottom:3px solid #3b82f6;display:flex;align-items:center;gap:8px;}
 .date-bar{background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:12px 16px;font-weight:700;color:#1e40af;margin-bottom:16px;text-align:center;}
+.live-clock{font-family:'Courier New',monospace;color:#059669;font-size:1.1rem;font-weight:800;margin-left:8px;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;border-radius:8px;font-size:0.88rem;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;text-decoration:none;}
 .btn-primary{background:#3b82f6;color:white;} .btn-primary:hover{background:#2563eb;}
 .btn-success{background:#10b981;color:white;} .btn-success:hover{background:#059669;}
@@ -41,6 +42,10 @@ table{width:100%;border-collapse:collapse;font-size:0.9rem;}
 th{background:#eff6ff;color:#1e40af;font-weight:700;padding:12px 13px;text-align:left;border-bottom:2px solid #dbeafe;}
 td{padding:12px 13px;border-bottom:1px solid #e5e7eb;vertical-align:middle;}
 tr:hover td{background:#f9fafb;}
+tr.row-upcoming{background:#fef3c7 !important;border-left:4px solid #f59e0b;}
+tr.row-upcoming td{background:#fef3c7 !important;}
+tr.row-recent{background:#f1f5f9 !important;border-left:4px solid #94a3b8;}
+tr.row-recent td{background:#f1f5f9 !important;}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;padding:16px;}
 .modal.active{display:flex;animation:fadeIn .2s ease;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -79,10 +84,12 @@ tr:hover td{background:#f9fafb;}
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast-ok{background:#10b981 !important;}
 .toast-err{background:#ef4444 !important;}
+.toast-warn{background:#f59e0b !important;}
 
 /* ═══ UPLOAD JADWAL GAMBAR ═══ */
 .upload-jadwal-area{background:#eff6ff;border:2px dashed #3b82f6;border-radius:12px;padding:30px 20px;text-align:center;transition:all .2s;}
 .upload-jadwal-area:hover{background:#dbeafe;border-color:#2563eb;}
+.upload-jadwal-area.dragover{background:#dbeafe;border-color:#2563eb;transform:scale(1.01);}
 .upload-icon{font-size:4rem;margin-bottom:10px;}
 .upload-title{color:#1e40af;font-size:1.1rem;font-weight:700;margin-bottom:6px;}
 .upload-desc{color:#6b7280;font-size:0.88rem;margin-bottom:14px;}
@@ -101,6 +108,10 @@ tr:hover td{background:#f9fafb;}
 .periode-active{background:#dcfce7;color:#166534;}
 .periode-expired{background:#fee2e2;color:#991b1b;}
 .periode-soon{background:#fef3c7;color:#92400e;}
+
+/* Live indicator */
+.live-indicator{display:inline-block;width:8px;height:8px;background:#10b981;border-radius:50%;margin-right:6px;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.2)}}
 
 @media(max-width:768px){
   .header{flex-wrap:wrap;padding:16px;}
@@ -129,15 +140,15 @@ tr:hover td{background:#f9fafb;}
 
   <!-- ALARM SETTINGS -->
   <div class="content-card">
-    <div class="section-title"> Pengaturan Alarm</div>
+    <div class="section-title">⚙️ Pengaturan Alarm</div>
     <div class="alarm-box">
       <div class="alarm-row">
         <div style="flex:1;min-width:220px;">
           <div style="font-weight:700;color:#1e40af;margin-bottom:3px;">Aktifkan Alarm Jadwal Mengajar</div>
-          <div class="alarm-desc">Sistem akan membunyikan alarm dan mengucapkan pengingat suara tepat saat jam mengajar Anda tiba.</div>
+          <div class="alarm-desc">Sistem akan membunyikan alarm dan mengucapkan pengingat suara tepat saat jam mengajar Anda tiba. <strong>Alarm dicek setiap 10 detik dengan toleransi 2 menit.</strong></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="alarm-status off" id="alarmStatusBadge"> Nonaktif</span>
+          <span class="alarm-status off" id="alarmStatusBadge">🔕 Nonaktif</span>
           <label class="toggle">
             <input type="checkbox" id="toggleAlarm">
             <span class="toggle-slider"></span>
@@ -155,12 +166,19 @@ tr:hover td{background:#f9fafb;}
         <div class="alarm-desc">Coba dengar bunyi alarm dan suara pengingat sebelum mengaktifkannya.</div>
         <button class="btn btn-secondary btn-sm" id="btnTestAlarm">🔊 Tes Alarm</button>
       </div>
+      <div class="alarm-row" style="background:#fef3c7;border-radius:8px;padding:10px;margin-top:8px;">
+        <div style="flex:1;">
+          <div style="font-weight:700;color:#92400e;margin-bottom:3px;"><span class="live-indicator"></span>Monitor Alarm Real-time</div>
+          <div class="alarm-desc" id="alarmMonitorText">Menunggu aktivitas alarm...</div>
+        </div>
+        <div style="font-family:'Courier New',monospace;font-weight:800;color:#059669;font-size:1.1rem;" id="liveClock">--:--:--</div>
+      </div>
     </div>
   </div>
 
   <!-- ═══ UPLOAD JADWAL MENGAJAR (GAMBAR) ═══ -->
   <div class="content-card">
-    <div class="section-title"> Jadwal Mengajar Saya (Gambar)</div>
+    <div class="section-title">🖼️ Jadwal Mengajar Saya (Gambar)</div>
     
     <!-- Upload Area -->
     <div id="uploadJadwalArea">
@@ -204,7 +222,7 @@ tr:hover td{background:#f9fafb;}
   <!-- JADWAL MENGAJAR (TABLE) -->
   <div class="content-card">
     <div class="section-title">📅 Jadwal Mengajar (Alarm)</div>
-    <div class="date-bar" id="currentDate"></div>
+    <div class="date-bar" id="currentDate">📅 Memuat...</div>
     
     <!-- Info Periode -->
     <div id="periodeInfo" style="background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.9rem;color:#1e40af;display:none;">
@@ -212,8 +230,8 @@ tr:hover td{background:#f9fafb;}
     </div>
     
     <div class="action-bar">
-      <button class="btn btn-primary" id="btnTambahJadwal"> Tambah Jadwal</button>
-      <button class="btn btn-success" id="btnTerapkanSemua" title="Terapkan semua jadwal ke periode tertentu"> Terapkan ke Semua Pekan</button>
+      <button class="btn btn-primary" id="btnTambahJadwal">➕ Tambah Jadwal</button>
+      <button class="btn btn-success" id="btnTerapkanSemua" title="Terapkan semua jadwal ke periode tertentu">📆 Terapkan ke Semua Pekan</button>
     </div>
     
     <div class="tbl-wrap">
@@ -264,17 +282,17 @@ tr:hover td{background:#f9fafb;}
     
     <!-- PERIODE BERLAKU -->
     <div style="background:#fef3c7;border:1px solid #fde047;border-radius:8px;padding:12px;margin-top:10px;">
-      <div style="font-weight:700;color:#92400e;margin-bottom:8px;"> Periode Berlaku</div>
+      <div style="font-weight:700;color:#92400e;margin-bottom:8px;">📆 Periode Berlaku</div>
       <div class="fr2">
         <div class="fg" style="margin-bottom:8px;"><label>Berlaku Mulai *</label><input type="date" id="inputPeriodeMulai"></div>
         <div class="fg" style="margin-bottom:8px;"><label>Berlaku Sampai *</label><input type="date" id="inputPeriodeSampai"></div>
       </div>
-      <div style="font-size:0.8rem;color:#78350f;"> <strong>Tips:</strong> Setting sekali untuk seluruh semester. Contoh: 1 Juli 2025 - 31 Desember 2025</div>
+      <div style="font-size:0.8rem;color:#78350f;">💡 <strong>Tips:</strong> Setting sekali untuk seluruh semester. Contoh: 1 Juli 2025 - 31 Desember 2025</div>
     </div>
     
     <div class="modal-foot">
       <button class="btn btn-secondary" id="btnBatalJadwal">Batal</button>
-      <button class="btn btn-primary" id="btnSimpanJadwal"> Simpan</button>
+      <button class="btn btn-primary" id="btnSimpanJadwal">💾 Simpan</button>
     </div>
   </div>
 </div>
@@ -284,7 +302,7 @@ tr:hover td{background:#f9fafb;}
   <div class="modal-box">
     <div class="modal-title">📆 Terapkan Periode ke Semua Jadwal</div>
     <div style="background:#eff6ff;border:1px solid #dbeafe;border-radius:8px;padding:14px;margin-bottom:16px;">
-      <div style="font-weight:700;color:#1e40af;margin-bottom:6px;"> Fitur Cepat</div>
+      <div style="font-weight:700;color:#1e40af;margin-bottom:6px;">⚡ Fitur Cepat</div>
       <div style="font-size:0.88rem;color:#6b7280;">Set periode berlaku untuk <strong>SEMUA jadwal</strong> Anda sekaligus. Cocok untuk setting awal semester.</div>
     </div>
     <div class="fr2">
@@ -336,6 +354,7 @@ let daftarJadwal  = [];
 let alarmEnabled  = false;
 let _alarmAudioCtx = null;
 let _alarmLastFiredKey = null;
+let alarmFiredToday = new Set(); // Track alarm yang sudah fired hari ini
 
 // ══════════════════════════════════════════════
 //                  HELPERS
@@ -345,11 +364,11 @@ function nowISO(){ return new Date().toISOString(); }
 
 function toast(msg, type='ok'){
   const t=document.createElement('div');
-  t.className = type==='ok' ? 'toast-ok' : 'toast-err';
-  t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:opacity .3s;`;
+  t.className = type==='ok' ? 'toast-ok' : type==='warn' ? 'toast-warn' : 'toast-err';
+  t.style.cssText=`position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);transition:opacity .3s;max-width:350px;`;
   t.textContent=msg; document.body.appendChild(t);
-  setTimeout(()=>t.style.opacity='0',2500);
-  setTimeout(()=>t.remove(),2900);
+  setTimeout(()=>t.style.opacity='0',3000);
+  setTimeout(()=>t.remove(),3400);
 }
 
 function openModal(id){ document.getElementById(id).classList.add('active'); }
@@ -388,10 +407,7 @@ function initApp(){
     const s = localStorage.getItem('sipelita_user');
     const userData = s ? JSON.parse(s) : null;
     
-    // ✅ PRIORITAS: nama > email > 'guru'
     currentUser = userData ? (userData.nama || userData.email || 'guru') : 'guru';
-    
-    // Simpan juga email untuk keperluan lain
     window.currentUserEmail = userData ? userData.email : '';
     window.currentUserRole = userData ? userData.role : 'guru';
     
@@ -401,7 +417,6 @@ function initApp(){
     window.currentUserRole = 'guru';
   }
 
-  // ✅ TAMPILKAN "Hi, Nama User" dengan role badge
   const userDisplay = document.getElementById('userDisplay');
   if (userDisplay) {
     const roleIcon = {
@@ -418,8 +433,7 @@ function initApp(){
     `;
   }
   
-  document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
+  updateDateBar();
   loadAlarmPref();
   initFirebaseListeners();
   bindEvents();
@@ -427,7 +441,14 @@ function initApp(){
   loadJadwalGambar();
   initDragDrop();
 }
-  
+
+function updateDateBar(){
+  const dateEl = document.getElementById('currentDate');
+  if(!dateEl) return;
+  const dateStr = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  dateEl.innerHTML = `📅 ${dateStr} <span class="live-clock" id="liveClockHeader">🕐 --:--:--</span>`;
+}
+
 // ══════════════════════════════════════════════
 //        UPLOAD JADWAL GAMBAR (BASE64 + RTDB)
 // ══════════════════════════════════════════════
@@ -445,7 +466,7 @@ function loadJadwalGambar(){
       previewArea.style.display = 'block';
       const uploadedAt = data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('id-ID') : '-';
       const sizeKB = data.sizeKB ? data.sizeKB.toFixed(1) : '?';
-      infoText.innerHTML = ` Diupload: <strong>${uploadedAt}</strong> • 📦 Ukuran: <strong>${sizeKB} KB</strong> (sudah dikompres)`;
+      infoText.innerHTML = `📤 Diupload: <strong>${uploadedAt}</strong> • 📦 Ukuran: <strong>${sizeKB} KB</strong> (sudah dikompres)`;
     } else {
       uploadArea.style.display = 'block';
       previewArea.style.display = 'none';
@@ -580,7 +601,7 @@ function bindEvents(){
 
   document.getElementById('toggleAlarm').onchange = e => setAlarmEnabled(e.target.checked);
   document.getElementById('btnNotifPerm').onclick = requestNotifPermission;
-  document.getElementById('btnTestAlarm').onclick = () => { playAlarmSound('Contoh Kelas','Contoh Mapel'); toast('Mencoba bunyi alarm...'); };
+  document.getElementById('btnTestAlarm').onclick = () => { playAlarmSound('Contoh Kelas','Contoh Mapel'); toast('🔊 Mencoba bunyi alarm...'); };
 
   document.getElementById('inputJadwalFile').onchange = e => { const file = e.target.files[0]; if(file) handleJadwalFile(file); };
 
@@ -651,9 +672,9 @@ async function simpanJadwal(){
     if(editKey){ await ROOT_JADWAL.child(editKey).update(payload); }
     else { await ROOT_JADWAL.push().set({...payload, created_at: nowISO()}); }
     closeModal('modalJadwal');
-    toast(editKey ? '✅ Jadwal berhasil diperbarui!' : '✅ Jadwal berhasil ditambahkan! Berlaku untuk seluruh periode.');
+    toast(editKey ? '✅ Jadwal berhasil diperbarui!' : '✅ Jadwal berhasil ditambahkan!');
   } catch(e){ toast('Gagal menyimpan: '+e.message, 'err'); }
-  btn.disabled = false; btn.textContent = ' Simpan';
+  btn.disabled = false; btn.textContent = '💾 Simpan';
 }
 
 function editJadwal(key){
@@ -688,12 +709,36 @@ function renderJadwalTable(){
   const sorted = [...daftarJadwal].sort((a,b)=> HARI_ORDER.indexOf(a.hari) - HARI_ORDER.indexOf(b.hari) || (a.mulai||'').localeCompare(b.mulai||''));
   const hariBadge = {Senin:'badge-blue',Selasa:'badge-purple',Rabu:'badge-amber',Kamis:'badge-green',Jumat:'badge-red',Sabtu:'badge-gray'};
 
+  // Hitung waktu sekarang untuk highlight
+  const now = new Date();
+  const hariMap = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
+  const hariIni = hariMap[now.getDay()];
+  const menitSekarang = now.getHours() * 60 + now.getMinutes();
+
   tbody.innerHTML = sorted.map(j=>{
     const isActive = isJadwalActive(j);
     const periodeStatus = getPeriodeStatus(j);
-    const rowStyle = isActive ? '' : 'opacity:0.6;';
+    
+    let rowClass = '';
+    let rowStyle = '';
+    
+    // Highlight jadwal hari ini
+    if(j.hari === hariIni && isActive){
+      const [jam, menit] = (j.mulai || '00:00').split(':').map(Number);
+      const menitJadwal = jam * 60 + (menit || 0);
+      const selisih = menitJadwal - menitSekarang;
+      
+      if(selisih >= 0 && selisih <= 30){ // Dalam 30 menit ke depan
+        rowClass = 'row-upcoming';
+      } else if(selisih < 0 && selisih >= -60){ // Baru saja lewat
+        rowClass = 'row-recent';
+      }
+    } else if(!isActive){
+      rowStyle = 'opacity:0.6;';
+    }
+    
     return `
-    <tr style="${rowStyle}">
+    <tr class="${rowClass}" style="${rowStyle}">
       <td><span class="badge ${hariBadge[j.hari]||'badge-gray'}">${j.hari}</span></td>
       <td>${j.mulai||'?'}${j.selesai?' – '+j.selesai:''}</td>
       <td><b style="color:#1e40af;">${j.kelas}</b></td>
@@ -719,7 +764,7 @@ function renderJadwalTable(){
 }
 
 // ══════════════════════════════════════════════
-//             ALARM ENGINE
+//             ALARM ENGINE (IMPROVED)
 // ══════════════════════════════════════════════
 function loadAlarmPref(){
   try{ alarmEnabled = localStorage.getItem('sipelita_alarm_'+currentUser) === 'true'; } catch(e){ alarmEnabled = false; }
@@ -731,6 +776,8 @@ function setAlarmEnabled(val){
   try{ localStorage.setItem('sipelita_alarm_'+currentUser, val ? 'true':'false'); }catch(e){}
   renderAlarmStatusBadge();
   toast(val ? '🔔 Alarm jadwal diaktifkan' : '🔕 Alarm jadwal dinonaktifkan');
+  if(val) updateAlarmMonitor('🟢 Alarm aktif - monitoring jadwal...');
+  else updateAlarmMonitor('🔴 Alarm nonaktif');
 }
 function renderAlarmStatusBadge(){
   const badge = document.getElementById('alarmStatusBadge');
@@ -751,6 +798,7 @@ function requestNotifPermission(){
     else if(perm==='denied') toast('❌ Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
   });
 }
+
 function playAlarmBeep(){
   return new Promise((resolve)=>{
     try{
@@ -766,15 +814,16 @@ function playAlarmBeep(){
         osc.start(startTime); osc.stop(startTime+0.4);
       };
       const now = ctx.currentTime;
-      for(let i=0;i<2;i++){ playBeep(now+i*0.55, 880); playBeep(now+i*0.55+0.25, 660); }
-      setTimeout(resolve, 1300);
+      for(let i=0;i<3;i++){ playBeep(now+i*0.55, 880); playBeep(now+i*0.55+0.25, 660); }
+      setTimeout(resolve, 1800);
     } catch(e){ console.error('Gagal memutar beep:', e); resolve(); }
   });
 }
+
 function speakAlarmMessage(kelasNama, mapel){
   if(!('speechSynthesis' in window)) return;
   const mapelText = mapel ? `, mata pelajaran ${mapel},` : '';
-  const kalimat = `Sekarang saatnya Anda mengajar di kelas ${kelasNama}${mapelText} Terima kasih!`;
+  const kalimat = `Perhatian! Sekarang saatnya Anda mengajar di kelas ${kelasNama}${mapelText}. Selamat mengajar!`;
   try{
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(kalimat);
@@ -785,39 +834,201 @@ function speakAlarmMessage(kelasNama, mapel){
     window.speechSynthesis.speak(utter);
   } catch(e){ console.error('Gagal memutar suara bicara:', e); }
 }
+
 async function playAlarmSound(kelasNama, mapel){ await playAlarmBeep(); speakAlarmMessage(kelasNama||'Anda', mapel||''); }
+
 function fireScheduleAlarm(jadwalItem){
   playAlarmSound(jadwalItem.kelas, jadwalItem.mapel);
-  toast(`🔔 Saatnya mengajar ${jadwalItem.kelas} (${jadwalItem.mulai})`,'err');
+  toast(`🔔 WAKTUNYA MENGAJAR! ${jadwalItem.kelas} - ${jadwalItem.mapel||''} (${jadwalItem.mulai})`,'err');
+  updateAlarmMonitor(`🔔 ALARM FIRED: ${jadwalItem.kelas} - ${jadwalItem.mapel||'-'} (${jadwalItem.mulai})`);
+  
   if('Notification' in window && Notification.permission==='granted'){
-    try{ new Notification('Waktunya Mengajar!',{ body:`${jadwalItem.kelas} · ${jadwalItem.mapel||''} · ${jadwalItem.mulai}${jadwalItem.ruang?' · '+jadwalItem.ruang:''}`, tag:'sipelita-jadwal-alarm' }); }
+    try{ 
+      new Notification('⏰ Waktunya Mengajar!',{ 
+        body:`${jadwalItem.kelas} · ${jadwalItem.mapel||''} · ${jadwalItem.mulai}${jadwalItem.ruang?' · '+jadwalItem.ruang:''}`, 
+        tag:'sipelita-jadwal-alarm',
+        requireInteraction: true
+      }); 
+    }
     catch(e){ console.error('Gagal menampilkan notifikasi:', e); }
   }
 }
+
+// ══════════════════════════════════════════════
+//        IMPROVED ALARM CHECK (TOLERANSI 2 MENIT)
+// ══════════════════════════════════════════════
 function checkScheduleAlarms(){
   if(!alarmEnabled) return;
+  
   const now = new Date();
   const hariMap = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
   const hariIni = hariMap[now.getDay()];
-  const jamSekarang = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-  const fireKey = now.toISOString().slice(0,10)+'_'+jamSekarang;
-  if(_alarmLastFiredKey===fireKey) return;
-  _alarmLastFiredKey = fireKey;
+  
+  // Waktu sekarang dalam menit
+  const menitSekarang = now.getHours() * 60 + now.getMinutes();
+  const todayStr = now.toISOString().slice(0,10);
+  
+  let adaJadwalHariIni = false;
+  
   daftarJadwal.forEach(j=>{
-    if(j.hari===hariIni && j.mulai===jamSekarang && isJadwalActive(j)){ fireScheduleAlarm(j); }
+    // Skip jika bukan hari ini atau tidak aktif
+    if(j.hari !== hariIni || !isJadwalActive(j)) return;
+    
+    adaJadwalHariIni = true;
+    
+    // Konversi jam jadwal ke menit
+    const [jamMulai, menitMulai] = (j.mulai || '00:00').split(':').map(Number);
+    const menitJadwal = jamMulai * 60 + (menitMulai || 0);
+    
+    // Unique key untuk jadwal ini hari ini
+    const jadwalKey = todayStr + '_' + j.__key;
+    
+    // Skip jika sudah fired hari ini
+    if(alarmFiredToday.has(jadwalKey)) return;
+    
+    // Hitung selisih menit
+    const selisihMenit = menitSekarang - menitJadwal;
+    
+    // TOLERANSI: Trigger jika 0-2 menit setelah jadwal (tidak terlewat)
+    if(selisihMenit >= 0 && selisihMenit <= 2){
+      alarmFiredToday.add(jadwalKey);
+      fireScheduleAlarm(j);
+      console.log(`✅ Alarm fired: ${j.kelas} at ${j.mulai}`);
+    }
+  });
+  
+  // Update monitor jika tidak ada jadwal hari ini
+  if(!adaJadwalHariIni && alarmEnabled){
+    updateAlarmMonitor(`✅ Tidak ada jadwal hari ini (${hariIni})`);
+  }
+}
+
+// ══════════════════════════════════════════════
+//        UPCOMING SCHEDULE NOTIFICATION (10 MENIT SEBELUM)
+// ══════════════════════════════════════════════
+function checkUpcomingSchedules(){
+  if(!alarmEnabled) return;
+  
+  const now = new Date();
+  const hariMap = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
+  const hariIni = hariMap[now.getDay()];
+  const menitSekarang = now.getHours() * 60 + now.getMinutes();
+  const todayStr = now.toISOString().slice(0,10);
+  
+  daftarJadwal.forEach(j=>{
+    if(j.hari !== hariIni || !isJadwalActive(j)) return;
+    
+    const [jam, menit] = (j.mulai || '00:00').split(':').map(Number);
+    const menitJadwal = jam * 60 + (menit || 0);
+    const selisih = menitJadwal - menitSekarang;
+    
+    const notifKey = todayStr + '_' + j.__key + '_upcoming';
+    if(alarmFiredToday.has(notifKey)) return;
+    
+    // Peringatan 10 menit sebelum jadwal
+    if(selisih === 10){
+      alarmFiredToday.add(notifKey);
+      toast(`⏰ 10 menit lagi mengajar: ${j.kelas} (${j.mulai})`, 'warn');
+      updateAlarmMonitor(`⏰ UPCOMING: ${j.kelas} dalam 10 menit (${j.mulai})`);
+      
+      if('Notification' in window && Notification.permission === 'granted'){
+        try {
+          new Notification('⏰ Siap-siap Mengajar!', {
+            body: `${j.kelas} dalam 10 menit · ${j.mapel||''}`,
+            tag: 'sipelita-upcoming'
+          });
+        } catch(e) {}
+      }
+    }
   });
 }
+
+// ══════════════════════════════════════════════
+//        ALARM MONITOR UI UPDATE
+// ══════════════════════════════════════════════
+function updateAlarmMonitor(text){
+  const el = document.getElementById('alarmMonitorText');
+  if(el) el.textContent = text;
+}
+
+function updateLiveClock(){
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+  
+  const clockHeader = document.getElementById('liveClockHeader');
+  if(clockHeader) clockHeader.textContent = `🕐 ${timeStr}`;
+  
+  const clockMonitor = document.getElementById('liveClock');
+  if(clockMonitor) clockMonitor.textContent = timeStr;
+}
+
+// ══════════════════════════════════════════════
+//        DAILY RESET (OTOMATIS RESET SETIAP HARI)
+// ══════════════════════════════════════════════
+function scheduleDailyReset(){
+  const now = new Date();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 1, 0, 0); // Reset jam 00:01
+  
+  const delay = tomorrow - now;
+  
+  setTimeout(() => {
+    alarmFiredToday.clear();
+    console.log('✅ Alarm fired list direset untuk hari baru');
+    updateAlarmMonitor('🔄 Reset harian - siap untuk hari baru');
+    scheduleDailyReset(); // Jadwalkan reset untuk besok lagi
+  }, delay);
+}
+
+// ══════════════════════════════════════════════
+//        INIT ALARM ENGINE (IMPROVED)
+// ══════════════════════════════════════════════
 function initAlarmEngine(){
   renderNotifPermStatus();
-  setInterval(checkScheduleAlarms, 15000);
+  
+  // Cek alarm setiap 10 DETIK (lebih sering dari sebelumnya 15 detik)
+  setInterval(checkScheduleAlarms, 10000);
+  
+  // Cek upcoming schedule setiap 30 detik
+  setInterval(checkUpcomingSchedules, 30000);
+  
+  // Update live clock setiap 1 detik
+  setInterval(updateLiveClock, 1000);
+  updateLiveClock();
+  
+  // Refresh tabel setiap 60 detik untuk update highlight
+  setInterval(renderJadwalTable, 60000);
+  
+  // Jalankan segera saat load
   checkScheduleAlarms();
-  if('speechSynthesis' in window){ window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); }; }
+  checkUpcomingSchedules();
+  
+  // Jadwalkan reset harian
+  scheduleDailyReset();
+  
+  if('speechSynthesis' in window){
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+  }
+  
+  console.log('🔔 Alarm engine initialized - checking every 10 seconds');
 }
 
 // ══════════════════════════════════════════════
 //                   START
 // ══════════════════════════════════════════════
 window.addEventListener('load', initApp);
+
+// Reset alarm fired list saat halaman dibuka (untuk kasus tab ditutup lalu dibuka lagi di hari berbeda)
+window.addEventListener('focus', () => {
+  const todayStr = new Date().toISOString().slice(0,10);
+  const lastResetDate = localStorage.getItem('sipelita_alarm_last_reset');
+  if(lastResetDate !== todayStr){
+    alarmFiredToday.clear();
+    localStorage.setItem('sipelita_alarm_last_reset', todayStr);
+    console.log('✅ Alarm fired list direset saat halaman difokuskan');
+  }
+});
 </script>
 </body>
 </html>
