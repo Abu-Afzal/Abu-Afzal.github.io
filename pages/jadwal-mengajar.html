@@ -378,6 +378,51 @@ function formatDateID(dateStr){
   if(!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
 }
+  // ══════════════════════════════════════════════
+//  KONVERSI ANGKA ROMAWI KE KATA BAHASA INDONESIA
+// ══════════════════════════════════════════════
+function romawiKeKata(text) {
+  if (!text) return '';
+  
+  // Konversi angka Romawi ke kata
+  const romawiMap = {
+    'XII': 'Dua Belas',
+    'XI': 'Sebelas',
+    'X': 'Sepuluh',
+    'IX': 'Sembilan',
+    'VIII': 'Delapan',
+    'VII': 'Tujuh',
+    'VI': 'Enam',
+    'V': 'Lima',
+    'IV': 'Empat',
+    'III': 'Tiga',
+    'II': 'Dua',
+    'I': 'Satu'
+  };
+  
+  let result = text;
+  
+  // Ganti angka Romawi (harus dari yang terpanjang dulu: XII sebelum X)
+  Object.keys(romawiMap).sort((a, b) => b.length - a.length).forEach(romawi => {
+    const regex = new RegExp('\\b' + romawi + '\\b', 'g');
+    result = result.replace(regex, romawiMap[romawi]);
+  });
+  
+  return result;
+}
+
+// Konversi kelas seperti "X.1" → "Sepuluh satu"
+function konversiKelas(kelas) {
+  if (!kelas) return '';
+  
+  // Ganti titik dan spasi dengan spasi
+  let result = kelas.replace(/[.\-\/]/g, ' ').trim();
+  
+  // Konversi angka Romawi
+  result = romawiKeKata(result);
+  
+  return result;
+}
 
 function isJadwalActive(jadwal){
   if(!jadwal.periode_mulai || !jadwal.periode_sampai) return true;
@@ -836,37 +881,35 @@ function playAlarmBeep(){
   });
 }
 
-function speakAlarmMessage(kelasNama, mapel){
-  if(!('speechSynthesis' in window)) return;
+function speakAlarmMessage(kelasNama, mapel) {
+  if (!('speechSynthesis' in window)) return;
+  
+  // ✅ Konversi kelas dari Romawi ke kata
+  const kelasDibaca = konversiKelas(kelasNama);
+  
+  // ✅ Konversi mapel jika ada (opsional, untuk konsistensi)
   const mapelText = mapel ? `, mata pelajaran ${mapel},` : '';
-  const kalimat = `Perhatian! Sekarang saatnya Anda mengajar di kelas ${kelasNama}${mapelText}. Selamat mengajar!`;
-  try{
+  
+  const kalimat = `Perhatian! Sekarang saatnya Anda mengajar di kelas ${kelasDibaca}${mapelText}. Selamat mengajar!`;
+  
+  try {
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(kalimat);
-    utter.lang = 'id-ID'; utter.rate = 0.95; utter.pitch = 1; utter.volume = 1;
+    utter.lang = 'id-ID';
+    utter.rate = 0.95;
+    utter.pitch = 1;
+    utter.volume = 1;
+    
     const voices = window.speechSynthesis.getVoices();
-    const idVoice = voices.find(v=>v.lang==='id-ID') || voices.find(v=>v.lang.startsWith('id'));
-    if(idVoice) utter.voice = idVoice;
+    const idVoice = voices.find(v => v.lang === 'id-ID') || voices.find(v => v.lang.startsWith('id'));
+    if (idVoice) utter.voice = idVoice;
+    
     window.speechSynthesis.speak(utter);
-  } catch(e){ console.error('Gagal memutar suara bicara:', e); }
-}
-
-async function playAlarmSound(kelasNama, mapel){ await playAlarmBeep(); speakAlarmMessage(kelasNama||'Anda', mapel||''); }
-
-function fireScheduleAlarm(jadwalItem){
-  playAlarmSound(jadwalItem.kelas, jadwalItem.mapel);
-  toast(`🔔 WAKTUNYA MENGAJAR! ${jadwalItem.kelas} - ${jadwalItem.mapel||''} (${jadwalItem.mulai})`,'err');
-  updateAlarmMonitor(`🔔 ALARM FIRED: ${jadwalItem.kelas} - ${jadwalItem.mapel||'-'} (${jadwalItem.mulai})`);
-  
-  if('Notification' in window && Notification.permission==='granted'){
-    try{ 
-      new Notification('⏰ Waktunya Mengajar!',{ 
-        body:`${jadwalItem.kelas} · ${jadwalItem.mapel||''} · ${jadwalItem.mulai}${jadwalItem.ruang?' · '+jadwalItem.ruang:''}`, 
-        tag:'sipelita-jadwal-alarm',
-        requireInteraction: true
-      }); 
-    }
-    catch(e){ console.error('Gagal menampilkan notifikasi:', e); }
+    
+    // Log untuk debugging
+    console.log(`🔊 Alarm mengucapkan: "${kalimat}"`);
+  } catch (e) {
+    console.error('Gagal memutar suara bicara:', e);
   }
 }
 
