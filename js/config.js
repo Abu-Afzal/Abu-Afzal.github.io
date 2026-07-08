@@ -73,7 +73,7 @@ const CONFIG = {
         { icon: '🎓', title: 'E-Learning', desc: '', color: '#d32f2f', page: 'pages/elearning.html' },
         { icon: '📁', title: 'E-Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
         { icon: '🏥', title: 'UKSmart', desc: '', color: '#e91e63', page: 'pages/uksmart.html' },
-        { icon: '📚', title: 'E-Perpus', desc: '', color: '#6d4c41', page: 'pages/eperpus.html' },
+        { icon: '📚', title: 'Jurnal Mengajar', desc: '', color: '#6d4c41', page: 'pages/jurnal-online.html' },
         { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
