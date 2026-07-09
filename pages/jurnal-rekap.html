@@ -32,7 +32,6 @@
         
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
-        /* Role Badge */
         .role-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -164,7 +163,6 @@
         .detail-label { font-weight: 700; color: #475569; }
         .detail-value { color: #1e293b; white-space: pre-wrap; }
         
-        /* Evaluation Form */
         .eval-section {
             margin-top: 20px;
             padding: 16px;
@@ -195,6 +193,7 @@
             display: flex;
             gap: 8px;
             margin: 12px 0;
+            flex-wrap: wrap;
         }
         .rating-btn {
             padding: 8px 16px;
@@ -259,7 +258,7 @@
 
 <div class="header">
     <div style="flex: 1;">
-        <h1>📊 Rekap Jurnal Mengajar</h1>
+        <h1> Rekap Jurnal Mengajar</h1>
         <p>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</p>
     </div>
     <div style="display: flex; gap: 10px; align-items: center;">
@@ -271,7 +270,6 @@
 
 <div class="container">
     
-    <!-- Statistik -->
     <div class="stats-grid">
         <div class="stat-card">
             <h3>Total Jurnal</h3>
@@ -295,7 +293,6 @@
         </div>
     </div>
     
-    <!-- Filter & Actions -->
     <div class="card">
         <h2>🔍 Filter & Pencarian</h2>
         
@@ -323,13 +320,11 @@
         </div>
     </div>
     
-    <!-- Statistik Per Guru (Hanya untuk Kamad/Wakamad) -->
     <div class="card" id="guruStatsCard" style="display: none;">
-        <h2>‍🏫 Statistik Per Guru</h2>
+        <h2>👨‍🏫 Statistik Per Guru</h2>
         <div id="guruStatsContainer"></div>
     </div>
     
-    <!-- Daftar Jurnal -->
     <div class="card">
         <h2>📋 Daftar Jurnal Mengajar</h2>
         
@@ -370,13 +365,11 @@
     
 </div>
 
-<!-- Modal Detail -->
 <div class="modal" id="modalDetail">
     <div class="modal-box">
-        <h3> Detail Jurnal Mengajar</h3>
+        <h3>📄 Detail Jurnal Mengajar</h3>
         <div id="detailContent"></div>
         
-        <!-- Evaluation Section (Hanya untuk Kamad/Wakamad) -->
         <div id="evalSection" class="eval-section" style="display: none;">
             <h4>📝 Evaluasi Kamad/Wakamad</h4>
             
@@ -407,34 +400,83 @@
     </div>
 </div>
 
-<script src="../js/jurnal-online.js"></script>
 <script>
+// ══════════════════════════════════════════════
+// FIREBASE CONFIG (Langsung di sini, tidak perlu load jurnal-online.js)
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+    apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+    authDomain: "sipelita-digital.firebaseapp.com",
+    databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "sipelita-digital",
+    storageBucket: "sipelita-digital.firebasestorage.app",
+    messagingSenderId: "787840817745",
+    appId: "1:787840817745:web:e6b5237cfbb5e51be93670"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ═════════════════════════════════════════════
+// STATE (Hanya deklarasi di sini, tidak duplikat)
+// ══════════════════════════════════════════════
 let allJurnal = [];
 let filteredJurnal = [];
-let currentUser = null;
-let userRole = 'guru'; // 'guru', 'wakamad', 'kepala', 'admin'
+let localUser = null; // Ganti nama dari currentUser agar tidak bentrok
+let userRole = 'guru';
 let currentDetailId = null;
 let currentRating = 0;
 
+// ══════════════════════════════════════════════
+// UTILITIES
+// ═════════════════════════════════════════════
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('id-ID', { 
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-    // Cek user dan role
+    // Cek user dan role dari localStorage
     try {
         const userStr = localStorage.getItem('sipelita_user');
         if (userStr) {
-            currentUser = JSON.parse(userStr);
-            userRole = currentUser.role || 'guru';
+            localUser = JSON.parse(userStr);
+            // Deteksi role dari field 'role' atau 'jabatan'
+            userRole = localUser.role || localUser.jabatan || 'guru';
+            console.log('👤 User:', localUser.nama || localUser.email);
+            console.log('🎭 Role:', userRole);
+        } else {
+            alert('Anda harus login!');
+            window.location.href = '../index.html';
+            return;
         }
     } catch (e) {
         console.error('Error load user:', e);
+        alert('Error memuat data user');
+        window.location.href = '../index.html';
+        return;
     }
     
     // Update UI berdasarkan role
     updateUIByRole();
     
-    // Load data
-    if (typeof loadRekapJurnal === 'function') {
-        loadRekapJurnal();
-    }
+    // Load data jurnal
+    loadRekapJurnal();
 });
 
 function updateUIByRole() {
@@ -445,11 +487,13 @@ function updateUIByRole() {
     const guruStatsCard = document.getElementById('guruStatsCard');
     const statGuruCard = document.getElementById('statGuruCard');
     
-    // Set badge role
-    if (userRole === 'admin' || userRole === 'kepala') {
+    // Set badge role berdasarkan role user
+    const roleLower = userRole.toLowerCase();
+    
+    if (roleLower === 'admin' || roleLower === 'kepala' || roleLower === 'kamad') {
         roleBadge.textContent = '👑 KAMAD/ADMIN';
         roleBadge.className = 'role-badge role-kamad';
-    } else if (userRole === 'wakil' || userRole === 'wakamad') {
+    } else if (roleLower === 'wakil' || roleLower === 'wakamad') {
         roleBadge.textContent = '⭐ WAKAMAD';
         roleBadge.className = 'role-badge role-wakamad';
     } else {
@@ -458,7 +502,7 @@ function updateUIByRole() {
     }
     
     // Tampilkan fitur Kamad/Wakamad
-    const isEvaluator = ['admin', 'kepala', 'wakil', 'wakamad'].includes(userRole);
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     if (isEvaluator) {
         filterGuru.style.display = 'block';
@@ -469,26 +513,23 @@ function updateUIByRole() {
     }
 }
 
-window.loadRekapJurnal = async function() {
+async function loadRekapJurnal() {
     try {
-        if (!currentUser) {
-            alert('Anda harus login!');
-            window.location.href = '../index.html';
-            return;
-        }
-        
-        const currentUserNama = currentUser.nama || currentUser.email || 'guru';
-        const isEvaluator = ['admin', 'kepala', 'wakil', 'wakamad'].includes(userRole);
+        const currentUserNama = localUser.nama || localUser.email || 'guru';
+        const roleLower = userRole.toLowerCase();
+        const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
         
         let snapshot;
         
         if (isEvaluator) {
             // Kamad/Wakamad: Load SEMUA jurnal
+            console.log(' Loading semua jurnal untuk evaluator...');
             snapshot = await db.collection('jurnal_online')
                 .orderBy('tanggal', 'desc')
                 .get();
         } else {
             // Guru: Load jurnal sendiri saja
+            console.log('📊 Loading jurnal untuk guru:', currentUserNama);
             snapshot = await db.collection('jurnal_online')
                 .where('guruNama', '==', currentUserNama)
                 .orderBy('tanggal', 'desc')
@@ -505,6 +546,8 @@ window.loadRekapJurnal = async function() {
             if (data.guruNama) guruSet.add(data.guruNama);
             if (data.kelas) kelasSet.add(data.kelas);
         });
+        
+        console.log(`✅ Loaded ${allJurnal.length} jurnal`);
         
         // Populate filter kelas
         const filterKelas = document.getElementById('filterKelas');
@@ -540,11 +583,14 @@ window.loadRekapJurnal = async function() {
         }
         
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error loading jurnal:', error);
         document.getElementById('loading').innerHTML = 
-            `<div style="color: #ef4444;">❌ ${error.message}</div>`;
+            `<div style="color: #ef4444; padding: 20px;">
+                <strong>❌ Error:</strong> ${error.message}<br><br>
+                <small>Pastikan Firestore Rules sudah dikonfigurasi dengan benar.</small>
+            </div>`;
     }
-};
+}
 
 function renderGuruStats(guruSet) {
     const container = document.getElementById('guruStatsContainer');
@@ -559,13 +605,12 @@ function renderGuruStats(guruSet) {
         stats.push({ guru, total, totalHadir, totalTidakHadir });
     });
     
-    // Sort by total jurnal descending
     stats.sort((a, b) => b.total - a.total);
     
     container.innerHTML = stats.map(s => `
         <div class="guru-stat-card" onclick="filterByGuru('${s.guru.replace(/'/g, "\\'")}')">
             <div class="guru-stat-info">
-                <h4>‍🏫 ${s.guru}</h4>
+                <h4>👨‍ ${s.guru}</h4>
                 <p>Hadir: ${s.totalHadir} | Tidak Hadir: ${s.totalTidakHadir}</p>
             </div>
             <div class="guru-stat-numbers">
@@ -584,7 +629,8 @@ window.filterByGuru = function(guruNama) {
 
 function renderTabel() {
     const tbody = document.getElementById('tabelBody');
-    const isEvaluator = ['admin', 'kepala', 'wakil', 'wakamad'].includes(userRole);
+    const roleLower = userRole.toLowerCase();
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     if (filteredJurnal.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${isEvaluator ? 10 : 9}" style="text-align: center; padding: 30px; color: #94a3b8;">
@@ -610,9 +656,9 @@ function renderTabel() {
                 <td class="materi-cell">${materi}${(j.materi || '').length > 100 ? '...' : ''}</td>
                 <td class="keterangan-cell">${keterangan}${(j.keterangan || '').length > 80 ? '...' : ''}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm" onclick="lihatDetail('${j.id}')">️</button>
+                    <button class="btn btn-primary btn-sm" onclick="lihatDetail('${j.id}')">👁️</button>
                     ${isEvaluator ? `<button class="btn btn-warning btn-sm" onclick="lihatDetail('${j.id}', true)">📝</button>` : ''}
-                    ${j.guruNama === (currentUser?.nama || currentUser?.email) ? `<button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>` : ''}
+                    ${j.guruNama === (localUser?.nama || localUser?.email) ? `<button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>` : ''}
                 </td>
             </tr>
         `;
@@ -636,7 +682,8 @@ function updateStatistik() {
     document.getElementById('statHadir').textContent = totalHadir;
     document.getElementById('statTidakHadir').textContent = totalTidakHadir;
     
-    const isEvaluator = ['admin', 'kepala', 'wakil', 'wakamad'].includes(userRole);
+    const roleLower = userRole.toLowerCase();
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     if (isEvaluator) {
         const guruSet = new Set(allJurnal.map(j => j.guruNama).filter(g => g));
         document.getElementById('statGuru').textContent = guruSet.size;
@@ -681,7 +728,8 @@ window.lihatDetail = function(id, showEval = false) {
     currentDetailId = id;
     currentRating = j.evaluasi?.rating || 0;
     
-    const isEvaluator = ['admin', 'kepala', 'wakil', 'wakamad'].includes(userRole);
+    const roleLower = userRole.toLowerCase();
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     const content = `
         <div class="detail-row">
@@ -740,7 +788,6 @@ window.lihatDetail = function(id, showEval = false) {
     
     document.getElementById('detailContent').innerHTML = content;
     
-    // Show/hide evaluation section
     const evalSection = document.getElementById('evalSection');
     if (isEvaluator && showEval) {
         evalSection.style.display = 'block';
@@ -786,7 +833,7 @@ window.simpanEvaluasi = async function() {
         const evaluasi = {
             rating: currentRating,
             komentar: komentar,
-            evaluator: currentUser.nama || currentUser.email,
+            evaluator: localUser.nama || localUser.email,
             evaluatorRole: userRole,
             tanggal: new Date().toISOString()
         };
@@ -798,7 +845,7 @@ window.simpanEvaluasi = async function() {
         
         alert('✅ Evaluasi berhasil disimpan!');
         closeModal();
-        loadRekapJurnal(); // Reload data
+        loadRekapJurnal();
         
     } catch (error) {
         alert('❌ Gagal menyimpan evaluasi: ' + error.message);
@@ -832,12 +879,13 @@ window.exportExcel = function() {
         return;
     }
     
-    const isEvaluator = ['admin', 'kepala', 'wakil', 'wakamad'].includes(userRole);
+    const roleLower = userRole.toLowerCase();
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     const data = [
         ['JURNAL MENGAJAR ONLINE - MAN BANTAENG'],
         ['TA. 2025/2026 SEMESTER GENAP'],
-        ['Diekspor oleh: ' + (currentUser?.nama || 'Unknown') + ' (' + userRole + ')'],
+        ['Diekspor oleh: ' + (localUser?.nama || 'Unknown') + ' (' + userRole + ')'],
         ['Tanggal Export: ' + new Date().toLocaleString('id-ID')],
         [],
         ['No', 'Tanggal', 'Jam Ke', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan', 'Rating Evaluasi', 'Komentar Evaluasi']
@@ -867,23 +915,6 @@ window.exportExcel = function() {
     const fileName = `Jurnal_Mengajar_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
 };
-
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('id-ID', { 
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-    });
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
 
 document.getElementById('modalDetail').addEventListener('click', (e) => {
     if (e.target.id === 'modalDetail') closeModal();
