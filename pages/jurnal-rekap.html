@@ -471,22 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '../index.html';
         return;
     }
-    // ── Tambahkan ini: login Firebase Auth pakai email+password dari localStorage ──
-    try {
-        const email = localUser.email;
-        const password = localUser.password; // pastikan password disimpan di localStorage
-        if (email && password) {
-            await firebase.auth().signInWithEmailAndPassword(email, password);
-            console.log('✅ Firebase Auth berhasil');
-        }
-    } catch (e) {
-        console.warn('⚠️ Firebase Auth gagal:', e.message);
-        // Lanjut saja, mungkin sudah login sebelumnya
-    }
-
-    updateUIByRole();
-    loadRekapJurnal();
-});
+    
     // Update UI berdasarkan role
     updateUIByRole();
     
