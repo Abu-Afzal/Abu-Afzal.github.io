@@ -142,7 +142,7 @@ async function simpanJurnal(e) {
         const materi = document.getElementById('materi').value.trim();
         const keterangan = document.getElementById('keterangan').value.trim();
         
-        // Validasi input form
+        // Validasi
         if (!namaGuru) throw new Error('Nama guru wajib diisi');
         if (!nip) throw new Error('NIP wajib diisi');
         if (!tanggal) throw new Error('Tanggal wajib diisi');
@@ -150,20 +150,18 @@ async function simpanJurnal(e) {
         if (!materi) throw new Error('Materi/Tugas wajib diisi');
         if (!keterangan) throw new Error('Keterangan wajib diisi');
         
-        // 🚨 VALIDASI KEAMANAN: Pastikan session user dan UID-nya ada
-        if (!currentUser || (!currentUser.uid && !currentUser.id)) {
-            throw new Error('Sesi login tidak valid atau UID tidak ditemukan. Silakan login ulang.');
+        // ✅ PENTING: Pastikan user sudah login via Firebase Auth
+        const firebaseUser = firebase.auth().currentUser;
+        if (!firebaseUser) {
+            throw new Error('Sesi Firebase Auth tidak valid. Silakan login ulang.');
         }
         
-        // Ambil UID (sesuaikan apakah sistem login Anda menyimpan properti sebagai .uid atau .id)
-        const currentUid = currentUser.uid || currentUser.id;
-        
-        // Simpan NIP ke localStorage untuk auto-fill berikutnya
+        // Simpan NIP ke localStorage
         localStorage.setItem('sipelita_nip_' + sanitizeEmail(namaGuru), nip);
         
-        // Struktur data yang dikirim ke Firestore
+        // ✅ Struktur data yang benar
         const data = {
-            userId: currentUid, // 🌟 WAJIB: Agar sinkron dengan Firestore Rules (resource.data.userId)
+            userId: firebaseUser.email,  // ✅ EMAIL, bukan UID!
             guruNama: namaGuru,
             nip: nip,
             tanggal: tanggal,
@@ -177,15 +175,12 @@ async function simpanJurnal(e) {
             updatedAt: new Date().toISOString()
         };
         
-        // Simpan ke Firestore
         await db.collection('jurnal_online').add(data);
         
         alertEl.textContent = '✅ Jurnal berhasil disimpan!';
         alertEl.className = 'alert alert-success show';
-        
         toast('✅ Jurnal berhasil disimpan!');
         
-        // Reset form setelah 1.5 detik
         setTimeout(() => {
             resetForm();
             alertEl.classList.remove('show');
