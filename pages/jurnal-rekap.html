@@ -30,19 +30,7 @@
         }
         .btn-dashboard:hover { background: rgba(255,255,255,0.3); }
         
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        
-        .role-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            margin-left: 10px;
-        }
-        .role-guru { background: #dbeafe; color: #1e40af; }
-        .role-kamad { background: #fef3c7; color: #92400e; }
-        .role-wakamad { background: #ede9fe; color: #5b21b6; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
         
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -70,7 +58,6 @@
             display: flex; gap: 10px; flex-wrap: wrap;
             margin-bottom: 16px; padding: 14px;
             background: #f8fafc; border-radius: 8px;
-            align-items: center;
         }
         .filter-bar input, .filter-bar select {
             padding: 9px 12px; border: 1.5px solid #e2e8f0;
@@ -79,9 +66,6 @@
         }
         .filter-bar input:focus, .filter-bar select:focus {
             border-color: #059669;
-        }
-        .filter-label {
-            font-weight: 600; color: #475569; font-size: 0.85rem;
         }
         
         .btn {
@@ -95,7 +79,6 @@
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-warning { background: #f59e0b; color: white; }
-        .btn-secondary { background: #64748b; color: white; }
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         
         .tbl-wrap { overflow-x: auto; }
@@ -113,14 +96,21 @@
         }
         tr:hover td { background: #f0fdf4; }
         
-        .materi-cell, .keterangan-cell {
-            max-width: 250px;
+        .materi-cell {
+            max-width: 300px;
             white-space: pre-wrap;
             word-wrap: break-word;
             font-size: 0.85rem;
             line-height: 1.5;
         }
-        .keterangan-cell { color: #64748b; }
+        .keterangan-cell {
+            max-width: 250px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #64748b;
+        }
         
         .badge {
             display: inline-block; padding: 3px 10px;
@@ -163,93 +153,12 @@
         .detail-label { font-weight: 700; color: #475569; }
         .detail-value { color: #1e293b; white-space: pre-wrap; }
         
-        .eval-section {
-            margin-top: 20px;
-            padding: 16px;
-            background: #fef3c7;
-            border-radius: 8px;
-            border-left: 4px solid #f59e0b;
-        }
-        .eval-section h4 {
-            color: #92400e;
-            margin-bottom: 12px;
-            font-size: 1rem;
-        }
-        .eval-section textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1.5px solid #fde68a;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.9rem;
-            resize: vertical;
-            min-height: 80px;
-        }
-        .eval-section textarea:focus {
-            outline: none;
-            border-color: #f59e0b;
-        }
-        .rating-group {
-            display: flex;
-            gap: 8px;
-            margin: 12px 0;
-            flex-wrap: wrap;
-        }
-        .rating-btn {
-            padding: 8px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .rating-btn:hover { border-color: #f59e0b; }
-        .rating-btn.active {
-            background: #f59e0b;
-            color: white;
-            border-color: #f59e0b;
-        }
-        
-        .guru-stat-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .guru-stat-card:hover {
-            background: #f0fdf4;
-            border-color: #059669;
-        }
-        .guru-stat-info h4 {
-            color: #1e293b;
-            margin-bottom: 4px;
-        }
-        .guru-stat-info p {
-            color: #64748b;
-            font-size: 0.82rem;
-        }
-        .guru-stat-numbers {
-            text-align: right;
-        }
-        .guru-stat-numbers .total {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #047857;
-        }
-        
         @media (max-width: 768px) {
             .header { flex-direction: column; text-align: center; gap: 12px; padding: 16px; }
             .header h1 { font-size: 1.2rem; }
             .container { padding: 12px; }
             .card { padding: 16px; }
-            .filter-bar { flex-direction: column; align-items: stretch; }
+            .filter-bar { flex-direction: column; }
             .detail-row { grid-template-columns: 1fr; }
         }
     </style>
@@ -258,11 +167,10 @@
 
 <div class="header">
     <div style="flex: 1;">
-        <h1> Rekap Jurnal Mengajar</h1>
+        <h1>📊 Rekap Jurnal Mengajar</h1>
         <p>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</p>
     </div>
-    <div style="display: flex; gap: 10px; align-items: center;">
-        <span id="roleBadge" class="role-badge role-guru">GURU</span>
+    <div style="display: flex; gap: 10px;">
         <a href="jurnal-online.html" class="btn-dashboard">➕ Isi Jurnal</a>
         <a href="../index.html" class="btn-dashboard">← Dashboard</a>
     </div>
@@ -270,6 +178,7 @@
 
 <div class="container">
     
+    <!-- Statistik -->
     <div class="stats-grid">
         <div class="stat-card">
             <h3>Total Jurnal</h3>
@@ -287,46 +196,24 @@
             <h3>Total Tidak Hadir</h3>
             <div class="value" id="statTidakHadir" style="color: #ef4444;">0</div>
         </div>
-        <div class="stat-card" id="statGuruCard" style="display: none;">
-            <h3>Jumlah Guru</h3>
-            <div class="value" id="statGuru" style="color: #8b5cf6;">0</div>
-        </div>
     </div>
     
+    <!-- Daftar Jurnal -->
     <div class="card">
-        <h2>🔍 Filter & Pencarian</h2>
+        <h2>📋 Daftar Jurnal Mengajar</h2>
         
+        <!-- Filter -->
         <div class="filter-bar">
-            <span class="filter-label">Tanggal:</span>
             <input type="date" id="filterTanggal" onchange="applyFilter()">
-            
-            <span class="filter-label">Kelas:</span>
             <select id="filterKelas" onchange="applyFilter()">
                 <option value="">Semua Kelas</option>
             </select>
-            
-            <span class="filter-label" id="filterGuruLabel" style="display: none;">Guru:</span>
-            <select id="filterGuru" onchange="applyFilter()" style="display: none;">
-                <option value="">Semua Guru</option>
-            </select>
-            
-            <span class="filter-label">Cari:</span>
-            <input type="text" id="filterSearch" placeholder="Materi/keterangan..." oninput="applyFilter()" style="flex: 1; min-width: 200px;">
-            
+            <input type="text" id="filterSearch" placeholder="🔍 Cari materi..." oninput="applyFilter()">
             <button class="btn btn-secondary btn-sm" onclick="resetFilter()">🔄 Reset</button>
             <button class="btn btn-success btn-sm" onclick="exportExcel()" style="margin-left: auto;">
                 📥 Export Excel
             </button>
         </div>
-    </div>
-    
-    <div class="card" id="guruStatsCard" style="display: none;">
-        <h2>👨‍🏫 Statistik Per Guru</h2>
-        <div id="guruStatsContainer"></div>
-    </div>
-    
-    <div class="card">
-        <h2>📋 Daftar Jurnal Mengajar</h2>
         
         <div id="loading" style="text-align: center; padding: 40px;">
             <div class="spinner"></div>
@@ -349,7 +236,6 @@
                             <th>Tanggal</th>
                             <th>Jam</th>
                             <th>Kelas</th>
-                            <th id="thGuru" style="display: none;">Guru</th>
                             <th>Hadir</th>
                             <th>Tidak Hadir</th>
                             <th>Materi/Tugas</th>
@@ -365,224 +251,57 @@
     
 </div>
 
+<!-- Modal Detail -->
 <div class="modal" id="modalDetail">
     <div class="modal-box">
         <h3>📄 Detail Jurnal Mengajar</h3>
         <div id="detailContent"></div>
-        
-        <div id="evalSection" class="eval-section" style="display: none;">
-            <h4>📝 Evaluasi Kamad/Wakamad</h4>
-            
-            <div style="margin-bottom: 12px;">
-                <label style="font-weight: 600; color: #78350f; display: block; margin-bottom: 6px;">Rating Kinerja:</label>
-                <div class="rating-group">
-                    <button class="rating-btn" data-rating="1" onclick="selectRating(1)">⭐ Kurang</button>
-                    <button class="rating-btn" data-rating="2" onclick="selectRating(2)">⭐⭐ Cukup</button>
-                    <button class="rating-btn" data-rating="3" onclick="selectRating(3)">⭐⭐⭐ Baik</button>
-                    <button class="rating-btn" data-rating="4" onclick="selectRating(4)">⭐⭐⭐⭐ Sangat Baik</button>
-                    <button class="rating-btn" data-rating="5" onclick="selectRating(5)">⭐⭐⭐⭐⭐ Luar Biasa</button>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 12px;">
-                <label style="font-weight: 600; color: #78350f; display: block; margin-bottom: 6px;">Komentar Evaluasi:</label>
-                <textarea id="evalKomentar" placeholder="Tulis komentar evaluasi untuk guru ini..."></textarea>
-            </div>
-            
-            <button class="btn btn-warning" onclick="simpanEvaluasi()" id="btnSimpanEval">
-                💾 Simpan Evaluasi
-            </button>
-        </div>
-        
         <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
             <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
         </div>
     </div>
 </div>
 
+<script src="../js/jurnal-online.js"></script>
 <script>
-// ══════════════════════════════════════════════
-// FIREBASE CONFIG
-// ══════════════════════════════════════════════
-const firebaseConfig = {
-    apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
-    authDomain: "sipelita-digital.firebaseapp.com",
-    databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "sipelita-digital",
-    storageBucket: "sipelita-digital.firebasestorage.app",
-    messagingSenderId: "787840817745",
-    appId: "1:787840817745:web:e6b5237cfbb5e51be93670"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const auth = firebase.auth(); // ✅ TAMBAHKAN INI
-
-// ══════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════
 let allJurnal = [];
 let filteredJurnal = [];
-let localUser = null;
-let userRole = 'guru';
-let currentDetailId = null;
-let currentRating = 0;
 
-// ══════════════════════════════════════════════
-// UTILITIES
-// ══════════════════════════════════════════════
-function formatDate(dateStr) {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('id-ID', { 
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
-    });
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
-// ══════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-    // ✅ CEK FIREBASE AUTH DULU
-    auth.onAuthStateChanged(async (firebaseUser) => {
-        if (!firebaseUser) {
-            console.warn('⚠️ User belum login di Firebase Auth. Mencoba auto-login...');
-            
-            // Coba auto-login dari data localStorage
-            try {
-                const userStr = localStorage.getItem('sipelita_user');
-                if (userStr) {
-                    const userData = JSON.parse(userStr);
-                    const email = userData.email;
-                    
-                    // Coba sign in dengan email (tanpa password - hanya untuk cek state)
-                    // Ini akan gagal jika user belum pernah login via Firebase Auth
-                    console.log('📧 Email dari localStorage:', email);
-                }
-            } catch (e) {
-                console.error('Error:', e);
-            }
-            
-            showError('Anda belum login di Firebase Auth. Silakan login ulang via halaman login SIPELITA.');
-            return;
-        }
-        
-        console.log('✅ Firebase Auth OK:', firebaseUser.email);
-        
-        // Load data user dari localStorage
-        try {
-            const userStr = localStorage.getItem('sipelita_user');
-            if (userStr) {
-                localUser = JSON.parse(userStr);
-                userRole = localUser.role || localUser.jabatan || 'guru';
-                console.log('👤 User:', localUser.nama || localUser.email);
-                console.log('🎭 Role:', userRole);
-                
-                updateUIByRole();
-                loadRekapJurnal();
-            } else {
-                showError('Data user tidak ditemukan di localStorage');
-            }
-        } catch (e) {
-            console.error('Error load user:', e);
-            showError('Error memuat data user');
-        }
-    });
+    if (typeof loadRekapJurnal === 'function') {
+        loadRekapJurnal();
+    }
 });
 
-function showError(message) {
-    document.getElementById('loading').innerHTML = 
-        `<div style="color: #ef4444; padding: 20px; background: #fee2e2; border-radius: 8px;">
-            <strong>❌ Error:</strong><br>${message}<br><br>
-            <button onclick="window.location.href='../index.html'" 
-                style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                Kembali ke Dashboard
-            </button>
-        </div>`;
-}
-
-function updateUIByRole() {
-    const roleBadge = document.getElementById('roleBadge');
-    const filterGuru = document.getElementById('filterGuru');
-    const filterGuruLabel = document.getElementById('filterGuruLabel');
-    const thGuru = document.getElementById('thGuru');
-    const guruStatsCard = document.getElementById('guruStatsCard');
-    const statGuruCard = document.getElementById('statGuruCard');
-    
-    const roleLower = userRole.toLowerCase();
-    
-    if (roleLower === 'admin' || roleLower === 'kepala' || roleLower === 'kamad') {
-        roleBadge.textContent = '👑 KAMAD/ADMIN';
-        roleBadge.className = 'role-badge role-kamad';
-    } else if (roleLower === 'wakil' || roleLower === 'wakamad') {
-        roleBadge.textContent = '⭐ WAKAMAD';
-        roleBadge.className = 'role-badge role-wakamad';
-    } else {
-        roleBadge.textContent = '👨‍🏫 GURU';
-        roleBadge.className = 'role-badge role-guru';
-    }
-    
-    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
-    
-    if (isEvaluator) {
-        filterGuru.style.display = 'block';
-        filterGuruLabel.style.display = 'block';
-        thGuru.style.display = 'table-cell';
-        guruStatsCard.style.display = 'block';
-        statGuruCard.style.display = 'block';
-    }
-}
-
-async function loadRekapJurnal() {
+window.loadRekapJurnal = async function() {
     try {
-        console.log('📊 Loading jurnal...');
+        const userStr = localStorage.getItem('sipelita_user');
+        if (!userStr) {
+            alert('Anda harus login!');
+            window.location.href = '../index.html';
+            return;
+        }
+        const user = JSON.parse(userStr);
+        const currentUser = user.nama || user.email || 'guru';
         
-        // ✅ Query tanpa orderBy untuk menghindari masalah index
-        const snapshot = await db.collection('jurnal_online').get();
+        const snapshot = await db.collection('jurnal_online')
+            .where('guruNama', '==', currentUser)
+            .orderBy('tanggal', 'desc')
+            .get();
         
         allJurnal = [];
-        const guruSet = new Set();
-        const kelasSet = new Set();
-        
         snapshot.forEach(doc => {
-            const data = { id: doc.id, ...doc.data() };
-            allJurnal.push(data);
-            if (data.guruNama) guruSet.add(data.guruNama);
-            if (data.kelas) kelasSet.add(data.kelas);
+            allJurnal.push({ id: doc.id, ...doc.data() });
         });
         
-        console.log(`✅ Loaded ${allJurnal.length} jurnal`);
-        
         // Populate filter kelas
+        const kelasSet = new Set(allJurnal.map(j => j.kelas).filter(k => k));
         const filterKelas = document.getElementById('filterKelas');
         kelasSet.forEach(k => {
             const opt = document.createElement('option');
             opt.value = k; opt.textContent = k;
             filterKelas.appendChild(opt);
         });
-        
-        // Populate filter guru
-        const roleLower = userRole.toLowerCase();
-        const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
-        
-        if (isEvaluator) {
-            const filterGuru = document.getElementById('filterGuru');
-            guruSet.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g; opt.textContent = g;
-                filterGuru.appendChild(opt);
-            });
-            renderGuruStats(guruSet);
-        }
         
         filteredJurnal = [...allJurnal];
         
@@ -597,57 +316,17 @@ async function loadRekapJurnal() {
         }
         
     } catch (error) {
-        console.error('❌ Error loading jurnal:', error);
+        console.error('Error:', error);
         document.getElementById('loading').innerHTML = 
-            `<div style="color: #ef4444; padding: 20px; background: #fee2e2; border-radius: 8px;">
-                <strong>❌ Error:</strong> ${error.message}<br><br>
-                <small>Kode error: ${error.code || 'N/A'}</small>
-            </div>`;
+            `<div style="color: #ef4444;">❌ ${error.message}</div>`;
     }
-}
-
-function renderGuruStats(guruSet) {
-    const container = document.getElementById('guruStatsContainer');
-    const stats = [];
-    
-    guruSet.forEach(guru => {
-        const jurnalGuru = allJurnal.filter(j => j.guruNama === guru);
-        const total = jurnalGuru.length;
-        const totalHadir = jurnalGuru.reduce((sum, j) => sum + (parseInt(j.muridHadir) || 0), 0);
-        const totalTidakHadir = jurnalGuru.reduce((sum, j) => sum + (parseInt(j.muridTidakHadir) || 0), 0);
-        
-        stats.push({ guru, total, totalHadir, totalTidakHadir });
-    });
-    
-    stats.sort((a, b) => b.total - a.total);
-    
-    container.innerHTML = stats.map(s => `
-        <div class="guru-stat-card" onclick="filterByGuru('${s.guru.replace(/'/g, "\\'")}')">
-            <div class="guru-stat-info">
-                <h4>👨‍🏫 ${s.guru}</h4>
-                <p>Hadir: ${s.totalHadir} | Tidak Hadir: ${s.totalTidakHadir}</p>
-            </div>
-            <div class="guru-stat-numbers">
-                <div class="total">${s.total}</div>
-                <div style="font-size: 0.75rem; color: #64748b;">jurnal</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-window.filterByGuru = function(guruNama) {
-    document.getElementById('filterGuru').value = guruNama;
-    applyFilter();
-    window.scrollTo({ top: document.getElementById('tableContainer').offsetTop - 100, behavior: 'smooth' });
 };
 
 function renderTabel() {
     const tbody = document.getElementById('tabelBody');
-    const roleLower = userRole.toLowerCase();
-    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     if (filteredJurnal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${isEvaluator ? 10 : 9}" style="text-align: center; padding: 30px; color: #94a3b8;">
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: #94a3b8;">
             Tidak ada data yang cocok dengan filter
         </td></tr>`;
         return;
@@ -664,15 +343,13 @@ function renderTabel() {
                 <td>${tanggal}</td>
                 <td>${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</td>
                 <td><strong>${j.kelas || '-'}</strong></td>
-                ${isEvaluator ? `<td>${j.guruNama || '-'}</td>` : ''}
                 <td><span class="badge badge-hadir">${j.muridHadir || 0}</span></td>
                 <td><span class="badge badge-tidak">${j.muridTidakHadir || 0}</span></td>
                 <td class="materi-cell">${materi}${(j.materi || '').length > 100 ? '...' : ''}</td>
                 <td class="keterangan-cell">${keterangan}${(j.keterangan || '').length > 80 ? '...' : ''}</td>
                 <td>
                     <button class="btn btn-primary btn-sm" onclick="lihatDetail('${j.id}')">👁️</button>
-                    ${isEvaluator ? `<button class="btn btn-warning btn-sm" onclick="lihatDetail('${j.id}', true)">📝</button>` : ''}
-                    ${j.guruNama === (localUser?.nama || localUser?.email) ? `<button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>
                 </td>
             </tr>
         `;
@@ -695,30 +372,20 @@ function updateStatistik() {
     document.getElementById('statBulanIni').textContent = bulanIni;
     document.getElementById('statHadir').textContent = totalHadir;
     document.getElementById('statTidakHadir').textContent = totalTidakHadir;
-    
-    const roleLower = userRole.toLowerCase();
-    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
-    if (isEvaluator) {
-        const guruSet = new Set(allJurnal.map(j => j.guruNama).filter(g => g));
-        document.getElementById('statGuru').textContent = guruSet.size;
-    }
 }
 
 window.applyFilter = function() {
     const tanggal = document.getElementById('filterTanggal').value;
     const kelas = document.getElementById('filterKelas').value;
-    const guru = document.getElementById('filterGuru').value;
     const search = document.getElementById('filterSearch').value.toLowerCase();
     
     filteredJurnal = allJurnal.filter(j => {
         if (tanggal && j.tanggal !== tanggal) return false;
         if (kelas && j.kelas !== kelas) return false;
-        if (guru && j.guruNama !== guru) return false;
         if (search) {
             const materi = (j.materi || '').toLowerCase();
             const keterangan = (j.keterangan || '').toLowerCase();
-            const guruNama = (j.guruNama || '').toLowerCase();
-            if (!materi.includes(search) && !keterangan.includes(search) && !guruNama.includes(search)) return false;
+            if (!materi.includes(search) && !keterangan.includes(search)) return false;
         }
         return true;
     });
@@ -729,21 +396,14 @@ window.applyFilter = function() {
 window.resetFilter = function() {
     document.getElementById('filterTanggal').value = '';
     document.getElementById('filterKelas').value = '';
-    document.getElementById('filterGuru').value = '';
     document.getElementById('filterSearch').value = '';
     filteredJurnal = [...allJurnal];
     renderTabel();
 };
 
-window.lihatDetail = function(id, showEval = false) {
+window.lihatDetail = function(id) {
     const j = allJurnal.find(x => x.id === id);
     if (!j) return;
-    
-    currentDetailId = id;
-    currentRating = j.evaluasi?.rating || 0;
-    
-    const roleLower = userRole.toLowerCase();
-    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     const content = `
         <div class="detail-row">
@@ -786,93 +446,14 @@ window.lihatDetail = function(id, showEval = false) {
             <div class="detail-label">Disimpan:</div>
             <div class="detail-value">${j.createdAt ? new Date(j.createdAt).toLocaleString('id-ID') : '-'}</div>
         </div>
-        ${j.evaluasi ? `
-        <div class="detail-row" style="background: #fef3c7; padding: 10px; border-radius: 6px;">
-            <div class="detail-label">Evaluasi Kamad:</div>
-            <div class="detail-value">
-                <div style="font-size: 1.2rem; margin-bottom: 4px;">${'⭐'.repeat(j.evaluasi.rating || 0)}</div>
-                <div>${escapeHtml(j.evaluasi.komentar || '-')}</div>
-                <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
-                    Oleh: ${j.evaluasi.evaluator || '-'} pada ${j.evaluasi.tanggal ? new Date(j.evaluasi.tanggal).toLocaleString('id-ID') : '-'}
-                </div>
-            </div>
-        </div>
-        ` : ''}
     `;
     
     document.getElementById('detailContent').innerHTML = content;
-    
-    const evalSection = document.getElementById('evalSection');
-    if (isEvaluator && showEval) {
-        evalSection.style.display = 'block';
-        document.getElementById('evalKomentar').value = j.evaluasi?.komentar || '';
-        updateRatingButtons();
-    } else {
-        evalSection.style.display = 'none';
-    }
-    
     document.getElementById('modalDetail').classList.add('active');
-};
-
-window.selectRating = function(rating) {
-    currentRating = rating;
-    updateRatingButtons();
-};
-
-function updateRatingButtons() {
-    document.querySelectorAll('.rating-btn').forEach(btn => {
-        const btnRating = parseInt(btn.dataset.rating);
-        if (btnRating === currentRating) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-}
-
-window.simpanEvaluasi = async function() {
-    if (!currentDetailId) return;
-    
-    const komentar = document.getElementById('evalKomentar').value.trim();
-    if (currentRating === 0 && !komentar) {
-        alert('Berikan rating atau komentar terlebih dahulu!');
-        return;
-    }
-    
-    const btn = document.getElementById('btnSimpanEval');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
-    
-    try {
-        const evaluasi = {
-            rating: currentRating,
-            komentar: komentar,
-            evaluator: localUser.nama || localUser.email,
-            evaluatorRole: userRole,
-            tanggal: new Date().toISOString()
-        };
-        
-        await db.collection('jurnal_online').doc(currentDetailId).update({
-            evaluasi: evaluasi,
-            updatedAt: new Date().toISOString()
-        });
-        
-        alert('✅ Evaluasi berhasil disimpan!');
-        closeModal();
-        loadRekapJurnal();
-        
-    } catch (error) {
-        alert('❌ Gagal menyimpan evaluasi: ' + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '💾 Simpan Evaluasi';
-    }
 };
 
 window.closeModal = function() {
     document.getElementById('modalDetail').classList.remove('active');
-    currentDetailId = null;
-    currentRating = 0;
 };
 
 window.hapusJurnal = async function(id) {
@@ -896,10 +477,8 @@ window.exportExcel = function() {
     const data = [
         ['JURNAL MENGAJAR ONLINE - MAN BANTAENG'],
         ['TA. 2025/2026 SEMESTER GENAP'],
-        ['Diekspor oleh: ' + (localUser?.nama || 'Unknown') + ' (' + userRole + ')'],
-        ['Tanggal Export: ' + new Date().toLocaleString('id-ID')],
         [],
-        ['No', 'Tanggal', 'Jam Ke', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan', 'Rating Evaluasi', 'Komentar Evaluasi']
+        ['No', 'Tanggal', 'Jam Ke', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan']
     ];
     
     filteredJurnal.forEach((j, idx) => {
@@ -913,9 +492,7 @@ window.exportExcel = function() {
             j.muridHadir || 0,
             j.muridTidakHadir || 0,
             j.materi || '-',
-            j.keterangan || '-',
-            j.evaluasi ? '⭐'.repeat(j.evaluasi.rating || 0) : '-',
-            j.evaluasi?.komentar || '-'
+            j.keterangan || '-'
         ]);
     });
     
@@ -926,6 +503,23 @@ window.exportExcel = function() {
     const fileName = `Jurnal_Mengajar_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(wb, fileName);
 };
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('id-ID', { 
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
 
 document.getElementById('modalDetail').addEventListener('click', (e) => {
     if (e.target.id === 'modalDetail') closeModal();
