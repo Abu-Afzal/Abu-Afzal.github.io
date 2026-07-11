@@ -59,6 +59,7 @@
             display: flex; gap: 10px; flex-wrap: wrap;
             margin-bottom: 16px; padding: 14px;
             background: #f8fafc; border-radius: 8px;
+            align-items: center;
         }
         .filter-bar input, .filter-bar select {
             padding: 9px 12px; border: 1.5px solid #e2e8f0;
@@ -75,11 +76,17 @@
             display: inline-flex; align-items: center; gap: 6px;
             text-decoration: none; transition: all 0.2s;
         }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .btn-primary { background: #059669; color: white; }
         .btn-primary:hover { background: #047857; }
         .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
         .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
         .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        .btn-secondary { background: #64748b; color: white; }
+        .btn-secondary:hover { background: #475569; }
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         
         .tbl-wrap { overflow-x: auto; }
@@ -154,12 +161,217 @@
         .detail-label { font-weight: 700; color: #475569; }
         .detail-value { color: #1e293b; white-space: pre-wrap; }
         
+        /* Loading overlay untuk PDF */
+        .pdf-loading {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+        .pdf-loading-content {
+            background: white;
+            color: #047857;
+            padding: 30px 50px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .pdf-loading-content .spinner {
+            width: 40px; height: 40px;
+            border-width: 4px;
+            margin: 0 auto 15px;
+        }
+        
+        /* ══════════════════════════════════════════════
+           PRINT STYLES
+           ══════════════════════════════════════════════ */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 15mm;
+            }
+            
+            body {
+                background: white !important;
+                font-size: 10pt;
+            }
+            
+            /* Hide elements that shouldn't be printed */
+            .header, .filter-bar, .btn, .modal, .zoom-modal,
+            .stats-grid, .pdf-loading, #loading, #emptyState {
+                display: none !important;
+            }
+            
+            .container {
+                max-width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .card {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                page-break-inside: avoid;
+            }
+            
+            .card h2 {
+                border-bottom: 2px solid #047857 !important;
+                padding-bottom: 8px !important;
+                margin-bottom: 12px !important;
+                color: #047857 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Print header */
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+                border-bottom: 3px double #047857;
+            }
+            
+            .print-header h1 {
+                font-size: 16pt;
+                color: #047857;
+                margin-bottom: 4px;
+            }
+            
+            .print-header h2 {
+                font-size: 12pt;
+                color: #334155;
+                margin-bottom: 4px;
+                font-weight: 600;
+            }
+            
+            .print-header p {
+                font-size: 10pt;
+                color: #64748b;
+                margin: 2px 0;
+            }
+            
+            /* Print statistics */
+            .print-stats {
+                display: flex !important;
+                justify-content: space-around;
+                margin-bottom: 20px;
+                padding: 10px;
+                background: #f0fdf4;
+                border-radius: 6px;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .print-stat-item {
+                text-align: center;
+            }
+            
+            .print-stat-item .label {
+                font-size: 9pt;
+                color: #64748b;
+                display: block;
+            }
+            
+            .print-stat-item .value {
+                font-size: 14pt;
+                font-weight: 700;
+                color: #047857;
+            }
+            
+            /* Table styling for print */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 9pt;
+                page-break-inside: auto;
+            }
+            
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            thead {
+                display: table-header-group;
+            }
+            
+            th, td {
+                border: 1px solid #cbd5e1 !important;
+                padding: 6px !important;
+                text-align: left;
+                vertical-align: top;
+            }
+            
+            th {
+                background-color: #059669 !important;
+                color: white !important;
+                font-weight: 700;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            td {
+                background: white !important;
+            }
+            
+            /* Hide action column in print */
+            th:last-child, td:last-child {
+                display: none !important;
+            }
+            
+            .materi-cell, .keterangan-cell {
+                max-width: 200px !important;
+                font-size: 8pt !important;
+            }
+            
+            .badge {
+                padding: 2px 6px !important;
+                font-size: 8pt !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .badge-hadir { background: #dcfce7 !important; color: #166534 !important; }
+            .badge-tidak { background: #fee2e2 !important; color: #991b1b !important; }
+            
+            /* Print footer */
+            .print-footer {
+                display: block !important;
+                margin-top: 20px;
+                padding-top: 15px;
+                border-top: 1px solid #cbd5e1;
+                font-size: 9pt;
+                color: #64748b;
+                text-align: right;
+            }
+            
+            /* Ensure all colors print */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+        
+        /* Hide print-only elements on screen */
+        .print-header, .print-stats, .print-footer {
+            display: none;
+        }
+        
         @media (max-width: 768px) {
             .header { flex-direction: column; text-align: center; gap: 12px; padding: 16px; }
             .header h1 { font-size: 1.2rem; }
             .container { padding: 12px; }
             .card { padding: 16px; }
-            .filter-bar { flex-direction: column; }
+            .filter-bar { flex-direction: column; align-items: stretch; }
             .detail-row { grid-template-columns: 1fr; }
         }
     </style>
@@ -179,7 +391,34 @@
 
 <div class="container">
     
-    <!-- Statistik -->
+    <!-- Print Header (hanya muncul saat print/PDF) -->
+    <div class="print-header">
+        <h1>📊 JURNAL MENGAJAR ONLINE</h1>
+        <h2>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</h2>
+        <p id="printInfo">Dicetak oleh: - | Tanggal: -</p>
+    </div>
+    
+    <!-- Print Stats (hanya muncul saat print/PDF) -->
+    <div class="print-stats">
+        <div class="print-stat-item">
+            <span class="label">Total Jurnal</span>
+            <span class="value" id="printStatTotal">0</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="label">Bulan Ini</span>
+            <span class="value" id="printStatBulan">0</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="label">Total Hadir</span>
+            <span class="value" id="printStatHadir" style="color: #10b981;">0</span>
+        </div>
+        <div class="print-stat-item">
+            <span class="label">Total Tidak Hadir</span>
+            <span class="value" id="printStatTidak" style="color: #ef4444;">0</span>
+        </div>
+    </div>
+    
+    <!-- Statistik (tampilan normal) -->
     <div class="stats-grid">
         <div class="stat-card">
             <h3>Total Jurnal</h3>
@@ -211,9 +450,17 @@
             </select>
             <input type="text" id="filterSearch" placeholder="🔍 Cari materi..." oninput="applyFilter()">
             <button class="btn btn-secondary btn-sm" onclick="resetFilter()">🔄 Reset</button>
-            <button class="btn btn-success btn-sm" onclick="exportExcel()" style="margin-left: auto;">
-                📥 Export Excel
-            </button>
+            <div style="display: flex; gap: 8px; margin-left: auto;">
+                <button class="btn btn-secondary btn-sm" onclick="printRekap()" title="Cetak Halaman">
+                    🖨️ Print
+                </button>
+                <button class="btn btn-warning btn-sm" onclick="exportPDF()" title="Export ke PDF">
+                    📄 PDF
+                </button>
+                <button class="btn btn-success btn-sm" onclick="exportExcel()" title="Export ke Excel">
+                    📥 Excel
+                </button>
+            </div>
         </div>
         
         <div id="loading" style="text-align: center; padding: 40px;">
@@ -230,7 +477,7 @@
         
         <div id="tableContainer" style="display: none;">
             <div class="tbl-wrap">
-                <table>
+                <table id="tabelJurnal">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -250,6 +497,12 @@
         </div>
     </div>
     
+    <!-- Print Footer (hanya muncul saat print/PDF) -->
+    <div class="print-footer">
+        <p>Dicetak dari SIPELITA - Sistem Informasi Pembelajaran Digital MAN Bantaeng</p>
+        <p id="printFooterTime">-</p>
+    </div>
+    
 </div>
 
 <!-- Modal Detail -->
@@ -257,9 +510,21 @@
     <div class="modal-box">
         <h3>📄 Detail Jurnal Mengajar</h3>
         <div id="detailContent"></div>
-        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+            <button class="btn btn-warning btn-sm" onclick="printDetailJurnal()" title="Cetak Jurnal Ini">
+                🖨️ Cetak Jurnal
+            </button>
             <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
         </div>
+    </div>
+</div>
+
+<!-- PDF Loading Overlay -->
+<div id="pdfLoading" class="pdf-loading" style="display: none;">
+    <div class="pdf-loading-content">
+        <div class="spinner"></div>
+        <div>Membuat PDF...</div>
+        <div style="font-size: 0.85rem; font-weight: 400; margin-top: 5px;">Mohon tunggu sebentar</div>
     </div>
 </div>
 
@@ -267,8 +532,20 @@
 <script>
 let allJurnal = [];
 let filteredJurnal = [];
+let currentUserData = null;
+let currentDetailJurnal = null; // Untuk menyimpan jurnal yang sedang dilihat di modal
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Load data user
+    try {
+        const userStr = localStorage.getItem('sipelita_user');
+        if (userStr) {
+            currentUserData = JSON.parse(userStr);
+        }
+    } catch (e) {
+        console.error('Error load user:', e);
+    }
+    
     if (typeof loadRekapJurnal === 'function') {
         loadRekapJurnal();
     }
@@ -298,6 +575,7 @@ window.loadRekapJurnal = async function() {
         // Populate filter kelas
         const kelasSet = new Set(allJurnal.map(j => j.kelas).filter(k => k));
         const filterKelas = document.getElementById('filterKelas');
+        filterKelas.innerHTML = '<option value="">Semua Kelas</option>';
         kelasSet.forEach(k => {
             const opt = document.createElement('option');
             opt.value = k; opt.textContent = k;
@@ -314,6 +592,7 @@ window.loadRekapJurnal = async function() {
             document.getElementById('tableContainer').style.display = 'block';
             renderTabel();
             updateStatistik();
+            updatePrintInfo();
         }
         
     } catch (error) {
@@ -358,21 +637,41 @@ function renderTabel() {
 }
 
 function updateStatistik() {
-    const total = allJurnal.length;
+    const total = filteredJurnal.length;
     const now = new Date();
-    const bulanIni = allJurnal.filter(j => {
+    const bulanIni = filteredJurnal.filter(j => {
         if (!j.tanggal) return false;
         const d = new Date(j.tanggal);
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     }).length;
     
-    const totalHadir = allJurnal.reduce((sum, j) => sum + (parseInt(j.muridHadir) || 0), 0);
-    const totalTidakHadir = allJurnal.reduce((sum, j) => sum + (parseInt(j.muridTidakHadir) || 0), 0);
+    const totalHadir = filteredJurnal.reduce((sum, j) => sum + (parseInt(j.muridHadir) || 0), 0);
+    const totalTidakHadir = filteredJurnal.reduce((sum, j) => sum + (parseInt(j.muridTidakHadir) || 0), 0);
     
     document.getElementById('statTotal').textContent = total;
     document.getElementById('statBulanIni').textContent = bulanIni;
     document.getElementById('statHadir').textContent = totalHadir;
     document.getElementById('statTidakHadir').textContent = totalTidakHadir;
+    
+    // Update print stats juga
+    document.getElementById('printStatTotal').textContent = total;
+    document.getElementById('printStatBulan').textContent = bulanIni;
+    document.getElementById('printStatHadir').textContent = totalHadir;
+    document.getElementById('printStatTidak').textContent = totalTidakHadir;
+}
+
+function updatePrintInfo() {
+    const userName = currentUserData?.nama || currentUserData?.email || 'User';
+    const userRole = currentUserData?.role || 'Guru';
+    const now = new Date().toLocaleString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+    
+    document.getElementById('printInfo').textContent = 
+        `Dicetak oleh: ${userName} (${userRole}) | Tanggal: ${now}`;
+    document.getElementById('printFooterTime').textContent = 
+        `Dicetak pada: ${now}`;
 }
 
 window.applyFilter = function() {
@@ -392,6 +691,7 @@ window.applyFilter = function() {
     });
     
     renderTabel();
+    updateStatistik();
 };
 
 window.resetFilter = function() {
@@ -400,11 +700,14 @@ window.resetFilter = function() {
     document.getElementById('filterSearch').value = '';
     filteredJurnal = [...allJurnal];
     renderTabel();
+    updateStatistik();
 };
 
 window.lihatDetail = function(id) {
     const j = allJurnal.find(x => x.id === id);
     if (!j) return;
+    
+    currentDetailJurnal = j; // Simpan untuk print individual
     
     const content = `
         <div class="detail-row">
@@ -455,6 +758,7 @@ window.lihatDetail = function(id) {
 
 window.closeModal = function() {
     document.getElementById('modalDetail').classList.remove('active');
+    currentDetailJurnal = null;
 };
 
 window.hapusJurnal = async function(id) {
@@ -469,15 +773,347 @@ window.hapusJurnal = async function(id) {
     }
 };
 
+// ══════════════════════════════════════════════
+// 🖨️ PRINT REKAP (Browser Print)
+// ══════════════════════════════════════════════
+window.printRekap = function() {
+    if (filteredJurnal.length === 0) {
+        alert('Tidak ada data untuk dicetak!');
+        return;
+    }
+    
+    updatePrintInfo();
+    window.print();
+};
+
+// ══════════════════════════════════════════════
+// 📄 EXPORT PDF (html2pdf.js)
+// ══════════════════════════════════════════════
+window.exportPDF = function() {
+    if (filteredJurnal.length === 0) {
+        alert('Tidak ada data untuk diexport!');
+        return;
+    }
+    
+    // Tampilkan loading
+    document.getElementById('pdfLoading').style.display = 'flex';
+    
+    const userName = currentUserData?.nama || currentUserData?.email || 'User';
+    const userRole = currentUserData?.role || 'Guru';
+    const now = new Date();
+    const nowStr = now.toLocaleString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+    
+    const totalHadir = filteredJurnal.reduce((sum, j) => sum + (parseInt(j.muridHadir) || 0), 0);
+    const totalTidakHadir = filteredJurnal.reduce((sum, j) => sum + (parseInt(j.muridTidakHadir) || 0), 0);
+    
+    // Buat elemen PDF
+    const element = document.createElement('div');
+    element.style.cssText = 'padding: 20px; font-family: Arial, sans-serif; color: #1e293b;';
+    
+    element.innerHTML = `
+        <div style="text-align: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 3px double #047857;">
+            <h1 style="margin: 0; font-size: 20px; color: #047857;">📊 JURNAL MENGAJAR ONLINE</h1>
+            <h2 style="margin: 5px 0; font-size: 14px; color: #334155;">MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</h2>
+            <p style="margin: 10px 0 0; font-size: 10px; color: #64748b;">
+                Dicetak oleh: ${userName} (${userRole})<br>
+                Tanggal: ${nowStr}
+            </p>
+        </div>
+        
+        <div style="display: flex; justify-content: space-around; margin-bottom: 20px; padding: 12px; background: #f0fdf4; border-radius: 6px;">
+            <div style="text-align: center;">
+                <div style="font-size: 9px; color: #64748b;">Total Jurnal</div>
+                <div style="font-size: 16px; font-weight: 700; color: #047857;">${filteredJurnal.length}</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 9px; color: #64748b;">Total Hadir</div>
+                <div style="font-size: 16px; font-weight: 700; color: #10b981;">${totalHadir}</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 9px; color: #64748b;">Total Tidak Hadir</div>
+                <div style="font-size: 16px; font-weight: 700; color: #ef4444;">${totalTidakHadir}</div>
+            </div>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: left;">No</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: left;">Tanggal</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: left;">Jam</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: left;">Kelas</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: center;">Hadir</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: center;">Tidak Hadir</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: left;">Materi/Tugas</th>
+                    <th style="border: 1px solid #cbd5e1; padding: 8px; background: #059669; color: white; text-align: left;">Keterangan</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filteredJurnal.map((j, idx) => `
+                    <tr style="background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${idx + 1}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${formatDate(j.tanggal)}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px;">${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; font-weight: 700;">${j.kelas || '-'}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #10b981; font-weight: 700;">${j.muridHadir || 0}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; color: #ef4444; font-weight: 700;">${j.muridTidakHadir || 0}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; font-size: 9px;">${escapeHtml(j.materi || '-')}</td>
+                        <td style="border: 1px solid #cbd5e1; padding: 6px; font-size: 9px; color: #64748b;">${escapeHtml(j.keterangan || '-')}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 25px; padding-top: 12px; border-top: 1px solid #cbd5e1; font-size: 9px; color: #64748b; text-align: right;">
+            <p>Dicetak dari SIPELITA - Sistem Informasi Pembelajaran Digital MAN Bantaeng</p>
+            <p>Dicetak pada: ${nowStr}</p>
+        </div>
+    `;
+    
+    // Konfigurasi PDF
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Jurnal_Mengajar_${now.toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            logging: false,
+            letterRendering: true
+        },
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'landscape' 
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
+    // Generate PDF
+    html2pdf().set(opt).from(element).save().then(() => {
+        document.getElementById('pdfLoading').style.display = 'none';
+    }).catch(err => {
+        console.error('Error generating PDF:', err);
+        alert('❌ Gagal membuat PDF: ' + err.message);
+        document.getElementById('pdfLoading').style.display = 'none';
+    });
+};
+
+// ══════════════════════════════════════════════
+// 🖨️ PRINT DETAIL JURNAL INDIVIDUAL
+// ══════════════════════════════════════════════
+window.printDetailJurnal = function() {
+    if (!currentDetailJurnal) {
+        alert('Tidak ada jurnal yang dipilih!');
+        return;
+    }
+    
+    const j = currentDetailJurnal;
+    const userName = currentUserData?.nama || currentUserData?.email || 'User';
+    const now = new Date().toLocaleString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
+    
+    // Buat window baru untuk print
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Jurnal Mengajar - ${j.kelas} - ${formatDate(j.tanggal)}</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Arial, sans-serif;
+                    padding: 30px;
+                    color: #1e293b;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .header {
+                    text-align: center;
+                    padding-bottom: 15px;
+                    border-bottom: 3px double #047857;
+                    margin-bottom: 25px;
+                }
+                .header h1 {
+                    color: #047857;
+                    margin: 0 0 5px;
+                    font-size: 22px;
+                }
+                .header h2 {
+                    color: #334155;
+                    margin: 0 0 5px;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                .header p {
+                    color: #64748b;
+                    font-size: 11px;
+                    margin: 3px 0;
+                }
+                .info-table {
+                    width: 100%;
+                    margin-bottom: 20px;
+                    border-collapse: collapse;
+                }
+                .info-table td {
+                    padding: 10px;
+                    border: 1px solid #e2e8f0;
+                    vertical-align: top;
+                }
+                .info-table .label {
+                    font-weight: 700;
+                    color: #475569;
+                    width: 180px;
+                    background: #f8fafc;
+                }
+                .info-table .value {
+                    color: #1e293b;
+                    white-space: pre-wrap;
+                }
+                .section-title {
+                    background: #059669;
+                    color: white;
+                    padding: 8px 12px;
+                    font-weight: 700;
+                    margin-top: 20px;
+                    border-radius: 4px 4px 0 0;
+                }
+                .content-box {
+                    border: 1px solid #e2e8f0;
+                    border-top: none;
+                    padding: 15px;
+                    white-space: pre-wrap;
+                    line-height: 1.6;
+                    min-height: 60px;
+                }
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 15px;
+                    border-top: 1px solid #cbd5e1;
+                    font-size: 10px;
+                    color: #64748b;
+                    text-align: right;
+                }
+                .signature {
+                    margin-top: 50px;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .signature-box {
+                    text-align: center;
+                    width: 250px;
+                }
+                .signature-box .line {
+                    margin-top: 70px;
+                    border-top: 1px solid #334155;
+                    padding-top: 5px;
+                    font-weight: 700;
+                }
+                @media print {
+                    body { padding: 15px; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>📝 JURNAL MENGAJAR</h1>
+                <h2>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</h2>
+                <p>Dicetak pada: ${now}</p>
+            </div>
+            
+            <table class="info-table">
+                <tr>
+                    <td class="label">Nama Guru</td>
+                    <td class="value">${j.guruNama || '-'}</td>
+                </tr>
+                <tr>
+                    <td class="label">NIP</td>
+                    <td class="value">${j.nip || '-'}</td>
+                </tr>
+                <tr>
+                    <td class="label">Hari/Tanggal</td>
+                    <td class="value">${formatDate(j.tanggal)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Jam Ke</td>
+                    <td class="value">${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</td>
+                </tr>
+                <tr>
+                    <td class="label">Mengajar di Kelas</td>
+                    <td class="value"><strong>${j.kelas || '-'}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label">Murid yang Hadir</td>
+                    <td class="value" style="color: #10b981; font-weight: 700;">${j.muridHadir || 0} siswa</td>
+                </tr>
+                <tr>
+                    <td class="label">Murid yang Tidak Hadir</td>
+                    <td class="value" style="color: #ef4444; font-weight: 700;">${j.muridTidakHadir || 0} siswa</td>
+                </tr>
+            </table>
+            
+            <div class="section-title">📖 Materi / Tugas</div>
+            <div class="content-box">${escapeHtml(j.materi || '-')}</div>
+            
+            <div class="section-title">📝 Keterangan</div>
+            <div class="content-box">${escapeHtml(j.keterangan || '-')}</div>
+            
+            <div class="signature">
+                <div class="signature-box">
+                    <p>Mengetahui,</p>
+                    <p>Kepala Madrasah</p>
+                    <div class="line">(........................................)</div>
+                    <p>NIP. </p>
+                </div>
+                <div class="signature-box">
+                    <p>Bantaeng, ${new Date(j.tanggal || Date.now()).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                    <p>Guru Mata Pelajaran</p>
+                    <div class="line">${j.guruNama || '(........................................)'}</div>
+                    <p>NIP. ${j.nip || ''}</p>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>Dicetak dari SIPELITA - Sistem Informasi Pembelajaran Digital MAN Bantaeng</p>
+            </div>
+            
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                    }, 500);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+};
+
+// ══════════════════════════════════════════════
+// 📥 EXPORT EXCEL
+// ══════════════════════════════════════════════
 window.exportExcel = function() {
     if (filteredJurnal.length === 0) {
         alert('Tidak ada data untuk diexport!');
         return;
     }
     
+    const userName = currentUserData?.nama || currentUserData?.email || 'User';
+    const userRole = currentUserData?.role || 'Guru';
+    
     const data = [
         ['JURNAL MENGAJAR ONLINE - MAN BANTAENG'],
         ['TA. 2025/2026 SEMESTER GENAP'],
+        ['Diekspor oleh: ' + userName + ' (' + userRole + ')'],
+        ['Tanggal Export: ' + new Date().toLocaleString('id-ID')],
         [],
         ['No', 'Tanggal', 'Jam Ke', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan']
     ];
@@ -498,6 +1134,21 @@ window.exportExcel = function() {
     });
     
     const ws = XLSX.utils.aoa_to_sheet(data);
+    
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 5 },   // No
+        { wch: 20 },  // Tanggal
+        { wch: 10 },  // Jam
+        { wch: 10 },  // Kelas
+        { wch: 25 },  // Nama
+        { wch: 20 },  // NIP
+        { wch: 12 },  // Hadir
+        { wch: 15 },  // Tidak Hadir
+        { wch: 50 },  // Materi
+        { wch: 40 }   // Keterangan
+    ];
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Jurnal Mengajar');
     
