@@ -142,7 +142,7 @@ async function simpanJurnal(e) {
         const materi = document.getElementById('materi').value.trim();
         const keterangan = document.getElementById('keterangan').value.trim();
         
-        // Validasi
+        // Validasi input form
         if (!namaGuru) throw new Error('Nama guru wajib diisi');
         if (!nip) throw new Error('NIP wajib diisi');
         if (!tanggal) throw new Error('Tanggal wajib diisi');
@@ -150,10 +150,20 @@ async function simpanJurnal(e) {
         if (!materi) throw new Error('Materi/Tugas wajib diisi');
         if (!keterangan) throw new Error('Keterangan wajib diisi');
         
+        // 🚨 VALIDASI KEAMANAN: Pastikan session user dan UID-nya ada
+        if (!currentUser || (!currentUser.uid && !currentUser.id)) {
+            throw new Error('Sesi login tidak valid atau UID tidak ditemukan. Silakan login ulang.');
+        }
+        
+        // Ambil UID (sesuaikan apakah sistem login Anda menyimpan properti sebagai .uid atau .id)
+        const currentUid = currentUser.uid || currentUser.id;
+        
         // Simpan NIP ke localStorage untuk auto-fill berikutnya
         localStorage.setItem('sipelita_nip_' + sanitizeEmail(namaGuru), nip);
         
+        // Struktur data yang dikirim ke Firestore
         const data = {
+            userId: currentUid, // 🌟 WAJIB: Agar sinkron dengan Firestore Rules (resource.data.userId)
             guruNama: namaGuru,
             nip: nip,
             tanggal: tanggal,
@@ -167,6 +177,7 @@ async function simpanJurnal(e) {
             updatedAt: new Date().toISOString()
         };
         
+        // Simpan ke Firestore
         await db.collection('jurnal_online').add(data);
         
         alertEl.textContent = '✅ Jurnal berhasil disimpan!';
@@ -189,7 +200,6 @@ async function simpanJurnal(e) {
         btn.innerHTML = '💾 Simpan Jurnal';
     }
 }
-
 window.resetForm = function() {
     document.getElementById('jamKe').value = '';
     document.getElementById('kelas').value = '';
