@@ -150,18 +150,10 @@ async function simpanJurnal(e) {
         if (!materi) throw new Error('Materi/Tugas wajib diisi');
         if (!keterangan) throw new Error('Keterangan wajib diisi');
         
-        // ✅ PENTING: Pastikan user sudah login via Firebase Auth
-        const firebaseUser = firebase.auth().currentUser;
-        if (!firebaseUser) {
-            throw new Error('Sesi Firebase Auth tidak valid. Silakan login ulang.');
-        }
-        
-        // Simpan NIP ke localStorage
+        // Simpan NIP ke localStorage untuk auto-fill berikutnya
         localStorage.setItem('sipelita_nip_' + sanitizeEmail(namaGuru), nip);
         
-        // ✅ Struktur data yang benar
         const data = {
-            userId: firebaseUser.email,  // ✅ EMAIL, bukan UID!
             guruNama: namaGuru,
             nip: nip,
             tanggal: tanggal,
@@ -179,8 +171,10 @@ async function simpanJurnal(e) {
         
         alertEl.textContent = '✅ Jurnal berhasil disimpan!';
         alertEl.className = 'alert alert-success show';
+        
         toast('✅ Jurnal berhasil disimpan!');
         
+        // Reset form setelah 1.5 detik
         setTimeout(() => {
             resetForm();
             alertEl.classList.remove('show');
@@ -195,6 +189,7 @@ async function simpanJurnal(e) {
         btn.innerHTML = '💾 Simpan Jurnal';
     }
 }
+
 window.resetForm = function() {
     document.getElementById('jamKe').value = '';
     document.getElementById('kelas').value = '';
