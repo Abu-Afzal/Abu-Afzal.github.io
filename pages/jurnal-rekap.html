@@ -22,6 +22,14 @@
         }
         .header h1 { font-size: 1.5rem; margin-bottom: 4px; }
         .header p { opacity: 0.9; font-size: 0.88rem; }
+        .role-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 10px;
+        }
         .btn-dashboard {
             background: rgba(255,255,255,0.2); color: white;
             padding: 10px 20px; border-radius: 8px; text-decoration: none;
@@ -30,7 +38,7 @@
         }
         .btn-dashboard:hover { background: rgba(255,255,255,0.3); }
         
-        .container { max-width: 1300px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
         
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -82,8 +90,6 @@
         .btn-success:hover { background: #059669; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
-        .btn-warning { background: #f59e0b; color: white; }
-        .btn-warning:hover { background: #d97706; }
         .btn-secondary { background: #64748b; color: white; }
         .btn-secondary:hover { background: #475569; }
         .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
@@ -159,183 +165,58 @@
         }
         .detail-label { font-weight: 700; color: #475569; }
         .detail-value { color: #1e293b; white-space: pre-wrap; }
-               
-        /* ══════════════════════════════════════════════
-           PRINT STYLES
-           ══════════════════════════════════════════════ */
+        
+        /* Statistik Per Guru */
+        .guru-stats {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .guru-stats:hover {
+            background: #f0fdf4;
+            border-color: #059669;
+            transform: translateX(4px);
+        }
+        .guru-stats-info h4 {
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        .guru-stats-info p {
+            color: #64748b;
+            font-size: 0.82rem;
+        }
+        .guru-stats-numbers {
+            text-align: right;
+        }
+        .guru-stats-numbers .total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #047857;
+        }
+        
         @media print {
             @page {
                 size: A4 landscape;
                 margin: 15mm;
             }
             
-            body {
-                background: white !important;
-                font-size: 10pt;
-            }
-            
-            /* Hide elements that shouldn't be printed */
-            .header, .filter-bar, .btn, .modal, .zoom-modal,
-            .stats-grid, .pdf-loading, #loading, #emptyState {
+            body { background: white !important; font-size: 10pt; }
+            .header, .filter-bar, .btn, .modal, .stats-grid, #loading, #emptyState {
                 display: none !important;
             }
-            
-            .container {
-                max-width: 100%;
-                padding: 0;
-                margin: 0;
-            }
-            
-            .card {
-                box-shadow: none !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                page-break-inside: avoid;
-            }
-            
-            .card h2 {
-                border-bottom: 2px solid #047857 !important;
-                padding-bottom: 8px !important;
-                margin-bottom: 12px !important;
-                color: #047857 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            /* Print header */
-            .print-header {
-                display: block !important;
-                text-align: center;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-                border-bottom: 3px double #047857;
-            }
-            
-            .print-header h1 {
-                font-size: 16pt;
-                color: #047857;
-                margin-bottom: 4px;
-            }
-            
-            .print-header h2 {
-                font-size: 12pt;
-                color: #334155;
-                margin-bottom: 4px;
-                font-weight: 600;
-            }
-            
-            .print-header p {
-                font-size: 10pt;
-                color: #64748b;
-                margin: 2px 0;
-            }
-            
-            /* Print statistics */
-            .print-stats {
-                display: flex !important;
-                justify-content: space-around;
-                margin-bottom: 20px;
-                padding: 10px;
-                background: #f0fdf4;
-                border-radius: 6px;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            .print-stat-item {
-                text-align: center;
-            }
-            
-            .print-stat-item .label {
-                font-size: 9pt;
-                color: #64748b;
-                display: block;
-            }
-            
-            .print-stat-item .value {
-                font-size: 14pt;
-                font-weight: 700;
-                color: #047857;
-            }
-            
-            /* Table styling for print */
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 9pt;
-                page-break-inside: auto;
-            }
-            
-            tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
-            
-            thead {
-                display: table-header-group;
-            }
-            
-            th, td {
-                border: 1px solid #cbd5e1 !important;
-                padding: 6px !important;
-                text-align: left;
-                vertical-align: top;
-            }
-            
-            th {
-                background-color: #059669 !important;
-                color: white !important;
-                font-weight: 700;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            td {
-                background: white !important;
-            }
-            
-            /* Hide action column in print */
-            th:last-child, td:last-child {
-                display: none !important;
-            }
-            
-            .materi-cell, .keterangan-cell {
-                max-width: 200px !important;
-                font-size: 8pt !important;
-            }
-            
-            .badge {
-                padding: 2px 6px !important;
-                font-size: 8pt !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            .badge-hadir { background: #dcfce7 !important; color: #166534 !important; }
-            .badge-tidak { background: #fee2e2 !important; color: #991b1b !important; }
-            
-            /* Print footer */
-            .print-footer {
-                display: block !important;
-                margin-top: 20px;
-                padding-top: 15px;
-                border-top: 1px solid #cbd5e1;
-                font-size: 9pt;
-                color: #64748b;
-                text-align: right;
-            }
-            
-            /* Ensure all colors print */
-            * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-        }
-        
-        /* Hide print-only elements on screen */
-        .print-header, .print-stats, .print-footer {
-            display: none;
+            .container { max-width: 100%; padding: 0; margin: 0; }
+            .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
+            table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+            th, td { border: 1px solid #cbd5e1 !important; padding: 6px !important; }
+            th { background-color: #059669 !important; color: white !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
         
         @media (max-width: 768px) {
@@ -352,10 +233,11 @@
 
 <div class="header">
     <div style="flex: 1;">
-        <h1>📊 Rekap Jurnal Mengajar</h1>
+        <h1> Rekap Jurnal Mengajar</h1>
         <p>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</p>
     </div>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="roleBadge" class="role-badge">GURU</span>
         <a href="jurnal-online.html" class="btn-dashboard">➕ Isi Jurnal</a>
         <a href="../index.html" class="btn-dashboard">← Dashboard</a>
     </div>
@@ -363,34 +245,7 @@
 
 <div class="container">
     
-    <!-- Print Header (hanya muncul saat print/PDF) -->
-    <div class="print-header">
-        <h1>📊 JURNAL MENGAJAR ONLINE</h1>
-        <h2>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</h2>
-        <p id="printInfo">Dicetak oleh: - | Tanggal: -</p>
-    </div>
-    
-    <!-- Print Stats (hanya muncul saat print/PDF) -->
-    <div class="print-stats">
-        <div class="print-stat-item">
-            <span class="label">Total Jurnal</span>
-            <span class="value" id="printStatTotal">0</span>
-        </div>
-        <div class="print-stat-item">
-            <span class="label">Bulan Ini</span>
-            <span class="value" id="printStatBulan">0</span>
-        </div>
-        <div class="print-stat-item">
-            <span class="label">Total Hadir</span>
-            <span class="value" id="printStatHadir" style="color: #10b981;">0</span>
-        </div>
-        <div class="print-stat-item">
-            <span class="label">Total Tidak Hadir</span>
-            <span class="value" id="printStatTidak" style="color: #ef4444;">0</span>
-        </div>
-    </div>
-    
-    <!-- Statistik (tampilan normal) -->
+    <!-- Statistik -->
     <div class="stats-grid">
         <div class="stat-card">
             <h3>Total Jurnal</h3>
@@ -408,11 +263,21 @@
             <h3>Total Tidak Hadir</h3>
             <div class="value" id="statTidakHadir" style="color: #ef4444;">0</div>
         </div>
+        <div class="stat-card" id="statGuruCard" style="display: none;">
+            <h3>Jumlah Guru</h3>
+            <div class="value" id="statGuru" style="color: #8b5cf6;">0</div>
+        </div>
+    </div>
+    
+    <!-- Statistik Per Guru (Hanya untuk Wakamad/Kamad) -->
+    <div class="card" id="guruStatsCard" style="display: none;">
+        <h2>👨‍🏫 Statistik Per Guru</h2>
+        <div id="guruStatsContainer"></div>
     </div>
     
     <!-- Daftar Jurnal -->
     <div class="card">
-        <h2>📋 Daftar Jurnal Mengajar</h2>
+        <h2> Daftar Jurnal Mengajar</h2>
         
         <!-- Filter -->
         <div class="filter-bar">
@@ -420,10 +285,13 @@
             <select id="filterKelas" onchange="applyFilter()">
                 <option value="">Semua Kelas</option>
             </select>
+            <select id="filterGuru" onchange="applyFilter()" style="display: none;">
+                <option value="">Semua Guru</option>
+            </select>
             <input type="text" id="filterSearch" placeholder="🔍 Cari materi..." oninput="applyFilter()">
             <button class="btn btn-secondary btn-sm" onclick="resetFilter()">🔄 Reset</button>
             <div style="display: flex; gap: 8px; margin-left: auto;">
-                <button class="btn btn-secondary btn-sm" onclick="printRekap()" title="Cetak Halaman">
+                <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Cetak Halaman">
                     🖨️ Print
                 </button>
                 <button class="btn btn-success btn-sm" onclick="exportExcel()" title="Export ke Excel">
@@ -438,7 +306,7 @@
         </div>
         
         <div id="emptyState" class="empty" style="display: none;">
-            <div class="icon">📭</div>
+            <div class="icon"></div>
             <h3>Belum Ada Jurnal</h3>
             <p style="margin: 10px 0;">Mulai isi jurnal mengajar pertama Anda!</p>
             <a href="jurnal-online.html" class="btn btn-primary">➕ Isi Jurnal</a>
@@ -446,13 +314,14 @@
         
         <div id="tableContainer" style="display: none;">
             <div class="tbl-wrap">
-                <table id="tabelJurnal">
+                <table>
                     <thead>
                         <tr>
                             <th>No</th>
                             <th>Tanggal</th>
                             <th>Jam</th>
                             <th>Kelas</th>
+                            <th id="thGuru" style="display: none;">Guru</th>
                             <th>Hadir</th>
                             <th>Tidak Hadir</th>
                             <th>Materi/Tugas</th>
@@ -466,12 +335,6 @@
         </div>
     </div>
     
-    <!-- Print Footer (hanya muncul saat print/PDF) -->
-    <div class="print-footer">
-        <p>Dicetak dari SIPELITA - Sistem Informasi Pembelajaran Digital MAN Bantaeng</p>
-        <p id="printFooterTime">-</p>
-    </div>
-    
 </div>
 
 <!-- Modal Detail -->
@@ -479,10 +342,7 @@
     <div class="modal-box">
         <h3>📄 Detail Jurnal Mengajar</h3>
         <div id="detailContent"></div>
-        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
-            <button class="btn btn-warning btn-sm" onclick="printDetailJurnal()" title="Cetak Jurnal Ini">
-                🖨️ Cetak Jurnal
-            </button>
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
             <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
         </div>
     </div>
@@ -493,23 +353,62 @@
 let allJurnal = [];
 let filteredJurnal = [];
 let currentUserData = null;
-let currentDetailJurnal = null; // Untuk menyimpan jurnal yang sedang dilihat di modal
+let userRole = 'guru';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Load data user
+    // Load data user dan role
     try {
         const userStr = localStorage.getItem('sipelita_user');
         if (userStr) {
             currentUserData = JSON.parse(userStr);
+            // Deteksi role dari field 'role' atau 'jabatan'
+            userRole = currentUserData.role || currentUserData.jabatan || 'guru';
+            console.log('👤 User:', currentUserData.nama || currentUserData.email);
+            console.log(' Role:', userRole);
         }
     } catch (e) {
         console.error('Error load user:', e);
     }
     
+    // Update UI berdasarkan role
+    updateUIByRole();
+    
+    // Load data jurnal
     if (typeof loadRekapJurnal === 'function') {
         loadRekapJurnal();
     }
 });
+
+function updateUIByRole() {
+    const roleBadge = document.getElementById('roleBadge');
+    const filterGuru = document.getElementById('filterGuru');
+    const thGuru = document.getElementById('thGuru');
+    const guruStatsCard = document.getElementById('guruStatsCard');
+    const statGuruCard = document.getElementById('statGuruCard');
+    
+    // Set badge role
+    const roleLower = userRole.toLowerCase();
+    
+    if (roleLower === 'admin' || roleLower === 'kepala' || roleLower === 'kamad') {
+        roleBadge.textContent = '👑 KAMAD/ADMIN';
+        roleBadge.style.background = 'rgba(255,255,255,0.3)';
+    } else if (roleLower === 'wakil' || roleLower === 'wakamad') {
+        roleBadge.textContent = '⭐ WAKAMAD';
+        roleBadge.style.background = 'rgba(255,255,255,0.3)';
+    } else {
+        roleBadge.textContent = '👨‍🏫 GURU';
+    }
+    
+    // Tampilkan fitur Wakamad/Kamad
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
+    
+    if (isEvaluator) {
+        filterGuru.style.display = 'block';
+        thGuru.style.display = 'table-cell';
+        guruStatsCard.style.display = 'block';
+        statGuruCard.style.display = 'block';
+    }
+}
 
 window.loadRekapJurnal = async function() {
     try {
@@ -519,21 +418,43 @@ window.loadRekapJurnal = async function() {
             window.location.href = '../index.html';
             return;
         }
+        
         const user = JSON.parse(userStr);
         const currentUser = user.nama || user.email || 'guru';
+        const roleLower = userRole.toLowerCase();
+        const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
         
-        const snapshot = await db.collection('jurnal_online')
-            .where('guruNama', '==', currentUser)
-            .orderBy('tanggal', 'desc')
-            .get();
+        let snapshot;
+        
+        if (isEvaluator) {
+            // Wakamad/Kamad: Load SEMUA jurnal
+            console.log('📊 Loading semua jurnal untuk evaluator...');
+            snapshot = await db.collection('jurnal_online')
+                .orderBy('tanggal', 'desc')
+                .get();
+        } else {
+            // Guru: Load jurnal sendiri saja
+            console.log('📊 Loading jurnal untuk guru:', currentUser);
+            snapshot = await db.collection('jurnal_online')
+                .where('guruNama', '==', currentUser)
+                .orderBy('tanggal', 'desc')
+                .get();
+        }
         
         allJurnal = [];
+        const guruSet = new Set();
+        const kelasSet = new Set();
+        
         snapshot.forEach(doc => {
-            allJurnal.push({ id: doc.id, ...doc.data() });
+            const data = { id: doc.id, ...doc.data() };
+            allJurnal.push(data);
+            if (data.guruNama) guruSet.add(data.guruNama);
+            if (data.kelas) kelasSet.add(data.kelas);
         });
         
+        console.log(`✅ Loaded ${allJurnal.length} jurnal`);
+        
         // Populate filter kelas
-        const kelasSet = new Set(allJurnal.map(j => j.kelas).filter(k => k));
         const filterKelas = document.getElementById('filterKelas');
         filterKelas.innerHTML = '<option value="">Semua Kelas</option>';
         kelasSet.forEach(k => {
@@ -541,6 +462,20 @@ window.loadRekapJurnal = async function() {
             opt.value = k; opt.textContent = k;
             filterKelas.appendChild(opt);
         });
+        
+        // Populate filter guru (hanya untuk evaluator)
+        if (isEvaluator) {
+            const filterGuru = document.getElementById('filterGuru');
+            filterGuru.innerHTML = '<option value="">Semua Guru</option>';
+            guruSet.forEach(g => {
+                const opt = document.createElement('option');
+                opt.value = g; opt.textContent = g;
+                filterGuru.appendChild(opt);
+            });
+            
+            // Render statistik per guru
+            renderGuruStats(guruSet);
+        }
         
         filteredJurnal = [...allJurnal];
         
@@ -552,21 +487,59 @@ window.loadRekapJurnal = async function() {
             document.getElementById('tableContainer').style.display = 'block';
             renderTabel();
             updateStatistik();
-            updatePrintInfo();
         }
         
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error:', error);
         document.getElementById('loading').innerHTML = 
             `<div style="color: #ef4444;">❌ ${error.message}</div>`;
     }
 };
 
+function renderGuruStats(guruSet) {
+    const container = document.getElementById('guruStatsContainer');
+    const stats = [];
+    
+    guruSet.forEach(guru => {
+        const jurnalGuru = allJurnal.filter(j => j.guruNama === guru);
+        const total = jurnalGuru.length;
+        const totalHadir = jurnalGuru.reduce((sum, j) => sum + (parseInt(j.muridHadir) || 0), 0);
+        const totalTidakHadir = jurnalGuru.reduce((sum, j) => sum + (parseInt(j.muridTidakHadir) || 0), 0);
+        
+        stats.push({ guru, total, totalHadir, totalTidakHadir });
+    });
+    
+    // Sort by total jurnal descending
+    stats.sort((a, b) => b.total - a.total);
+    
+    container.innerHTML = stats.map(s => `
+        <div class="guru-stats" onclick="filterByGuru('${s.guru.replace(/'/g, "\\'")}')">
+            <div class="guru-stats-info">
+                <h4>👨‍🏫 ${s.guru}</h4>
+                <p>Hadir: ${s.totalHadir} | Tidak Hadir: ${s.totalTidakHadir}</p>
+            </div>
+            <div class="guru-stats-numbers">
+                <div class="total">${s.total}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">jurnal</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.filterByGuru = function(guruNama) {
+    document.getElementById('filterGuru').value = guruNama;
+    applyFilter();
+    // Scroll ke tabel
+    document.getElementById('tableContainer').scrollIntoView({ behavior: 'smooth' });
+};
+
 function renderTabel() {
     const tbody = document.getElementById('tabelBody');
+    const roleLower = userRole.toLowerCase();
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
     
     if (filteredJurnal.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 30px; color: #94a3b8;">
+        tbody.innerHTML = `<tr><td colspan="${isEvaluator ? 10 : 9}" style="text-align: center; padding: 30px; color: #94a3b8;">
             Tidak ada data yang cocok dengan filter
         </td></tr>`;
         return;
@@ -583,13 +556,14 @@ function renderTabel() {
                 <td>${tanggal}</td>
                 <td>${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</td>
                 <td><strong>${j.kelas || '-'}</strong></td>
+                ${isEvaluator ? `<td>${j.guruNama || '-'}</td>` : ''}
                 <td><span class="badge badge-hadir">${j.muridHadir || 0}</span></td>
                 <td><span class="badge badge-tidak">${j.muridTidakHadir || 0}</span></td>
                 <td class="materi-cell">${materi}${(j.materi || '').length > 100 ? '...' : ''}</td>
                 <td class="keterangan-cell">${keterangan}${(j.keterangan || '').length > 80 ? '...' : ''}</td>
                 <td>
                     <button class="btn btn-primary btn-sm" onclick="lihatDetail('${j.id}')">👁️</button>
-                    <button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">🗑️</button>
+                    <button class="btn btn-danger btn-sm" onclick="hapusJurnal('${j.id}')">️</button>
                 </td>
             </tr>
         `;
@@ -613,61 +587,49 @@ function updateStatistik() {
     document.getElementById('statHadir').textContent = totalHadir;
     document.getElementById('statTidakHadir').textContent = totalTidakHadir;
     
-    // Update print stats juga
-    document.getElementById('printStatTotal').textContent = total;
-    document.getElementById('printStatBulan').textContent = bulanIni;
-    document.getElementById('printStatHadir').textContent = totalHadir;
-    document.getElementById('printStatTidak').textContent = totalTidakHadir;
-}
-
-function updatePrintInfo() {
-    const userName = currentUserData?.nama || currentUserData?.email || 'User';
-    const userRole = currentUserData?.role || 'Guru';
-    const now = new Date().toLocaleString('id-ID', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-    
-    document.getElementById('printInfo').textContent = 
-        `Dicetak oleh: ${userName} (${userRole}) | Tanggal: ${now}`;
-    document.getElementById('printFooterTime').textContent = 
-        `Dicetak pada: ${now}`;
+    // Update statistik jumlah guru (hanya untuk evaluator)
+    const roleLower = userRole.toLowerCase();
+    const isEvaluator = ['admin', 'kepala', 'kamad', 'wakil', 'wakamad'].includes(roleLower);
+    if (isEvaluator) {
+        const guruSet = new Set(allJurnal.map(j => j.guruNama).filter(g => g));
+        document.getElementById('statGuru').textContent = guruSet.size;
+    }
 }
 
 window.applyFilter = function() {
     const tanggal = document.getElementById('filterTanggal').value;
     const kelas = document.getElementById('filterKelas').value;
+    const guru = document.getElementById('filterGuru').value;
     const search = document.getElementById('filterSearch').value.toLowerCase();
     
     filteredJurnal = allJurnal.filter(j => {
         if (tanggal && j.tanggal !== tanggal) return false;
         if (kelas && j.kelas !== kelas) return false;
+        if (guru && j.guruNama !== guru) return false;
         if (search) {
             const materi = (j.materi || '').toLowerCase();
             const keterangan = (j.keterangan || '').toLowerCase();
-            if (!materi.includes(search) && !keterangan.includes(search)) return false;
+            const guruNama = (j.guruNama || '').toLowerCase();
+            if (!materi.includes(search) && !keterangan.includes(search) && !guruNama.includes(search)) return false;
         }
         return true;
     });
     
     renderTabel();
-    updateStatistik();
 };
 
 window.resetFilter = function() {
     document.getElementById('filterTanggal').value = '';
     document.getElementById('filterKelas').value = '';
+    document.getElementById('filterGuru').value = '';
     document.getElementById('filterSearch').value = '';
     filteredJurnal = [...allJurnal];
     renderTabel();
-    updateStatistik();
 };
 
 window.lihatDetail = function(id) {
     const j = allJurnal.find(x => x.id === id);
     if (!j) return;
-    
-    currentDetailJurnal = j; // Simpan untuk print individual
     
     const content = `
         <div class="detail-row">
@@ -718,7 +680,6 @@ window.lihatDetail = function(id) {
 
 window.closeModal = function() {
     document.getElementById('modalDetail').classList.remove('active');
-    currentDetailJurnal = null;
 };
 
 window.hapusJurnal = async function(id) {
@@ -733,217 +694,6 @@ window.hapusJurnal = async function(id) {
     }
 };
 
-// ══════════════════════════════════════════════
-// 🖨️ PRINT REKAP (Browser Print)
-// ══════════════════════════════════════════════
-window.printRekap = function() {
-    if (filteredJurnal.length === 0) {
-        alert('Tidak ada data untuk dicetak!');
-        return;
-    }
-    
-    updatePrintInfo();
-    window.print();
-};
-
-// ══════════════════════════════════════════════
-// 🖨️ PRINT DETAIL JURNAL INDIVIDUAL
-// ══════════════════════════════════════════════
-window.printDetailJurnal = function() {
-    if (!currentDetailJurnal) {
-        alert('Tidak ada jurnal yang dipilih!');
-        return;
-    }
-    
-    const j = currentDetailJurnal;
-    const userName = currentUserData?.nama || currentUserData?.email || 'User';
-    const now = new Date().toLocaleString('id-ID', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-    
-    // Buat window baru untuk print
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Jurnal Mengajar - ${j.kelas} - ${formatDate(j.tanggal)}</title>
-            <style>
-                body {
-                    font-family: 'Segoe UI', Arial, sans-serif;
-                    padding: 30px;
-                    color: #1e293b;
-                    max-width: 800px;
-                    margin: 0 auto;
-                }
-                .header {
-                    text-align: center;
-                    padding-bottom: 15px;
-                    border-bottom: 3px double #047857;
-                    margin-bottom: 25px;
-                }
-                .header h1 {
-                    color: #047857;
-                    margin: 0 0 5px;
-                    font-size: 22px;
-                }
-                .header h2 {
-                    color: #334155;
-                    margin: 0 0 5px;
-                    font-size: 14px;
-                    font-weight: 600;
-                }
-                .header p {
-                    color: #64748b;
-                    font-size: 11px;
-                    margin: 3px 0;
-                }
-                .info-table {
-                    width: 100%;
-                    margin-bottom: 20px;
-                    border-collapse: collapse;
-                }
-                .info-table td {
-                    padding: 10px;
-                    border: 1px solid #e2e8f0;
-                    vertical-align: top;
-                }
-                .info-table .label {
-                    font-weight: 700;
-                    color: #475569;
-                    width: 180px;
-                    background: #f8fafc;
-                }
-                .info-table .value {
-                    color: #1e293b;
-                    white-space: pre-wrap;
-                }
-                .section-title {
-                    background: #059669;
-                    color: white;
-                    padding: 8px 12px;
-                    font-weight: 700;
-                    margin-top: 20px;
-                    border-radius: 4px 4px 0 0;
-                }
-                .content-box {
-                    border: 1px solid #e2e8f0;
-                    border-top: none;
-                    padding: 15px;
-                    white-space: pre-wrap;
-                    line-height: 1.6;
-                    min-height: 60px;
-                }
-                .footer {
-                    margin-top: 40px;
-                    padding-top: 15px;
-                    border-top: 1px solid #cbd5e1;
-                    font-size: 10px;
-                    color: #64748b;
-                    text-align: right;
-                }
-                .signature {
-                    margin-top: 50px;
-                    display: flex;
-                    justify-content: space-between;
-                }
-                .signature-box {
-                    text-align: center;
-                    width: 250px;
-                }
-                .signature-box .line {
-                    margin-top: 70px;
-                    border-top: 1px solid #334155;
-                    padding-top: 5px;
-                    font-weight: 700;
-                }
-                @media print {
-                    body { padding: 15px; }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="header">
-                <h1>📝 JURNAL MENGAJAR</h1>
-                <h2>MAN BANTAENG - TA. 2025/2026 SEMESTER GENAP</h2>
-                <p>Dicetak pada: ${now}</p>
-            </div>
-            
-            <table class="info-table">
-                <tr>
-                    <td class="label">Nama Guru</td>
-                    <td class="value">${j.guruNama || '-'}</td>
-                </tr>
-                <tr>
-                    <td class="label">NIP</td>
-                    <td class="value">${j.nip || '-'}</td>
-                </tr>
-                <tr>
-                    <td class="label">Hari/Tanggal</td>
-                    <td class="value">${formatDate(j.tanggal)}</td>
-                </tr>
-                <tr>
-                    <td class="label">Jam Ke</td>
-                    <td class="value">${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</td>
-                </tr>
-                <tr>
-                    <td class="label">Mengajar di Kelas</td>
-                    <td class="value"><strong>${j.kelas || '-'}</strong></td>
-                </tr>
-                <tr>
-                    <td class="label">Murid yang Hadir</td>
-                    <td class="value" style="color: #10b981; font-weight: 700;">${j.muridHadir || 0} siswa</td>
-                </tr>
-                <tr>
-                    <td class="label">Murid yang Tidak Hadir</td>
-                    <td class="value" style="color: #ef4444; font-weight: 700;">${j.muridTidakHadir || 0} siswa</td>
-                </tr>
-            </table>
-            
-            <div class="section-title">📖 Materi / Tugas</div>
-            <div class="content-box">${escapeHtml(j.materi || '-')}</div>
-            
-            <div class="section-title">📝 Keterangan</div>
-            <div class="content-box">${escapeHtml(j.keterangan || '-')}</div>
-            
-            <div class="signature">
-                <div class="signature-box">
-                    <p>Mengetahui,</p>
-                    <p>Kepala Madrasah</p>
-                    <div class="line">(........................................)</div>
-                    <p>NIP. </p>
-                </div>
-                <div class="signature-box">
-                    <p>Bantaeng, ${new Date(j.tanggal || Date.now()).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
-                    <p>Guru Mata Pelajaran</p>
-                    <div class="line">${j.guruNama || '(........................................)'}</div>
-                    <p>NIP. ${j.nip || ''}</p>
-                </div>
-            </div>
-            
-            <div class="footer">
-                <p>Dicetak dari SIPELITA - Sistem Informasi Pembelajaran Digital MAN Bantaeng</p>
-            </div>
-            
-            <script>
-                window.onload = function() {
-                    setTimeout(function() {
-                        window.print();
-                    }, 500);
-                };
-            <\/script>
-        </body>
-        </html>
-    `);
-    
-    printWindow.document.close();
-};
-
-// ══════════════════════════════════════════════
-// 📥 EXPORT EXCEL
-// ══════════════════════════════════════════════
 window.exportExcel = function() {
     if (filteredJurnal.length === 0) {
         alert('Tidak ada data untuk diexport!');
@@ -951,12 +701,12 @@ window.exportExcel = function() {
     }
     
     const userName = currentUserData?.nama || currentUserData?.email || 'User';
-    const userRole = currentUserData?.role || 'Guru';
+    const userRoleText = currentUserData?.role || 'Guru';
     
     const data = [
         ['JURNAL MENGAJAR ONLINE - MAN BANTAENG'],
         ['TA. 2025/2026 SEMESTER GENAP'],
-        ['Diekspor oleh: ' + userName + ' (' + userRole + ')'],
+        ['Diekspor oleh: ' + userName + ' (' + userRoleText + ')'],
         ['Tanggal Export: ' + new Date().toLocaleString('id-ID')],
         [],
         ['No', 'Tanggal', 'Jam Ke', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan']
