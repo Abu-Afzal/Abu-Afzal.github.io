@@ -1,4 +1,4 @@
-// ═════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // FIREBASE CONFIG
 // ══════════════════════════════════════════════
 const firebaseConfig = {
@@ -30,36 +30,111 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFormSubmit();
     setupPhotoUpload();
     setDefaultDate();
-    addActivity(); // Membuat baris input kegiatan pertama otomatis
+    addActivity();
 });
 
-function loadUserInfo() {
+// ══════════════════════════════════════════════
+// LOAD USER INFO (FIXED: Always fetch from Firestore)
+// ══════════════════════════════════════════════
+async function loadUserInfo() {
+    const nipElement = document.getElementById('userNip');
+    const nameEl = document.getElementById('userName');
+    const roleEl = document.getElementById('userRole');
+    
     try {
         const userStr = localStorage.getItem('sipelita_user');
-        if (userStr) {
-            currentUser = JSON.parse(userStr);
-            
-            const nameEl = document.getElementById('userName');
-            if (nameEl) nameEl.textContent = currentUser.nama || 'User';
-            
-            const roleEl = document.getElementById('userRole');
-            if (roleEl) roleEl.textContent = currentUser.role || 'Guru';
-            
-            const nipElement = document.getElementById('userNip');
-            if (nipElement) {
-                if (currentUser.nip) {
-                    nipElement.textContent = 'NIP: ' + currentUser.nip;
-                    nipElement.style.color = '#64748b';
+        if (!userStr) {
+            alert('⛔ Anda harus login terlebih dahulu!');
+            window.location.href = '../index.html';
+            return;
+        }
+        
+        currentUser = JSON.parse(userStr);
+        
+        // Tampilkan info dasar segera dari localStorage
+        if (nameEl) nameEl.textContent = currentUser.nama || 'User';
+        if (roleEl) roleEl.textContent = currentUser.role || 'Guru';
+        
+        // Tampilkan status loading untuk NIP
+        if (nipElement) {
+            nipElement.textContent = 'NIP: Memuat...';
+            nipElement.style.color = '#f59e0b';
+        }
+        
+        // ════════════════════════════════════════════════════════════
+        // PERBAIKAN: Selalu ambil data terbaru dari Firestore
+        // Ini memastikan NIP selalu update meski localStorage lama
+        // ════════════════════════════════════════════════════════════
+        if (currentUser.email) {
+            try {
+                // Coba ambil dari collection 'users' berdasarkan email
+                const snapshot = await db.collection('users')
+                    .where('email', '==', currentUser.email)
+                    .limit(1)
+                    .get();
+                
+                if (!snapshot.empty) {
+                    const freshUserData = snapshot.docs[0].data();
+                    
+                    // Update currentUser dengan data terbaru dari Firestore
+                    currentUser.nip = freshUserData.nip || '';
+                    currentUser.nama = freshUserData.nama || currentUser.nama;
+                    currentUser.role = freshUserData.role || currentUser.role;
+                    
+                    // Update localStorage dengan data terbaru
+                    localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
+                    
+                    // Update tampilan
+                    if (nameEl) nameEl.textContent = currentUser.nama;
+                    if (roleEl) roleEl.textContent = currentUser.role;
+                    
+                    if (nipElement) {
+                        if (currentUser.nip) {
+                            nipElement.textContent = 'NIP: ' + currentUser.nip;
+                            nipElement.style.color = '#64748b';
+                        } else {
+                            nipElement.textContent = 'NIP: Belum diisi (hubungi Admin)';
+                            nipElement.style.color = '#ef4444';
+                        }
+                    }
+                    
+                    console.log('✅ Data user berhasil diperbarui dari Firestore');
                 } else {
-                    nipElement.textContent = 'NIP: Belum diisi (hubungi Admin)';
-                    nipElement.style.color = '#ef4444';
+                    // User tidak ditemukan di Firestore, gunakan data localStorage
+                    console.warn('⚠️ User tidak ditemukan di Firestore, menggunakan data localStorage');
+                    if (nipElement) {
+                        if (currentUser.nip) {
+                            nipElement.textContent = 'NIP: ' + currentUser.nip;
+                            nipElement.style.color = '#64748b';
+                        } else {
+                            nipElement.textContent = 'NIP: -';
+                            nipElement.style.color = '#64748b';
+                        }
+                    }
+                }
+            } catch (firestoreError) {
+                console.error('❌ Error mengambil dari Firestore:', firestoreError);
+                // Fallback ke data localStorage jika Firestore error
+                if (nipElement) {
+                    if (currentUser.nip) {
+                        nipElement.textContent = 'NIP: ' + currentUser.nip;
+                        nipElement.style.color = '#64748b';
+                    } else {
+                        nipElement.textContent = 'NIP: Mode offline';
+                        nipElement.style.color = '#f59e0b';
+                    }
                 }
             }
         } else {
-            alert('⛔ Anda harus login terlebih dahulu!');
-            window.location.href = '../index.html';
+            // Tidak ada email, gunakan data localStorage apa adanya
+            if (nipElement) {
+                nipElement.textContent = 'NIP: ' + (currentUser.nip || '-');
+                nipElement.style.color = '#64748b';
+            }
         }
+        
     } catch (e) {
+        console.error('❌ Error di loadUserInfo:', e);
         window.location.href = '../index.html';
     }
 }
@@ -107,7 +182,7 @@ window.switchTab = switchTab;
 function addActivity() {
     activityCounter++;
     const container = document.getElementById('activitiesContainer');
-    if (!container) return; // Mencegah crash jika kontainer form tidak ditemukan
+    if (!container) return;
     
     const div = document.createElement('div');
     div.className = 'activity-item';
@@ -629,31 +704,23 @@ async function generatePDF(isPreview) {
             }).join('') +
         '</tbody></table>' +
         
-        // ════════════════════════════════════════════════════════════
-        // PERBAIKAN STRUKTUR TATA LETAK TANDA TANGAN (FIXED)
-        // ════════════════════════════════════════════════════════════
         '<div style="margin-top:40px; display:flex; justify-content:space-between; font-size:11px; width:100%; line-height: 1.5;">' +
-            
-            // Kolom Kiri: Kepala Madrasah
             '<div style="width: 350px; text-align:left;">' +
-                '<div style="height: 18px;"></div>' + // Spacer kosong penyeimbang baris Tanggal Kota di kanan
+                '<div style="height: 18px;"></div>' +
                 '<p style="margin: 0 0 4px 0; padding: 0;">Mengetahui,</p>' +
                 '<p style="margin: 0; padding: 0; font-weight:bold;">Kepala Madrasah</p>' +
-                '<div style="height: 75px;"></div>' + // Ruang tanda tangan
+                '<div style="height: 75px;"></div>' +
                 '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">Muhammad Arief Pither, S.Ag.,M.M.,M.Pd</p>' +
                 '<p style="margin: 0; padding: 0;">NIP. 19710930 200710 1 001</p>' +
             '</div>' +
-            
-            // Kolom Kanan: Guru Mata Pelajaran (Digeser penuh ke kanan margin)
             '<div style="width: 350px; text-align:left; margin-left: auto; padding-left: 460px;">' +
                 '<p style="margin: 0 0 4px 0; padding: 0;">Bantaeng, ' + new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }) + '</p>' +
-                '<div style="height: 18px;"></div>' + // Spacer kosong penyeimbang kata "Mengetahui," di kiri
+                '<div style="height: 18px;"></div>' +
                 '<p style="margin: 0; padding: 0; font-weight:bold;">Guru Mata Pelajaran</p>' +
-                '<div style="height: 75px;"></div>' + // Ruang tanda tangan
+                '<div style="height: 75px;"></div>' +
                 '<p style="font-weight:bold; margin: 0 0 4px 0; padding: 0; text-decoration: underline;">' + (currentUser.nama || '') + '</p>' +
                 '<p style="margin: 0; padding: 0;">NIP. ' + (currentUser.nip || '-') + '</p>' +
             '</div>' +
-            
         '</div>' +
     '</div>';
     
