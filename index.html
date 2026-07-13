@@ -3,35 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="theme-color" content="#10b981">
-<link rel="manifest" href="../manifest.json">
-<link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Administrasi Sekolah Terintegrasi</title>
     <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
     <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Firebase SDK (untuk refresh data user) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <!-- Ganti 'logo-custom.png' dengan nama file logo Anda -->
-        <img src="assets/images/sipelita-app.png" alt="Logo SIPELITA" class="header-logo">
-        <div>
-            <h1 style="margin: 0; font-size: 1.4rem;">SIPELITA</h1>
-            <p style="margin: 0; font-size: 0.85rem;">Sistem Pengelolaan Edukasi & Layanan Terpadu</p>
-        </div>
-    </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="assets/images/sipelita-app.png" alt="Logo SIPELITA" class="header-logo">
+                <div>
+                    <h1 style="margin: 0; font-size: 1.4rem;">SIPELITA</h1>
+                    <p style="margin: 0; font-size: 0.85rem;">Sistem Pengelolaan Edukasi & Layanan Terpadu</p>
+                </div>
+            </div>
             <div id="userPanel" style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-left: auto;">
-    <!-- Baris 1: Role & Logout -->
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <span id="userRole" style="background: #ffd700; color: #1a237e; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;"></span>
-        <button id="btnLogout" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Logout</button>
-    </div>
-    
-    <!-- Baris 2: Sapaan Nama User -->
-    <span id="userName" style="color: #000; font-weight: bold; font-size: 0.95rem;">Hi, ...</span>
-</div>
-</header>
+                <!-- Baris 1: Role & Logout -->
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span id="userRole" style="background: #ffd700; color: #1a237e; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;"></span>
+                    <button id="btnLogout" style="background: #f44336; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500;">Logout</button>
+                </div>
+                
+                <!-- Baris 2: Sapaan Nama User -->
+                <span id="userName" style="color: #000; font-weight: bold; font-size: 0.95rem;">Hi, ...</span>
+                
+                <!-- Baris 3: NIP User (BARU) -->
+                <span id="userNip" style="color: #64748b; font-size: 0.8rem; font-family: 'Courier New', monospace;"></span>
+            </div>
+        </header>
 
         <h2 class="section-title">Layanan Umum</h2>
         <div class="grid" id="layanan-umum"></div>
@@ -39,6 +45,7 @@
         <h2 class="section-title">Layanan Madrasah</h2>
         <div class="grid" id="layanan-madrasah"></div>
     </div>
+    
     <!-- Modal -->
     <div class="modal" id="integrationModal">
         <div class="modal-content">
@@ -60,92 +67,178 @@
 
     <script src="js/config.js"></script>
     <script src="js/main.js"></script>
-    <script type="module">
-  import { AuthService } from './js/auth-service.js';
-
-  try {
-    // 1. Cek apakah user sudah login
-    const user = AuthService.checkAuth();
-
-    if (user) {
-      // Tampilkan sapaan "Hi, [Nama]"
-      const userNameEl = document.getElementById('userName');
-      if (userNameEl) {
-        userNameEl.textContent = `Hi, ${user.nama || 'User'}`;
-      }
-      
-      // Tampilkan role
-      const userRoleEl = document.getElementById('userRole');
-      if (userRoleEl) {
-        if (user.role === 'admin') {
-          userRoleEl.textContent = '👑 Admin';
-        } else if (user.role === 'kepala') {
-          userRoleEl.textContent = '👑 Kepala Madrasah';
-        } else if (user.role === 'wakil') {
-          userRoleEl.textContent = '⭐ Wakil Kepala';
-        } else {
-          userRoleEl.textContent = '👤 Guru';
-        }
-      }
-
-      // Cek apakah elemen adminSection ADA sebelum diubah
-      const adminSection = document.getElementById('adminSection');
-      if (adminSection) {
-        if (user.role === 'admin') {
-          adminSection.style.display = 'block';
-        } else {
-          adminSection.style.display = 'none';
-        }
-      }
-
-    } else {
-      // Jika belum login, tendang ke home.html
-      window.location.href = 'home.html';
-    }
-
-    // 2. Handle Tombol Logout - DENGAN ERROR HANDLING
-    const btnLogout = document.getElementById('btnLogout');
-    if (btnLogout) {
-      btnLogout.addEventListener('click', async () => {
-        if (confirm('Yakin ingin keluar dari SIPELITA?')) {
-          try {
-            // Clear session
-            localStorage.removeItem('sipelita_user');
-            sessionStorage.removeItem('sipelita_user');
-            
-            // Panggil AuthService.logout() jika tersedia
-            if (typeof AuthService !== 'undefined' && AuthService.logout) {
-              await AuthService.logout();
-            } else {
-              // Fallback: redirect manual
-              window.location.href = 'home.html';
-            }
-          } catch (error) {
-            console.error('Error saat logout:', error);
-            // Fallback: tetap redirect
-            localStorage.removeItem('sipelita_user');
-            sessionStorage.removeItem('sipelita_user');
-            window.location.href = 'home.html';
-          }
-        }
-      });
-    }
-
-  } catch (error) {
-    console.error('❌ Error di script module:', error);
     
-    // Fallback: tetap tampilkan tombol logout yang berfungsi
-    const btnLogout = document.getElementById('btnLogout');
-    if (btnLogout) {
-      btnLogout.addEventListener('click', () => {
-        if (confirm('Yakin ingin keluar?')) {
-          localStorage.removeItem('sipelita_user');
-          sessionStorage.removeItem('sipelita_user');
-          window.location.href = 'home.html';
+    <script type="module">
+        import { AuthService } from './js/auth-service.js';
+
+        // ══════════════════════════════════════════════
+        // FIREBASE CONFIG (Harus sama dengan jurnal.js)
+        // ══════════════════════════════════════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+            authDomain: "sipelita-digital.firebaseapp.com",
+            databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sipelita-digital",
+            storageBucket: "sipelita-digital.firebasestorage.app",
+            messagingSenderId: "787840817745",
+            appId: "1:787840817745:web:e6b5237cfbb5e51be93670"
+        };
+
+        // Inisialisasi Firebase hanya jika belum
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-      });
-    }
-  }
-</script>
+        const db = firebase.firestore();
+
+        // ══════════════════════════════════════════════
+        // FUNGSI REFRESH DATA USER DARI FIRESTORE
+        // ══════════════════════════════════════════════
+        async function refreshUserDataFromFirestore(userEmail) {
+            try {
+                const snapshot = await db.collection('users')
+                    .where('email', '==', userEmail)
+                    .limit(1)
+                    .get();
+                
+                if (!snapshot.empty) {
+                    const freshData = snapshot.docs[0].data();
+                    return freshData;
+                }
+                return null;
+            } catch (error) {
+                console.error('❌ Error refresh user data:', error);
+                return null;
+            }
+        }
+
+        try {
+            // 1. Cek apakah user sudah login
+            const user = AuthService.checkAuth();
+
+            if (user) {
+                // Tampilkan data dasar segera dari localStorage
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) {
+                    userNameEl.textContent = `Hi, ${user.nama || 'User'}`;
+                }
+                
+                const userRoleEl = document.getElementById('userRole');
+                if (userRoleEl) {
+                    if (user.role === 'admin') {
+                        userRoleEl.textContent = '👑 Admin';
+                    } else if (user.role === 'kepala') {
+                        userRoleEl.textContent = '👑 Kepala Madrasah';
+                    } else if (user.role === 'wakil') {
+                        userRoleEl.textContent = '⭐ Wakil Kepala';
+                    } else {
+                        userRoleEl.textContent = '👤 Guru';
+                    }
+                }
+
+                // Tampilkan NIP (jika ada di localStorage)
+                const userNipEl = document.getElementById('userNip');
+                if (userNipEl) {
+                    if (user.nip) {
+                        userNipEl.textContent = 'NIP: ' + user.nip;
+                    } else {
+                        userNipEl.textContent = 'NIP: Memuat...';
+                    }
+                }
+
+                // ══════════════════════════════════════════════
+                // AUTO-REFRESH: Ambil data terbaru dari Firestore
+                // ══════════════════════════════════════════════
+                if (user.email) {
+                    refreshUserDataFromFirestore(user.email).then(freshData => {
+                        if (freshData) {
+                            // Update user object dengan data terbaru
+                            const updatedUser = { 
+                                ...user, 
+                                ...freshData,
+                                email: user.email // Pertahankan email asli
+                            };
+                            
+                            // Update localStorage
+                            localStorage.setItem('sipelita_user', JSON.stringify(updatedUser));
+                            
+                            // Update tampilan
+                            if (userNameEl) {
+                                userNameEl.textContent = `Hi, ${updatedUser.nama || 'User'}`;
+                            }
+                            
+                            if (userNipEl) {
+                                if (updatedUser.nip) {
+                                    userNipEl.textContent = 'NIP: ' + updatedUser.nip;
+                                    userNipEl.style.color = '#64748b';
+                                } else {
+                                    userNipEl.textContent = 'NIP: Belum diisi';
+                                    userNipEl.style.color = '#ef4444';
+                                }
+                            }
+                            
+                            console.log('✅ Data user berhasil di-refresh dari Firestore');
+                        }
+                    });
+                }
+
+                // Cek apakah elemen adminSection ADA sebelum diubah
+                const adminSection = document.getElementById('adminSection');
+                if (adminSection) {
+                    if (user.role === 'admin') {
+                        adminSection.style.display = 'block';
+                    } else {
+                        adminSection.style.display = 'none';
+                    }
+                }
+
+            } else {
+                // Jika belum login, tendang ke home.html
+                window.location.href = 'home.html';
+            }
+
+            // 2. Handle Tombol Logout - DENGAN ERROR HANDLING
+            const btnLogout = document.getElementById('btnLogout');
+            if (btnLogout) {
+                btnLogout.addEventListener('click', async () => {
+                    if (confirm('Yakin ingin keluar dari SIPELITA?')) {
+                        try {
+                            // Clear session
+                            localStorage.removeItem('sipelita_user');
+                            sessionStorage.removeItem('sipelita_user');
+                            
+                            // Panggil AuthService.logout() jika tersedia
+                            if (typeof AuthService !== 'undefined' && AuthService.logout) {
+                                await AuthService.logout();
+                            } else {
+                                // Fallback: redirect manual
+                                window.location.href = 'home.html';
+                            }
+                        } catch (error) {
+                            console.error('Error saat logout:', error);
+                            // Fallback: tetap redirect
+                            localStorage.removeItem('sipelita_user');
+                            sessionStorage.removeItem('sipelita_user');
+                            window.location.href = 'home.html';
+                        }
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error('❌ Error di script module:', error);
+            
+            // Fallback: tetap tampilkan tombol logout yang berfungsi
+            const btnLogout = document.getElementById('btnLogout');
+            if (btnLogout) {
+                btnLogout.addEventListener('click', () => {
+                    if (confirm('Yakin ingin keluar?')) {
+                        localStorage.removeItem('sipelita_user');
+                        sessionStorage.removeItem('sipelita_user');
+                        window.location.href = 'home.html';
+                    }
+                });
+            }
+        }
+    </script>
 </body>
 </html>
