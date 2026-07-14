@@ -7,7 +7,6 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // Fungsi untuk mengambil API Key dari Firestore (Terpusat)
 async function getCentralizedApiKey() {
     try {
-        // Pastikan variabel 'db' sudah tersedia (dari elearning-core.js)
         if (typeof db === 'undefined') {
             throw new Error('Database belum terinisialisasi');
         }
@@ -30,7 +29,6 @@ async function getCentralizedApiKey() {
 // GENERATE SOAL DARI MATERI TEKS
 // ══════════════════════════════════════════════
 window.generateSoalDariMateri = async function(materiTeks, jumlahSoal = 10) {
-    // 1. Ambil API Key dari Firestore terlebih dahulu
     const apiKey = await getCentralizedApiKey();
     
     const prompt = `
@@ -76,7 +74,7 @@ ATURAN:
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                model: 'qwen/qwen-2.5-72b-instruct:free', // Model Qwen Gratis & Powerful
+                model: 'qwen/qwen-2.5-7b-instruct:free', // ✅ Model GRATIS yang stabil
                 messages: [
                     {
                         role: 'system',
@@ -133,7 +131,7 @@ ATURAN:
         if (error instanceof SyntaxError) {
             throw new Error('AI menghasilkan format yang tidak valid. Coba lagi dengan materi yang lebih jelas.');
         }
-        throw error; // Lempar error ke pemanggil (akan ditangkap oleh elearning-buat.html)
+        throw error;
     }
 };
 
@@ -175,7 +173,7 @@ window.generateSoalHybrid = async function(materiData) {
     }
     
     if (materiData.images && materiData.images.length > 0) {
-        prompt += `\n\n️ Terdapat ${materiData.images.length} gambar buku/materi yang dilampirkan.`;
+        prompt += `\n\n🖼️ Terdapat ${materiData.images.length} gambar buku/materi yang dilampirkan.`;
     }
     
     prompt += `\n\nTUGAS:\nBuatkan ${materiData.jumlahSoal} soal pilihan ganda dengan 5 opsi (A, B, C, D, E).`;
@@ -214,7 +212,7 @@ ATURAN:
     
     // 4. Jika hanya teks + YouTube, gunakan model teks biasa
     try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${apiKey}`,
@@ -223,7 +221,7 @@ ATURAN:
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                model: 'qwen/qwen-2.5-72b-instruct:free',
+                model: 'qwen/qwen-2.5-7b-instruct:free', // ✅ Model GRATIS yang stabil
                 messages: [
                     {
                         role: 'system',
@@ -281,7 +279,7 @@ async function generateSoalDenganGambarDanTeks(apiKey, prompt, imageBase64) {
     const mimeType = imageBase64.match(/data:(.*?);/)[1];
     
     try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${apiKey}`,
@@ -290,7 +288,7 @@ async function generateSoalDenganGambarDanTeks(apiKey, prompt, imageBase64) {
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                model: 'qwen/qwen-2-vl-72b-instruct:free',
+                model: 'qwen/qwen-2-vl-72b-instruct:free', // ✅ Model Vision GRATIS
                 messages: [
                     {
                         role: 'user',
@@ -341,7 +339,6 @@ async function generateSoalDenganGambarDanTeks(apiKey, prompt, imageBase64) {
 // GENERATE SOAL DARI GAMBAR (OCR + AI Vision)
 // ══════════════════════════════════════════════
 window.generateSoalDariGambar = async function(imageBase64, jumlahSoal = 10) {
-    // 1. Ambil API Key dari Firestore terlebih dahulu
     const apiKey = await getCentralizedApiKey();
     
     // Extract base64 data
@@ -373,7 +370,7 @@ HANYA output JSON array, tanpa teks lain.
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                model: 'qwen/qwen-2-vl-72b-instruct:free', // Model Qwen Vision Gratis
+                model: 'qwen/qwen-2-vl-72b-instruct:free', // ✅ Model Vision GRATIS
                 messages: [
                     {
                         role: 'user',
