@@ -615,9 +615,13 @@ window.generateSoalAI = async function() {
         
         alert(`✅ ${soalList.length} soal berhasil digenerate oleh AI!\n\nSilakan review dan edit jika perlu.`);
         
-    } catch (error) {
+        } catch (error) {
         console.error('Error AI:', error);
-        alert('❌ Gagal generate soal: ' + error.message);
+        let errorMsg = error.message;
+        if (errorMsg.includes('API Key tidak valid')) {
+            errorMsg = 'API Key salah atau kadaluarsa. Silakan periksa di OpenRouter.';
+        }
+        alert('❌ Gagal generate soal:\n\n' + errorMsg);
     } finally {
         btn.disabled = false;
         btn.innerHTML = '🤖 Generate Soal dengan AI';
