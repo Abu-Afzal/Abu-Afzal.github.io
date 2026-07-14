@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// E-LEARNING AI MODULE (100% GRATIS - Google Gemma)
+// E-LEARNING AI MODULE (100% GRATIS - Llama 3.2)
 // ══════════════════════════════════════════════
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -20,20 +20,25 @@ async function getCentralizedApiKey() {
 
 window.generateSoalDariMateri = async function(materiTeks, jumlahSoal = 10) {
     const apiKey = await getCentralizedApiKey();
-    const prompt = `You are an expert teacher. Create ${jumlahSoal} multiple choice questions (A-E) in Indonesian from this material:
+    const prompt = `Anda adalah guru ahli. Buat ${jumlahSoal} soal pilihan ganda (A-E) dari materi berikut dalam Bahasa Indonesia.
 
-MATERIAL:
+MATERI:
 ${materiTeks}
 
-Output format (JSON ARRAY ONLY, no other text):
+FORMAT OUTPUT (HANYA JSON ARRAY, tanpa teks lain):
 [
   {
-    "pertanyaan": "Question text in Indonesian",
-    "opsi": {"a": "Option A", "b": "Option B", "c": "Option C", "d": "Option D", "e": "Option E"},
+    "pertanyaan": "Teks pertanyaan",
+    "opsi": {"a": "Opsi A", "b": "Opsi B", "c": "Opsi C", "d": "Opsi D", "e": "Opsi E"},
     "jawabanBenar": "a"
   }
 ]
-Rules: Only 1 correct answer per question (a/b/c/d/e). Vary the correct answer positions. Use proper Indonesian language.`;
+
+Aturan:
+- Hanya 1 jawaban benar per soal (a/b/c/d/e)
+- Variasikan posisi jawaban benar
+- Gunakan Bahasa Indonesia yang baik
+- HANYA output JSON array`;
 
     try {
         const response = await fetch(OPENROUTER_API_URL, {
@@ -45,8 +50,8 @@ Rules: Only 1 correct answer per question (a/b/c/d/e). Vary the correct answer p
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                // ✅ MODEL INI MASIH 100% GRATIS
-                model: 'google/gemma-2b-it:free',
+                // ✅ MODEL INI MASIH 100% GRATIS DI OPENROUTER
+                model: 'meta-llama/llama-3.2-3b-instruct:free',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
                 max_tokens: 4000
@@ -84,26 +89,30 @@ window.generateSoalHybrid = async function(materiData) {
                 const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
                 if (res.ok) {
                     const data = await res.json();
-                    youtubeInfo = `\n\n🎬 YOUTUBE VIDEO:\nTitle: ${data.title}\nAuthor: ${data.author_name}`;
+                    youtubeInfo = `\n\n🎬 VIDEO YOUTUBE:\nJudul: ${data.title}\nPenulis: ${data.author_name}`;
                 }
             }
         } catch (e) { console.warn('Gagal ambil metadata YouTube:', e); }
     }
     
-    let prompt = `You are an expert teacher. Create ${materiData.jumlahSoal} multiple choice questions (A-E) in Indonesian.`;
-    if (materiData.teks) prompt += `\n\n📚 MATERIAL:\n${materiData.teks}`;
+    let prompt = `Anda adalah guru ahli. Buat ${materiData.jumlahSoal} soal pilihan ganda (A-E) dalam Bahasa Indonesia.`;
+    if (materiData.teks) prompt += `\n\n📚 MATERI:\n${materiData.teks}`;
     if (youtubeInfo) prompt += youtubeInfo;
-    if (materiData.images?.length > 0) prompt += `\n\n🖼️ Images are attached.`;
+    if (materiData.images?.length > 0) prompt += `\n\n️ Ada gambar yang dilampirkan.`;
     
-    prompt += `\n\nOutput format (JSON ARRAY ONLY):
+    prompt += `\n\nFORMAT OUTPUT (HANYA JSON ARRAY):
 [
   {
-    "pertanyaan": "Question text",
-    "opsi": {"a": "Option A", "b": "Option B", "c": "Option C", "d": "Option D", "e": "Option E"},
+    "pertanyaan": "Teks pertanyaan",
+    "opsi": {"a": "Opsi A", "b": "Opsi B", "c": "Opsi C", "d": "Opsi D", "e": "Opsi E"},
     "jawabanBenar": "a"
   }
 ]
-Rules: Only 1 correct answer. Use Indonesian language.`;
+
+Aturan:
+- Hanya 1 jawaban benar
+- Gunakan Bahasa Indonesia yang baik
+- HANYA output JSON array`;
 
     if (materiData.images?.length > 0) {
         return await generateSoalDenganGambar(apiKey, prompt, materiData.images[0]);
@@ -119,8 +128,8 @@ Rules: Only 1 correct answer. Use Indonesian language.`;
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                // ✅ MODEL INI MASIH 100% GRATIS
-                model: 'google/gemma-2b-it:free',
+                // ✅ MODEL INI MASIH 100% GRATIS DI OPENROUTER
+                model: 'meta-llama/llama-3.2-3b-instruct:free',
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.7,
                 max_tokens: 4000
@@ -161,8 +170,8 @@ async function generateSoalDenganGambar(apiKey, prompt, imageBase64) {
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                // ✅ MODEL VISION GRATIS (jika tersedia)
-                model: 'google/gemma-2b-it:free',
+                // ✅ MODEL VISION GRATIS
+                model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
                 messages: [{
                     role: 'user',
                     content: [
