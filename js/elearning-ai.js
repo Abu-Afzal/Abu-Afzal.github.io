@@ -1,31 +1,28 @@
 // ══════════════════════════════════════════════
-// GEMINI AI INTEGRATION
+// E-LEARNING AI MODULE (Qwen via OpenRouter)
 // ══════════════════════════════════════════════
 
-// ⚠️ PENTING: Jangan commit API key ke GitHub!
-// API key disimpan di localStorage browser (aman, lokal)
-
-let GEMINI_API_KEY = localStorage.getItem('gemini_api_key');
+let OPENROUTER_API_KEY = localStorage.getItem('openrouter_api_key');
 
 // Jika belum ada, minta user input
-if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'YOUR_OPENROUTER_API_KEY_HERE') {
     const userInput = prompt(
-        '🔑 Masukkan Gemini API Key Anda:\n\n' +
-        '1. Dapatkan gratis di: https://aistudio.google.com/app/apikey\n' +
-        '2. Copy API key Anda\n' +
-        '3. Paste di bawah ini\n\n' +
-        'Key akan disimpan di browser Anda (lokal, aman)'
+        '🔑 Masukkan OpenRouter API Key Anda untuk menggunakan AI Qwen:\n\n' +
+        '1. Dapatkan gratis di: https://openrouter.ai/keys\n' +
+        '2. Buat key baru (pilih model gratis)\n' +
+        '3. Copy dan paste key (dimulai dengan sk-or-v1-) di bawah ini\n\n' +
+        'Key akan disimpan aman di browser Anda (lokal).'
     );
     
     if (userInput && userInput.trim().length > 0) {
-        GEMINI_API_KEY = userInput.trim();
-        localStorage.setItem('gemini_api_key', GEMINI_API_KEY);
+        OPENROUTER_API_KEY = userInput.trim();
+        localStorage.setItem('openrouter_api_key', OPENROUTER_API_KEY);
     } else {
         throw new Error('API Key diperlukan untuk menggunakan fitur AI');
     }
 }
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent';
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // ══════════════════════════════════════════════
 // GENERATE SOAL DARI MATERI TEKS
@@ -41,7 +38,7 @@ TUGAS:
 Buatkan ${jumlahSoal} soal pilihan ganda dengan 5 opsi (A, B, C, D, E).
 Setiap soal harus memiliki tepat 1 jawaban benar.
 
-FORMAT OUTPUT (WAJIB JSON VALID):
+FORMAT OUTPUT (WAJIB JSON VALID, TANPA MARKDOWN):
 [
   {
     "pertanyaan": "Teks pertanyaan di sini",
@@ -60,34 +57,49 @@ ATURAN:
 - Jawaban benar hanya 1 per soal (a/b/c/d/e)
 - Variasikan posisi jawaban benar (jangan semua 'a')
 - Soal harus jelas dan tidak ambigu
-- Gunakan Bahasa Indonesia yang baik
-- Soal harus berdasarkan materi yang diberikan
-- JANGAN tambahkan teks lain di luar JSON
-- HANYA output JSON array, tanpa markdown, tanpa \`\`\`
+- Gunakan Bahasa Indonesia yang baik dan sesuai kurikulum
+- HANYA output JSON array, tanpa teks pembuka/penutup, tanpa \`\`\`
 `;
     
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'SIPELITA E-Learning'
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 8192
-                }
+                model: 'qwen/qwen-2.5-72b-instruct:free', // Model Qwen Gratis & Powerful
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Anda adalah generator soal ujian profesional. Anda HANYA boleh membalas dengan format JSON array yang valid, tanpa markdown atau teks tambahan.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 4000
             })
         });
         
         if (!response.ok) {
             const err = await response.json();
+            if (response.status === 401) {
+                localStorage.removeItem('openrouter_api_key');
+                throw new Error('API Key tidak valid. Silakan periksa kembali key OpenRouter Anda.');
+            }
             throw new Error(err.error?.message || 'API error');
         }
         
         const data = await response.json();
-        let text = data.candidates[0].content.parts[0].text.trim();
+        let text = data.choices[0].message.content.trim();
         
-        // Bersihkan markdown code block jika ada
+        // Bersihkan markdown code block jika AI tetap menghasilkannya
         text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         
         // Parse JSON
@@ -118,14 +130,14 @@ ATURAN:
     } catch (error) {
         console.error('AI Error:', error);
         if (error instanceof SyntaxError) {
-            throw new Error('AI menghasilkan format yang tidak valid. Coba lagi.');
+            throw new Error('AI menghasilkan format yang tidak valid. Coba lagi dengan materi yang lebih jelas.');
         }
         throw error;
     }
 };
 
 // ══════════════════════════════════════════════
-// GENERATE SOAL DARI GAMBAR (OCR + AI)
+// GENERATE SOAL DARI GAMBAR (OCR + AI Vision)
 // ══════════════════════════════════════════════
 window.generateSoalDariGambar = async function(imageBase64, jumlahSoal = 10) {
     // Extract base64 data
@@ -133,9 +145,9 @@ window.generateSoalDariGambar = async function(imageBase64, jumlahSoal = 10) {
     const mimeType = imageBase64.match(/data:(.*?);/)[1];
     
     const prompt = `
-Analisis gambar buku/materi ini dan buatkan ${jumlahSoal} soal pilihan ganda (5 opsi A-E).
+Analisis gambar buku/materi pembelajaran ini dan buatkan ${jumlahSoal} soal pilihan ganda (5 opsi A-E) berdasarkan konten gambar tersebut.
 
-FORMAT OUTPUT (JSON array):
+FORMAT OUTPUT (WAJIB JSON VALID, TANPA MARKDOWN):
 [
   {
     "pertanyaan": "...",
@@ -144,42 +156,67 @@ FORMAT OUTPUT (JSON array):
   }
 ]
 
-HANYA output JSON, tanpa teks lain.
+HANYA output JSON array, tanpa teks lain.
 `;
     
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+        // Menggunakan model Vision Qwen yang tersedia gratis di OpenRouter
+        const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'SIPELITA E-Learning'
+            },
             body: JSON.stringify({
-                contents: [{
-                    parts: [
-                        { text: prompt },
-                        {
-                            inline_data: {
-                                mime_type: mimeType,
-                                data: base64Data
+                model: 'qwen/qwen-2-vl-72b-instruct:free', // Model Qwen Vision Gratis
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            { 
+                                type: 'image_url', 
+                                image_url: { url: `data:${mimeType};base64,${base64Data}` } 
                             }
-                        }
-                    ]
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 8192
-                }
+                        ]
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 4000
             })
         });
         
-        if (!response.ok) throw new Error('API error');
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || 'API error');
+        }
         
         const data = await response.json();
-        let text = data.candidates[0].content.parts[0].text.trim();
+        let text = data.choices[0].message.content.trim();
         text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         
-        return JSON.parse(text);
+        const soalList = JSON.parse(text);
+        
+        if (!Array.isArray(soalList)) {
+            throw new Error('Format output tidak valid');
+        }
+        
+        return soalList.map(soal => ({
+            pertanyaan: soal.pertanyaan || 'Pertanyaan tidak tersedia',
+            opsi: {
+                a: soal.opsi?.a || 'Opsi A',
+                b: soal.opsi?.b || 'Opsi B',
+                c: soal.opsi?.c || 'Opsi C',
+                d: soal.opsi?.d || 'Opsi D',
+                e: soal.opsi?.e || 'Opsi E'
+            },
+            jawabanBenar: (soal.jawabanBenar || 'a').toLowerCase()
+        }));
         
     } catch (error) {
-        console.error('AI Error:', error);
+        console.error('AI Vision Error:', error);
         throw new Error('Gagal generate soal dari gambar: ' + error.message);
     }
 };
@@ -187,9 +224,9 @@ HANYA output JSON, tanpa teks lain.
 // ══════════════════════════════════════════════
 // FITUR TAMBAHAN: RESET API KEY
 // ══════════════════════════════════════════════
-window.resetGeminiApiKey = function() {
-    if (confirm('Yakin ingin mereset API Key Gemini?\nAnda akan diminta memasukkan key baru.')) {
-        localStorage.removeItem('gemini_api_key');
+window.resetAiApiKey = function() {
+    if (confirm('Yakin ingin mereset API Key AI?\nAnda akan diminta memasukkan key OpenRouter baru.')) {
+        localStorage.removeItem('openrouter_api_key');
         location.reload();
     }
 };
