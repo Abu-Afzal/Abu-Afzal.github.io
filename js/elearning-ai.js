@@ -138,6 +138,206 @@ ATURAN:
 };
 
 // ══════════════════════════════════════════════
+// HYBRID GENERATE: Teks + YouTube + Gambar
+// ══════════════════════════════════════════════
+window.generateSoalHybrid = async function(materiData) {
+    const apiKey = await getCentralizedApiKey();
+    
+    // 1. Ambil metadata YouTube jika ada
+    let youtubeInfo = '';
+    if (materiData.youtube) {
+        try {
+            const videoId = extractYoutubeId(materiData.youtube);
+            if (videoId) {
+                // Fetch metadata via oEmbed (gratis, no API key)
+                const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+                const response = await fetch(oembedUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    youtubeInfo = `\n\n🎬 VIDEO YOUTUBE:\nJudul: ${data.title}\nPenulis: ${data.author_name}\nDeskripsi: Lihat video untuk detail materi.`;
+                }
+            }
+        } catch (e) {
+            console.warn('Gagal ambil metadata YouTube:', e);
+            youtubeInfo = '\n\n🎬 Video YouTube tersedia (metadata tidak bisa diambil)';
+        }
+    }
+    
+    // 2. Bangun prompt berdasarkan materi yang tersedia
+    let prompt = `Kamu adalah guru ahli yang akan membuat soal pilihan ganda.`;
+    
+    if (materiData.teks) {
+        prompt += `\n\n📚 MATERI TEKS:\n${materiData.teks}`;
+    }
+    
+    if (youtubeInfo) {
+        prompt += youtubeInfo;
+    }
+    
+    if (materiData.images && materiData.images.length > 0) {
+        prompt += `\n\n️ Terdapat ${materiData.images.length} gambar buku/materi yang dilampirkan.`;
+    }
+    
+    prompt += `\n\nTUGAS:\nBuatkan ${materiData.jumlahSoal} soal pilihan ganda dengan 5 opsi (A, B, C, D, E).`;
+    
+    if (youtubeInfo && !materiData.teks) {
+        prompt += `\n\nPENTING: Karena hanya ada video YouTube, buat soal yang menguji pemahaman konsep dari topik video tersebut.`;
+    }
+    
+    prompt += `
+
+FORMAT OUTPUT (WAJIB JSON VALID, TANPA MARKDOWN):
+[
+  {
+    "pertanyaan": "Teks pertanyaan di sini",
+    "opsi": {
+      "a": "Opsi A",
+      "b": "Opsi B", 
+      "c": "Opsi C",
+      "d": "Opsi D",
+      "e": "Opsi E"
+    },
+    "jawabanBenar": "a"
+  }
+]
+
+ATURAN:
+- Jawaban benar hanya 1 per soal (a/b/c/d/e)
+- Variasikan posisi jawaban benar
+- Gunakan Bahasa Indonesia yang baik
+- HANYA output JSON array, tanpa teks lain`;
+
+    // 3. Jika ada gambar, gunakan model Vision
+    if (materiData.images && materiData.images.length > 0) {
+        return await generateSoalDenganGambarDanTeks(apiKey, prompt, materiData.images[0]);
+    }
+    
+    // 4. Jika hanya teks + YouTube, gunakan model teks biasa
+    try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'SIPELITA E-Learning'
+            },
+            body: JSON.stringify({
+                model: 'qwen/qwen-2.5-72b-instruct:free',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'Anda adalah generator soal ujian profesional. HANYA balas dengan JSON array valid.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 4000
+            })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || 'Gagal menghubungi AI');
+        }
+        
+        const data = await response.json();
+        let text = data.choices[0].message.content.trim();
+        text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        const soalList = JSON.parse(text);
+        
+        return soalList.map(soal => ({
+            pertanyaan: soal.pertanyaan || 'Pertanyaan tidak tersedia',
+            opsi: {
+                a: soal.opsi?.a || 'Opsi A',
+                b: soal.opsi?.b || 'Opsi B',
+                c: soal.opsi?.c || 'Opsi C',
+                d: soal.opsi?.d || 'Opsi D',
+                e: soal.opsi?.e || 'Opsi E'
+            },
+            jawabanBenar: (soal.jawabanBenar || 'a').toLowerCase()
+        }));
+        
+    } catch (error) {
+        console.error('AI Error:', error);
+        throw error;
+    }
+};
+
+// Helper untuk extract YouTube ID
+function extractYoutubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// Generate soal dengan gambar (untuk model Vision)
+async function generateSoalDenganGambarDanTeks(apiKey, prompt, imageBase64) {
+    const base64Data = imageBase64.split(',')[1];
+    const mimeType = imageBase64.match(/data:(.*?);/)[1];
+    
+    try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': window.location.origin,
+                'X-Title': 'SIPELITA E-Learning'
+            },
+            body: JSON.stringify({
+                model: 'qwen/qwen-2-vl-72b-instruct:free',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            { 
+                                type: 'image_url', 
+                                image_url: { url: `data:${mimeType};base64,${base64Data}` } 
+                            }
+                        ]
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 4000
+            })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error?.message || 'Gagal menghubungi AI Vision');
+        }
+        
+        const data = await response.json();
+        let text = data.choices[0].message.content.trim();
+        text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        
+        const soalList = JSON.parse(text);
+        
+        return soalList.map(soal => ({
+            pertanyaan: soal.pertanyaan || 'Pertanyaan tidak tersedia',
+            opsi: {
+                a: soal.opsi?.a || 'Opsi A',
+                b: soal.opsi?.b || 'Opsi B',
+                c: soal.opsi?.c || 'Opsi C',
+                d: soal.opsi?.d || 'Opsi D',
+                e: soal.opsi?.e || 'Opsi E'
+            },
+            jawabanBenar: (soal.jawabanBenar || 'a').toLowerCase()
+        }));
+        
+    } catch (error) {
+        console.error('AI Vision Error:', error);
+        throw new Error('Gagal generate soal dengan gambar: ' + error.message);
+    }
+}
+
+// ══════════════════════════════════════════════
 // GENERATE SOAL DARI GAMBAR (OCR + AI Vision)
 // ══════════════════════════════════════════════
 window.generateSoalDariGambar = async function(imageBase64, jumlahSoal = 10) {
