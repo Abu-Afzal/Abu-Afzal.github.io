@@ -656,7 +656,7 @@ async function generatePDF(isPreview) {
                     '<tr>' +
                         '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
                         '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
-                        '<td style="padding: 3px 0; border: none;">Sejarah</td>' +
+                        '<td style="padding: 3px 0; border: none;">' + (currentUser.mataPelajaran || '-') + '</td>' +
                     '</tr>' +
                     '<tr>' +
                         '<td style="padding: 3px 0; font-weight: bold; border: none;">JABATAN</td>' +
