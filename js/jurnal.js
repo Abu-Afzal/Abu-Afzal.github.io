@@ -63,11 +63,9 @@ async function loadUserInfo() {
         
         // ════════════════════════════════════════════════════════════
         // PERBAIKAN: Selalu ambil data terbaru dari Firestore
-        // Ini memastikan NIP selalu update meski localStorage lama
         // ════════════════════════════════════════════════════════════
         if (currentUser.email) {
             try {
-                // Coba ambil dari collection 'users' berdasarkan email
                 const snapshot = await db.collection('users')
                     .where('email', '==', currentUser.email)
                     .limit(1)
@@ -80,6 +78,9 @@ async function loadUserInfo() {
                     currentUser.nip = freshUserData.nip || '';
                     currentUser.nama = freshUserData.nama || currentUser.nama;
                     currentUser.role = freshUserData.role || currentUser.role;
+                    
+                    // 🆕 TAMBAHAN: Ambil data Mata Pelajaran
+                    currentUser.mataPelajaran = freshUserData.mataPelajaran || '';
                     
                     // Update localStorage dengan data terbaru
                     localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
@@ -100,7 +101,6 @@ async function loadUserInfo() {
                     
                     console.log('✅ Data user berhasil diperbarui dari Firestore');
                 } else {
-                    // User tidak ditemukan di Firestore, gunakan data localStorage
                     console.warn('⚠️ User tidak ditemukan di Firestore, menggunakan data localStorage');
                     if (nipElement) {
                         if (currentUser.nip) {
@@ -114,7 +114,6 @@ async function loadUserInfo() {
                 }
             } catch (firestoreError) {
                 console.error('❌ Error mengambil dari Firestore:', firestoreError);
-                // Fallback ke data localStorage jika Firestore error
                 if (nipElement) {
                     if (currentUser.nip) {
                         nipElement.textContent = 'NIP: ' + currentUser.nip;
@@ -126,7 +125,6 @@ async function loadUserInfo() {
                 }
             }
         } else {
-            // Tidak ada email, gunakan data localStorage apa adanya
             if (nipElement) {
                 nipElement.textContent = 'NIP: ' + (currentUser.nip || '-');
                 nipElement.style.color = '#64748b';
@@ -141,7 +139,6 @@ async function loadUserInfo() {
 
 function setDefaultDate() {
     const today = new Date().toISOString().split('T')[0];
-    
     const tglEl = document.getElementById('jurnalTanggal');
     if (tglEl) tglEl.value = today;
     
@@ -153,11 +150,10 @@ function setDefaultDate() {
 }
 
 // ══════════════════════════════════════════════
-// TAB SWITCHING (Safe Event Handling)
+// TAB SWITCHING
 // ══════════════════════════════════════════════
 function switchTab(tabName, element) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    
     if (element && element.classList) {
         element.classList.add('active');
     } else {
@@ -167,17 +163,15 @@ function switchTab(tabName, element) {
             if (closestTab) closestTab.classList.add('active');
         }
     }
-    
     document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
     const targetContent = document.getElementById('tab-' + tabName);
     if (targetContent) targetContent.style.display = 'block';
-    
     if (tabName === 'daftar') loadDaftarJurnal();
 }
 window.switchTab = switchTab;
 
 // ══════════════════════════════════════════════
-// ACTIVITY MANAGEMENT (Fixed Hoisting)
+// ACTIVITY MANAGEMENT
 // ══════════════════════════════════════════════
 function addActivity() {
     activityCounter++;
@@ -196,7 +190,7 @@ function addActivity() {
             '</div>' +
             '<div class="form-group" style="margin:0;">' +
                 '<label>Uraian Kegiatan *</label>' +
-                '<input type="text" class="act-kegiatan" placeholder="Contoh: Mengajar Mapel Sejarah Kelas X.2" required>' +
+                '<input type="text" class="act-kegiatan" placeholder="Contoh: Mengajar Mapel Kelas X.2" required>' +
             '</div>' +
         '</div>' +
         '<div class="form-group" style="margin:0;">' +
@@ -210,7 +204,6 @@ window.addActivity = addActivity;
 function removeActivity(id) {
     const el = document.getElementById('activity-' + id);
     if (el) el.remove();
-    
     const items = document.querySelectorAll('.activity-item');
     items.forEach((item, index) => {
         const h4 = item.querySelector('h4');
@@ -221,7 +214,7 @@ function removeActivity(id) {
 window.removeActivity = removeActivity;
 
 // ═════════════════════════════════════════════
-// PHOTO UPLOAD (Clean Event Rewriting)
+// PHOTO UPLOAD
 // ══════════════════════════════════════════════
 function setupPhotoUpload() {
     const uploadArea = document.getElementById('photoUploadArea');
@@ -229,25 +222,14 @@ function setupPhotoUpload() {
     if (!uploadArea || !photoInput) return;
     
     uploadArea.onclick = () => photoInput.click();
-    
-    uploadArea.ondragover = (e) => { 
-        e.preventDefault(); 
-        uploadArea.classList.add('dragover'); 
-    };
-    
-    uploadArea.ondragleave = () => { 
-        uploadArea.classList.remove('dragover'); 
-    };
-    
+    uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); };
+    uploadArea.ondragleave = () => { uploadArea.classList.remove('dragover'); };
     uploadArea.ondrop = (e) => {
         e.preventDefault();
         uploadArea.classList.remove('dragover');
         handleFiles(e.dataTransfer.files);
     };
-    
-    photoInput.onchange = (e) => { 
-        handleFiles(e.target.files); 
-    };
+    photoInput.onchange = (e) => { handleFiles(e.target.files); };
 }
 
 function handleFiles(files) {
@@ -291,7 +273,6 @@ function compressImage(base64, maxWidth, quality) {
 function renderPhotoPreview() {
     const preview = document.getElementById('photoPreview');
     if (!preview) return;
-    
     preview.innerHTML = uploadedPhotos.map((p, i) => 
         '<div class="photo-item">' +
             '<img src="' + p.base64 + '" alt="Preview">' +
@@ -357,10 +338,7 @@ async function simpanJurnal() {
             } else {
                 alert('❌ Minimal 1 kegiatan harus diisi!');
             }
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '💾 Simpan Jurnal';
-            }
+            if (btn) { btn.disabled = false; btn.innerHTML = '💾 Simpan Jurnal'; }
             return;
         }
         
@@ -371,6 +349,7 @@ async function simpanJurnal() {
             userName: currentUser.nama,
             userRole: currentUser.role,
             userNip: currentUser.nip || '',
+            userMapel: currentUser.mataPelajaran || '', // 🆕 Simpan mapel ke database juga
             tanggal: tanggal,
             keterangan: keterangan,
             activities: activities,
@@ -408,10 +387,8 @@ async function simpanJurnal() {
 function resetForm() {
     const form = document.getElementById('formJurnal');
     if (form) form.reset();
-    
     const container = document.getElementById('activitiesContainer');
     if (container) container.innerHTML = '';
-    
     activityCounter = 0;
     uploadedPhotos = [];
     renderPhotoPreview();
@@ -439,7 +416,6 @@ async function loadDaftarJurnal() {
         
         daftarJurnal = [];
         snapshot.forEach(doc => daftarJurnal.push({ id: doc.id, ...doc.data() }));
-        
         daftarJurnal.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
         
         const blnEl = document.getElementById('filterBulan');
@@ -496,10 +472,8 @@ async function loadDaftarJurnal() {
                 }).join('');
             }
         }
-        
         if (loading) loading.style.display = 'none';
         if (table) table.style.display = 'block';
-        
     } catch (error) {
         console.error('Error:', error);
         if (loading) loading.innerHTML = '<div style="color:red;padding:20px;">❌ ' + error.message + '</div>';
@@ -510,7 +484,6 @@ window.loadDaftarJurnal = loadDaftarJurnal;
 function viewPhoto(jurnalId, photoIndex) {
     const jurnal = daftarJurnal.find(j => j.id === jurnalId);
     if (!jurnal || !jurnal.fotoBase64[photoIndex]) return;
-    
     const modal = document.createElement('div');
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
     const img = document.createElement('img');
@@ -535,23 +508,18 @@ async function hapusSemuaJurnal() {
     const blnEl = document.getElementById('filterBulan');
     const thnEl = document.getElementById('filterTahun');
     if (!blnEl || !thnEl) return;
-    
     const filterBulan = blnEl.value;
     const filterTahun = thnEl.value;
     const monthNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-    
     if (!confirm('⚠️ Hapus SEMUA jurnal bulan ' + monthNames[filterBulan] + ' ' + filterTahun + '?\n\nTindakan ini TIDAK bisa dibatalkan!')) return;
-    
     try {
         const filtered = daftarJurnal.filter(j => {
             const d = new Date(j.tanggal);
             return (d.getMonth() + 1) === parseInt(filterBulan) && d.getFullYear() === parseInt(filterTahun);
         });
-        
         for (const j of filtered) {
             await db.collection('jurnal_mengajar').doc(j.id).delete();
         }
-        
         alert('✅ ' + filtered.length + ' jurnal berhasil dihapus!');
         loadDaftarJurnal();
     } catch (error) { alert('❌ ' + error.message); }
@@ -565,23 +533,15 @@ async function previewPDF(e) {
     const evt = e || window.event;
     const btn = (evt && evt.target) ? evt.target.closest('button') : null;
     let originalText = "Preview";
-    
     if (btn) {
         originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> Loading...';
     }
-    
-    try {
-        await generatePDF(true);
-    } catch (error) {
-        console.error('Error preview:', error);
-        alert('⚠️ Gagal preview PDF: ' + error.message);
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
+    try { await generatePDF(true); } 
+    catch (error) { console.error('Error preview:', error); alert('⚠️ Gagal preview PDF: ' + error.message); } 
+    finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
     }
 }
 window.previewPDF = previewPDF;
@@ -590,23 +550,15 @@ async function exportPDF(e) {
     const evt = e || window.event;
     const btn = (evt && evt.target) ? evt.target.closest('button') : null;
     let originalText = "Export";
-    
     if (btn) {
         originalText = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
     }
-    
-    try {
-        await generatePDF(false);
-    } catch (error) {
-        console.error('Error export:', error);
-        alert('❌ Gagal export PDF: ' + error.message);
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-        }
+    try { await generatePDF(false); } 
+    catch (error) { console.error('Error export:', error); alert('❌ Gagal export PDF: ' + error.message); } 
+    finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
     }
 }
 window.exportPDF = exportPDF;
@@ -631,6 +583,16 @@ async function generatePDF(isPreview) {
     const pdfArea = document.getElementById('pdfExportArea');
     if (!pdfArea) return;
     
+    // 🆕 Format Mata Pelajaran Dinamis (Mendukung String atau Array)
+    let mapelText = '-';
+    if (currentUser.mataPelajaran) {
+        if (Array.isArray(currentUser.mataPelajaran)) {
+            mapelText = currentUser.mataPelajaran.join(', ');
+        } else {
+            mapelText = currentUser.mataPelajaran;
+        }
+    }
+
     pdfArea.innerHTML = '<div style="font-family:Arial,sans-serif;padding:20px 30px;width:1050px;background:white;box-sizing:border-box;">' +
         '<h2 style="text-align:center;font-size:16px;margin-bottom:5px;font-weight:bold;">LAPORAN CAPAIAN KINERJA HARIAN (LCKH)</h2>' +
         '<h3 style="text-align:center;font-size:13px;margin-bottom:3px;">BULAN ' + monthNames[filterBulan].toUpperCase() + ' TP. ' + filterTahun + '/' + (parseInt(filterTahun)+1) + '</h3>' +
@@ -656,7 +618,8 @@ async function generatePDF(isPreview) {
                     '<tr>' +
                         '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
                         '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
-                        '<td style="padding: 3px 0; border: none;">' + (currentUser.mataPelajaran || '-') + '</td>' +
+                        // 🆕 PERUBAHAN DI SINI: Tidak lagi hardcoded "Sejarah"
+                        '<td style="padding: 3px 0; border: none;">' + mapelText + '</td>' +
                     '</tr>' +
                     '<tr>' +
                         '<td style="padding: 3px 0; font-weight: bold; border: none;">JABATAN</td>' +
@@ -756,7 +719,6 @@ async function generatePDF(isPreview) {
                 pdf.addImage(imgData, 'JPEG', 0, yOffset, pdfW, scaledH);
             }
         }
-        
         pdf.save('LCKH_' + monthNames[filterBulan] + '_' + filterTahun + '_' + (currentUser.nama || '').replace(/\s+/g, '_') + '.pdf');
     }
 }
