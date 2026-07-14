@@ -1,6 +1,6 @@
 // ══════════════════════════════════════════════
 // FIREBASE CONFIG
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 const firebaseConfig = {
     apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
     authDomain: "sipelita-digital.firebaseapp.com",
@@ -20,7 +20,7 @@ const db = firebase.firestore();
 let currentUser = null;
 let daftarKelas = [];
 
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 // UTILITIES
 // ══════════════════════════════════════════════
 function toast(msg, type = 'success') {
@@ -46,6 +46,28 @@ function sanitizeEmail(email) {
 }
 
 // ══════════════════════════════════════════════
+//  CONVERT ANGKA KE ROMAWI
+// ══════════════════════════════════════════════
+function toRoman(num) {
+    if (!num || num < 1 || num > 10) return num;
+    
+    const roman = {
+        1: 'I',
+        2: 'II',
+        3: 'III',
+        4: 'IV',
+        5: 'V',
+        6: 'VI',
+        7: 'VII',
+        8: 'VIII',
+        9: 'IX',
+        10: 'X'
+    };
+    
+    return roman[num] || num;
+}
+
+// ══════════════════════════════════════════════
 // INIT - Form Jurnal Online
 // ══════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
@@ -55,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentUser = getCurrentUser();
     if (!currentUser) {
         alert('Anda harus login!');
-        window.location.href = '../login.html'; // Sesuaikan path jika perlu
+        window.location.href = '../login.html';
         return;
     }
     
@@ -73,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('tanggal').value = today;
     
-    // 🆕 Setup Live Preview untuk Rentang Jam
+    // 🆕 Setup Live Preview untuk Rentang Jam (Format Romawi)
     setupJamPreview();
     
     // Load daftar kelas dari SIPENA
@@ -84,7 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ══════════════════════════════════════════════
-// 🆕 FITUR: Live Preview Rentang Jam
+// 🆕 FITUR: Live Preview Rentang Jam (Format Romawi)
 // ══════════════════════════════════════════════
 function setupJamPreview() {
     const jamMulaiEl = document.getElementById('jamMulai');
@@ -96,12 +118,18 @@ function setupJamPreview() {
         const selesai = jamSelesaiEl.value;
         
         if (mulai && selesai) {
-            if (parseInt(selesai) < parseInt(mulai)) {
+            const mulaiInt = parseInt(mulai);
+            const selesaiInt = parseInt(selesai);
+            
+            if (selesaiInt < mulaiInt) {
                 previewEl.textContent = '⚠️ Jam selesai tidak boleh kurang dari jam mulai!';
                 previewEl.style.background = '#fee2e2';
                 previewEl.style.color = '#991b1b';
             } else {
-                previewEl.textContent = `🕒 Jam ${mulai} s/d ${selesai}`;
+                // 🆕 Format Romawi: "Jam I-III"
+                const romanMulai = toRoman(mulaiInt);
+                const romanSelesai = toRoman(selesaiInt);
+                previewEl.textContent = `Jam ${romanMulai}-${romanSelesai}`;
                 previewEl.style.background = '#d1fae5';
                 previewEl.style.color = '#047857';
             }
@@ -214,9 +242,11 @@ async function simpanJurnal(e) {
         // Simpan NIP ke localStorage untuk auto-fill berikutnya
         localStorage.setItem('sipelita_nip_' + sanitizeEmail(namaGuru), nip);
         
-        // 🆕 Format data jam untuk database
-        const jamRange = `${jamMulai}-${jamSelesai}`; // Contoh: "1-3" (bagus untuk sorting/filtering)
-        const jamDisplay = `Jam ${jamMulai} s/d ${jamSelesai}`; // Contoh: "Jam 1 s/d 3" (bagus untuk tampilan)
+        // 🆕 Format data jam untuk database (dengan angka Romawi)
+        const jamMulaiInt = parseInt(jamMulai);
+        const jamSelesaiInt = parseInt(jamSelesai);
+        const jamRange = `${jamMulaiInt}-${jamSelesaiInt}`; // "1-3" untuk database/sorting
+        const jamDisplay = `Jam ${toRoman(jamMulaiInt)}-${toRoman(jamSelesaiInt)}`; // "Jam I-III" untuk tampilan
         
         // Struktur data yang dikirim ke Firestore
         const data = {
@@ -224,10 +254,10 @@ async function simpanJurnal(e) {
             guruNama: namaGuru,
             nip: nip,
             tanggal: tanggal,
-            jamMulai: parseInt(jamMulai),      // 🆕 Disimpan sebagai angka
-            jamSelesai: parseInt(jamSelesai),  // 🆕 Disimpan sebagai angka
-            jamRange: jamRange,                // 🆕 Format singkat "1-3"
-            jamDisplay: jamDisplay,            // 🆕 Format tampilan "Jam 1 s/d 3"
+            jamMulai: jamMulaiInt,           // Angka: 1
+            jamSelesai: jamSelesaiInt,       // Angka: 3
+            jamRange: jamRange,              // String: "1-3"
+            jamDisplay: jamDisplay,          // String: "Jam I-III"
             kelas: kelas,
             muridHadir: muridHadir,
             muridTidakHadir: muridTidakHadir,
@@ -264,7 +294,7 @@ async function simpanJurnal(e) {
 // RESET FORM
 // ══════════════════════════════════════════════
 window.resetForm = function() {
-    // 🆕 Reset dropdown jam dan preview
+    //  Reset dropdown jam dan preview
     document.getElementById('jamMulai').value = '';
     document.getElementById('jamSelesai').value = '';
     document.getElementById('jamPreview').style.display = 'none';
