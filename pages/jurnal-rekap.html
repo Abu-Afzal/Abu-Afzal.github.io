@@ -554,7 +554,7 @@ function renderTabel() {
             <tr>
                 <td>${idx + 1}</td>
                 <td>${tanggal}</td>
-                <td>${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</td>
+                <td>${j.jamDisplay || (j.jamKe ? 'Jam ke-' + j.jamKe : '-')}</td>
                 <td><strong>${j.kelas || '-'}</strong></td>
                 ${isEvaluator ? `<td>${j.guruNama || '-'}</td>` : ''}
                 <td><span class="badge badge-hadir">${j.muridHadir || 0}</span></td>
@@ -645,8 +645,8 @@ window.lihatDetail = function(id) {
             <div class="detail-value">${formatDate(j.tanggal)}</div>
         </div>
         <div class="detail-row">
-            <div class="detail-label">Jam Ke:</div>
-            <div class="detail-value">${j.jamKe ? 'Jam ke-' + j.jamKe : '-'}</div>
+            <div class="detail-label">Jam Mengajar:</div>
+            <div class="detail-value">${j.jamDisplay || (j.jamKe ? 'Jam ke-' + j.jamKe : '-') || '-'}</div>
         </div>
         <div class="detail-row">
             <div class="detail-label">Kelas:</div>
@@ -709,14 +709,14 @@ window.exportExcel = function() {
         ['Diekspor oleh: ' + userName + ' (' + userRoleText + ')'],
         ['Tanggal Export: ' + new Date().toLocaleString('id-ID')],
         [],
-        ['No', 'Tanggal', 'Jam Ke', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan']
+        ['No', 'Tanggal', 'Jam Mengajar', 'Kelas', 'Nama Guru', 'NIP', 'Murid Hadir', 'Murid Tidak Hadir', 'Materi/Tugas', 'Keterangan']
     ];
     
     filteredJurnal.forEach((j, idx) => {
         data.push([
             idx + 1,
             formatDate(j.tanggal),
-            j.jamKe ? 'Jam ke-' + j.jamKe : '-',
+            j.jamDisplay || (j.jamKe ? 'Jam ke-' + j.jamKe : '-') || '-',
             j.kelas || '-',
             j.guruNama || '-',
             j.nip || '-',
