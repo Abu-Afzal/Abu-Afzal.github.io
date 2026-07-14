@@ -583,26 +583,47 @@ function renumberSoal() {
 window.generateSoalAI = async function() {
     const btn = document.getElementById('btnAI');
     const materiTeks = document.getElementById('materiTeks').innerText;
+    const youtubeLink = document.getElementById('youtubeLink').value;
     const jumlah = document.getElementById('aiJumlahSoal').value;
     
-    if (!materiTeks || materiTeks.length < 50) {
-        alert('Tulis minimal 50 karakter materi di tab Teks terlebih dahulu!');
+    // Validasi: Harus ada minimal 1 materi
+    const hasText = materiTeks && materiTeks.length >= 50;
+    const hasYoutube = youtubeLink && youtubeLink.trim().length > 0;
+    const hasImages = uploadedImages && uploadedImages.length > 0;
+    
+    if (!hasText && !hasYoutube && !hasImages) {
+        alert('⚠️ Mohon lengkapi minimal salah satu:\n\n' +
+              '1. Tulis materi di tab Teks (minimal 50 karakter), ATAU\n' +
+              '2. Paste link YouTube di tab YouTube, ATAU\n' +
+              '3. Upload gambar buku di tab Gambar');
         return;
     }
     
-    if (!confirm(`Generate ${jumlah} soal dari materi?\n\nSoal yang sudah ada akan dihapus dan diganti dengan soal baru dari AI.`)) {
+    if (!confirm(`Generate ${jumlah} soal dari materi yang tersedia?\n\n` +
+                 `📝 Teks: ${hasText ? '✅' : '❌'}\n` +
+                 `🎬 YouTube: ${hasYoutube ? '✅' : '❌'}\n` +
+                 `🖼️ Gambar: ${hasImages ? '✅' : '❌'}\n\n` +
+                 `Soal yang sudah ada akan dihapus dan diganti dengan soal baru dari AI.`)) {
         return;
     }
     
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> AI sedang bekerja...';
+    btn.innerHTML = '<span class="spinner"></span> 🤖 AI sedang menganalisis materi...';
     
     try {
-        if (typeof generateSoalDariMateri !== 'function') {
+        if (typeof generateSoalHybrid !== 'function') {
             throw new Error('Module AI belum tersedia');
         }
         
-        const soalList = await generateSoalDariMateri(materiTeks, parseInt(jumlah));
+        // Kumpulkan semua materi
+        const materiData = {
+            teks: hasText ? materiTeks : '',
+            youtube: hasYoutube ? youtubeLink : '',
+            images: hasImages ? uploadedImages : [],
+            jumlahSoal: parseInt(jumlah)
+        };
+        
+        const soalList = await generateSoalHybrid(materiData);
         
         // Hapus soal lama
         document.getElementById('soalContainer').innerHTML = '';
@@ -613,15 +634,16 @@ window.generateSoalAI = async function() {
             tambahSoal(soal);
         });
         
-        alert(`✅ ${soalList.length} soal berhasil digenerate oleh AI!\n\nSilakan review dan edit jika perlu.`);
+        alert(`✅ ${soalList.length} soal berhasil digenerate oleh AI!\n\n` +
+              ` Sumber:\n` +
+              `${hasText ? '• Teks materi\n' : ''}` +
+              `${hasYoutube ? '• Video YouTube\n' : ''}` +
+              `${hasImages ? '• Gambar buku\n' : ''}` +
+              `\nSilakan review dan edit jika perlu.`);
         
-        } catch (error) {
+    } catch (error) {
         console.error('Error AI:', error);
-        let errorMsg = error.message;
-        if (errorMsg.includes('API Key tidak valid')) {
-            errorMsg = 'API Key salah atau kadaluarsa. Silakan periksa di OpenRouter.';
-        }
-        alert('❌ Gagal generate soal:\n\n' + errorMsg);
+        alert('❌ Gagal generate soal: ' + error.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = '🤖 Generate Soal dengan AI';
