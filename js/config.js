@@ -44,7 +44,7 @@ const CONFIG = {
         { 
             id: 'pelatihan', 
             icon: '', 
-            title: 'Pintar Kemenag', 
+            title: 'PINTAR', 
             desc: '', 
             color: '#afb6b5', 
             url: 'https://pintar.kemenag.go.id/',
