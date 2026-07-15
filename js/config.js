@@ -11,7 +11,7 @@ const CONFIG = {
         { 
             id: 'pusaka', 
             icon: '📜',
-            title: 'PELAPORAN PRESENSI', 
+            title: 'SSO KEMENAG', 
             desc: '', 
             color: '#9c27b0', 
             url: 'https://absensi.kemenag.go.id'
