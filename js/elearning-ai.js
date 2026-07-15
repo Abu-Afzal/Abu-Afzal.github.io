@@ -6,9 +6,10 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // ✅ DAFTAR MODEL GRATIS YANG VALID DI OPENROUTER (Per 2024)
 const MODELS = [
-    'meta-llama/llama-3.1-8b-instruct:free',
-    'qwen/qwen-2.5-7b-instruct:free',
-    'google/gemma-2-9b-it:free'
+    'openrouter/free',                          // auto-pilih model gratis (paling andal)
+    'meta-llama/llama-4-scout:free',           // fallback 1
+    'meta-llama/llama-3.3-70b-instruct:free',  // fallback 2
+    'qwen/qwen-2.5-7b-instruct:free'           // fallback 3
 ];
 
 async function getCentralizedApiKey() {
