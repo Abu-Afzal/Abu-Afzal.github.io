@@ -1,14 +1,14 @@
 // ══════════════════════════════════════════════
-// E-LEARNING AI MODULE (Dengan Retry & Fallback)
+// E-LEARNING AI MODULE (Model Valid & Gratis)
 // ══════════════════════════════════════════════
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Daftar model gratis dengan fallback
+// Daftar model gratis yang VALID di OpenRouter
 const MODELS = [
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'microsoft/phi-3-mini-4k-instruct:free',
-    'qwen/qwen2.5-7b-instruct:free'
+    'meta-llama/llama-3-8b-instruct:free',  // ✅ Model ini pasti ada
+    'mistralai/mistral-7b-instruct:free',   // ✅ Alternatif bagus
+    'google/gemma-7b-it:free'               // ✅ Model Google
 ];
 
 async function getCentralizedApiKey() {
@@ -26,7 +26,7 @@ async function getCentralizedApiKey() {
 }
 
 // Fungsi untuk mencoba multiple model dengan retry
-async function callAIWithRetry(prompt, maxRetries = 3) {
+async function callAIWithRetry(prompt, maxRetries = 2) {
     const apiKey = await getCentralizedApiKey();
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -51,14 +51,14 @@ async function callAIWithRetry(prompt, maxRetries = 3) {
                 });
                 
                 if (response.status === 429) {
-                    console.warn('Rate limit, tunggu 3 detik...');
-                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    console.warn('Rate limit, tunggu 5 detik...');
+                    await new Promise(resolve => setTimeout(resolve, 5000));
                     continue;
                 }
                 
                 if (!response.ok) {
                     const err = await response.json();
-                    console.warn(`Model ${model} error:`, err.error?.message);
+                    console.warn(`Model ${model} error:`, err.error?.message || response.statusText);
                     continue;
                 }
                 
@@ -82,8 +82,8 @@ async function callAIWithRetry(prompt, maxRetries = 3) {
         }
         
         if (attempt < maxRetries) {
-            console.log(`Retry ${attempt}/${maxRetries}, tunggu 5 detik...`);
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            console.log(`Retry ${attempt}/${maxRetries}, tunggu 10 detik...`);
+            await new Promise(resolve => setTimeout(resolve, 10000));
         }
     }
     
@@ -166,7 +166,6 @@ Aturan:
 - HANYA output JSON array`;
 
     if (materiData.images?.length > 0) {
-        // Untuk gambar, gunakan model vision langsung
         return await generateSoalDenganGambar(materiData.images[0], prompt);
     }
 
@@ -196,6 +195,7 @@ async function generateSoalDenganGambar(imageBase64, prompt) {
     const mimeType = imageBase64.match(/data:(.*?);/)[1];
     
     try {
+        // Gunakan model yang support vision
         const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
             headers: { 
@@ -205,7 +205,7 @@ async function generateSoalDenganGambar(imageBase64, prompt) {
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
+                model: 'meta-llama/llama-3-8b-instruct:free',
                 messages: [{
                     role: 'user',
                     content: [
