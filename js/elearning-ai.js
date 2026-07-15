@@ -1,14 +1,14 @@
 // ══════════════════════════════════════════════
-// E-LEARNING AI MODULE (Model Valid & Gratis)
+// E-LEARNING AI MODULE (Model Terverifikasi & Gratis)
 // ══════════════════════════════════════════════
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Daftar model gratis yang VALID di OpenRouter
+// ✅ DAFTAR MODEL GRATIS YANG VALID DI OPENROUTER (Per 2024)
 const MODELS = [
-    'meta-llama/llama-3-8b-instruct:free',  // ✅ Model ini pasti ada
-    'mistralai/mistral-7b-instruct:free',   // ✅ Alternatif bagus
-    'google/gemma-7b-it:free'               // ✅ Model Google
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'qwen/qwen-2.5-7b-instruct:free',
+    'google/gemma-2-9b-it:free'
 ];
 
 async function getCentralizedApiKey() {
@@ -25,7 +25,6 @@ async function getCentralizedApiKey() {
     }
 }
 
-// Fungsi untuk mencoba multiple model dengan retry
 async function callAIWithRetry(prompt, maxRetries = 2) {
     const apiKey = await getCentralizedApiKey();
     
@@ -82,8 +81,8 @@ async function callAIWithRetry(prompt, maxRetries = 2) {
         }
         
         if (attempt < maxRetries) {
-            console.log(`Retry ${attempt}/${maxRetries}, tunggu 10 detik...`);
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            console.log(`Retry ${attempt}/${maxRetries}, tunggu 5 detik...`);
+            await new Promise(resolve => setTimeout(resolve, 5000));
         }
     }
     
@@ -113,16 +112,9 @@ Aturan:
 
     try {
         const soalList = await callAIWithRetry(prompt);
-        
         return soalList.map(soal => ({
             pertanyaan: soal.pertanyaan || '',
-            opsi: { 
-                a: soal.opsi?.a || '', 
-                b: soal.opsi?.b || '', 
-                c: soal.opsi?.c || '', 
-                d: soal.opsi?.d || '', 
-                e: soal.opsi?.e || '' 
-            },
+            opsi: { a: soal.opsi?.a || '', b: soal.opsi?.b || '', c: soal.opsi?.c || '', d: soal.opsi?.d || '', e: soal.opsi?.e || '' },
             jawabanBenar: (soal.jawabanBenar || 'a').toLowerCase()
         }));
     } catch (error) {
@@ -171,16 +163,9 @@ Aturan:
 
     try {
         const soalList = await callAIWithRetry(prompt);
-        
         return soalList.map(soal => ({
             pertanyaan: soal.pertanyaan || 'Pertanyaan tidak tersedia',
-            opsi: { 
-                a: soal.opsi?.a || 'Opsi A', 
-                b: soal.opsi?.b || 'Opsi B', 
-                c: soal.opsi?.c || 'Opsi C', 
-                d: soal.opsi?.d || 'Opsi D', 
-                e: soal.opsi?.e || 'Opsi E' 
-            },
+            opsi: { a: soal.opsi?.a || 'Opsi A', b: soal.opsi?.b || 'Opsi B', c: soal.opsi?.c || 'Opsi C', d: soal.opsi?.d || 'Opsi D', e: soal.opsi?.e || 'Opsi E' },
             jawabanBenar: (soal.jawabanBenar || 'a').toLowerCase()
         }));
     } catch (error) {
@@ -195,7 +180,7 @@ async function generateSoalDenganGambar(imageBase64, prompt) {
     const mimeType = imageBase64.match(/data:(.*?);/)[1];
     
     try {
-        // Gunakan model yang support vision
+        // Gunakan model yang support vision (Llama 3.2 11B Vision masih gratis)
         const response = await fetch(OPENROUTER_API_URL, {
             method: 'POST',
             headers: { 
@@ -205,7 +190,7 @@ async function generateSoalDenganGambar(imageBase64, prompt) {
                 'X-Title': 'SIPELITA E-Learning'
             },
             body: JSON.stringify({
-                model: 'meta-llama/llama-3-8b-instruct:free',
+                model: 'meta-llama/llama-3.2-11b-vision-instruct:free',
                 messages: [{
                     role: 'user',
                     content: [
@@ -230,16 +215,9 @@ async function generateSoalDenganGambar(imageBase64, prompt) {
             .trim();
         
         const soalList = JSON.parse(text);
-        
         return soalList.map(soal => ({
             pertanyaan: soal.pertanyaan || 'Pertanyaan tidak tersedia',
-            opsi: { 
-                a: soal.opsi?.a || 'Opsi A', 
-                b: soal.opsi?.b || 'Opsi B', 
-                c: soal.opsi?.c || 'Opsi C', 
-                d: soal.opsi?.d || 'Opsi D', 
-                e: soal.opsi?.e || 'Opsi E' 
-            },
+            opsi: { a: soal.opsi?.a || 'Opsi A', b: soal.opsi?.b || 'Opsi B', c: soal.opsi?.c || 'Opsi C', d: soal.opsi?.d || 'Opsi D', e: soal.opsi?.e || 'Opsi E' },
             jawabanBenar: (soal.jawabanBenar || 'a').toLowerCase()
         }));
     } catch (error) {
