@@ -40,6 +40,14 @@ const CONFIG = {
             desc: '', 
             color: '#546e7a', 
             url: 'https://simpeg5.kemenag.go.id/' 
+        },
+        { 
+            id: 'pelatihan', 
+            icon: '📘', 
+            title: 'Pintar Kemenag', 
+            desc: '', 
+            color: '#afb6b5', 
+            url: 'https://pintar.kemenag.go.id/' 
         }
     ],
     
