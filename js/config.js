@@ -2,7 +2,7 @@ const CONFIG = {
     layananUmum: [
         { 
             id: 'pusaka', 
-            title: 'Absensi Pusaka', 
+            title: 'PUSAKA', 
             desc: '', 
             color: '#ffffff', 
             url: 'https://pusaka-v3.kemenag.go.id/',
@@ -11,7 +11,7 @@ const CONFIG = {
         { 
             id: 'pusaka', 
             icon: '📜',
-            title: 'Pelaporan Pusaka', 
+            title: 'PELAPORAN PRESENSI', 
             desc: '', 
             color: '#9c27b0', 
             url: 'https://absensi.kemenag.go.id'
