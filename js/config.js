@@ -47,7 +47,8 @@ const CONFIG = {
             title: 'Pintar Kemenag', 
             desc: '', 
             color: '#afb6b5', 
-            url: 'https://pintar.kemenag.go.id/' 
+            url: 'https://pintar.kemenag.go.id/'
+            logo: 'assets/images/pintar-app.png'
         }
     ],
     
