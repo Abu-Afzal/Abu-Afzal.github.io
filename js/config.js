@@ -85,7 +85,6 @@ const CONFIG = {
         { icon: '📚', title: 'Jurnal Mengajar', desc: '', color: '#6d4c41', page: 'pages/jurnal-online.html' },
         { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
-        { icon: '🏆', title: 'Prestasi', desc: '', color: '#546e7a', page: 'pages/prestasi.html' },
         { icon: '👨‍💼', title: 'PKKM', desc: 'Penilaian Kinerja Kepala Madrasah', color: '#1b5e20', page: 'pkkm.html' },
         { icon: '🛠️', title: 'Master PKKM', desc: 'Kelola Instrumen PKKM', color: '#0dd940', page: '/pages/master-pkkm.html' },
         { 
