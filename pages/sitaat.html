@@ -43,9 +43,9 @@
     <div class="tabs">
         <button type="button" class="tab active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
         <button type="button" class="tab" onclick="switchTab('input', this)">➕ Input Pelanggaran</button>
-        <button type="button" class="tab" onclick="switchTab('siswa', this)"> Data Siswa</button>
+        <button type="button" class="tab" onclick="switchTab('siswa', this)">👥 Data Siswa</button>
         <button type="button" class="tab" onclick="switchTab('jenis', this)">📋 Jenis Pelanggaran</button>
-        <button type="button" class="tab" onclick="switchTab('laporan', this)"> Laporan</button>
+        <button type="button" class="tab" onclick="switchTab('laporan', this)">📈 Laporan</button>
     </div>
     
     <!-- TAB: DASHBOARD -->
@@ -70,14 +70,14 @@
         </div>
         
         <div class="card">
-            <h2> Siswa Dengan Poin Tertinggi</h2>
+            <h2>🏆 Siswa Dengan Poin Tertinggi</h2>
             <div id="topSiswaContainer">
                 <div class="empty-state">Memuat data...</div>
             </div>
         </div>
         
         <div class="card">
-            <h2> Pelanggaran Terbaru</h2>
+            <h2>🕒 Pelanggaran Terbaru</h2>
             <div id="recentPelanggaranContainer">
                 <div class="empty-state">Memuat data...</div>
             </div>
@@ -94,11 +94,13 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Nama Siswa *</label>
-                        <input type="text" id="namaSiswa" placeholder="Nama lengkap siswa" required>
+                        <input type="text" id="namaSiswa" placeholder="Ketik nama atau NIS..." required autocomplete="off">
+                        <small style="color: #64748b; font-size: 0.75rem;">💡 Data diambil dari master SICAN</small>
                     </div>
                     <div class="form-group">
                         <label>Kelas *</label>
-                        <input type="text" id="kelasSiswa" placeholder="Contoh: X.1" required>
+                        <input type="text" id="kelasSiswa" placeholder="Akan terisi otomatis" required readonly>
+                        <small style="color: #64748b; font-size: 0.75rem;">📚 Otomatis dari database</small>
                     </div>
                 </div>
                 
@@ -144,6 +146,23 @@
     
     <!-- TAB: DATA SISWA -->
     <div id="tab-siswa" class="tab-content" style="display: none;">
+        
+        <!-- ✨ CARD INTEGRASI SICAN (BARU) -->
+        <div class="card" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #0ea5e9; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="color: #0369a1; margin-bottom: 5px;">🔗 Integrasi dengan Master Data SICAN</h3>
+                    <p style="color: #0c4a6e; font-size: 0.9rem; margin: 0;">
+                        Data siswa diambil langsung dari database SICAN. Untuk menambah/edit data siswa, gunakan panel admin SICAN.
+                    </p>
+                </div>
+                <a href="sican-admin.html" class="btn btn-primary" target="_blank">
+                    🛡️ Buka Panel Admin SICAN
+                </a>
+            </div>
+        </div>
+        <!-- ✨ AKHIR CARD INTEGRASI -->
+
         <div class="card">
             <h2>👥 Data Siswa & Poin Pelanggaran</h2>
             
@@ -213,41 +232,41 @@
         </div>
     </div>
     
-   <!-- TAB: LAPORAN -->
-<div id="tab-laporan" class="tab-content" style="display: none;">
-    <div class="card">
-        <h2>📊 Laporan Pelanggaran</h2>
-        
-        <!-- Header Khusus Print (Hanya muncul saat diprint) -->
-        <div class="print-header" style="display: none;">
-            <h1>LAPORAN PELANGGARAN TATA TERTIB</h1>
-            <p>MAN BANTAENG - TA. 2025/2026</p>
-            <p id="printPeriodeInfo" style="font-size: 9pt; color: #64748b; margin-top: 5px;"></p>
-        </div>
-        
-        <!-- Filter dan Tombol (Akan disembunyikan saat print) -->
-        <div class="filter-bar no-print" style="margin-bottom: 20px;">
-            <input type="month" id="filterBulanLaporan" onchange="generateLaporan()">
-            <select id="filterKelasLaporan" onchange="generateLaporan()">
-                <option value="">Semua Kelas</option>
-            </select>
-            <button class="btn btn-success" onclick="exportLaporanExcel()"> Export Excel</button>
-            <button class="btn btn-primary" onclick="printLaporan()">️ Print Laporan</button>
-        </div>
-        
-        <!-- Container Laporan -->
-        <div id="laporanContainer">
-            <div class="empty-state">Pilih periode untuk melihat laporan</div>
+    <!-- TAB: LAPORAN -->
+    <div id="tab-laporan" class="tab-content" style="display: none;">
+        <div class="card">
+            <h2>📊 Laporan Pelanggaran</h2>
+            
+            <!-- Header Khusus Print (Hanya muncul saat diprint) -->
+            <div class="print-header" style="display: none;">
+                <h1>LAPORAN PELANGGARAN TATA TERTIB</h1>
+                <p>MAN BANTAENG - TA. 2025/2026</p>
+                <p id="printPeriodeInfo" style="font-size: 9pt; color: #64748b; margin-top: 5px;"></p>
+            </div>
+            
+            <!-- Filter dan Tombol (Akan disembunyikan saat print) -->
+            <div class="filter-bar no-print" style="margin-bottom: 20px;">
+                <input type="month" id="filterBulanLaporan" onchange="generateLaporan()">
+                <select id="filterKelasLaporan" onchange="generateLaporan()">
+                    <option value="">Semua Kelas</option>
+                </select>
+                <button class="btn btn-success" onclick="exportLaporanExcel()">📥 Export Excel</button>
+                <button class="btn btn-primary" onclick="printLaporan()">🖨️ Print Laporan</button>
+            </div>
+            
+            <!-- Container Laporan -->
+            <div id="laporanContainer">
+                <div class="empty-state">Pilih periode untuk melihat laporan</div>
+            </div>
         </div>
     </div>
-</div>
     
 </div>
 
 <!-- Modal Detail Siswa -->
 <div class="modal" id="modalDetailSiswa">
     <div class="modal-box">
-        <h3> Detail Pelanggaran Siswa</h3>
+        <h3>📝 Detail Pelanggaran Siswa</h3>
         <div id="detailSiswaContent"></div>
         <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
             <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
