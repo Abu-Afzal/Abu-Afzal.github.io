@@ -213,37 +213,29 @@
         </div>
     </div>
     
-    <!-- TAB: LAPORAN -->
+   <!-- TAB: LAPORAN -->
 <div id="tab-laporan" class="tab-content" style="display: none;">
     <div class="card">
-        <h2> Laporan Pelanggaran</h2>
+        <h2>📊 Laporan Pelanggaran</h2>
         
-        <!-- Tombol Print (akan disembunyikan saat print) -->
-        <div class="no-print" style="margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn btn-primary" onclick="printLaporan()">
-                🖨️ Print Laporan
-            </button>
-            <button class="btn btn-success" onclick="exportLaporanExcel()">
-                📥 Export Excel
-            </button>
-        </div>
-        
-        <!-- Header Khusus Print (hanya muncul saat print) -->
+        <!-- Header Khusus Print (Hanya muncul saat diprint) -->
         <div class="print-header" style="display: none;">
             <h1>LAPORAN PELANGGARAN TATA TERTIB</h1>
             <p>MAN BANTAENG - TA. 2025/2026</p>
-            <p id="printPeriodeInfo" style="font-size: 9pt; color: #64748b;"></p>
+            <p id="printPeriodeInfo" style="font-size: 9pt; color: #64748b; margin-top: 5px;"></p>
         </div>
         
-        <div class="filter-bar no-print">
+        <!-- Filter dan Tombol (Akan disembunyikan saat print) -->
+        <div class="filter-bar no-print" style="margin-bottom: 20px;">
             <input type="month" id="filterBulanLaporan" onchange="generateLaporan()">
             <select id="filterKelasLaporan" onchange="generateLaporan()">
                 <option value="">Semua Kelas</option>
             </select>
             <button class="btn btn-success" onclick="exportLaporanExcel()"> Export Excel</button>
-            <button class="btn btn-primary" onclick="printLaporan()">️ Print</button>
+            <button class="btn btn-primary" onclick="printLaporan()">️ Print Laporan</button>
         </div>
         
+        <!-- Container Laporan -->
         <div id="laporanContainer">
             <div class="empty-state">Pilih periode untuk melihat laporan</div>
         </div>
