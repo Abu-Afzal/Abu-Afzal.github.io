@@ -70,7 +70,7 @@
         </div>
         
         <div class="card">
-            <h2>🏆 Siswa Dengan Poin Tertinggi</h2>
+            <h2> Siswa Dengan Poin Tertinggi</h2>
             <div id="topSiswaContainer">
                 <div class="empty-state">Memuat data...</div>
             </div>
@@ -147,8 +147,8 @@
     <!-- TAB: DATA SISWA -->
     <div id="tab-siswa" class="tab-content" style="display: none;">
         
-        <!-- ✨ CARD INTEGRASI SICAN (BARU) -->
-        <div class="card" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #0ea5e9; margin-bottom: 20px;">
+        <!-- ✨ CARD INTEGRASI SICAN (Hanya untuk Admin/Kepala) -->
+        <div id="cardIntegrasiSICAN" class="card" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #0ea5e9; margin-bottom: 20px; display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <h3 style="color: #0369a1; margin-bottom: 5px;">🔗 Integrasi dengan Master Data SICAN</h3>
@@ -174,7 +174,7 @@
                 <select id="filterLevelSiswa" onchange="filterSiswa()">
                     <option value="">Semua Level</option>
                     <option value="aman">🟢 Aman (0-10)</option>
-                    <option value="peringatan1">🟡 Peringatan I (11-20)</option>
+                    <option value="peringatan1"> Peringatan I (11-20)</option>
                     <option value="peringatan2">🟠 Peringatan II (21-30)</option>
                     <option value="peringatan3">🟠 Peringatan III (31-75)</option>
                     <option value="kritis">🔴 Kritis (75-100)</option>
@@ -251,7 +251,7 @@
                     <option value="">Semua Kelas</option>
                 </select>
                 <button class="btn btn-success" onclick="exportLaporanExcel()">📥 Export Excel</button>
-                <button class="btn btn-primary" onclick="printLaporan()">🖨️ Print Laporan</button>
+                <button class="btn btn-primary" onclick="printLaporan()">️ Print Laporan</button>
             </div>
             
             <!-- Container Laporan -->
@@ -274,30 +274,31 @@
     </div>
 </div>
 
-    <script>
-// Show/hide card integrasi berdasarkan role
-document.addEventListener('DOMContentLoaded', function() {
-    const cardIntegrasi = document.getElementById('cardIntegrasiSICAN');
-    const userRoleEl = document.getElementById('userRole');
-    
-    if (cardIntegrasi && userRoleEl) {
-        const userRole = userRoleEl.textContent.toLowerCase();
-        const isAdmin = userRole.includes('admin') || userRole.includes('kepala');
-        
-        if (isAdmin) {
-            cardIntegrasi.style.display = 'block';
-        } else {
-            cardIntegrasi.style.display = 'none';
-        }
-    }
-});
-</script>
-
 <!-- Script Modular -->
 <script src="../js/sitaat-core.js"></script>
 <script src="../js/sitaat-pelanggaran.js"></script>
 <script src="../js/sitaat-siswa.js"></script>
 <script src="../js/sitaat-laporan.js"></script>
+
+<!-- ✅ Script Pengecekan Role (Diletakkan PALING BAWAH agar berjalan setelah core.js) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cardIntegrasi = document.getElementById('cardIntegrasiSICAN');
+    const userRoleEl = document.getElementById('userRole');
+    
+    if (cardIntegrasi && userRoleEl) {
+        // Baca teks dari badge role (misal: " ADMIN/KEPALA" atau "👨‍🏫 GURU")
+        const userRole = userRoleEl.textContent.toLowerCase();
+        const isAdmin = userRole.includes('admin') || userRole.includes('kepala');
+        
+        if (isAdmin) {
+            cardIntegrasi.style.display = 'block'; // Tampilkan untuk Admin/Kepala
+        } else {
+            cardIntegrasi.style.display = 'none';  // Sembunyikan untuk Guru/Wakil
+        }
+    }
+});
+</script>
 
 </body>
 </html>
