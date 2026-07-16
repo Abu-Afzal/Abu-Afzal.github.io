@@ -68,7 +68,7 @@ const CONFIG = {
             color: '#37474f', 
             url: 'https://www.manbantaeng.sch.id/' 
         },
-        { icon: '🧾', title: 'PMBM', desc: 'Penerimaan Mueid Baru Madrasah', color: '#00695c', page: 'pages/pmbm.html' },
+        { icon: '🧾', title: 'PMBM', desc: 'Penerimaan Murid Baru Madrasah', color: '#00695c', page: 'pages/pmbm.html' },
         { icon: '📖', title: 'SIPENA', desc: 'Sistem Penilaian dan Absensi', color: '#3949ab', page: 'pages/sipena.html' },
         { icon: '⏱️', title: 'Jadwal Mengajar', desc: '', color: '#a704c8', page: 'pages/jadwal-mengajar.html' },
         { icon: '✅', title: 'Tatib', desc: '', color: '#f57c00', page: 'pages/sitaat.html' },
