@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITAAT - Sistem Informasi Tata Tertib</title>
+    <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    
+    <!-- CSS Modular -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/sitaat.css">
+</head>
+<body>
+
+<div class="header">
+    <div style="flex: 1;">
+        <h1>⚖️ SITAAT</h1>
+        <p>Sistem Informasi Tata Tertib - MAN Bantaeng</p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <span id="userRole" class="role-badge">GURU</span>
+        <a href="../index.html" class="btn-dashboard">← Dashboard</a>
+    </div>
+</div>
+
+<div class="container">
+    
+    <!-- Info Banner -->
+    <div class="info-banner">
+        <strong>📋 Bobot Pelanggaran:</strong> 
+        0-10 poin: Dibina | 
+        11-20 poin: Peringatan I | 
+        21-30 poin: Peringatan II | 
+        31-75 poin: Peringatan III | 
+        75-100 poin: Dikembalikan
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="tabs">
+        <button type="button" class="tab active" onclick="switchTab('dashboard', this)">📊 Dashboard</button>
+        <button type="button" class="tab" onclick="switchTab('input', this)">➕ Input Pelanggaran</button>
+        <button type="button" class="tab" onclick="switchTab('siswa', this)"> Data Siswa</button>
+        <button type="button" class="tab" onclick="switchTab('jenis', this)">📋 Jenis Pelanggaran</button>
+        <button type="button" class="tab" onclick="switchTab('laporan', this)"> Laporan</button>
+    </div>
+    
+    <!-- TAB: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Pelanggaran</h3>
+                <div class="value" id="statTotalPelanggaran">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Siswa Bermasalah</h3>
+                <div class="value" id="statSiswaBermasalah" style="color: #ef4444;">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pelanggaran Hari Ini</h3>
+                <div class="value" id="statHariIni" style="color: #f59e0b;">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Rata-rata Poin</h3>
+                <div class="value" id="statRataPoin">0</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2> Siswa Dengan Poin Tertinggi</h2>
+            <div id="topSiswaContainer">
+                <div class="empty-state">Memuat data...</div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2> Pelanggaran Terbaru</h2>
+            <div id="recentPelanggaranContainer">
+                <div class="empty-state">Memuat data...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB: INPUT PELANGGARAN -->
+    <div id="tab-input" class="tab-content" style="display: none;">
+        <div class="card">
+            <h2>➕ Input Pelanggaran Siswa</h2>
+            <div id="alertInput" class="alert"></div>
+            
+            <form id="formPelanggaran">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nama Siswa *</label>
+                        <input type="text" id="namaSiswa" placeholder="Nama lengkap siswa" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Kelas *</label>
+                        <input type="text" id="kelasSiswa" placeholder="Contoh: X.1" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tanggal Pelanggaran *</label>
+                        <input type="date" id="tanggalPelanggaran" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jenis Pelanggaran *</label>
+                        <select id="jenisPelanggaran" required>
+                            <option value="">-- Pilih Jenis Pelanggaran --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Poin Otomatis</label>
+                    <input type="number" id="poinPelanggaran" readonly style="background: #f1f5f9; font-weight: 700; color: #ef4444;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Keterangan Tambahan</label>
+                    <textarea id="keteranganPelanggaran" placeholder="Detail kejadian, saksi, dll..." rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Pelapor (Guru)</label>
+                    <input type="text" id="pelapor" readonly>
+                </div>
+                
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-primary" id="btnSimpanPelanggaran">
+                        💾 Simpan Pelanggaran
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetFormPelanggaran()">
+                        🔄 Reset
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- TAB: DATA SISWA -->
+    <div id="tab-siswa" class="tab-content" style="display: none;">
+        <div class="card">
+            <h2>👥 Data Siswa & Poin Pelanggaran</h2>
+            
+            <div class="filter-bar">
+                <input type="text" id="searchSiswa" placeholder="🔍 Cari nama siswa..." oninput="filterSiswa()">
+                <select id="filterKelasSiswa" onchange="filterSiswa()">
+                    <option value="">Semua Kelas</option>
+                </select>
+                <select id="filterLevelSiswa" onchange="filterSiswa()">
+                    <option value="">Semua Level</option>
+                    <option value="aman">🟢 Aman (0-10)</option>
+                    <option value="peringatan1">🟡 Peringatan I (11-20)</option>
+                    <option value="peringatan2">🟠 Peringatan II (21-30)</option>
+                    <option value="peringatan3">🟠 Peringatan III (31-75)</option>
+                    <option value="kritis">🔴 Kritis (75-100)</option>
+                </select>
+            </div>
+            
+            <div id="loadingSiswa" style="text-align: center; padding: 40px;">
+                <div class="spinner"></div>
+                <p style="margin-top: 12px; color: #64748b;">Memuat data siswa...</p>
+            </div>
+            
+            <div id="siswaContainer"></div>
+        </div>
+    </div>
+    
+    <!-- TAB: JENIS PELANGGARAN -->
+    <div id="tab-jenis" class="tab-content" style="display: none;">
+        <div class="card">
+            <h2>📋 Database Jenis Pelanggaran</h2>
+            <div id="alertJenis" class="alert"></div>
+            
+            <button type="button" class="btn btn-primary" onclick="showFormTambahPelanggaran()" style="margin-bottom: 16px;">
+                ➕ Tambah Jenis Pelanggaran
+            </button>
+            
+            <div id="formTambahPelanggaran" style="display: none; background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+                <h4 style="margin-bottom: 12px; color: #1e40af;">Tambah Jenis Pelanggaran Baru</h4>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kategori</label>
+                        <select id="newKategori">
+                            <option value="A. KETERTIBAN">A. KETERTIBAN</option>
+                            <option value="B. KERAJINAN">B. KERAJINAN</option>
+                            <option value="C. KERAPIAN">C. KERAPIAN</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Poin</label>
+                        <input type="number" id="newPoin" min="1" max="100" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Jenis Pelanggaran</label>
+                    <textarea id="newJenis" placeholder="Deskripsi pelanggaran..." required></textarea>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-success" onclick="simpanJenisPelanggaran()">💾 Simpan</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideFormTambahPelanggaran()">❌ Batal</button>
+                </div>
+            </div>
+            
+            <div id="jenisPelanggaranContainer">
+                <div class="empty-state">Memuat data...</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TAB: LAPORAN -->
+    <div id="tab-laporan" class="tab-content" style="display: none;">
+        <div class="card">
+            <h2> Laporan Pelanggaran</h2>
+            
+            <div class="filter-bar">
+                <input type="month" id="filterBulanLaporan" onchange="generateLaporan()">
+                <select id="filterKelasLaporan" onchange="generateLaporan()">
+                    <option value="">Semua Kelas</option>
+                </select>
+                <button class="btn btn-success" onclick="exportLaporanExcel()">📥 Export Excel</button>
+                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
+            </div>
+            
+            <div id="laporanContainer">
+                <div class="empty-state">Pilih periode untuk melihat laporan</div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Modal Detail Siswa -->
+<div class="modal" id="modalDetailSiswa">
+    <div class="modal-box">
+        <h3> Detail Pelanggaran Siswa</h3>
+        <div id="detailSiswaContent"></div>
+        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="closeModal()">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Script Modular -->
+<script src="../js/sitaat-core.js"></script>
+<script src="../js/sitaat-pelanggaran.js"></script>
+<script src="../js/sitaat-siswa.js"></script>
+<script src="../js/sitaat-laporan.js"></script>
+
+</body>
+</html>
