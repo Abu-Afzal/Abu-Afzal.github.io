@@ -214,24 +214,41 @@
     </div>
     
     <!-- TAB: LAPORAN -->
-    <div id="tab-laporan" class="tab-content" style="display: none;">
-        <div class="card">
-            <h2> Laporan Pelanggaran</h2>
-            
-            <div class="filter-bar">
-                <input type="month" id="filterBulanLaporan" onchange="generateLaporan()">
-                <select id="filterKelasLaporan" onchange="generateLaporan()">
-                    <option value="">Semua Kelas</option>
-                </select>
-                <button class="btn btn-success" onclick="exportLaporanExcel()">📥 Export Excel</button>
-                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print</button>
-            </div>
-            
-            <div id="laporanContainer">
-                <div class="empty-state">Pilih periode untuk melihat laporan</div>
-            </div>
+<div id="tab-laporan" class="tab-content" style="display: none;">
+    <div class="card">
+        <h2> Laporan Pelanggaran</h2>
+        
+        <!-- Tombol Print (akan disembunyikan saat print) -->
+        <div class="no-print" style="margin-bottom: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="printLaporan()">
+                🖨️ Print Laporan
+            </button>
+            <button class="btn btn-success" onclick="exportLaporanExcel()">
+                📥 Export Excel
+            </button>
+        </div>
+        
+        <!-- Header Khusus Print (hanya muncul saat print) -->
+        <div class="print-header" style="display: none;">
+            <h1>LAPORAN PELANGGARAN TATA TERTIB</h1>
+            <p>MAN BANTAENG - TA. 2025/2026</p>
+            <p id="printPeriodeInfo" style="font-size: 9pt; color: #64748b;"></p>
+        </div>
+        
+        <div class="filter-bar no-print">
+            <input type="month" id="filterBulanLaporan" onchange="generateLaporan()">
+            <select id="filterKelasLaporan" onchange="generateLaporan()">
+                <option value="">Semua Kelas</option>
+            </select>
+            <button class="btn btn-success" onclick="exportLaporanExcel()"> Export Excel</button>
+            <button class="btn btn-primary" onclick="printLaporan()">️ Print</button>
+        </div>
+        
+        <div id="laporanContainer">
+            <div class="empty-state">Pilih periode untuk melihat laporan</div>
         </div>
     </div>
+</div>
     
 </div>
 
