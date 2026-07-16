@@ -750,9 +750,14 @@
     .level-peringatan3 { background: #fecaca !important; color: #991b1b !important; }
     .level-kritis { background: #ef4444 !important; color: white !important; }
 }
+
 /* ══════════════════════════════════════════════
-   AUTOCOMPLETE DROPDOWN
+   AUTOCOMPLETE DROPDOWN - SICAN Integration
    ══════════════════════════════════════════════ */
+.form-group {
+    position: relative;
+}
+
 .autocomplete-dropdown {
     position: absolute;
     z-index: 1000;
@@ -764,6 +769,8 @@
     overflow-y: auto;
     width: 100%;
     margin-top: 4px;
+    top: 100%;
+    left: 0;
 }
 
 .autocomplete-item {
@@ -771,7 +778,7 @@
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
     border-bottom: 1px solid #f1f5f9;
     transition: background 0.2s;
 }
@@ -781,20 +788,22 @@
 }
 
 .autocomplete-item:hover {
-    background: #f8fafc;
+    background: #f0f9ff;
 }
 
 .autocomplete-item strong {
     color: #1e293b;
     font-size: 0.95rem;
+    font-weight: 600;
 }
 
 .autocomplete-item span {
     color: #64748b;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
-/* Make input container relative for absolute dropdown */
-.form-group {
-    position: relative;
+/* Input readonly styling */
+input[readonly] {
+    background: #f1f5f9 !important;
+    cursor: not-allowed;
 }
