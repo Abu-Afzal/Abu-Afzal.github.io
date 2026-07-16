@@ -23,7 +23,7 @@
       "purpose": "any"
     },
     {
-      "src": "./assets/images/sipelita-app-512-bg.png",
+      "src": "./assets/images/sipelita-app-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
