@@ -654,6 +654,7 @@
     .tabs,
     .filter-bar,
     .btn,
+    .no-print,
     .modal,
     .spinner,
     .empty-state {
@@ -672,6 +673,11 @@
         margin: 0;
     }
     
+    /* Sembunyikan h2 "Laporan Pelanggaran" */
+    #tab-laporan .card > h2 {
+        display: none !important;
+    }
+    
     /* Styling card untuk print */
     .card {
         box-shadow: none !important;
@@ -680,9 +686,25 @@
         margin: 0 !important;
     }
     
-    .card h2 {
-        color: #1e40af !important;
-        border-bottom: 2px solid #1e40af !important;
+    /* Header Laporan untuk Print */
+    .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 3px double #1e40af;
+    }
+    
+    .print-header h1 {
+        font-size: 14pt;
+        color: #1e40af;
+        margin: 0 0 5px 0;
+    }
+    
+    .print-header p {
+        font-size: 9pt;
+        color: #64748b;
+        margin: 2px 0;
     }
     
     /* Table Laporan */
@@ -690,6 +712,7 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 9pt;
+        margin-top: 20px;
     }
     
     .laporan-table th {
@@ -714,6 +737,9 @@
     .level-badge {
         padding: 2px 8px !important;
         border: 1px solid #ccc !important;
+        border-radius: 12px !important;
+        font-size: 8pt !important;
+        font-weight: 700 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
@@ -723,29 +749,4 @@
     .level-peringatan2 { background: #fed7aa !important; color: #9a3412 !important; }
     .level-peringatan3 { background: #fecaca !important; color: #991b1b !important; }
     .level-kritis { background: #ef4444 !important; color: white !important; }
-    
-    /* Header Laporan untuk Print */
-    .print-header {
-        text-align: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 3px double #1e40af;
-    }
-    
-    .print-header h1 {
-        font-size: 14pt;
-        color: #1e40af;
-        margin: 0;
-    }
-    
-    .print-header p {
-        font-size: 9pt;
-        color: #64748b;
-        margin: 4px 0 0 0;
-    }
-    
-    /* Sembunyikan tombol print saat print */
-    .no-print {
-        display: none !important;
-    }
 }
