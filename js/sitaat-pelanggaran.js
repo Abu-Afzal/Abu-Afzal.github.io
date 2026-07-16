@@ -283,6 +283,33 @@ async function simpanPelanggaran() {
             throw new Error('Mohon lengkapi semua field yang wajib diisi!');
         }
         
+        // Validasi: cek apakah siswa ada di master data SICAN
+        const siswaData = masterDataSiswa.find(s => 
+            s.nama.toLowerCase() === namaSiswa.toLowerCase() &&
+            s.kelas.toLowerCase() === kelasSiswa.toLowerCase()
+        );
+        
+        let siswaId = null;
+        let nisSiswa = null;
+        
+        if (siswaData) {
+            siswaId = siswaData.id;
+            nisSiswa = siswaData.nis;
+        } else if (masterDataSiswa.length > 0) {
+            // Warning jika siswa tidak ada di master data
+            const confirmInput = confirm(
+                `⚠️ Siswa "${namaSiswa}" dari kelas ${kelasSiswa} tidak ditemukan di database SICAN.\n\n` +
+                `Apakah Anda yakin ingin melanjutkan?\n\n` +
+                `Klik OK untuk lanjut (input manual), Cancel untuk membatalkan.`
+            );
+            
+            if (!confirmInput) {
+                btn.disabled = false;
+                btn.innerHTML = '💾 Simpan Pelanggaran';
+                return;
+            }
+        }
+        
         // Ambil data jenis pelanggaran
         const jenisData = daftarJenisPelanggaran.find(j => j.id === jenisId);
         
@@ -290,6 +317,8 @@ async function simpanPelanggaran() {
         await db.collection('sitaat_pelanggaran').add({
             namaSiswa: namaSiswa,
             kelasSiswa: kelasSiswa,
+            nisSiswa: nisSiswa || '-',  // Simpan NIS jika ada
+            siswaId: siswaId || null,    // Link ke master data SICAN jika ada
             tanggal: tanggal,
             jenisPelanggaranId: jenisId,
             jenisPelanggaran: jenisData ? jenisData.jenis : '',
@@ -297,6 +326,7 @@ async function simpanPelanggaran() {
             poin: poin,
             keterangan: keterangan,
             pelapor: pelapor,
+            pelaporEmail: currentUser.email || '',
             createdAt: new Date().toISOString()
         });
         
@@ -319,7 +349,7 @@ async function simpanPelanggaran() {
         }
     } finally {
         btn.disabled = false;
-        btn.innerHTML = ' Simpan Pelanggaran';
+        btn.innerHTML = '💾 Simpan Pelanggaran';
     }
 }
 
