@@ -274,6 +274,25 @@
     </div>
 </div>
 
+    <script>
+// Show/hide card integrasi berdasarkan role
+document.addEventListener('DOMContentLoaded', function() {
+    const cardIntegrasi = document.getElementById('cardIntegrasiSICAN');
+    const userRoleEl = document.getElementById('userRole');
+    
+    if (cardIntegrasi && userRoleEl) {
+        const userRole = userRoleEl.textContent.toLowerCase();
+        const isAdmin = userRole.includes('admin') || userRole.includes('kepala');
+        
+        if (isAdmin) {
+            cardIntegrasi.style.display = 'block';
+        } else {
+            cardIntegrasi.style.display = 'none';
+        }
+    }
+});
+</script>
+
 <!-- Script Modular -->
 <script src="../js/sitaat-core.js"></script>
 <script src="../js/sitaat-pelanggaran.js"></script>
