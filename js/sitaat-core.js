@@ -124,38 +124,38 @@ document.addEventListener('click', (e) => {
 });
 
 // ═════════════════════════════════════════════
-// LOAD MASTER DATA SISWA dari SIPELITA
+// LOAD MASTER DATA SISWA dari SICAN
 // ══════════════════════════════════════════════
 let masterDataSiswa = [];
 
 async function loadMasterDataSiswa() {
     try {
-        // Coba load dari collection sipena_siswa (atau sesuaikan dengan collection Anda)
-        const snapshot = await db.collection('sipena_siswa').get();
+        // Load dari collection sican_siswa (master data SICAN)
+        const snapshot = await db.collection('sican_siswa').get();
         
         masterDataSiswa = [];
         snapshot.forEach(doc => {
             const data = doc.data();
             masterDataSiswa.push({
                 id: doc.id,
-                nama: data.nama || data.namaSiswa || data.nama_lengkap || '',
-                kelas: data.kelas || data.kelasSiswa || data.rombel || '',
-                nis: data.nis || data.nisn || '',
-                email: data.email || ''
+                nis: data.nis || '',
+                nama: data.nama || '',
+                kelas: data.kelas || '',
+                // Tambahkan field untuk validasi
+                displayName: `${data.nama} (${data.nis}) - ${data.kelas}`
             });
         });
         
         // Sort by nama
         masterDataSiswa.sort((a, b) => a.nama.localeCompare(b.nama));
         
-        console.log(`✅ Loaded ${masterDataSiswa.length} siswa from master data`);
+        console.log(`✅ Loaded ${masterDataSiswa.length} siswa dari SICAN`);
         
-        // Auto-populate dropdown/input
+        // Setup autocomplete
         setupAutocompleteSiswa();
         
     } catch (error) {
-        console.error('Error load master data siswa:', error);
-        // Fallback: tetap bisa input manual jika master data tidak tersedia
+        console.error('❌ Error load master data SICAN:', error);
         masterDataSiswa = [];
     }
 }
@@ -167,19 +167,23 @@ function setupAutocompleteSiswa() {
     
     if (!namaInput) return;
     
-    // Clear existing listeners
+    // Clone input untuk clear event listeners
     const newInput = namaInput.cloneNode(true);
     namaInput.parentNode.replaceChild(newInput, namaInput);
     
-    // Add autocomplete functionality
+    // Event input
     newInput.addEventListener('input', function() {
         const value = this.value.toLowerCase();
         
-        if (value.length < 2) return;
+        if (value.length < 2) {
+            hideAutocompleteDropdown();
+            return;
+        }
         
-        // Filter siswa yang cocok
+        // Filter siswa yang cocok (by nama atau NIS)
         const matches = masterDataSiswa.filter(s => 
             s.nama.toLowerCase().includes(value) ||
+            s.nis.toLowerCase().includes(value) ||
             s.kelas.toLowerCase().includes(value)
         );
         
@@ -190,6 +194,7 @@ function setupAutocompleteSiswa() {
         }
     });
     
+    // Event blur
     newInput.addEventListener('blur', function() {
         setTimeout(hideAutocompleteDropdown, 200);
     });
@@ -210,7 +215,9 @@ function showAutocompleteDropdown(matches, namaInput, kelasInput) {
         item.className = 'autocomplete-item';
         item.innerHTML = `
             <strong>${siswa.nama}</strong>
-            <span style="color: #64748b; font-size: 0.85rem;">${siswa.kelas}</span>
+            <span style="color: #64748b; font-size: 0.85rem;">
+                NIS: ${siswa.nis} • ${siswa.kelas}
+            </span>
         `;
         item.onclick = () => {
             namaInput.value = siswa.nama;
@@ -228,10 +235,8 @@ function hideAutocompleteDropdown() {
     if (dropdown) dropdown.remove();
 }
 
-// Panggil load master data saat init
+// Panggil saat init
 document.addEventListener('DOMContentLoaded', async () => {
     // ... existing code ...
-    
-    // Load master data siswa
     await loadMasterDataSiswa();
 });
