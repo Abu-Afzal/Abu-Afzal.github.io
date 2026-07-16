@@ -242,3 +242,33 @@ window.exportLaporanExcel = function() {
     
     alert('✅ Laporan berhasil diexport!');
 };
+
+// ══════════════════════════════════════════════
+// PRINT LAPORAN
+// ══════════════════════════════════════════════
+window.printLaporan = function() {
+    // Update info periode untuk print header
+    const filterBulan = document.getElementById('filterBulanLaporan')?.value || 'Semua';
+    const filterKelas = document.getElementById('filterKelasLaporan')?.value || 'Semua';
+    
+    const printInfo = document.getElementById('printPeriodeInfo');
+    if (printInfo) {
+        printInfo.textContent = `Periode: ${filterBulan} | Kelas: ${filterKelas} | Dicetak: ${new Date().toLocaleString('id-ID')}`;
+    }
+    
+    // Tampilkan header print
+    const printHeader = document.querySelector('.print-header');
+    if (printHeader) {
+        printHeader.style.display = 'block';
+    }
+    
+    // Panggil print browser
+    window.print();
+    
+    // Sembunyikan kembali header print setelah selesai
+    setTimeout(() => {
+        if (printHeader) {
+            printHeader.style.display = 'none';
+        }
+    }, 1000);
+};
