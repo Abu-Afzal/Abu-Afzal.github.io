@@ -17,7 +17,7 @@ body, html {
     background-color: #f8fafc;
     color: #1e293b;
     line-height: 1.6;
-    overflow-x: hidden; /* Mencegah layar HP bisa digeser ke kanan (ruang kosong) */
+    overflow-x: hidden;
 }
 
 .container {
@@ -86,7 +86,7 @@ body, html {
     background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); 
     color: white; 
     padding: 12px 0; 
-    margin-top: 70px; /* Memberikan jarak agar tidak tertutup navbar fixed */
+    margin-top: 70px;
 }
 .marquee-container-wrapper {
     max-width: 1200px; 
@@ -108,13 +108,15 @@ body, html {
     white-space: nowrap;
 }
 
-/* --- Hero Section - Struktur Vertikal Tumpuk (DIOPTIMALKAN AGAR RAPAT DI SEMUA MODE) --- */
+/* ==========================================================================
+   HERO SECTION (DIOPTIMALKAN: RAPAT DI SEMUA MODE, TANPA RUANG KOSONG)
+   ========================================================================== */
 .hero {
-    padding: 30px 0 40px 0; /* DIUBAH: Dikurangi drastis dari 60px 0 80px 0 */
+    padding: 30px 0 40px 0; /* Padding global yang rapat */
     background: linear-gradient(135deg, #1a237e 0%, #764ba2 100%);
     color: white;
     position: relative;
-    min-height: auto; /* KUNCI UTAMA: Hapus paksaan tinggi layar penuh, biarkan menyesuaikan isi */
+    min-height: auto; /* KUNCI: Hapus paksaan tinggi layar penuh */
     display: flex;
     align-items: center;
 }
@@ -124,7 +126,7 @@ body, html {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px; /* DIUBAH: Dikurangi dari 35px agar jarak judul dan login lebih rapat */
+    gap: 20px; /* Jarak rapat antara judul dan kotak login */
 }
 
 .hero-text-center {
@@ -132,7 +134,7 @@ body, html {
     text-align: center;
 }
 .hero-text-center h1 {
-    font-size: 2.2rem; /* DIUBAH: Dikurangi dari 3.2rem agar proporsional di desktop mode HP */
+    font-size: 2.2rem;
     margin: 0 0 8px 0;
     font-weight: 800;
     letter-spacing: -0.5px;
@@ -140,7 +142,7 @@ body, html {
     text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 .hero-text-center p {
-    font-size: 1rem; /* DIUBAH: Dikurangi dari 1.4rem */
+    font-size: 1rem;
     line-height: 1.5;
     margin: 0;
     opacity: 0.95;
@@ -149,11 +151,11 @@ body, html {
 /* --- Kotak Login Glassmorphism --- */
 .hero-login-card-wide {
     width: 100%; 
-    max-width: 460px; /* DIUBAH: Dikurangi sedikit dari 520px agar lebih compact */
+    max-width: 460px;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 25px 30px; /* DIUBAH: Dikurangi dari 35px 40px */
+    padding: 25px 30px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
@@ -161,7 +163,7 @@ body, html {
     transition: all 0.3s ease;
 }
 .hero-login-card-wide h2 {
-    font-size: 1.4rem; /* DIUBAH: Dikurangi dari 1.8rem */
+    font-size: 1.4rem;
     margin-bottom: 4px;
     font-weight: 700;
     text-align: center;
@@ -170,18 +172,14 @@ body, html {
 .hero-login-card-wide p.subtitle {
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 20px; /* DIUBAH: Dikurangi dari 30px */
+    margin-bottom: 20px;
     text-align: center;
 }
 
 .form-group {
-    margin-bottom: 16px; /* DIUBAH: Dikurangi dari 22px */
+    margin-bottom: 16px;
 }
 
-/* --- Berita Section (Juga dirapatkan secara global) --- */
-.berita-section {
-    padding: 40px 0; /* DIUBAH: Dikurangi drastis dari 80px 0 */
-}
 /* --- Input Isian & Ikon --- */
 .input-icon-wrapper {
     position: relative;
@@ -229,7 +227,7 @@ body, html {
 
 /* --- Kotak Centang Ingat Saya --- */
 .remember-me-container {
-    margin: -5px 0 25px 0;
+    margin: -5px 0 20px 0;
 }
 .remember-me-label {
     display: inline-flex;
@@ -289,14 +287,17 @@ body, html {
     border-left: 5px solid #c62828;
 }
 
-/* --- Berita Section --- */
+/* ==========================================================================
+   BERITA SECTION (DIOPTIMALKAN: JARAK RAPAT GLOBAL)
+   ========================================================================== */
 .berita-section {
-    padding: 80px 0;
+    padding: 40px 0; /* Dipastikan hanya 40px, tidak ada duplikasi 80px */
 }
+
 .section-title {
     font-size: 2rem;
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     color: #0f172a;
     font-weight: 700;
 }
@@ -313,7 +314,7 @@ body, html {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 25px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 .btn-more {
     display: block;
@@ -417,7 +418,7 @@ body, html {
 }
 
 /* ==========================================================================
-   OPTIMASI RESPONSIVE TOTAL (KHUSUS SINKRONISASI HP & DESKTOP)
+   OPTIMASI RESPONSIVE TOTAL (MOBILE & DESKTOP MODE DI HP)
    ========================================================================== */
 .marquee-running-bar, .marquee-overflow-hide {
     width: 100% !important;
@@ -436,44 +437,20 @@ body, html {
     .container, .hero .container.hero-vertical-layout {
         padding: 0 15px !important;
     }
-    .hero {
-        padding: 40px 0 !important;
-    }
-    .hero-text-center h1 {
-        font-size: 1.8rem !important;
-    }
-    .hero-text-center p {
-        font-size: 1rem !important;
-    }
-    .hero-login-card-wide {
-        max-width: 100% !important;
-        padding: 25px 20px !important;
-    }
-    .berita-grid, .footer-container {
-        grid-template-columns: 1fr !important;
-        gap: 30px;
-    }
-    .btn-more { width: 100%; text-align: center; }
-}
-/* ==========================================================================
-   PERBAIKAN KHUSUS MOBILE: MINIMALKAN RUANG KOSONG LOGIN & TAMPILKAN BERITA
-   ========================================================================== */
-@media (max-width: 768px) {
-    /* 1. Hapus paksaan tinggi layar penuh & mulai dari atas */
+    
+    /* Paksa rapat di semua mode layar kecil (termasuk desktop mode di HP) */
     .hero {
         min-height: auto !important; 
         padding: 20px 0 30px 0 !important; 
         align-items: flex-start !important; 
     }
     
-    /* 2. Rapatkan jarak antara Teks Judul dan Kotak Login */
     .hero .container.hero-vertical-layout {
         gap: 15px !important; 
     }
 
-    /* 3. Perkecil teks hero agar proporsional di HP */
     .hero-text-center h1 {
-        font-size: 1.5rem !important;
+        font-size: 1.6rem !important;
         margin-bottom: 5px !important;
     }
     .hero-text-center p {
@@ -481,8 +458,8 @@ body, html {
         margin-bottom: 15px !important;
     }
 
-    /* 4. Kompakkan Kotak Login Glassmorphism */
     .hero-login-card-wide {
+        max-width: 100% !important;
         padding: 20px 15px !important; 
         border-radius: 15px;
     }
@@ -495,7 +472,6 @@ body, html {
         margin-bottom: 15px !important;
     }
 
-    /* 5. Rapatkan Form Input */
     .form-group {
         margin-bottom: 12px !important;
     }
@@ -511,16 +487,18 @@ body, html {
         margin: 0 0 15px 0 !important;
     }
 
-    /* 6. TARIK BAGIAN BERITA KE ATAS (Agar langsung terlihat) */
+    /* Tarik bagian berita ke atas */
     .berita-section {
-        padding: 30px 0 50px 0 !important; 
+        padding: 20px 0 40px 0 !important; 
         margin-top: -10px !important; 
     }
     .section-title {
         font-size: 1.4rem !important;
         margin-bottom: 20px !important;
     }
-    .berita-grid {
+    .berita-grid, .footer-container {
+        grid-template-columns: 1fr !important;
         gap: 15px !important;
     }
+    .btn-more { width: 100%; text-align: center; }
 }
