@@ -22,6 +22,10 @@ let uploadedPhotos = [];
 let daftarJurnal = [];
 let activityCounter = 0;
 
+// State untuk Edit Jurnal
+let editUploadedPhotos = [];
+let editActivityCounter = 0;
+
 // ══════════════════════════════════════════════
 // INIT & DOM READY
 // ══════════════════════════════════════════════
@@ -31,6 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPhotoUpload();
     setDefaultDate();
     addActivity();
+    
+    // Setup listener untuk form edit jurnal
+    const formEdit = document.getElementById('formEditJurnal');
+    if (formEdit) {
+        formEdit.onsubmit = async (e) => {
+            e.preventDefault();
+            await updateJurnal();
+        };
+    }
 });
 
 // ══════════════════════════════════════════════
@@ -141,7 +154,7 @@ function switchTab(tabName, element) {
 window.switchTab = switchTab;
 
 // ══════════════════════════════════════════════
-// ACTIVITY MANAGEMENT (KOLOM WAKTU DIHAPUS)
+// ACTIVITY MANAGEMENT
 // ══════════════════════════════════════════════
 function addActivity() {
     activityCounter++;
@@ -359,7 +372,7 @@ function resetForm() {
 }
 
 // ══════════════════════════════════════════════
-// LOAD DATATABLE (KOLOM JAM DIHAPUS)
+// LOAD DATATABLE (DENGAN TOMBOL EDIT)
 // ══════════════════════════════════════════════
 async function loadDaftarJurnal() {
     const loading = document.getElementById('loadingDaftar');
@@ -427,7 +440,10 @@ async function loadDaftarJurnal() {
                         '<td style="text-align:center;font-weight:700;">' + vol + '</td>' +
                         '<td style="font-size:0.82rem;">' + outputText + '</td>' +
                         '<td style="text-align:center;">' + fotoHtml + '</td>' +
-                        '<td><button class="btn btn-danger btn-sm" onclick="hapusJurnal(\'' + j.id + '\')">🗑️</button></td>' +
+                        '<td style="display:flex;gap:4px;">' +
+                            '<button class="btn btn-warning btn-sm" onclick="openModalEdit(\'' + j.id + '\')" style="padding:4px 8px;" title="Edit">✏️</button>' +
+                            '<button class="btn btn-danger btn-sm" onclick="hapusJurnal(\'' + j.id + '\')" style="padding:4px 8px;" title="Hapus">🗑️</button>' +
+                        '</td>' +
                     '</tr>';
                 }).join('');
             }
@@ -487,7 +503,203 @@ async function hapusSemuaJurnal() {
 window.hapusSemuaJurnal = hapusSemuaJurnal;
 
 // ══════════════════════════════════════════════
-// EXPORT SYSTEM & REPORT GENERATOR (KOLOM JAM DIHAPUS)
+// EDIT JURNAL FUNCTIONS
+// ══════════════════════════════════════════════
+
+async function openModalEdit(jurnalId) {
+    const jurnal = daftarJurnal.find(j => j.id === jurnalId);
+    if (!jurnal) return;
+    
+    document.getElementById('editJurnalId').value = jurnalId;
+    document.getElementById('editTanggal').value = jurnal.tanggal;
+    document.getElementById('editKeterangan').value = jurnal.keterangan || '';
+    
+    const container = document.getElementById('editActivitiesContainer');
+    container.innerHTML = '';
+    editActivityCounter = 0;
+    
+    const activities = jurnal.activities || [];
+    if (activities.length > 0) {
+        activities.forEach((act) => {
+            editActivityCounter++;
+            const div = document.createElement('div');
+            div.className = 'activity-item';
+            div.id = 'edit-activity-' + editActivityCounter;
+            div.innerHTML = '<h4>Kegiatan #' + editActivityCounter + '</h4>' +
+                '<button type="button" class="activity-remove" onclick="removeEditActivity(' + editActivityCounter + ')">×</button>' +
+                '<div class="form-group" style="margin:0;">' +
+                    '<label>Uraian Kegiatan *</label>' +
+                    '<input type="text" class="edit-act-kegiatan" value="' + (act.kegiatan || '') + '" placeholder="Contoh: Mengajar Mapel Kelas X.2" required>' +
+                '</div>' +
+                '<div class="form-group" style="margin:0; margin-top: 10px;">' +
+                    '<label>Hasil/Output</label>' +
+                    '<input type="text" class="edit-act-hasil" value="' + (act.hasil || '') + '" placeholder="Contoh: Terlaksananya PBM di kelas X.2">' +
+                '</div>';
+            container.appendChild(div);
+        });
+    } else {
+        addEditActivity();
+    }
+    
+    editUploadedPhotos = jurnal.fotoBase64 || [];
+    renderEditPhotoPreview();
+    setupEditPhotoUpload();
+    
+    document.getElementById('modalEditJurnal').classList.add('show');
+}
+window.openModalEdit = openModalEdit;
+
+function addEditActivity() {
+    editActivityCounter++;
+    const container = document.getElementById('editActivitiesContainer');
+    const div = document.createElement('div');
+    div.className = 'activity-item';
+    div.id = 'edit-activity-' + editActivityCounter;
+    div.innerHTML = '<h4>Kegiatan #' + editActivityCounter + '</h4>' +
+        '<button type="button" class="activity-remove" onclick="removeEditActivity(' + editActivityCounter + ')">×</button>' +
+        '<div class="form-group" style="margin:0;">' +
+            '<label>Uraian Kegiatan *</label>' +
+            '<input type="text" class="edit-act-kegiatan" placeholder="Contoh: Mengajar Mapel Kelas X.2" required>' +
+        '</div>' +
+        '<div class="form-group" style="margin:0; margin-top: 10px;">' +
+            '<label>Hasil/Output</label>' +
+            '<input type="text" class="edit-act-hasil" placeholder="Contoh: Terlaksananya PBM di kelas X.2">' +
+        '</div>';
+    container.appendChild(div);
+}
+window.addEditActivity = addEditActivity;
+
+function removeEditActivity(id) {
+    const el = document.getElementById('edit-activity-' + id);
+    if (el) el.remove();
+    const items = document.querySelectorAll('#editActivitiesContainer .activity-item');
+    items.forEach((item, index) => {
+        const h4 = item.querySelector('h4');
+        if (h4) h4.textContent = 'Kegiatan #' + (index + 1);
+    });
+    if (items.length === 0) addEditActivity();
+}
+window.removeEditActivity = removeEditActivity;
+
+function setupEditPhotoUpload() {
+    const uploadArea = document.getElementById('editPhotoUploadArea');
+    const photoInput = document.getElementById('editPhotoInput');
+    if (!uploadArea || !photoInput) return;
+    
+    uploadArea.onclick = () => photoInput.click();
+    uploadArea.ondragover = (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); };
+    uploadArea.ondragleave = () => { uploadArea.classList.remove('dragover'); };
+    uploadArea.ondrop = (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        handleEditFiles(e.dataTransfer.files);
+    };
+    photoInput.onchange = (e) => { handleEditFiles(e.target.files); };
+}
+
+function handleEditFiles(files) {
+    const remaining = 3 - editUploadedPhotos.length;
+    if (remaining <= 0) { alert('⚠️ Maksimal 3 foto!'); return; }
+    
+    Array.from(files).slice(0, remaining).forEach(file => {
+        if (file.size > 2 * 1024 * 1024) { alert('⚠️ ' + file.name + ' terlalu besar (maks 2 MB)'); return; }
+        if (!file.type.startsWith('image/')) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            compressImage(e.target.result, 800, 0.7).then(compressed => {
+                editUploadedPhotos.push(compressed);
+                renderEditPhotoPreview();
+            });
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function renderEditPhotoPreview() {
+    const preview = document.getElementById('editPhotoPreview');
+    if (!preview) return;
+    preview.innerHTML = editUploadedPhotos.map((p, i) => 
+        '<div class="photo-item">' +
+            '<img src="' + p + '" alt="Preview">' +
+            '<button type="button" class="photo-remove" onclick="removeEditPhoto(' + i + ')">×</button>' +
+        '</div>'
+    ).join('');
+}
+
+function removeEditPhoto(i) { 
+    editUploadedPhotos.splice(i, 1); 
+    renderEditPhotoPreview(); 
+}
+window.removeEditPhoto = removeEditPhoto;
+
+function closeModalEdit() {
+    document.getElementById('modalEditJurnal').classList.remove('show');
+    editUploadedPhotos = [];
+    editActivityCounter = 0;
+}
+window.closeModalEdit = closeModalEdit;
+
+async function updateJurnal() {
+    const btn = document.getElementById('btnUpdateJurnal');
+    const jurnalId = document.getElementById('editJurnalId').value;
+    
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+    }
+    
+    try {
+        const tanggal = document.getElementById('editTanggal').value;
+        const keterangan = document.getElementById('editKeterangan').value;
+        
+        const activities = [];
+        document.querySelectorAll('#editActivitiesContainer .activity-item').forEach(item => {
+            const kegiatanEl = item.querySelector('.edit-act-kegiatan');
+            const hasilEl = item.querySelector('.edit-act-hasil');
+            
+            const kegiatan = kegiatanEl ? kegiatanEl.value.trim() : '';
+            const hasil = hasilEl ? hasilEl.value.trim() : '';
+            
+            if (kegiatan) {
+                activities.push({ kegiatan: kegiatan, hasil: hasil });
+            }
+        });
+        
+        if (activities.length === 0) {
+            alert('❌ Minimal 1 kegiatan harus diisi!');
+            if (btn) { btn.disabled = false; btn.innerHTML = '💾 Update Jurnal'; }
+            return;
+        }
+        
+        await db.collection('jurnal_mengajar').doc(jurnalId).update({
+            tanggal: tanggal,
+            keterangan: keterangan,
+            activities: activities,
+            vol: activities.length,
+            fotoBase64: editUploadedPhotos,
+            fotoCount: editUploadedPhotos.length,
+            updatedAt: new Date().toISOString()
+        });
+        
+        alert('✅ Jurnal berhasil diupdate!');
+        closeModalEdit();
+        loadDaftarJurnal();
+        
+    } catch (error) {
+        console.error('Error updating:', error);
+        alert('❌ Gagal update jurnal: ' + error.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '💾 Update Jurnal';
+        }
+    }
+}
+window.updateJurnal = updateJurnal;
+
+// ══════════════════════════════════════════════
+// EXPORT SYSTEM & REPORT GENERATOR
 // ══════════════════════════════════════════════
 async function previewPDF(e) {
     const evt = e || window.event;
