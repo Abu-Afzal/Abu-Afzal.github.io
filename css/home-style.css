@@ -108,13 +108,13 @@ body, html {
     white-space: nowrap;
 }
 
-/* --- Hero Section - Struktur Vertikal Tumpuk --- */
+/* --- Hero Section - Struktur Vertikal Tumpuk (DIOPTIMALKAN AGAR RAPAT DI SEMUA MODE) --- */
 .hero {
-    padding: 60px 0 80px 0;
+    padding: 30px 0 40px 0; /* DIUBAH: Dikurangi drastis dari 60px 0 80px 0 */
     background: linear-gradient(135deg, #1a237e 0%, #764ba2 100%);
     color: white;
     position: relative;
-    min-height: calc(100vh - 140px);
+    min-height: auto; /* KUNCI UTAMA: Hapus paksaan tinggi layar penuh, biarkan menyesuaikan isi */
     display: flex;
     align-items: center;
 }
@@ -124,7 +124,7 @@ body, html {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 35px;
+    gap: 20px; /* DIUBAH: Dikurangi dari 35px agar jarak judul dan login lebih rapat */
 }
 
 .hero-text-center {
@@ -132,15 +132,15 @@ body, html {
     text-align: center;
 }
 .hero-text-center h1 {
-    font-size: 3.2rem;
-    margin: 0 0 12px 0;
+    font-size: 2.2rem; /* DIUBAH: Dikurangi dari 3.2rem agar proporsional di desktop mode HP */
+    margin: 0 0 8px 0;
     font-weight: 800;
     letter-spacing: -0.5px;
     line-height: 1.2;
     text-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 .hero-text-center p {
-    font-size: 1.4rem;
+    font-size: 1rem; /* DIUBAH: Dikurangi dari 1.4rem */
     line-height: 1.5;
     margin: 0;
     opacity: 0.95;
@@ -149,11 +149,11 @@ body, html {
 /* --- Kotak Login Glassmorphism --- */
 .hero-login-card-wide {
     width: 100%; 
-    max-width: 520px;
+    max-width: 460px; /* DIUBAH: Dikurangi sedikit dari 520px agar lebih compact */
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 35px 40px;
+    padding: 25px 30px; /* DIUBAH: Dikurangi dari 35px 40px */
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.25);
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
@@ -161,23 +161,27 @@ body, html {
     transition: all 0.3s ease;
 }
 .hero-login-card-wide h2 {
-    font-size: 1.8rem;
-    margin-bottom: 6px;
+    font-size: 1.4rem; /* DIUBAH: Dikurangi dari 1.8rem */
+    margin-bottom: 4px;
     font-weight: 700;
     text-align: center;
     letter-spacing: 1px;
 }
 .hero-login-card-wide p.subtitle {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* DIUBAH: Dikurangi dari 30px */
     text-align: center;
 }
 
 .form-group {
-    margin-bottom: 22px;
+    margin-bottom: 16px; /* DIUBAH: Dikurangi dari 22px */
 }
 
+/* --- Berita Section (Juga dirapatkan secara global) --- */
+.berita-section {
+    padding: 40px 0; /* DIUBAH: Dikurangi drastis dari 80px 0 */
+}
 /* --- Input Isian & Ikon --- */
 .input-icon-wrapper {
     position: relative;
