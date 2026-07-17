@@ -108,3 +108,144 @@ tr:hover td{background:#fafbff;}
   .header{flex-wrap:wrap;}
   .header-user{width:100%;text-align:left;}
 }
+
+/* ══════════════════════════════════════════════
+   PRINT STYLES - REKAP ABSENSI
+   ══════════════════════════════════════════════ */
+@media print {
+    /* Reset dasar untuk print */
+    body {
+        background: white !important;
+        margin: 0;
+        padding: 0;
+        color: #000;
+    }
+
+    /* Sembunyikan SEMUA elemen UI yang tidak perlu */
+    .header,
+    .menu-grid,
+    .tabs,
+    .btn,
+    button,
+    .action-bar,
+    .form-group,
+    input,
+    select,
+    .modal,
+    .autocomplete-dropdown,
+    .back-btn,
+    .date-bar {
+        display: none !important;
+    }
+
+    /* Pastikan hanya konten rekap yang aktif yang tampil */
+    .content-area {
+        display: none !important;
+    }
+    .content-area.active {
+        display: block !important;
+    }
+
+    /* Styling card untuk print agar bersih tanpa shadow */
+    .content-card {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Judul section */
+    .section-title {
+        color: #000 !important;
+        border-bottom: 2px solid #000 !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 15px !important;
+    }
+
+    /* Statistik rekap */
+    .stat-row {
+        display: grid !important;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 10px !important;
+        margin-bottom: 20px !important;
+        page-break-inside: avoid;
+    }
+
+    .stat-box {
+        border-radius: 6px !important;
+        padding: 10px !important;
+        text-align: center !important;
+        border: 1px solid #ccc !important;
+        border-left: 4px solid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .stat-box h4 {
+        font-size: 1.4rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 2px !important;
+    }
+
+    .stat-box p {
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+    }
+
+    /* Tabel rekap */
+    .tbl-wrap {
+        overflow: visible !important;
+        margin-top: 15px !important;
+    }
+
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 9pt !important;
+        page-break-inside: auto;
+    }
+
+    th {
+        background-color: #f1f5f9 !important;
+        color: #000 !important;
+        font-weight: 700 !important;
+        padding: 8px !important;
+        border: 1px solid #000 !important;
+        text-align: left !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    td {
+        padding: 6px 8px !important;
+        border: 1px solid #000 !important;
+        vertical-align: middle !important;
+    }
+
+    tr {
+        page-break-inside: avoid;
+    }
+
+    /* Badge status kehadiran agar tetap berwarna saat dicetak */
+    .badge {
+        padding: 2px 8px !important;
+        border-radius: 4px !important;
+        font-size: 8pt !important;
+        font-weight: 700 !important;
+        display: inline-block !important;
+        border: 1px solid #ccc !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .badge-green { background-color: #dcfce7 !important; color: #166534 !important; }
+    .badge-red { background-color: #fee2e2 !important; color: #991b1b !important; }
+    .badge-amber { background-color: #fef3c7 !important; color: #78350f !important; }
+
+    /* Atur margin halaman cetak */
+    @page {
+        margin: 15mm;
+        size: A4 portrait;
+    }
+}
