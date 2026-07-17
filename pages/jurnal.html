@@ -253,6 +253,67 @@
     </div>
 </div>
 
+    <!-- Modal Edit Jurnal -->
+<div class="modal" id="modalEditJurnal">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3>✏️ Edit Jurnal</h3>
+            <button class="close-btn" onclick="closeModalEdit()">&times;</button>
+        </div>
+        <div id="modalEditBody">
+            <form id="formEditJurnal">
+                <input type="hidden" id="editJurnalId">
+                
+                <div class="form-group">
+                    <label>Tanggal *</label>
+                    <input type="date" id="editTanggal" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Keterangan Hari (Opsional)</label>
+                    <select id="editKeterangan">
+                        <option value="">-</option>
+                        <option value="Hadir">Hadir</option>
+                        <option value="Izin">Izin</option>
+                        <option value="Sakit">Sakit</option>
+                        <option value="Alpha">Alpha</option>
+                        <option value="Dinas Luar">Dinas Luar</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Kegiatan *</label>
+                    <div id="editActivitiesContainer"></div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="addEditActivity()" style="margin-top: 8px;">
+                        ➕ Tambah Kegiatan
+                    </button>
+                </div>
+
+                <div class="form-group">
+                    <label>Foto Kegiatan / Dokumentasi (Opsional)</label>
+                    <div class="photo-upload-area" id="editPhotoUploadArea">
+                        <div style="font-size: 2rem; margin-bottom: 8px;">📷</div>
+                        <div style="font-weight: 600; color: #475569;">Klik atau seret foto ke sini</div>
+                        <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 4px;">
+                            Format: JPG, PNG • Maks: 2 MB per foto • Maks 3 foto
+                        </div>
+                        <input type="file" id="editPhotoInput" accept="image/*" multiple style="display: none;">
+                    </div>
+                    <div class="photo-preview" id="editPhotoPreview"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" id="btnUpdateJurnal" style="flex: 1;">
+                        💾 Update Jurnal
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModalEdit()">
+                        Batal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <div id="pdfExportArea"></div>
 
 <script src="../js/jurnal.js"></script>
