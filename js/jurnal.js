@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ══════════════════════════════════════════════
-// LOAD USER INFO (FIXED: Always fetch from Firestore)
+// LOAD USER INFO
 // ══════════════════════════════════════════════
 async function loadUserInfo() {
     const nipElement = document.getElementById('userNip');
@@ -51,19 +51,14 @@ async function loadUserInfo() {
         
         currentUser = JSON.parse(userStr);
         
-        // Tampilkan info dasar segera dari localStorage
         if (nameEl) nameEl.textContent = currentUser.nama || 'User';
         if (roleEl) roleEl.textContent = currentUser.role || 'Guru';
         
-        // Tampilkan status loading untuk NIP
         if (nipElement) {
             nipElement.textContent = 'NIP: Memuat...';
             nipElement.style.color = '#f59e0b';
         }
         
-        // ════════════════════════════════════════════════════════════
-        // PERBAIKAN: Selalu ambil data terbaru dari Firestore
-        // ════════════════════════════════════════════════════════════
         if (currentUser.email) {
             try {
                 const snapshot = await db.collection('users')
@@ -73,19 +68,13 @@ async function loadUserInfo() {
                 
                 if (!snapshot.empty) {
                     const freshUserData = snapshot.docs[0].data();
-                    
-                    // Update currentUser dengan data terbaru dari Firestore
                     currentUser.nip = freshUserData.nip || '';
                     currentUser.nama = freshUserData.nama || currentUser.nama;
                     currentUser.role = freshUserData.role || currentUser.role;
-                    
-                    // 🆕 TAMBAHAN: Ambil data Mata Pelajaran
                     currentUser.mataPelajaran = freshUserData.mataPelajaran || '';
                     
-                    // Update localStorage dengan data terbaru
                     localStorage.setItem('sipelita_user', JSON.stringify(currentUser));
                     
-                    // Update tampilan
                     if (nameEl) nameEl.textContent = currentUser.nama;
                     if (roleEl) roleEl.textContent = currentUser.role;
                     
@@ -98,39 +87,20 @@ async function loadUserInfo() {
                             nipElement.style.color = '#ef4444';
                         }
                     }
-                    
-                    console.log('✅ Data user berhasil diperbarui dari Firestore');
                 } else {
-                    console.warn('⚠️ User tidak ditemukan di Firestore, menggunakan data localStorage');
                     if (nipElement) {
-                        if (currentUser.nip) {
-                            nipElement.textContent = 'NIP: ' + currentUser.nip;
-                            nipElement.style.color = '#64748b';
-                        } else {
-                            nipElement.textContent = 'NIP: -';
-                            nipElement.style.color = '#64748b';
-                        }
+                        nipElement.textContent = 'NIP: ' + (currentUser.nip || '-');
+                        nipElement.style.color = '#64748b';
                     }
                 }
             } catch (firestoreError) {
                 console.error('❌ Error mengambil dari Firestore:', firestoreError);
                 if (nipElement) {
-                    if (currentUser.nip) {
-                        nipElement.textContent = 'NIP: ' + currentUser.nip;
-                        nipElement.style.color = '#64748b';
-                    } else {
-                        nipElement.textContent = 'NIP: Mode offline';
-                        nipElement.style.color = '#f59e0b';
-                    }
+                    nipElement.textContent = 'NIP: ' + (currentUser.nip || 'Mode offline');
+                    nipElement.style.color = '#f59e0b';
                 }
             }
-        } else {
-            if (nipElement) {
-                nipElement.textContent = 'NIP: ' + (currentUser.nip || '-');
-                nipElement.style.color = '#64748b';
-            }
         }
-        
     } catch (e) {
         console.error('❌ Error di loadUserInfo:', e);
         window.location.href = '../index.html';
@@ -171,7 +141,7 @@ function switchTab(tabName, element) {
 window.switchTab = switchTab;
 
 // ══════════════════════════════════════════════
-// ACTIVITY MANAGEMENT
+// ACTIVITY MANAGEMENT (KOLOM WAKTU DIHAPUS)
 // ══════════════════════════════════════════════
 function addActivity() {
     activityCounter++;
@@ -183,17 +153,11 @@ function addActivity() {
     div.id = 'activity-' + activityCounter;
     div.innerHTML = '<h4>Kegiatan #' + activityCounter + '</h4>' +
         '<button type="button" class="activity-remove" onclick="removeActivity(' + activityCounter + ')">×</button>' +
-        '<div class="form-row">' +
-            '<div class="form-group" style="margin:0;">' +
-                '<label>Waktu *</label>' +
-                '<input type="text" class="act-waktu" placeholder="Contoh: 07.30-08.50" required>' +
-            '</div>' +
-            '<div class="form-group" style="margin:0;">' +
-                '<label>Uraian Kegiatan *</label>' +
-                '<input type="text" class="act-kegiatan" placeholder="Contoh: Mengajar Mapel Kelas X.2" required>' +
-            '</div>' +
-        '</div>' +
         '<div class="form-group" style="margin:0;">' +
+            '<label>Uraian Kegiatan *</label>' +
+            '<input type="text" class="act-kegiatan" placeholder="Contoh: Mengajar Mapel Kelas X.2" required>' +
+        '</div>' +
+        '<div class="form-group" style="margin:0; margin-top: 10px;">' +
             '<label>Hasil/Output</label>' +
             '<input type="text" class="act-hasil" placeholder="Contoh: Terlaksananya PBM di kelas X.2">' +
         '</div>';
@@ -318,16 +282,14 @@ async function simpanJurnal() {
         
         const activities = [];
         document.querySelectorAll('.activity-item').forEach(item => {
-            const waktuEl = item.querySelector('.act-waktu');
             const kegiatanEl = item.querySelector('.act-kegiatan');
             const hasilEl = item.querySelector('.act-hasil');
             
-            const waktu = waktuEl ? waktuEl.value.trim() : '';
             const kegiatan = kegiatanEl ? kegiatanEl.value.trim() : '';
             const hasil = hasilEl ? hasilEl.value.trim() : '';
             
-            if (waktu && kegiatan) {
-                activities.push({ waktu: waktu, kegiatan: kegiatan, hasil: hasil });
+            if (kegiatan) {
+                activities.push({ kegiatan: kegiatan, hasil: hasil });
             }
         });
         
@@ -349,7 +311,7 @@ async function simpanJurnal() {
             userName: currentUser.nama,
             userRole: currentUser.role,
             userNip: currentUser.nip || '',
-            userMapel: currentUser.mataPelajaran || '', // 🆕 Simpan mapel ke database juga
+            userMapel: currentUser.mataPelajaran || '',
             tanggal: tanggal,
             keterangan: keterangan,
             activities: activities,
@@ -397,7 +359,7 @@ function resetForm() {
 }
 
 // ══════════════════════════════════════════════
-// LOAD DATATABLE
+// LOAD DATATABLE (KOLOM JAM DIHAPUS)
 // ══════════════════════════════════════════════
 async function loadDaftarJurnal() {
     const loading = document.getElementById('loadingDaftar');
@@ -432,16 +394,15 @@ async function loadDaftarJurnal() {
         
         if (tbody) {
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#64748b;"> Tidak ada data jurnal</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#64748b;"> Tidak ada data jurnal</td></tr>';
             } else {
                 tbody.innerHTML = filtered.map((j, index) => {
                     let activities = j.activities || [];
                     if (activities.length === 0 && j.kegiatan) {
-                        activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
+                        activities = [{ kegiatan: j.kegiatan, hasil: j.hasil || '' }];
                     }
                     
                     const vol = activities.length || j.vol || 1;
-                    const jamText = activities.map((a, i) => (i + 1) + '. ' + a.waktu).join('<br>');
                     const kegiatanText = activities.map((a, i) => (i + 1) + '. ' + a.kegiatan).join('<br>');
                     const outputText = activities.map((a, i) => (i + 1) + '. ' + (a.hasil || '-')).join('<br>');
                     
@@ -462,7 +423,6 @@ async function loadDaftarJurnal() {
                     return '<tr>' +
                         '<td style="text-align:center;font-weight:700;">' + (index + 1) + '</td>' +
                         '<td>' + formatDate(j.tanggal) + (badgeHtml ? '<br>' + badgeHtml : '') + '</td>' +
-                        '<td style="font-size:0.82rem;">' + jamText + '</td>' +
                         '<td style="font-size:0.82rem;">' + kegiatanText + '</td>' +
                         '<td style="text-align:center;font-weight:700;">' + vol + '</td>' +
                         '<td style="font-size:0.82rem;">' + outputText + '</td>' +
@@ -527,7 +487,7 @@ async function hapusSemuaJurnal() {
 window.hapusSemuaJurnal = hapusSemuaJurnal;
 
 // ══════════════════════════════════════════════
-// EXPORT SYSTEM & REPORT GENERATOR
+// EXPORT SYSTEM & REPORT GENERATOR (KOLOM JAM DIHAPUS)
 // ══════════════════════════════════════════════
 async function previewPDF(e) {
     const evt = e || window.event;
@@ -583,7 +543,6 @@ async function generatePDF(isPreview) {
     const pdfArea = document.getElementById('pdfExportArea');
     if (!pdfArea) return;
     
-    // 🆕 Format Mata Pelajaran Dinamis (Mendukung String atau Array)
     let mapelText = '-';
     if (currentUser.mataPelajaran) {
         if (Array.isArray(currentUser.mataPelajaran)) {
@@ -618,7 +577,6 @@ async function generatePDF(isPreview) {
                     '<tr>' +
                         '<td style="width: 130px; padding: 3px 0; font-weight: bold; border: none;">MATA PELAJARAN</td>' +
                         '<td style="width: 15px; padding: 3px 0; border: none;">:</td>' +
-                        // 🆕 PERUBAHAN DI SINI: Tidak lagi hardcoded "Sejarah"
                         '<td style="padding: 3px 0; border: none;">' + mapelText + '</td>' +
                     '</tr>' +
                     '<tr>' +
@@ -634,7 +592,6 @@ async function generatePDF(isPreview) {
             '<thead><tr style="background:#1e40af;color:white;">' +
                 '<th style="border:1px solid #333;padding:8px;width:30px;text-align:center;">NO</th>' +
                 '<th style="border:1px solid #333;padding:8px;width:150px;">HARI, TANGGAL</th>' +
-                '<th style="border:1px solid #333;padding:8px;width:180px;">JAM</th>' +
                 '<th style="border:1px solid #333;padding:8px;">URAIAN KEGIATAN</th>' +
                 '<th style="border:1px solid #333;padding:8px;width:40px;text-align:center;">VOL</th>' +
                 '<th style="border:1px solid #333;padding:8px;">OUTPUT</th>' +
@@ -643,10 +600,9 @@ async function generatePDF(isPreview) {
             filtered.map((j, index) => {
                 let activities = j.activities || [];
                 if (activities.length === 0 && j.kegiatan) {
-                    activities = [{ waktu: j.waktu || '', kegiatan: j.kegiatan, hasil: j.hasil || '' }];
+                    activities = [{ kegiatan: j.kegiatan, hasil: j.hasil || '' }];
                 }
                 const vol = activities.length || 1;
-                const jamText = activities.map((a, i) => (i+1) + '. ' + a.waktu).join('<br>');
                 const kegiatanText = activities.map((a, i) => (i+1) + '. ' + a.kegiatan).join('<br>');
                 const outputText = activities.map((a, i) => (i+1) + '. ' + (a.hasil || '-')).join('<br>');
                 let fotoHtml = '';
@@ -658,7 +614,6 @@ async function generatePDF(isPreview) {
                 return '<tr>' +
                     '<td style="border:1px solid #333;padding:6px;text-align:center;vertical-align:top;">' + (index + 1) + '</td>' +
                     '<td style="border:1px solid #333;padding:6px;vertical-align:top;">' + formatDate(j.tanggal) + '</td>' +
-                    '<td style="border:1px solid #333;padding:6px;font-size:9px;vertical-align:top;">' + jamText + '</td>' +
                     '<td style="border:1px solid #333;padding:6px;font-size:9px;vertical-align:top;">' + kegiatanText + '</td>' +
                     '<td style="border:1px solid #333;padding:6px;text-align:center;vertical-align:top;font-weight:bold;">' + vol + '</td>' +
                     '<td style="border:1px solid #333;padding:6px;font-size:9px;vertical-align:top;">' + outputText + '</td>' +
