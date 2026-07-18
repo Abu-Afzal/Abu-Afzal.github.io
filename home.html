@@ -1,159 +1,152 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <!-- ══════════════════════════════════════════════ -->
-<!-- 📱 PWA META TAGS -->
-<!-- ══════════════════════════════════════════════ -->
-<meta name="theme-color" content="#10b981">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SIPELITA">
-<meta name="application-name" content="SIPELITA">
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./assets/images/sipelita-app.png">
-<link rel="icon" type="image/png" href="./assets/images/sipelita-app.png">
+    <!--  PWA META TAGS -->
+    <!-- ═════════════════════════════════════════════ -->
+    <meta name="theme-color" content="#10b981">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SIPELITA">
+    <meta name="application-name" content="SIPELITA">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./assets/images/sipelita-app.png">
+    <link rel="icon" type="image/png" href="./assets/images/sipelita-app.png">
 
-<!-- ═════════════════════════════════════════════ -->
-<!-- 📱 PWA INSTALL PROMPT SCRIPT -->
-<!-- ══════════════════════════════════════════════ -->
-<script>
-// Register Service Worker
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => {
-        console.log('✅ Service Worker registered:', reg.scope);
-      })
-      .catch(err => {
-        console.log('️ Service Worker registration failed:', err);
-      });
-  });
-}
-
-// PWA Install Prompt
-let deferredPrompt;
-const installButton = document.getElementById('btnInstallPWA'); // Optional: tombol install manual
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  
-  // Tampilkan banner install custom (opsional)
-  showInstallBanner();
-  
-  // Atau tampilkan tombol install jika ada
-  if (installButton) {
-    installButton.style.display = 'block';
-    installButton.onclick = () => {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('✅ User installed PWA');
-        }
-        deferredPrompt = null;
-        hideInstallBanner();
-      });
-    };
-  }
-});
-
-// Deteksi setelah install
-window.addEventListener('appinstalled', () => {
-  console.log('🎉 SIPELITA di-install!');
-  hideInstallBanner();
-  deferredPrompt = null;
-});
-
-// Fungsi untuk tampilkan banner install
-function showInstallBanner() {
-  // Cek apakah sudah pernah ditutup
-  if (localStorage.getItem('sipelita_install_dismissed')) return;
-  
-  const banner = document.createElement('div');
-  banner.id = 'pwaInstallBanner';
-  banner.style.cssText = `
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 16px 20px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    z-index: 9999;
-    border-radius: 16px 16px 0 0;
-    animation: slideUp 0.3s ease;
-  `;
-  
-  banner.innerHTML = `
-    <div style="width:48px;height:48px;background:linear-gradient(135deg,#10b981,#059669);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-      <img src="./assets/images/sipelita-app.png" style="width:36px;height:36px;border-radius:8px;" onerror="this.outerHTML='📱'">
-    </div>
-    <div style="flex:1;min-width:0;">
-      <div style="font-weight:700;color:#1e293b;font-size:0.95rem;">PWA TERSEDIA</div>
-      <div style="font-weight:700;color:#0f172a;font-size:1rem;margin:2px 0;">Install aplikasi ini</div>
-      <div style="font-size:0.82rem;color:#64748b;">Pasang SIPELITA ke layar utama agar lebih cepat dibuka seperti aplikasi Android.</div>
-    </div>
-    <div style="display:flex;gap:8px;flex-shrink:0;">
-      <button id="btnInstallNow" style="padding:10px 20px;background:#10b981;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Install</button>
-      <button id="btnInstallLater" style="padding:10px 20px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Nanti</button>
-    </div>
-  `;
-  
-  // Tambahkan style animation
-  if (!document.getElementById('pwaBannerStyle')) {
-    const style = document.createElement('style');
-    style.id = 'pwaBannerStyle';
-    style.textContent = `
-      @keyframes slideUp {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-  
-  document.body.appendChild(banner);
-  
-  // Event listeners
-  document.getElementById('btnInstallNow').onclick = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('✅ User installed PWA');
-        }
-        deferredPrompt = null;
-        hideInstallBanner();
+    <!-- ════════════════════════════════════════════ -->
+    <!-- 📱 PWA INSTALL PROMPT SCRIPT -->
+    <!-- ══════════════════════════════════════════════ -->
+    <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => {
+            console.log('✅ Service Worker registered:', reg.scope);
+          })
+          .catch(err => {
+            console.log('❌ Service Worker registration failed:', err);
+          });
       });
     }
-  };
-  
-  document.getElementById('btnInstallLater').onclick = () => {
-    localStorage.setItem('sipelita_install_dismissed', 'true');
-    hideInstallBanner();
-  };
-}
 
-function hideInstallBanner() {
-  const banner = document.getElementById('pwaInstallBanner');
-  if (banner) {
-    banner.style.animation = 'slideUp 0.3s ease reverse';
-    setTimeout(() => banner.remove(), 300);
-  }
-}
-</script>
+    // PWA Install Prompt
+    let deferredPrompt;
+    const installButton = document.getElementById('btnInstallPWA');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallBanner();
+      
+      if (installButton) {
+        installButton.style.display = 'block';
+        installButton.onclick = () => {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ User installed PWA');
+            }
+            deferredPrompt = null;
+            hideInstallBanner();
+          });
+        };
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 SIPELITA di-install!');
+      hideInstallBanner();
+      deferredPrompt = null;
+    });
+
+    function showInstallBanner() {
+      if (localStorage.getItem('sipelita_install_dismissed')) return;
+      
+      const banner = document.createElement('div');
+      banner.id = 'pwaInstallBanner';
+      banner.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 16px 20px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        z-index: 9999;
+        border-radius: 16px 16px 0 0;
+        animation: slideUp 0.3s ease;
+      `;
+      
+      banner.innerHTML = `
+        <div style="width:48px;height:48px;background:linear-gradient(135deg,#10b981,#059669);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <img src="./assets/images/sipelita-app.png" style="width:36px;height:36px;border-radius:8px;" onerror="this.outerHTML=''">
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;color:#1e293b;font-size:0.95rem;">PWA TERSEDIA</div>
+          <div style="font-weight:700;color:#0f172a;font-size:1rem;margin:2px 0;">Install aplikasi ini</div>
+          <div style="font-size:0.82rem;color:#64748b;">Pasang SIPELITA ke layar utama agar lebih cepat dibuka seperti aplikasi Android.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button id="btnInstallNow" style="padding:10px 20px;background:#10b981;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Install</button>
+          <button id="btnInstallLater" style="padding:10px 20px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:0.9rem;">Nanti</button>
+        </div>
+      `;
+      
+      if (!document.getElementById('pwaBannerStyle')) {
+        const style = document.createElement('style');
+        style.id = 'pwaBannerStyle';
+        style.textContent = `
+          @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(banner);
+      
+      document.getElementById('btnInstallNow').onclick = () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+              console.log('✅ User installed PWA');
+            }
+            deferredPrompt = null;
+            hideInstallBanner();
+          });
+        }
+      };
+      
+      document.getElementById('btnInstallLater').onclick = () => {
+        localStorage.setItem('sipelita_install_dismissed', 'true');
+        hideInstallBanner();
+      };
+    }
+
+    function hideInstallBanner() {
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) {
+        banner.style.animation = 'slideUp 0.3s ease reverse';
+        setTimeout(() => banner.remove(), 300);
+      }
+    }
+    </script>
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIPELITA – MAN Bantaeng</title>
     <link rel="icon" type="image/png" href="assets/images/sipelita-app.png">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-       <link rel="stylesheet" href="css/home-style.css?v=4">
+    <link rel="stylesheet" href="css/home-style.css?v=4">
+    
     <!-- ==================================================================== -->
     <!-- 🎨 BENTENG CSS: DIKUNCI AGAR ALBUM RAPI & TIDAK MEMENUHI LAYAR HP -->
     <!-- ==================================================================== -->
@@ -174,7 +167,7 @@ function hideInstallBanner() {
             color: #334155;
             background-color: #ffffff;
             border: 1px solid #cbd5e1;
-            border-radius: 50px; /* Membuat filter elips elegan */
+            border-radius: 50px;
             outline: none;
             cursor: pointer;
             min-width: 280px;
@@ -182,7 +175,6 @@ function hideInstallBanner() {
             box-shadow: 0 2px 6px rgba(0,0,0,0.02);
         }
         
-        /* 1. GRID UTAMA: 4 KOLOM PRESISI (SEPERTI CONTOH LUWU) */
         #galeriKegiatanContainer {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
@@ -190,50 +182,46 @@ function hideInstallBanner() {
             margin-top: 30px !important;
         }
 
-        /* 2. KARTU ALBUM VERTIKAL (MEMAKSA ELEMEN MENUMPUK KE BAWAH) */
         #galeriKegiatanContainer > div, 
         #galeriKegiatanContainer > a,
         #galeriKegiatanContainer .galeri-item {
             display: flex !important;
-            flex-direction: column !important; /* PENTING: Memaksa teks turun ke bawah foto */
+            flex-direction: column !important;
             background: #ffffff !important;
-            border-radius: 18px !important; /* Sudut melengkung halus premium */
+            border-radius: 18px !important;
             overflow: hidden !important;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important; /* Shadow lembut ala Luwu */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
             border: 1px solid #e2e8f0 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             text-decoration: none !important;
             height: 100% !important;
         }
         
-        /* Efek Hover Mengangkat Kartu */
         #galeriKegiatanContainer > div:hover,
         #galeriKegiatanContainer > a:hover {
             transform: translateY(-6px) !important;
             box-shadow: 0 16px 32px rgba(0, 0, 0, 0.09) !important;
         }
 
-        /* 3. FOTO DIATUR PENUH DI ATAS BARIS PERTAMA */
         #galeriKegiatanContainer img {
             width: 100% !important;
-            height: 170px !important; /* Mengunci tinggi foto agar seragam */
+            height: 170px !important;
             object-fit: cover !important;
             display: block !important;
-            order: 1 !important; /* Garansi posisi foto selalu paling atas */
+            order: 1 !important;
         }
         
-        /* 4. JUDUL DI BAWAH FOTO (BERSIH, TANPA LINK BIRU, HURUF KAPITAL) */
         #galeriKegiatanContainer a,
         #galeriKegiatanContainer span,
         #galeriKegiatanContainer p {
-            order: 2 !important; /* Garansi posisi teks selalu di bawah foto */
+            order: 2 !important;
             padding: 20px 15px !important;
             text-align: center !important;
             font-size: 0.88rem !important;
             font-weight: 700 !important;
-            color: #1e293b !important; /* Warna abu-abu gelap elegan */
+            color: #1e293b !important;
             text-decoration: none !important; 
-            text-transform: uppercase !important; /* Otomatis Kapital seperti Luwu */
+            text-transform: uppercase !important;
             letter-spacing: 0.3px !important;
             line-height: 1.5 !important;
             background: #ffffff !important;
@@ -246,7 +234,6 @@ function hideInstallBanner() {
             100% { transform: rotate(360deg); }
         }
 
-        /* 5. RESPONSIVITAS MOBILE (OTOMATIS MENYESUAIKAN LAYAR HP) */
         @media (max-width: 1200px) {
             #galeriKegiatanContainer { grid-template-columns: repeat(3, 1fr) !important; }
         }
@@ -255,42 +242,35 @@ function hideInstallBanner() {
             #galeriKegiatanContainer img { height: 130px !important; }
             #galeriKegiatanContainer a, #galeriKegiatanContainer span { font-size: 0.78rem !important; padding: 12px 8px !important; }
         }
-        /* Class pembantu untuk menyembunyikan kartu yang tidak sesuai tahun */
-.album-tersembunyi {
-    display: none !important;
-}
-        /* ==================================================================== */
-/* 🗜️ KODE PENYELARAS JARAK (ANTI-RENGGANG)                             */
-/* ==================================================================== */
+        
+        .album-tersembunyi {
+            display: none !important;
+        }
+        
+        .galeri-album-section {
+            padding-top: 20px !important;
+            padding-bottom: 60px !important;
+        }
 
-/* 1. Pangkas jarak atas pada section galeri */
-.galeri-album-section {
-    padding-top: 20px !important;    /* Diubah dari 60px menjadi 20px agar naik ke atas */
-    padding-bottom: 60px !important; /* Jarak bawah biarkan tetap longgar */
-}
+        .galeri-album-section h2,
+        .galeri-album-section .section-title,
+        .galeri-album-section h1 {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
 
-/* 2. Hilangkan margin bawaan di atas teks "Galeri Kegiatan MAN Bantaeng" */
-.galeri-album-section h2,
-.galeri-album-section .section-title,
-.galeri-album-section h1 {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
-
-/* 3. Pangkas jarak bawah dari section berita / tombol "Lihat Semua Berita" */
-/* (Ganti '.berita-section' sesuai dengan nama class pembungkus area berita Bapak jika berbeda) */
-.berita-section, 
-.news-section, 
-#berita {
-    padding-bottom: 10px !important;
-    margin-bottom: 10px !important;
-}
+        .berita-section, 
+        .news-section, 
+        #berita {
+            padding-bottom: 10px !important;
+            margin-bottom: 10px !important;
+        }
     </style>
 </head>
 <body>
 
     <!-- ═════════════════════════════════════════════ -->
-    <!-- 🎨 CUSTOM SPLASH SCREEN (TEMPEL DI SINI) -->
+    <!-- 🎨 CUSTOM SPLASH SCREEN -->
     <!-- ══════════════════════════════════════════════ -->
     <div id="customSplashScreen" style="
         position: fixed;
@@ -306,31 +286,25 @@ function hideInstallBanner() {
         z-index: 99999;
         transition: opacity 0.5s ease, visibility 0.5s ease;
     ">
-        <!-- Logo Besar -->
         <div style="width: 280px; height: 280px; margin-bottom: 40px; animation: splashLogoBounce 2s ease-in-out infinite;">
             <img src="assets/images/sipelita-app.png" alt="SIPELITA" style="width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.1));">
         </div>
 
-        <!-- Progress Bar -->
         <div style="width: 280px; height: 8px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin-bottom: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
             <div id="splashProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981 0%, #059669 100%); border-radius: 10px; transition: width 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);"></div>
         </div>
 
-        <!-- Persentase Loading -->
         <div id="splashPercentage" style="font-size: 1.8rem; font-weight: 700; color: #10b981; margin-bottom: 10px; font-family: 'Courier New', monospace;">0%</div>
 
-        <!-- Teks Loading -->
         <div style="font-size: 1.1rem; color: #64748b; font-weight: 500; animation: splashDots 1.5s ease-in-out infinite;">
             Loading<span class="dots">...</span>
         </div>
 
-        <!-- Tagline -->
         <div style="margin-top: 30px; font-size: 0.9rem; color: #94a3b8; text-align: center; max-width: 300px; line-height: 1.5;">
             Sistem Pengelolaan Edukasi &<br>Layanan Terpadu MAN Bantaeng
         </div>
     </div>
 
-    <!-- Animasi CSS untuk Splash Screen -->
     <style>
         @keyframes splashLogoBounce {
             0%, 100% { transform: translateY(0) scale(1); }
@@ -357,7 +331,6 @@ function hideInstallBanner() {
         }
     </style>
 
-    <!-- Script Animasi Loading -->
     <script>
         let splashProgress = 0;
         const splashInterval = setInterval(() => {
@@ -379,12 +352,6 @@ function hideInstallBanner() {
         }, 200); 
     </script>
     <!-- ═════════════════════════════════════════════ -->
-
-    <!-- ========================================== -->
-    <!-- KONTEN LAMAN YANG SUDAH ADA (JANGAN DIHAPUS) -->
-    <!-- ========================================== -->
-    <nav class="navbar">
-    ... (kode navbar, hero, berita, dll tetap di sini) ...
 
     <nav class="navbar">
         <div class="container">
@@ -417,7 +384,6 @@ function hideInstallBanner() {
                 <p>Sistem Pengelolaan Edukasi & Layanan Terpadu – MAN Bantaeng</p>
             </div>
 
-            <!-- AREA LOGIN USER (AMAN TIDAK DISENTUH) -->
             <div class="hero-login-card-wide">
                 <h2>LOGIN USER</h2>
                 <p class="subtitle">Portal Akses Guru & Staf Madrasah</p>
@@ -455,7 +421,6 @@ function hideInstallBanner() {
         </div>
     </section>
 
-    <!-- SECTION BERITA TERBARU (AMAN TIDAK DISENTUH) -->
     <section id="berita" class="berita-section">
         <div class="container">
             <h2 class="section-title">Berita Terbaru</h2>
@@ -464,14 +429,10 @@ function hideInstallBanner() {
         </div>
     </section>      
            
-    <!-- ==================================================================== -->
-    <!-- 📸 SECTION GALERI KEGIATAN ALBUM DIGITAL                             -->
-    <!-- ==================================================================== -->
     <section id="galeri" class="galeri-album-section">
         <div class="container">
             <h2 class="section-title" style="text-align: center; margin-bottom: 5px;">Galeri Kegiatan MAN Bantaeng</h2>
             
-            <!-- Filter Dropdown -->
             <div class="galeri-filter-wrapper">
                 <select id="filterKegiatan" class="galeri-select-filter">
                     <option value="semua">Semua Kegiatan</option>
@@ -481,17 +442,14 @@ function hideInstallBanner() {
                 </select>
             </div>
 
-            <!-- Loader Sinkronisasi -->
             <div id="loadingGaleri" style="text-align: center; padding: 40px; display: none;">
                 <div class="spinner" style="margin: 0 auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #2e7d32; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <p style="color: #2e7d32; margin-top: 15px; font-weight: 500;">🔄 Menyingkronkan dengan Google Drive...</p>
+                <p style="color: #2e7d32; margin-top: 15px; font-weight: 500;"> Menyingkronkan dengan Google Drive...</p>
             </div>
 
-            <!-- Grid Konten Utama (Tempat Eksekusi Script Bawaan) -->
             <div class="galeri-grid" id="galeriKegiatanContainer"></div>
         </div>
     </section>
-    <!-- ==================================================================== -->
         
     <section class="social-section">
         <h2>Ikuti Kami</h2>
@@ -530,155 +488,8 @@ function hideInstallBanner() {
         </div>
     </footer>
 
-    <!-- RUNNING SCRIPTS CORE (TIDAK MERUBAH APAPUN) -->
     <script type="module" src="js/home-auth.js"></script>
     <script type="module" src="js/berita.js"></script>
     <script type="module" src="js/load-galeri.js"></script>
 </body>
-
-    <body>
-    <!-- ═════════════════════════════════════════════ -->
-    <!-- 🎨 CUSTOM SPLASH SCREEN -->
-    <!-- ══════════════════════════════════════════════ -->
-    <div id="customSplashScreen" style="
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #fef9f3 0%, #fff5eb 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 99999;
-        transition: opacity 0.5s ease, visibility 0.5s ease;
-    ">
-        <!-- Logo Besar -->
-        <div style="
-            width: 280px;
-            height: 280px;
-            margin-bottom: 40px;
-            animation: splashLogoBounce 2s ease-in-out infinite;
-        ">
-            <img src="assets/images/sipelita-app.png" 
-                 alt="SIPELITA" 
-                 style="
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.1));
-                 ">
-        </div>
-
-        <!-- Progress Bar -->
-        <div style="
-            width: 280px;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 15px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        ">
-            <div id="splashProgressBar" style="
-                width: 0%;
-                height: 100%;
-                background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-                border-radius: 10px;
-                transition: width 0.3s ease;
-                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-            "></div>
-        </div>
-
-        <!-- Persentase Loading -->
-        <div id="splashPercentage" style="
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #10b981;
-            margin-bottom: 10px;
-            font-family: 'Courier New', monospace;
-        ">0%</div>
-
-        <!-- Teks Loading -->
-        <div style="
-            font-size: 1.1rem;
-            color: #64748b;
-            font-weight: 500;
-            animation: splashDots 1.5s ease-in-out infinite;
-        ">Loading<span class="dots">...</span></div>
-
-        <!-- Tagline -->
-        <div style="
-            margin-top: 30px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            text-align: center;
-            max-width: 300px;
-            line-height: 1.5;
-        ">
-            Sistem Pengelolaan Edukasi &<br>Layanan Terpadu MAN Bantaeng
-        </div>
-    </div>
-
-    <!-- Animasi CSS -->
-    <style>
-        @keyframes splashLogoBounce {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-15px) scale(1.02); }
-        }
-        
-        @keyframes splashDots {
-            0%, 20% { opacity: 0.4; }
-            40%, 100% { opacity: 1; }
-        }
-        
-        .dots::after {
-            content: '';
-            animation: splashDotPulse 1.5s infinite;
-        }
-        
-        @keyframes splashDotPulse {
-            0% { content: ''; }
-            25% { content: '.'; }
-            50% { content: '..'; }
-            75%, 100% { content: '...'; }
-        }
-        
-        /* Hide splash screen class */
-        .splash-hidden {
-            opacity: 0 !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-        }
-    </style>
-
-    <!-- Script Animasi Loading -->
-    <script>
-        // Simulasi loading progress
-        let splashProgress = 0;
-        const splashInterval = setInterval(() => {
-            splashProgress += Math.random() * 15;
-            if (splashProgress > 100) splashProgress = 100;
-            
-            // Update progress bar
-            document.getElementById('splashProgressBar').style.width = splashProgress + '%';
-            
-            // Update persentase
-            document.getElementById('splashPercentage').textContent = Math.floor(splashProgress) + '%';
-            
-            // Jika sudah 100%, sembunyikan splash screen
-            if (splashProgress === 100) {
-                clearInterval(splashInterval);
-                setTimeout(() => {
-                    document.getElementById('customSplashScreen').classList.add('splash-hidden');
-                    // Hapus dari DOM setelah animasi selesai
-                    setTimeout(() => {
-                        document.getElementById('customSplashScreen').style.display = 'none';
-                    }, 500);
-                }, 500);
-            }
-        }, 200); // Kecepatan update progress (200ms)
-    </script>
-    <!-- ═════════════════════════════════════════════ -->
 </html>
