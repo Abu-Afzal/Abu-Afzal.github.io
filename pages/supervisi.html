@@ -374,5 +374,88 @@
 <!-- Custom JavaScript -->
 <script src="../js/supervisi.js"></script>
 
+  <script>
+// ══════════════════════════════════════════════════
+// FORCE 1 PAGE PRINT - SUPERVISI
+// ═══════════════════════════════════════════════════
+function prepareForPrint() {
+    // Simpan elemen yang akan dimodifikasi
+    const catatanEl = document.querySelector('.catatan-khusus, .catatan-supervisor, [name="catatan_khusus"]');
+    const signatureEl = document.querySelector('.signature-section, .ttd-area');
+    const tables = document.querySelectorAll('table');
+    const formGroups = document.querySelectorAll('.form-group');
+    
+    // Perkecil semua elemen SEBELUM print
+    tables.forEach(table => {
+        table.style.fontSize = '7pt';
+        table.style.marginBottom = '5px';
+        const cells = table.querySelectorAll('th, td');
+        cells.forEach(cell => {
+            cell.style.padding = '2px 3px';
+            cell.style.fontSize = '7pt';
+        });
+    });
+    
+    formGroups.forEach(group => {
+        group.style.marginBottom = '3px';
+        const inputs = group.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.style.padding = '2px 4px';
+            input.style.fontSize = '7pt';
+        });
+    });
+    
+    // Batasi tinggi catatan
+    if (catatanEl) {
+        const textarea = catatanEl.querySelector('textarea');
+        if (textarea) {
+            textarea.style.maxHeight = '40px';
+            textarea.style.height = '40px';
+            textarea.rows = 2;
+        }
+        catatanEl.style.marginTop = '5px';
+        catatanEl.style.marginBottom = '5px';
+    }
+    
+    // Rapatkan signature
+    if (signatureEl) {
+        signatureEl.style.marginTop = '8px';
+        signatureEl.style.pageBreakBefore = 'avoid';
+    }
+}
+
+function cleanupAfterPrint() {
+    // Restore ukuran normal setelah print
+    location.reload(); // Cara termudah untuk restore
+}
+
+// Tambahkan tombol print custom
+const printButton = document.querySelector('.btn-print, button[onclick*="print"]');
+if (printButton) {
+    printButton.onclick = (e) => {
+        e.preventDefault();
+        prepareForPrint();
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => {
+                cleanupAfterPrint();
+            }, 1000);
+        }, 300);
+    };
+}
+
+// Atau override window.print
+const originalPrint = window.print;
+window.print = function() {
+    prepareForPrint();
+    setTimeout(() => {
+        originalPrint.call(window);
+        setTimeout(() => {
+            cleanupAfterPrint();
+        }, 1000);
+    }, 300);
+};
+</script>
+
 </body>
 </html>
