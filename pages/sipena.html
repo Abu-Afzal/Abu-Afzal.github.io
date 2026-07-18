@@ -17,6 +17,36 @@
 <!-- CSS Modular -->
 <link rel="stylesheet" href="../css/style.css">
 <link rel="stylesheet" href="../css/sipena.css">
+
+<!-- Style Khusus Print untuk memastikan Header Rekap muncul -->
+<style>
+@media print {
+    .print-header-rekap {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 3px double #1e40af;
+    }
+    .print-header-rekap h2 {
+        font-size: 16pt;
+        color: #1e40af;
+        margin: 0 0 5px 0;
+        font-weight: bold;
+    }
+    .print-header-rekap h3 {
+        font-size: 14pt;
+        color: #334155;
+        margin: 0 0 10px 0;
+        font-weight: normal;
+    }
+    .print-header-rekap p {
+        font-size: 11pt;
+        color: #555;
+        margin: 0;
+    }
+}
+</style>
 </head>
 <body>
 <div class="app-wrap">
@@ -186,7 +216,7 @@
 <script src="../js/sipena-nilai.js"></script>
 <script src="../js/sipena-dokumen.js"></script>
 
-<!-- EVENT BINDING (Tetap di HTML agar tidak perlu rewrite semua onclick) -->
+<!-- EVENT BINDING -->
 <script>
 function bindEvents(){
   document.getElementById('btnDashboard').onclick = () => window.location.href='../index.html';
@@ -206,7 +236,16 @@ function bindEvents(){
   document.getElementById('btnKirimAbsen').onclick = window.simpanAbsensi;
 
   document.querySelectorAll('#rekapTabs .tab').forEach(t=>{ t.onclick = () => { document.querySelectorAll('#rekapTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); currentRekapTab = t.dataset.rtab; window.renderRekap(); }; });
-  document.getElementById('btnCetakRekap').onclick = () => window.print();
+  
+  // ✅ PERBAIKAN: Menggunakan fungsi cetakRekap agar info kelas muncul
+  document.getElementById('btnCetakRekap').onclick = () => {
+      if (typeof window.cetakRekap === 'function') {
+          window.cetakRekap();
+      } else {
+          window.print(); // Fallback jika fungsi belum dimuat
+      }
+  };
+  
   document.getElementById('btnExportRekap').onclick = window.exportRekap;
 
   document.querySelectorAll('#nilaiTabs .tab').forEach(t=>{ t.onclick = () => { document.querySelectorAll('#nilaiTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); currentNilaiTab = t.dataset.ntab; window.renderPenilaian(); }; });
@@ -228,6 +267,9 @@ function bindEvents(){
 
   document.querySelectorAll('.modal').forEach(m=>{ m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('active'); }); });
 }
+
+// Jalankan bindEvents saat DOM siap
+document.addEventListener('DOMContentLoaded', bindEvents);
 </script>
 </body>
 </html>
