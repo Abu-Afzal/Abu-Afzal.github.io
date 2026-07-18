@@ -1,10 +1,13 @@
 // ══════════════════════════════════════════════
 // SIPENA: Rekap Kehadiran
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 
 window.renderRekap = () => {
   const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
-  if (!kelas.length) { document.getElementById('rekapContent').innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; return; }
+  if (!kelas.length) { 
+    document.getElementById('rekapContent').innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; 
+    return; 
+  }
   if (!currentRekapClass || !kelas.find(k => k.class_name === currentRekapClass)) currentRekapClass = kelas[0].class_name;
 
   const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -21,14 +24,19 @@ window.renderRekap = () => {
     filterHtml += `<div class="fg" style="margin:0;min-width:160px;"><label>Semester</label><select id="rekapSemSelect"><option value="ganjil" ${selectedSemester === 'ganjil' ? 'selected' : ''}>Ganjil (Jul–Des)</option><option value="genap" ${selectedSemester === 'genap' ? 'selected' : ''}>Genap (Jan–Jun)</option></select></div>
     <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label><input type="number" id="rekapTahunSem" value="${selectedYear}" style="width:90px;"></div>`;
   }
-  filterHtml += `<div class="fg" style="margin:0;align-self:flex-end;"><button class="btn btn-primary" id="btnTampilRekap">🔍 Tampilkan</button></div></div>`;
+  filterHtml += `<div class="fg" style="margin:0;align-self:flex-end;"><button class="btn btn-primary" id="btnTampilRekap"> Tampilkan</button></div></div>`;
   document.getElementById('rekapFilters').innerHTML = filterHtml;
 
   document.getElementById('rekapKelasSelect').onchange = e => { currentRekapClass = e.target.value; };
   document.getElementById('btnTampilRekap').onclick = () => {
     currentRekapClass = document.getElementById('rekapKelasSelect').value;
-    if (currentRekapTab === 'bulanan') { selectedMonth = parseInt(document.getElementById('rekapBulanSelect').value); selectedYear = parseInt(document.getElementById('rekapTahunSelect').value); }
-    else if (currentRekapTab === 'semester') { selectedSemester = document.getElementById('rekapSemSelect').value; selectedYear = parseInt(document.getElementById('rekapTahunSem').value); }
+    if (currentRekapTab === 'bulanan') { 
+      selectedMonth = parseInt(document.getElementById('rekapBulanSelect').value); 
+      selectedYear = parseInt(document.getElementById('rekapTahunSelect').value); 
+    } else if (currentRekapTab === 'semester') { 
+      selectedSemester = document.getElementById('rekapSemSelect').value; 
+      selectedYear = parseInt(document.getElementById('rekapTahunSem').value); 
+    }
     window.generateRekap();
   };
   window.generateRekap();
@@ -97,6 +105,80 @@ window.generateRekap = () => {
   });
   html += `</tbody></table></div>`;
   cont.innerHTML = html;
+};
+
+// ═════════════════════════════════════════════
+// FITUR CETAK REKAP (PRINT CLEAN) - UPDATED
+// ══════════════════════════════════════════════
+window.cetakRekap = () => {
+  const table = document.getElementById('rekapTable');
+  if (!table) { 
+    window.toast('Tampilkan rekap terlebih dahulu.', 'err'); 
+    return; 
+  }
+
+  // Ambil data filter saat ini untuk kop surat
+  const kelasSelect = document.getElementById('rekapKelasSelect');
+  const bulanSelect = document.getElementById('rekapBulanSelect');
+  const tahunSelect = document.getElementById('rekapTahunSelect');
+  const semSelect = document.getElementById('rekapSemSelect');
+  const tahunSemInput = document.getElementById('rekapTahunSem');
+
+  const kelasName = kelasSelect ? kelasSelect.value : currentRekapClass;
+  let periodeText = '';
+  let semesterText = '';
+  let tahunText = '';
+  
+  if (currentRekapTab === 'bulanan') {
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const bln = bulanSelect ? monthNames[parseInt(bulanSelect.value) - 1] : '';
+    tahunText = tahunSelect ? tahunSelect.value : new Date().getFullYear();
+    periodeText = `Bulan ${bln} Tahun ${tahunText}`;
+    semesterText = '-';
+  } else if (currentRekapTab === 'semester') {
+    semesterText = semSelect ? (semSelect.value === 'ganjil' ? 'Ganjil (Jul-Des)' : 'Genap (Jan-Jun)') : '';
+    tahunText = tahunSemInput ? tahunSemInput.value : new Date().getFullYear();
+    periodeText = `Semester ${semesterText} Tahun ${tahunText}`;
+  } else {
+    periodeText = `Harian (Tanggal ${window.todayStr()})`;
+    semesterText = '-';
+    tahunText = new Date().getFullYear();
+  }
+
+  // Buat elemen header print dengan informasi LENGKAP
+  const printHeader = document.createElement('div');
+  printHeader.className = 'print-header-rekap';
+  printHeader.style.cssText = `
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 3px double #1e40af;
+  `;
+  printHeader.innerHTML = `
+    <h2 style="font-size:16pt; margin:0 0 5px 0; font-weight:bold; color:#1e40af;">REKAP KEHADIRAN SISWA</h2>
+    <h3 style="font-size:14pt; margin:0 0 10px 0; font-weight:normal; color:#334155;">MAN BANTAENG</h3>
+    <div style="display: flex; justify-content: center; gap: 40px; margin-top: 15px; font-size: 11pt;">
+      <div><strong>Kelas:</strong> ${kelasName}</div>
+      <div><strong>Semester:</strong> ${currentRekapTab === 'semester' ? semesterText : (currentRekapTab === 'bulanan' ? '-' : 'Harian')}</div>
+      <div><strong>Tahun:</strong> ${tahunText}</div>
+    </div>
+  `;
+
+  // Sisipkan sebelum tabel
+  const tblWrap = table.parentElement;
+  tblWrap.insertBefore(printHeader, table);
+
+  // Panggil window.print() dengan delay kecil agar browser merender header
+  setTimeout(() => {
+    window.print();
+    
+    // Hapus header print setelah dialog print tertutup
+    setTimeout(() => {
+      if (printHeader.parentNode) {
+        printHeader.parentNode.removeChild(printHeader);
+      }
+    }, 500);
+  }, 300);
 };
 
 window.exportRekap = () => {
