@@ -376,85 +376,59 @@
 
   <script>
 // ══════════════════════════════════════════════════
-// FORCE 1 PAGE PRINT - SUPERVISI
+// FORCE 1 PAGE PRINT - SUPERVISI (MODAL TARGET)
 // ═══════════════════════════════════════════════════
-function prepareForPrint() {
-    // Simpan elemen yang akan dimodifikasi
-    const catatanEl = document.querySelector('.catatan-khusus, .catatan-supervisor, [name="catatan_khusus"]');
-    const signatureEl = document.querySelector('.signature-section, .ttd-area');
-    const tables = document.querySelectorAll('table');
-    const formGroups = document.querySelectorAll('.form-group');
-    
-    // Perkecil semua elemen SEBELUM print
-    tables.forEach(table => {
-        table.style.fontSize = '7pt';
-        table.style.marginBottom = '5px';
-        const cells = table.querySelectorAll('th, td');
-        cells.forEach(cell => {
-            cell.style.padding = '2px 3px';
-            cell.style.fontSize = '7pt';
-        });
-    });
-    
-    formGroups.forEach(group => {
-        group.style.marginBottom = '3px';
-        const inputs = group.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            input.style.padding = '2px 4px';
-            input.style.fontSize = '7pt';
-        });
-    });
-    
-    // Batasi tinggi catatan
-    if (catatanEl) {
-        const textarea = catatanEl.querySelector('textarea');
-        if (textarea) {
-            textarea.style.maxHeight = '40px';
-            textarea.style.height = '40px';
-            textarea.rows = 2;
-        }
-        catatanEl.style.marginTop = '5px';
-        catatanEl.style.marginBottom = '5px';
-    }
-    
-    // Rapatkan signature
-    if (signatureEl) {
-        signatureEl.style.marginTop = '8px';
-        signatureEl.style.pageBreakBefore = 'avoid';
-    }
-}
 
-function cleanupAfterPrint() {
-    // Restore ukuran normal setelah print
-    location.reload(); // Cara termudah untuk restore
-}
-
-// Tambahkan tombol print custom
-const printButton = document.querySelector('.btn-print, button[onclick*="print"]');
-if (printButton) {
-    printButton.onclick = (e) => {
-        e.preventDefault();
-        prepareForPrint();
-        setTimeout(() => {
-            window.print();
-            setTimeout(() => {
-                cleanupAfterPrint();
-            }, 1000);
-        }, 300);
-    };
-}
-
-// Atau override window.print
+// Simpan fungsi print asli
 const originalPrint = window.print;
+
+// Override fungsi print
 window.print = function() {
-    prepareForPrint();
+    // 1. Cari semua textarea (termasuk catatan & rencana tindak lanjut)
+    const textareas = document.querySelectorAll('textarea');
+    const originalStyles = [];
+
+    // 2. Simpan style asli & paksa ukuran kecil
+    textareas.forEach((ta, index) => {
+        originalStyles[index] = {
+            rows: ta.rows,
+            style: ta.style.cssText
+        };
+        ta.rows = 2; // Paksa hanya 2 baris
+        ta.style.maxHeight = '40px';
+        ta.style.height = '40px';
+        ta.style.overflow = 'hidden';
+    });
+
+    // 3. Cari elemen tanda tangan dan pastikan tidak page-break
+    const ttdAreas = document.querySelectorAll('.ttd-area, .signature-section, .detail-row');
+    ttdAreas.forEach(el => {
+        el.style.pageBreakBefore = 'avoid';
+        el.style.pageBreakInside = 'avoid';
+    });
+
+    // 4. Tunda sebentar agar browser merender perubahan ukuran
     setTimeout(() => {
         originalPrint.call(window);
+        
+        // 5. Kembalikan ke ukuran normal setelah dialog print ditutup
         setTimeout(() => {
-            cleanupAfterPrint();
+            textareas.forEach((ta, index) => {
+                if (originalStyles[index]) {
+                    ta.rows = originalStyles[index].rows;
+                    ta.style.cssText = originalStyles[index].style;
+                }
+            });
         }, 1000);
     }, 300);
 };
+
+// Pastikan tombol "Download PDF" atau tombol print di modal juga menggunakan ini
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.btn-print') || e.target.textContent.includes('Download PDF') || e.target.textContent.includes('Cetak')) {
+        // Jika ada tombol khusus, biarkan window.print() yang dipanggil bekerja
+    }
+});
 </script>
 
 </body>
