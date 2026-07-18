@@ -258,245 +258,120 @@ tr:hover td{background:#f9fafb;}
 }
 
 /* ═══════════════════════════════════════════════════
-   PRINT SETTINGS - SUPERVISI (PAKSA 1 HALAMAN)
+   FINAL PRINT FIX: PAKSA 1 HALAMAN (SUPER AGRESIF)
    ═══════════════════════════════════════════════════ */
 @media print {
     @page {
         size: A4 portrait;
-        margin: 8mm 10mm; /* Margin sangat kecil */
+        margin: 5mm !important; /* Margin super tipis */
     }
     
     body {
         background: white !important;
-        margin: 0;
-        padding: 0;
         font-size: 8pt !important;
-        line-height: 1.2 !important;
+        line-height: 1.1 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-    
-    /* Sembunyikan SEMUA elemen yang tidak perlu */
-    .header,
-    .btn,
-    button,
-    .btn-back,
-    .action-bar,
-    .tabs,
-    .tab,
-    .modal,
-    .schedule-actions,
-    .folder-actions,
-    .file-list-actions,
-    .alert,
-    [onclick],
-    [style*="display: none"] {
+
+    /* Sembunyikan SEMUA yang tidak dicetak */
+    .header, .btn, button, .tabs, .tab, .modal-close, 
+    .action-bar, .folder-actions, .file-list-actions, 
+    #loadingPage, #accessDeniedPage, .btn-back {
         display: none !important;
     }
-    
-    /* Container - hilangkan semua spacing */
-    .container {
-        max-width: 100% !important;
-        margin: 0 !important;
+
+    /* Paksa Modal Detail menjadi halaman penuh tanpa border */
+    .modal {
+        position: static !important;
+        display: block !important;
+        background: white !important;
         padding: 0 !important;
+        overflow: visible !important;
     }
     
-    .card,
-    .upload-section {
+    .modal-content {
+        max-width: 100% !important;
+        max-height: none !important;
         box-shadow: none !important;
         border: none !important;
-        padding: 5px !important;
+        padding: 0 !important;
         margin: 0 !important;
-        page-break-inside: avoid;
     }
-    
-    /* Heading - sangat kecil */
-    h1, h2, h3, .section-title {
+
+    .modal-header, .modal-footer {
+        display: none !important; /* Sembunyikan header/footer modal saat print */
+    }
+
+    .modal-body, #detailContent {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* PERKECIL SEMUA TEKS & FORM */
+    h1, h2, h3, h4, .section-title {
         font-size: 10pt !important;
-        margin: 3px 0 6px 0 !important;
-        page-break-after: avoid;
+        margin: 4px 0 !important;
     }
-    
-    /* Form - perkecil maksimal */
+
     .form-group {
         margin-bottom: 4px !important;
-        page-break-inside: avoid;
+        page-break-inside: avoid !important;
     }
-    
+
     .form-group label {
         font-size: 7pt !important;
         margin-bottom: 1px !important;
+        font-weight: bold;
     }
-    
-    .form-group input,
-    .form-group select,
+
+    .form-group input, 
+    .form-group select, 
     .form-group textarea {
-        padding: 3px 5px !important;
         font-size: 7pt !important;
+        padding: 2px 4px !important;
         border: 1px solid #999 !important;
         min-height: auto !important;
         height: auto !important;
-        line-height: 1.1 !important;
     }
-    
-    /* Textarea catatan - BATASI TINGGI */
-    textarea[name="catatan"],
-    textarea[name="catatan_khusus"],
-    .catatan-supervisor textarea,
-    #catatanSupervisor {
-        max-height: 60px !important;
-        height: 60px !important;
+
+    /* PENTING: Batasi Textarea Catatan agar tidak melebar ke halaman 2 */
+    textarea {
+        max-height: 50px !important;
         overflow: hidden !important;
-        font-size: 7pt !important;
-        padding: 3px !important;
-        margin: 2px 0 !important;
+        resize: none !important;
     }
-    
-    .form-row,
-    .form-row-3 {
-        gap: 5px !important;
-        margin-bottom: 5px !important;
-    }
-    
-    /* Tabel - sangat compact */
+
+    /* Tabel super compact */
     table {
         font-size: 7pt !important;
         width: 100% !important;
         border-collapse: collapse !important;
-        page-break-inside: auto;
         margin-bottom: 5px !important;
-    }
-    
-    th, td {
-        padding: 3px 4px !important;
-        border: 1px solid #333 !important;
-        font-size: 7pt !important;
-        page-break-inside: avoid;
-        line-height: 1.1 !important;
-    }
-    
-    th {
-        background: #e5e7eb !important;
-        color: #1e40af !important;
-        font-weight: 700 !important;
-        padding: 4px 4px !important;
-    }
-    
-    /* Catatan khusus - PERKECIL & BATASI */
-    .catatan-khusus,
-    .catatan-supervisor,
-    .supervisi-notes,
-    .hasil-supervisi {
-        font-size: 7pt !important;
-        margin: 4px 0 !important;
-        padding: 4px 6px !important;
-        border: 1px solid #ddd !important;
-        page-break-inside: avoid;
-        max-height: 80px !important;
-        overflow: hidden !important;
-    }
-    
-    /* Signature area - SANGAT RINGKAS */
-    .signature-section,
-    .ttd-area,
-    .ttd-supervisi,
-    .tanda-tangan {
-        margin-top: 8px !important;
-        page-break-inside: avoid;
-        page-break-before: avoid;
-    }
-    
-    .signature-section table,
-    .ttd-area table {
-        margin: 0 !important;
-    }
-    
-    .signature-section td,
-    .ttd-area td {
-        padding: 2px 5px !important;
-        border: none !important;
-        font-size: 7pt !important;
-        vertical-align: bottom !important;
-    }
-    
-    /* Ruang untuk tanda tangan - minimal */
-    .signature-space {
-        height: 30px !important;
-        margin: 2px 0 !important;
-    }
-    
-    /* Radio group - horizontal compact */
-    .radio-group {
-        gap: 8px !important;
-        margin: 3px 0 !important;
-    }
-    
-    .radio-group label {
-        font-size: 7pt !important;
-    }
-    
-    /* Badge - mini */
-    .badge {
-        padding: 1px 4px !important;
-        font-size: 6pt !important;
-    }
-    
-    /* Folder & file - perkecil */
-    .folder-card {
-        padding: 3px 5px !important;
-        margin-bottom: 2px !important;
-    }
-    
-    .folder-name {
-        font-size: 7pt !important;
-    }
-    
-    .file-list-table th,
-    .file-list-table td {
-        padding: 2px 4px !important;
-        font-size: 6pt !important;
-    }
-    
-    /* Detail row - minimal */
-    .detail-row {
-        padding: 2px 0 !important;
-        font-size: 7pt !important;
-    }
-    
-    /* Icon - hilangkan atau perkecil */
-    .header-icon,
-    .folder-icon,
-    .file-list-icon,
-    .doc-icon,
-    .section-title::before {
-        display: none !important;
-    }
-    
-    /* PAKSA SEMUA KONTEN DALAM 1 HALAMAN */
-    .supervisi-wrapper,
-    .supervisi-content,
-    .card > * {
-        max-height: 275mm !important;
-        overflow: hidden !important;
-    }
-    
-    /* Hindari page break */
-    .instrument-card,
-    .assessment-item,
-    .schedule-card,
-    .form-group,
-    table,
-    .catatan-khusus,
-    .signature-section {
         page-break-inside: avoid !important;
     }
-    
-    /* Jika masih overflow, sembunyikan elemen kurang penting */
-    .doc-item,
-    .folder-card,
-    .schedule-detail,
-    .file-list-meta {
-        font-size: 6pt !important;
-        padding: 2px !important;
+
+    th, td {
+        padding: 2px 4px !important;
+        border: 1px solid #333 !important;
+        line-height: 1.1 !important;
+    }
+
+    th {
+        background-color: #e5e7eb !important;
+    }
+
+    /* Area Tanda Tangan: Paksa tetap di halaman yang sama */
+    .ttd-area, .signature-section, .detail-row:last-child {
+        margin-top: 10px !important;
+        page-break-before: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Trik Terakhir: Scale down 5% jika masih ada yang overflow */
+    #detailContent, .card {
+        transform: scale(0.95);
+        transform-origin: top center;
+        width: 105%; /* Kompensasi skala */
     }
 }
