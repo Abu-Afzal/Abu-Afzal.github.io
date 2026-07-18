@@ -90,7 +90,7 @@ function showDashboard(){
   else if (currentUser.role === 'wakil') { document.getElementById('supervisorTabs').style.display = 'block'; document.getElementById('teacherTabs').style.display = 'block'; loadScheduleList(); loadMySchedule(); loadFolders(); loadMySupervisionList(); }
   else { document.getElementById('supervisorTabs').style.display = 'none'; document.getElementById('teacherTabs').style.display = 'block'; loadMySchedule(); loadFolders(); loadMySupervisionList(); }
 }
-function getRoleLabel(role){ return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨‍🏫 Guru', admin:'👑 Administrator'}[role] || role; }
+function getRoleLabel(role){ return {kepala:'👑 Kepala Madrasah', wakil:'⭐ Wakil Kepala Madrasah', guru:'👨🏫 Guru', admin:'👑 Administrator'}[role] || role; }
 window.doLogout = function(){ if(confirm('Apakah Anda yakin ingin keluar?')){ sessionStorage.removeItem('supervisi_user'); currentUser = null; window.location.href = '../index.html'; } };
 
 // ══════════════════════════════════════════════
@@ -111,7 +111,7 @@ async function loadAvailableTeachers() {
     if (availableUsers.length === 0) { select.innerHTML = '<option value="">-- Tidak ada yang tersedia --</option>'; return; }
     select.innerHTML = '<option value="">-- Pilih --</option>';
     availableUsers.forEach(u => {
-      const roleLabel = u.role === 'wakil' ? '⭐ Wakil Kepala' : '👨‍🏫 Guru';
+      const roleLabel = u.role === 'wakil' ? '⭐ Wakil Kepala' : '👨🏫 Guru';
       select.innerHTML += `<option value="${u.id}" data-nama="${u.nama}" data-email="${u.email}">${u.nama} (${roleLabel})</option>`;
     });
   } catch(e) { select.innerHTML = '<option value="">-- Error --</option>'; }
@@ -150,7 +150,7 @@ async function loadScheduleList() {
     const schedules = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
     container.innerHTML = schedules.map(s => {
       const statusBadge = {'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>', 'in-progress': '<span class="badge badge-progress">🔄 Berlangsung</span>', 'completed': '<span class="badge badge-done">✅ Selesai</span>'}[s.status] || s.status;
-      const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '👨‍';
+      const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '👨';
       return `<div class="schedule-card"><div class="schedule-info"><div class="schedule-title">${roleIcon} ${s.teacherName}</div><div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>${s.notes ? `<div class="schedule-detail"> ${s.notes}</div>` : ''}</div><div class="schedule-actions">${s.status !== 'completed' ? `<button class="btn btn-warning btn-sm" onclick="updateScheduleStatus('${s.id}','in-progress')"> Mulai</button>` : ''}${s.status === 'scheduled' ? `<button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">️ Hapus</button>` : ''}</div></div>`;
     }).join('');
   } catch(e) { container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>'; }
