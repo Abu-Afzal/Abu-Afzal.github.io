@@ -109,8 +109,8 @@ tr:hover td{background:#fafbff;}
   .header-user{width:100%;text-align:left;}
 }
 
-/* ══════════════════════════════════════════════
-   PRINT STYLES - REKAP ABSENSI
+/* ═════════════════════════════════════════════
+   PRINT STYLES - REKAP ABSENSI (REVISI)
    ══════════════════════════════════════════════ */
 @media print {
     /* Reset dasar untuk print */
@@ -123,25 +123,35 @@ tr:hover td{background:#fafbff;}
 
     /* Sembunyikan SEMUA elemen UI yang tidak perlu */
     .header,
+    .page-header,
     .menu-grid,
     .tabs,
+    .tab,
     .btn,
     button,
+    .back-btn,
+    .user-info,
     .action-bar,
+    .filter-bar,
     .form-group,
     input,
     select,
+    textarea,
     .modal,
-    .autocomplete-dropdown,
-    .back-btn,
-    .date-bar {
+    .spinner,
+    [style*="display: none"] {
         display: none !important;
     }
-
-    /* Pastikan hanya konten rekap yang aktif yang tampil */
+    
+    /* Tampilkan hanya konten rekap */
     .content-area {
         display: none !important;
     }
+    .content-area.active {
+        display: block !important;
+    }
+
+    /* Pastikan hanya konten rekap yang aktif yang tampil */
     .content-area.active {
         display: block !important;
     }
@@ -161,6 +171,27 @@ tr:hover td{background:#fafbff;}
         border-bottom: 2px solid #000 !important;
         font-size: 1.2rem !important;
         margin-bottom: 15px !important;
+        display: block !important;
+    }
+
+    /* ═══════════════════════════════════════════ */
+    /* INFORMASI KELAS - PASTI MUNCUL */
+    /* ═══════════════════════════════════════════ */
+    .kelas-info-print,
+    .rekap-kelas-info,
+    .kelas-label {
+        display: block !important;
+        visibility: visible !important;
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        color: #000 !important;
+        margin: 10px 0 20px 0 !important;
+        padding: 10px !important;
+        background: #f8fafc !important;
+        border: 2px solid #10b981 !important;
+        border-radius: 8px !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 
     /* Statistik rekap */
