@@ -736,53 +736,234 @@ function showDetailModal() {
 
 window.downloadPDF = async function(docId) {
   try {
-    const id = docId || currentSupervision.id; const snap = await db.collection('supervisions').doc(id).get(); if (!snap.exists) { alert('Data tidak ditemukan'); return; }
-    const data = snap.data(); let components = []; if (data.instrumentId) { const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get(); if (instSnap.exists) components = instSnap.data().components; }
-    if (!window.jspdf) { alert('Library PDF sedang dimuat. Silakan coba lagi.'); return; }
-    const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4'); const pageWidth = pdf.internal.pageSize.getWidth(); const margin = 15; let y = 15;
-    pdf.setFontSize(14); pdf.setFont(undefined, 'bold'); pdf.text('HASIL SUPERVISI PEMBELAJARAN', pageWidth / 2, y, { align: 'center' }); y += 7; pdf.setFontSize(11); pdf.text('KURIKULUM BERBASIS CINTA (KBC)', pageWidth / 2, y, { align: 'center' }); y += 10;
-    pdf.setFontSize(9); pdf.setFont(undefined, 'normal'); const date = new Date(data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt);
-    pdf.text(`Tanggal: ${date.toLocaleDateString('id-ID')}`, margin, y); y += 5; pdf.text(`Nama Madrasah: ${data.schoolName || 'MAN BANTAENG'}`, margin, y); y += 5; pdf.text(`Supervisor: ${data.supervisorName}`, margin, y); y += 5; pdf.text(`Yang Disupervisi: ${data.superviseeName}`, margin, y); y += 5; pdf.text(`Mata Pelajaran: ${data.subject || '-'}`, margin, y); y += 5; pdf.text(`Kelas/Semester: ${data.classSemester || '-'}`, margin, y); y += 5; pdf.text(`Instrumen: ${data.instrumentName || '-'}`, margin, y); y += 10;
-    if (components.length > 0) {
-      pdf.setFontSize(8); pdf.setFont(undefined, 'bold'); const colWidths = [8, 82, 11, 11, 11, 11, 14]; const headers = ['No', 'Komponen', '1', '2', '3', '4', 'Skor'];
-      const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2; const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2; const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2; const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2; const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
-      pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255); pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3);
-      for (let i = 0; i < headers.length; i++) { const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0); pdf.rect(xPos, y, colWidths[i], 7, 'FD'); pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' }); } y += 7;
-      pdf.setTextColor(0, 0, 0); pdf.setFont(undefined, 'normal');
-      components.forEach((comp, index) => {
-        const score = data.scores[`comp_${index}`] || 0; const rowHeight = 7;
-        if (y > 245) { pdf.addPage(); y = 15; pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255); pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3); for (let i = 0; i < headers.length; i++) { const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0); pdf.rect(xPos, y, colWidths[i], 7, 'FD'); pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4.5, { align: 'center' }); } y += 7; pdf.setTextColor(0, 0, 0); }
-        if (index % 2 === 0) { pdf.setFillColor(232, 245, 233); const totalWidth = colWidths.reduce((a, b) => a + b, 0); pdf.rect(margin, y, totalWidth, rowHeight, 'F'); }
-        pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3); const totalWidth = colWidths.reduce((a, b) => a + b, 0); pdf.rect(margin, y, totalWidth, rowHeight, 'S');
-        pdf.text(String(index + 1), margin + 4, y + 4.5); const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2); pdf.text(compText[0], margin + colWidths[0] + 2, y + 4.5);
-        const boxSize = 4; [col1X, col2X, col3X, col4X].forEach((cx, idx) => { const value = idx + 1; if (score === value) { pdf.setFillColor(76, 175, 80); pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD'); pdf.setDrawColor(255, 255, 255); pdf.setLineWidth(0.6); pdf.line(cx - 1.5, y + 3.5, cx - 0.3, y + 4.8); pdf.line(cx - 0.3, y + 4.8, cx + 1.5, y + 2.0); pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3); } else { pdf.setFillColor(255, 255, 255); pdf.rect(cx - boxSize/2, y + 1.5, boxSize, boxSize, 'FD'); } });
-        pdf.text(`${score}/4`, scoreX, y + 4.5, { align: 'center' }); y += rowHeight;
-      });
-      y += 2; pdf.setDrawColor(0, 0, 0); pdf.setLineWidth(0.3); pdf.setFillColor(200, 230, 201); const footerWidth = colWidths.reduce((a, b) => a + b, 0); pdf.rect(margin, y, footerWidth, 7, 'FD'); pdf.setFont(undefined, 'bold'); pdf.text('Jumlah', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' });
-      const count1 = Object.values(data.scores).filter(s => s === 1).length; const count2 = Object.values(data.scores).filter(s => s === 2).length; const count3 = Object.values(data.scores).filter(s => s === 3).length; const count4 = Object.values(data.scores).filter(s => s === 4).length;
-      pdf.text(String(count1), col1X, y + 4.5, { align: 'center' }); pdf.text(String(count2), col2X, y + 4.5, { align: 'center' }); pdf.text(String(count3), col3X, y + 4.5, { align: 'center' }); pdf.text(String(count4), col4X, y + 4.5, { align: 'center' }); pdf.text(`${data.totalScore}/${data.maxScore}`, scoreX, y + 4.5, { align: 'center' });
-      y += 7; pdf.setFillColor(165, 214, 167); pdf.rect(margin, y, footerWidth, 7, 'FD'); pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' }); pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
-      y += 7; pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255); pdf.rect(margin, y, footerWidth, 7, 'FD'); pdf.text('Predikat', margin + colWidths[0] + colWidths[1] - 2, y + 4.5, { align: 'right' }); pdf.text(data.predicate || '-', margin + colWidths[0] + colWidths[1] + 5, y + 4.5);
-      y += 12; pdf.setTextColor(0, 0, 0); pdf.setFontSize(8); pdf.setFont(undefined, 'normal'); pdf.text('Keterangan:', margin, y); y += 4; pdf.text('• 91% - 100% = Sangat Baik', margin, y); y += 4; pdf.text('• 81% - 90% = Baik', margin, y); y += 4; pdf.text('• 71% - 80% = Cukup', margin, y); y += 4; pdf.text('• < 70% = Kurang', margin, y);
+    const id = docId || currentSupervision.id; 
+    const snap = await db.collection('supervisions').doc(id).get(); 
+    if (!snap.exists) { alert('Data tidak ditemukan'); return; }
+    const data = snap.data(); 
+    let components = []; 
+    if (data.instrumentId) { 
+      const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get(); 
+      if (instSnap.exists) components = instSnap.data().components; 
     }
-    if (data.notes) { y += 10; if (y > 200) { pdf.addPage(); y = 15; } pdf.setFont(undefined, 'bold'); pdf.text('Catatan Khusus Hasil Supervisi:', margin, y); y += 5; pdf.setFont(undefined, 'normal'); const splitNotes = pdf.splitTextToSize(data.notes, pageWidth - 2 * margin); pdf.text(splitNotes, margin, y); y += splitNotes.length * 4 + 5; }
-    if (data.actionPlan) { y += 5; if (y > 200) { pdf.addPage(); y = 15; } pdf.setFont(undefined, 'bold'); pdf.text('Rencana Tindak Lanjut:', margin, y); y += 5; pdf.setFont(undefined, 'normal'); const splitPlan = pdf.splitTextToSize(data.actionPlan, pageWidth - 2 * margin); pdf.text(splitPlan, margin, y); y += splitPlan.length * 4 + 15; }
-    y += 10; if (y > 220) { pdf.addPage(); y = 15; } const signY = y; const leftSignX = margin + 20; const rightSignX = pageWidth - margin - 60;
-    pdf.setFont(undefined, 'normal'); pdf.text('Bantaeng, ' + date.toLocaleDateString('id-ID'), rightSignX, signY); pdf.text('Guru yang disupervisi', leftSignX, signY + 20); pdf.text('Supervisor', rightSignX, signY + 20);
-    pdf.line(leftSignX, signY + 38, leftSignX + 50, signY + 38); pdf.line(rightSignX, signY + 38, rightSignX + 50, signY + 38);
-    pdf.setFont(undefined, 'bold'); pdf.text(data.superviseeName, leftSignX, signY + 43); pdf.text(data.supervisorName, rightSignX, signY + 43);
-    if (data.superviseeNIP) { pdf.setFont(undefined, 'normal'); pdf.text(`NIP. ${data.superviseeNIP}`, leftSignX, signY + 48); }
-    if (data.supervisorNIP) { pdf.setFont(undefined, 'normal'); pdf.text(`NIP. ${data.supervisorNIP}`, rightSignX, signY + 48); }
-    const fileName = `Supervisi_${data.superviseeName.replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`; pdf.save(fileName);
-  } catch (error) { console.error('Error download PDF:', error); alert('❌ Gagal mendownload PDF: ' + error.message); }
+    if (!window.jspdf) { alert('Library PDF sedang dimuat. Silakan coba lagi.'); return; }
+    
+    const { jsPDF } = window.jspdf; 
+    const pdf = new jsPDF('p', 'mm', 'a4'); 
+    const pageWidth = pdf.internal.pageSize.getWidth(); 
+    const margin = 12; // Margin diperkecil dari 15 menjadi 12
+    let y = 12; // Starting Y diperkecil
+    
+    // Header
+    pdf.setFontSize(12); 
+    pdf.setFont(undefined, 'bold'); 
+    pdf.text('HASIL SUPERVISI PEMBELAJARAN', pageWidth / 2, y, { align: 'center' }); 
+    y += 6; 
+    pdf.setFontSize(10); 
+    pdf.text('KURIKULUM BERBASIS CINTA (KBC)', pageWidth / 2, y, { align: 'center' }); 
+    y += 8;
+    
+    // Info
+    pdf.setFontSize(8); 
+    pdf.setFont(undefined, 'normal'); 
+    const date = new Date(data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt);
+    pdf.text(`Tanggal: ${date.toLocaleDateString('id-ID')}`, margin, y); y += 4.5; 
+    pdf.text(`Nama Madrasah: ${data.schoolName || 'MAN BANTAENG'}`, margin, y); y += 4.5; 
+    pdf.text(`Supervisor: ${data.supervisorName}`, margin, y); y += 4.5; 
+    pdf.text(`Yang Disupervisi: ${data.superviseeName}`, margin, y); y += 4.5; 
+    pdf.text(`Mata Pelajaran: ${data.subject || '-'}`, margin, y); y += 4.5; 
+    pdf.text(`Kelas/Semester: ${data.classSemester || '-'}`, margin, y); y += 4.5; 
+    pdf.text(`Instrumen: ${data.instrumentName || '-'}`, margin, y); 
+    y += 8;
+    
+    if (components.length > 0) {
+      pdf.setFontSize(7); // Font tabel diperkecil
+      pdf.setFont(undefined, 'bold'); 
+      const colWidths = [7, 78, 10, 10, 10, 10, 12]; 
+      const headers = ['No', 'Komponen', '1', '2', '3', '4', 'Skor'];
+      
+      const col1X = margin + colWidths[0] + colWidths[1] + colWidths[2] / 2; 
+      const col2X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2; 
+      const col3X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2; 
+      const col4X = margin + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5] / 2; 
+      const scoreX = margin + colWidths.slice(0, 6).reduce((a, b) => a + b, 0) + colWidths[6] / 2;
+      
+      pdf.setFillColor(76, 175, 80); 
+      pdf.setTextColor(255, 255, 255); 
+      pdf.setDrawColor(0, 0, 0); 
+      pdf.setLineWidth(0.2); 
+      
+      for (let i = 0; i < headers.length; i++) { 
+        const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0); 
+        pdf.rect(xPos, y, colWidths[i], 6, 'FD'); // Tinggi baris diperkecil dari 7 ke 6
+        pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4, { align: 'center' }); 
+      } 
+      y += 6;
+      
+      pdf.setTextColor(0, 0, 0); 
+      pdf.setFont(undefined, 'normal');
+      
+      components.forEach((comp, index) => {
+        const score = data.scores[`comp_${index}`] || 0; 
+        const rowHeight = 6; 
+        
+        // Ambang batas pindah halaman dinaikkan dari 245 ke 250
+        if (y > 250) { 
+          pdf.addPage(); 
+          y = 12; 
+          pdf.setFillColor(76, 175, 80); 
+          pdf.setTextColor(255, 255, 255); 
+          pdf.setDrawColor(0, 0, 0); 
+          pdf.setLineWidth(0.2); 
+          for (let i = 0; i < headers.length; i++) { 
+            const xPos = margin + colWidths.slice(0, i).reduce((a, b) => a + b, 0); 
+            pdf.rect(xPos, y, colWidths[i], 6, 'FD'); 
+            pdf.text(headers[i], xPos + colWidths[i] / 2, y + 4, { align: 'center' }); 
+          } 
+          y += 6; 
+          pdf.setTextColor(0, 0, 0); 
+        }
+        
+        if (index % 2 === 0) { 
+          pdf.setFillColor(232, 245, 233); 
+          const totalWidth = colWidths.reduce((a, b) => a + b, 0); 
+          pdf.rect(margin, y, totalWidth, rowHeight, 'F'); 
+        }
+        pdf.setDrawColor(0, 0, 0); 
+        pdf.setLineWidth(0.2); 
+        const totalWidth = colWidths.reduce((a, b) => a + b, 0); 
+        pdf.rect(margin, y, totalWidth, rowHeight, 'S');
+        
+        pdf.text(String(index + 1), margin + 3, y + 4); 
+        const compText = pdf.splitTextToSize(comp.name, colWidths[1] - 2); 
+        pdf.text(compText[0], margin + colWidths[0] + 1, y + 4);
+        
+        const boxSize = 3.5; 
+        [col1X, col2X, col3X, col4X].forEach((cx, idx) => { 
+          const value = idx + 1; 
+          if (score === value) { 
+            pdf.setFillColor(76, 175, 80); 
+            pdf.rect(cx - boxSize/2, y + 1.2, boxSize, boxSize, 'FD'); 
+            pdf.setDrawColor(255, 255, 255); 
+            pdf.setLineWidth(0.5); 
+            pdf.line(cx - 1.2, y + 3, cx - 0.2, y + 4.2); 
+            pdf.line(cx - 0.2, y + 4.2, cx + 1.2, y + 1.8); 
+            pdf.setDrawColor(0, 0, 0); 
+            pdf.setLineWidth(0.2); 
+          } else { 
+            pdf.setFillColor(255, 255, 255); 
+            pdf.rect(cx - boxSize/2, y + 1.2, boxSize, boxSize, 'FD'); 
+          } 
+        });
+        pdf.text(`${score}/4`, scoreX, y + 4, { align: 'center' }); 
+        y += rowHeight;
+      });
+      
+      y += 2; 
+      pdf.setDrawColor(0, 0, 0); 
+      pdf.setLineWidth(0.2); 
+      pdf.setFillColor(200, 230, 201); 
+      const footerWidth = colWidths.reduce((a, b) => a + b, 0); 
+      pdf.rect(margin, y, footerWidth, 6, 'FD'); 
+      pdf.setFont(undefined, 'bold'); 
+      pdf.text('Jumlah', margin + colWidths[0] + colWidths[1] - 2, y + 4, { align: 'right' });
+      
+      const count1 = Object.values(data.scores).filter(s => s === 1).length; 
+      const count2 = Object.values(data.scores).filter(s => s === 2).length; 
+      const count3 = Object.values(data.scores).filter(s => s === 3).length; 
+      const count4 = Object.values(data.scores).filter(s => s === 4).length;
+      
+      pdf.text(String(count1), col1X, y + 4, { align: 'center' }); 
+      pdf.text(String(count2), col2X, y + 4, { align: 'center' }); 
+      pdf.text(String(count3), col3X, y + 4, { align: 'center' }); 
+      pdf.text(String(count4), col4X, y + 4, { align: 'center' }); 
+      pdf.text(`${data.totalScore}/${data.maxScore}`, scoreX, y + 4, { align: 'center' });
+      
+      y += 6; 
+      pdf.setFillColor(165, 214, 167); 
+      pdf.rect(margin, y, footerWidth, 6, 'FD'); 
+      pdf.text('Persentase Capaian', margin + colWidths[0] + colWidths[1] - 2, y + 4, { align: 'right' }); 
+      pdf.text(`${data.percentage}%`, margin + colWidths[0] + colWidths[1] + 5, y + 4);
+      
+      y += 6; 
+      pdf.setFillColor(76, 175, 80); 
+      pdf.setTextColor(255, 255, 255); 
+      pdf.rect(margin, y, footerWidth, 6, 'FD'); 
+      pdf.text('Predikat', margin + colWidths[0] + colWidths[1] - 2, y + 4, { align: 'right' }); 
+      pdf.text(data.predicate || '-', margin + colWidths[0] + colWidths[1] + 5, y + 4);
+      
+      y += 8; 
+      pdf.setTextColor(0, 0, 0); 
+      pdf.setFontSize(7); 
+      pdf.setFont(undefined, 'normal'); 
+      pdf.text('Keterangan:', margin, y); y += 3.5; 
+      pdf.text('• 91% - 100% = Sangat Baik', margin, y); y += 3.5; 
+      pdf.text('• 81% - 90% = Baik', margin, y); y += 3.5; 
+      pdf.text('• 71% - 80% = Cukup', margin, y); y += 3.5; 
+      pdf.text('• < 70% = Kurang', margin, y);
+    }
+    
+    // CATATAN & RENCANA TINDAK LANJUT (DIPADATKAN)
+    if (data.notes) { 
+      y += 6; 
+      if (y > 240) { pdf.addPage(); y = 12; } // Ambang batas dinaikkan
+      pdf.setFontSize(8); 
+      pdf.setFont(undefined, 'bold'); 
+      pdf.text('Catatan Khusus Hasil Supervisi:', margin, y); 
+      y += 4; 
+      pdf.setFont(undefined, 'normal'); 
+      pdf.setFontSize(7); // Font catatan diperkecil
+      const splitNotes = pdf.splitTextToSize(data.notes, pageWidth - 2 * margin); 
+      pdf.text(splitNotes, margin, y); 
+      y += splitNotes.length * 3.5 + 2; // Jarak antar baris diperkecil
+    }
+    
+    if (data.actionPlan) { 
+      y += 4; 
+      if (y > 245) { pdf.addPage(); y = 12; } 
+      pdf.setFontSize(8);
+      pdf.setFont(undefined, 'bold'); 
+      pdf.text('Rencana Tindak Lanjut:', margin, y); 
+      y += 4; 
+      pdf.setFont(undefined, 'normal'); 
+      pdf.setFontSize(7);
+      const splitPlan = pdf.splitTextToSize(data.actionPlan, pageWidth - 2 * margin); 
+      pdf.text(splitPlan, margin, y); 
+      y += splitPlan.length * 3.5 + 2; 
+    }
+    
+    // TANDA TANGAN (DIPADATKAN)
+    y += 6; 
+    if (y > 250) { pdf.addPage(); y = 12; } 
+    const signY = y; 
+    const leftSignX = margin + 15; 
+    const rightSignX = pageWidth - margin - 55; 
+    
+    pdf.setFontSize(7);
+    pdf.setFont(undefined, 'normal'); 
+    pdf.text('Bantaeng, ' + date.toLocaleDateString('id-ID'), rightSignX, signY); 
+    pdf.text('Guru yang disupervisi', leftSignX, signY + 12); // Jarak diperkecil dari 20
+    pdf.text('Supervisor', rightSignX, signY + 12); 
+    
+    pdf.line(leftSignX, signY + 24, leftSignX + 50, signY + 24); // Garis diperkecil dari 38
+    pdf.line(rightSignX, signY + 24, rightSignX + 50, signY + 24); 
+    
+    pdf.setFont(undefined, 'bold'); 
+    pdf.text(data.superviseeName, leftSignX, signY + 28); // Nama diperkecil dari 43
+    pdf.text(data.supervisorName, rightSignX, signY + 28); 
+    
+    if (data.superviseeNIP) { 
+      pdf.setFont(undefined, 'normal'); 
+      pdf.text(`NIP. ${data.superviseeNIP}`, leftSignX, signY + 32); // NIP diperkecil dari 48
+    }
+    if (data.supervisorNIP) { 
+      pdf.setFont(undefined, 'normal'); 
+      pdf.text(`NIP. ${data.supervisorNIP}`, rightSignX, signY + 32); 
+    }
+    
+    const fileName = `Supervisi_${data.superviseeName.replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`; 
+    pdf.save(fileName);
+  } catch (error) { 
+    console.error('Error download PDF:', error); 
+    alert('❌ Gagal mendownload PDF: ' + error.message); 
+  }
 };
-
-window.previewDoc = async function(docId) { try { const snap = await db.collection('supervision_documents').doc(docId).get(); if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; } const data = snap.data(); if (data.type === 'link') { window.open(data.link, '_blank'); } else if (data.fileExt === 'pdf') { const newWindow = window.open('', '_blank'); newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;}.header{background:#3b82f6;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}.header h3{margin:0;font-size:1rem;}.header a{color:white;text-decoration:none;background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:6px;font-size:0.85rem;}iframe{width:100%;height:calc(100vh - 50px);border:none;}</style></head><body><div class="header"><h3>📄 ${data.nama}</h3><a href="${data.fileData}" download="${data.nama}.${data.fileExt}">⬇ Download</a></div><iframe src="${data.fileData}"></iframe></body></html>`); } else { alert(`File ${data.fileExt.toUpperCase()} tidak bisa di-preview langsung.`); window.previewDocOffice(docId, data.fileExt); } } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); } };
-window.previewDocOffice = async function(docId, fileExt) { try { const snap = await db.collection('supervision_documents').doc(docId).get(); if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; } const data = snap.data(); if (data.type === 'link') { window.open(data.link, '_blank'); return; } const newWindow = window.open('', '_blank'); newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}.card{background:white;padding:30px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-width:500px;text-align:center;}.icon{font-size:4rem;margin-bottom:15px;}h3{color:#1e40af;margin-bottom:10px;}p{color:#6b7280;margin-bottom:20px;}.btn{display:inline-block;background:#3b82f6;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;margin:5px;}.btn:hover{background:#2563eb;}.btn-secondary{background:#6b7280;}.btn-secondary:hover{background:#4b5563;}</style></head><body><div class="card"><div class="icon">${fileExt==='pdf'?'📕':['doc','docx'].includes(fileExt)?'📘':['xls','xlsx'].includes(fileExt)?'📗':'📄'}</div><h3>${data.nama}</h3><p>${data.kategori} • ${data.fileSize?(data.fileSize/1024/1024).toFixed(2)+' MB':''}</p><p style="font-size:0.85rem;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung.</p><a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn"> Download untuk Melihat</a><br><button onclick="window.close()" class="btn btn-secondary">Tutup</button></div></body></html>`); } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); } };
-
-window.closeModal = function(id){ document.getElementById(id).classList.remove('active'); };
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function formatDate(dateStr) { if (!dateStr) return '-'; const date = new Date(dateStr); return date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}); }
-
-window.addEventListener('load', async () => { showLoading(); await new Promise(resolve => setTimeout(resolve, 500)); const isValid = await checkSipelitaSession(); if (isValid) { showDashboard(); } });
-window.viewDetail = viewDetail; window.downloadPDF = downloadPDF;
