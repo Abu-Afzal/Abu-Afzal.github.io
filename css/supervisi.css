@@ -258,24 +258,25 @@ tr:hover td{background:#f9fafb;}
 }
 
 /* ═══════════════════════════════════════════════════
-   PRINT SETTINGS - FORM SUPERVISI (1 HALAMAN A4)
+   PRINT SETTINGS - SUPERVISI (PAKSA 1 HALAMAN)
    ═══════════════════════════════════════════════════ */
 @media print {
     @page {
         size: A4 portrait;
-        margin: 12mm 15mm;
+        margin: 8mm 10mm; /* Margin sangat kecil */
     }
     
     body {
         background: white !important;
         margin: 0;
         padding: 0;
-        font-size: 9pt !important;
+        font-size: 8pt !important;
+        line-height: 1.2 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
     
-    /* Sembunyikan elemen yang tidak perlu saat print */
+    /* Sembunyikan SEMUA elemen yang tidak perlu */
     .header,
     .btn,
     button,
@@ -287,12 +288,13 @@ tr:hover td{background:#f9fafb;}
     .schedule-actions,
     .folder-actions,
     .file-list-actions,
+    .alert,
     [onclick],
     [style*="display: none"] {
         display: none !important;
     }
     
-    /* Container utama - hilangkan shadow dan padding berlebih */
+    /* Container - hilangkan semua spacing */
     .container {
         max-width: 100% !important;
         margin: 0 !important;
@@ -300,174 +302,201 @@ tr:hover td{background:#f9fafb;}
     }
     
     .card,
-    .upload-section,
-    .instrument-card,
-    .assessment-item,
-    .schedule-card,
-    .doc-item {
+    .upload-section {
         box-shadow: none !important;
-        border: 1px solid #ddd !important;
-        padding: 10px !important;
-        margin-bottom: 8px !important;
+        border: none !important;
+        padding: 5px !important;
+        margin: 0 !important;
         page-break-inside: avoid;
     }
     
-    /* Perkecil heading */
-    h1, h2, h3, .section-title, .upload-section h2 {
-        font-size: 11pt !important;
-        margin: 4px 0 8px 0 !important;
+    /* Heading - sangat kecil */
+    h1, h2, h3, .section-title {
+        font-size: 10pt !important;
+        margin: 3px 0 6px 0 !important;
         page-break-after: avoid;
     }
     
-    /* Form elements - perkecil */
+    /* Form - perkecil maksimal */
     .form-group {
-        margin-bottom: 6px !important;
+        margin-bottom: 4px !important;
         page-break-inside: avoid;
     }
     
     .form-group label {
-        font-size: 8pt !important;
-        margin-bottom: 2px !important;
+        font-size: 7pt !important;
+        margin-bottom: 1px !important;
     }
     
     .form-group input,
     .form-group select,
     .form-group textarea {
-        padding: 4px 8px !important;
-        font-size: 8pt !important;
+        padding: 3px 5px !important;
+        font-size: 7pt !important;
         border: 1px solid #999 !important;
         min-height: auto !important;
+        height: auto !important;
+        line-height: 1.1 !important;
+    }
+    
+    /* Textarea catatan - BATASI TINGGI */
+    textarea[name="catatan"],
+    textarea[name="catatan_khusus"],
+    .catatan-supervisor textarea,
+    #catatanSupervisor {
+        max-height: 60px !important;
+        height: 60px !important;
+        overflow: hidden !important;
+        font-size: 7pt !important;
+        padding: 3px !important;
+        margin: 2px 0 !important;
     }
     
     .form-row,
     .form-row-3 {
-        gap: 8px !important;
-        margin-bottom: 8px !important;
+        gap: 5px !important;
+        margin-bottom: 5px !important;
     }
     
-    /* Tabel supervisi - optimalkan untuk 1 halaman */
+    /* Tabel - sangat compact */
     table {
-        font-size: 8pt !important;
+        font-size: 7pt !important;
         width: 100% !important;
         border-collapse: collapse !important;
         page-break-inside: auto;
-        margin-bottom: 8px !important;
+        margin-bottom: 5px !important;
     }
     
     th, td {
-        padding: 4px 6px !important;
+        padding: 3px 4px !important;
         border: 1px solid #333 !important;
-        font-size: 8pt !important;
+        font-size: 7pt !important;
         page-break-inside: avoid;
+        line-height: 1.1 !important;
     }
     
     th {
         background: #e5e7eb !important;
         color: #1e40af !important;
         font-weight: 700 !important;
+        padding: 4px 4px !important;
     }
     
-    /* Catatan supervisor - perkecil tapi tetap terlihat */
+    /* Catatan khusus - PERKECIL & BATASI */
     .catatan-khusus,
     .catatan-supervisor,
-    .supervisi-notes {
-        font-size: 8pt !important;
-        margin: 6px 0 !important;
-        padding: 6px 8px !important;
-        border: 1px solid #ddd !important;
-        border-radius: 4px !important;
-        page-break-inside: avoid;
-        max-height: none !important;
-        overflow: visible !important;
-    }
-    
-    .catatan-khusus strong,
-    .catatan-supervisor strong {
-        font-size: 8pt !important;
-    }
-    
-    /* Badge - perkecil */
-    .badge {
-        padding: 2px 6px !important;
+    .supervisi-notes,
+    .hasil-supervisi {
         font-size: 7pt !important;
-    }
-    
-    /* Signature area - rapatkan */
-    .signature-section,
-    .ttd-area {
-        margin-top: 15px !important;
-        page-break-inside: avoid;
-    }
-    
-    .signature-section table td,
-    .ttd-area table td {
-        padding: 3px 5px !important;
-        border: none !important;
-    }
-    
-    /* Radio group - perkecil */
-    .radio-group {
-        gap: 10px !important;
         margin: 4px 0 !important;
+        padding: 4px 6px !important;
+        border: 1px solid #ddd !important;
+        page-break-inside: avoid;
+        max-height: 80px !important;
+        overflow: hidden !important;
+    }
+    
+    /* Signature area - SANGAT RINGKAS */
+    .signature-section,
+    .ttd-area,
+    .ttd-supervisi,
+    .tanda-tangan {
+        margin-top: 8px !important;
+        page-break-inside: avoid;
+        page-break-before: avoid;
+    }
+    
+    .signature-section table,
+    .ttd-area table {
+        margin: 0 !important;
+    }
+    
+    .signature-section td,
+    .ttd-area td {
+        padding: 2px 5px !important;
+        border: none !important;
+        font-size: 7pt !important;
+        vertical-align: bottom !important;
+    }
+    
+    /* Ruang untuk tanda tangan - minimal */
+    .signature-space {
+        height: 30px !important;
+        margin: 2px 0 !important;
+    }
+    
+    /* Radio group - horizontal compact */
+    .radio-group {
+        gap: 8px !important;
+        margin: 3px 0 !important;
     }
     
     .radio-group label {
-        font-size: 8pt !important;
+        font-size: 7pt !important;
     }
     
-    /* Folder & file list - perkecil */
+    /* Badge - mini */
+    .badge {
+        padding: 1px 4px !important;
+        font-size: 6pt !important;
+    }
+    
+    /* Folder & file - perkecil */
     .folder-card {
-        padding: 5px 8px !important;
-        margin-bottom: 3px !important;
+        padding: 3px 5px !important;
+        margin-bottom: 2px !important;
     }
     
     .folder-name {
-        font-size: 8pt !important;
+        font-size: 7pt !important;
     }
     
     .file-list-table th,
     .file-list-table td {
-        padding: 3px 6px !important;
+        padding: 2px 4px !important;
+        font-size: 6pt !important;
+    }
+    
+    /* Detail row - minimal */
+    .detail-row {
+        padding: 2px 0 !important;
         font-size: 7pt !important;
     }
     
-    /* Detail row - perkecil */
-    .detail-row {
-        padding: 4px 0 !important;
-        font-size: 8pt !important;
-    }
-    
-    .detail-label,
-    .detail-value {
-        font-size: 8pt !important;
-    }
-    
-    /* Alert - perkecil */
-    .alert {
-        padding: 6px 10px !important;
-        font-size: 8pt !important;
-        margin-bottom: 8px !important;
-    }
-    
-    /* Pastikan konten tetap dalam 1 halaman */
-    .supervisi-wrapper,
-    .supervisi-content {
-        max-height: 270mm !important;
-        overflow: hidden !important;
-    }
-    
-    /* Hindari page break di tengah elemen penting */
-    .instrument-card,
-    .assessment-item,
-    .schedule-card {
-        page-break-inside: avoid;
-    }
-    
-    /* Perkecil icon/emoji */
+    /* Icon - hilangkan atau perkecil */
     .header-icon,
     .folder-icon,
     .file-list-icon,
-    .doc-icon {
-        font-size: 1rem !important;
+    .doc-icon,
+    .section-title::before {
+        display: none !important;
+    }
+    
+    /* PAKSA SEMUA KONTEN DALAM 1 HALAMAN */
+    .supervisi-wrapper,
+    .supervisi-content,
+    .card > * {
+        max-height: 275mm !important;
+        overflow: hidden !important;
+    }
+    
+    /* Hindari page break */
+    .instrument-card,
+    .assessment-item,
+    .schedule-card,
+    .form-group,
+    table,
+    .catatan-khusus,
+    .signature-section {
+        page-break-inside: avoid !important;
+    }
+    
+    /* Jika masih overflow, sembunyikan elemen kurang penting */
+    .doc-item,
+    .folder-card,
+    .schedule-detail,
+    .file-list-meta {
+        font-size: 6pt !important;
+        padding: 2px !important;
     }
 }
