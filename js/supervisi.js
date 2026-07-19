@@ -756,105 +756,99 @@ window.downloadPDF = async function(docId) {
     if (!window.jspdf) { alert('Library PDF sedang dimuat. Silakan coba lagi.'); return; }
 
     const { jsPDF } = window.jspdf;
-    // A4 landscape supaya semua komponen cukup dalam 1 halaman
-    const pdf = new jsPDF('l', 'mm', 'a4');
-    const pageWidth  = pdf.internal.pageSize.getWidth();  // 297mm
-    const pageHeight = pdf.internal.pageSize.getHeight(); // 210mm
-    const margin = 12;
-    let y = 12;
+    // A4 Portrait
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth  = pdf.internal.pageSize.getWidth();  // 210mm
+    const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+    const margin = 10;
+    let y = 10;
 
     // ── HEADER ──
-    pdf.setFontSize(12); pdf.setFont(undefined, 'bold');
+    pdf.setFontSize(11); pdf.setFont(undefined, 'bold');
     pdf.text('HASIL SUPERVISI PEMBELAJARAN', pageWidth / 2, y, { align: 'center' });
     y += 5;
-    pdf.setFontSize(9); pdf.setFont(undefined, 'normal');
+    pdf.setFontSize(8); pdf.setFont(undefined, 'normal');
     pdf.text('KURIKULUM BERBASIS CINTA (KBC) — MAN BANTAENG', pageWidth / 2, y, { align: 'center' });
-    y += 7;
+    y += 6;
 
     // ── INFO SESI (2 kolom) ──
     const date = new Date(data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt);
     const col1 = margin;
-    const col2 = pageWidth / 2 + 5;
-    const infoFontSize = 8;
+    const col2 = pageWidth / 2 + 3;
+    const infoFontSize = 7.5;
 
     pdf.setFontSize(infoFontSize); pdf.setFont(undefined, 'normal');
     const infoLeft = [
-      ['Nama Madrasah', data.schoolName || 'MAN Bantaeng'],
+      ['Nama Madrasah',        data.schoolName || 'MAN Bantaeng'],
       ['Guru yang Disupervisi', data.superviseeName || '-'],
-      ['Mata Pelajaran', data.subject || '-'],
-      ['Kelas/Semester', data.classSemester || '-'],
+      ['Mata Pelajaran',       data.subject || '-'],
+      ['Kelas/Semester',       data.classSemester || '-'],
     ];
     const infoRight = [
-      ['Tanggal', date.toLocaleDateString('id-ID')],
-      ['Supervisor', data.supervisorName || '-'],
-      ['Instrumen', data.instrumentName || '-'],
+      ['Tanggal',           date.toLocaleDateString('id-ID')],
+      ['Supervisor',        data.supervisorName || '-'],
+      ['Instrumen',         data.instrumentName || '-'],
       ['Jml Jam Tatap Muka', data.meetingHours || '-'],
     ];
 
     const infoStartY = y;
     infoLeft.forEach((row, i) => {
       pdf.setFont(undefined, 'bold');
-      pdf.text(row[0], col1, y + i * 4.5);
+      pdf.text(row[0], col1, y + i * 4);
       pdf.setFont(undefined, 'normal');
-      pdf.text(': ' + row[1], col1 + 45, y + i * 4.5);
+      pdf.text(': ' + row[1], col1 + 40, y + i * 4);
     });
     infoRight.forEach((row, i) => {
       pdf.setFont(undefined, 'bold');
-      pdf.text(row[0], col2, infoStartY + i * 4.5);
+      pdf.text(row[0], col2, infoStartY + i * 4);
       pdf.setFont(undefined, 'normal');
-      pdf.text(': ' + row[1], col2 + 40, infoStartY + i * 4.5);
+      pdf.text(': ' + row[1], col2 + 36, infoStartY + i * 4);
     });
-    y += 4 * 4.5 + 4;
+    y += 4 * 4 + 4;
 
     // ── TABEL PENILAIAN ──
     if (components.length > 0) {
-      // Hitung tinggi yang tersedia
-      const footerHeight = data.notes ? 24 : 16; // ruang untuk keterangan + ttd
-      const signatureHeight = 28;
+      const signatureHeight = 30;
+      const footerHeight    = data.notes ? 16 : 10;
       const availableHeight = pageHeight - y - footerHeight - signatureHeight - margin;
-      const numRows = components.length;
-      // Hitung row height agar semua muat
-      const headerHeight = 8;
-      const footerRowsHeight = 22; // 3 baris footer (jumlah, %, predikat)
+      const numRows         = components.length;
+      const headerHeight    = 8;
+      const footerRowsH     = 18; // 3 baris footer
       const rowHeight = Math.min(
-        7, // max row height
-        Math.max(5, (availableHeight - headerHeight - footerRowsHeight) / numRows)
+        6.5,
+        Math.max(4.5, (availableHeight - headerHeight - footerRowsH) / numRows)
       );
 
-      // Kolom: No | Komponen | 1 | 2 | 3 | 4 | Skor
-      const colNo     = 8;
-      const colSkor   = 12;
-      const colCheck  = 10;
-      const colKomp   = pageWidth - 2 * margin - colNo - 4 * colCheck - colSkor;
+      // Lebar kolom — portrait lebih sempit, komponen diberi ruang lebih
+      const colNo    = 7;
+      const colSkor  = 11;
+      const colCheck = 9;
+      const colKomp  = pageWidth - 2 * margin - colNo - 4 * colCheck - colSkor;
       const colWidths = [colNo, colKomp, colCheck, colCheck, colCheck, colCheck, colSkor];
       const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-      // Hitung posisi X setiap kolom
       const colX = [];
       let cx = margin;
       colWidths.forEach(w => { colX.push(cx); cx += w; });
 
-      // Header tabel
-      const fontSize = Math.min(7.5, rowHeight * 0.9);
+      const fontSize = Math.min(7, rowHeight * 0.88);
       pdf.setFontSize(fontSize);
 
-      // Baris header 1 (merged header atas)
+      // Header baris 1
       pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255);
       pdf.rect(margin, y, tableWidth, headerHeight / 2, 'FD');
       pdf.setFont(undefined, 'bold');
-      pdf.text('No', colX[0] + colWidths[0] / 2, y + 3, { align: 'center' });
-      pdf.text('Komponen', colX[1] + colWidths[1] / 2, y + 3, { align: 'center' });
-      pdf.text('Skor Nilai', colX[2] + (colWidths[2] + colWidths[3] + colWidths[4] + colWidths[5]) / 2, y + 3, { align: 'center' });
-      pdf.text('Skor', colX[6] + colWidths[6] / 2, y + 3, { align: 'center' });
+      pdf.text('No',        colX[0] + colWidths[0] / 2, y + 3, { align: 'center' });
+      pdf.text('Komponen',  colX[1] + colWidths[1] / 2, y + 3, { align: 'center' });
+      pdf.text('Skor Nilai',colX[2] + (colWidths[2]+colWidths[3]+colWidths[4]+colWidths[5])/2, y + 3, { align: 'center' });
+      pdf.text('Skor',      colX[6] + colWidths[6] / 2, y + 3, { align: 'center' });
       y += headerHeight / 2;
 
-      // Baris header 2 (angka 1-4)
+      // Header baris 2 (angka 1-4)
       pdf.setFillColor(129, 199, 132); pdf.setTextColor(0, 0, 0);
       pdf.rect(margin, y, tableWidth, headerHeight / 2, 'FD');
-      pdf.text('', colX[0] + colWidths[0] / 2, y + 3, { align: 'center' });
-      pdf.text('', colX[1] + colWidths[1] / 2, y + 3, { align: 'center' });
-      ['1', '2', '3', '4'].forEach((lbl, i) => {
-        pdf.text(lbl, colX[2 + i] + colWidths[2 + i] / 2, y + 3, { align: 'center' });
+      ['1','2','3','4'].forEach((lbl, i) => {
+        pdf.text(lbl, colX[2+i] + colWidths[2+i] / 2, y + 3, { align: 'center' });
       });
       y += headerHeight / 2;
 
@@ -863,92 +857,84 @@ window.downloadPDF = async function(docId) {
       components.forEach((comp, index) => {
         const score = data.scores[`comp_${index}`] || 0;
 
-        // Alternating row color
         if (index % 2 === 0) {
           pdf.setFillColor(232, 245, 233);
           pdf.rect(margin, y, tableWidth, rowHeight, 'F');
         }
 
-        // Border row
-        pdf.setDrawColor(180, 180, 180); pdf.setLineWidth(0.2);
+        pdf.setDrawColor(180, 180, 180); pdf.setLineWidth(0.15);
         pdf.rect(margin, y, tableWidth, rowHeight, 'S');
 
         const textY = y + rowHeight / 2 + fontSize * 0.35;
 
-        // No
         pdf.setTextColor(0, 0, 0);
         pdf.text(String(index + 1), colX[0] + colWidths[0] / 2, textY, { align: 'center' });
 
-        // Nama komponen — truncate jika terlalu panjang
-        const maxCompWidth = colWidths[1] - 2;
-        const compLines = pdf.splitTextToSize(comp.name, maxCompWidth);
-        // Tampilkan max 2 baris sesuai rowHeight
-        const maxLines = Math.floor(rowHeight / (fontSize * 0.4)) || 1;
-        const displayText = compLines.slice(0, maxLines).join(' ');
-        pdf.text(displayText, colX[1] + 1, textY);
+        // Komponen — truncate
+        const compLines = pdf.splitTextToSize(comp.name, colWidths[1] - 2);
+        const maxLines  = Math.max(1, Math.floor(rowHeight / (fontSize * 0.45)));
+        pdf.text(compLines.slice(0, maxLines), colX[1] + 1, y + fontSize * 0.9);
 
         // Checkbox 1-4
-        const boxSize = Math.min(3.5, rowHeight * 0.55);
-        [0, 1, 2, 3].forEach(i => {
-          const bx = colX[2 + i] + colWidths[2 + i] / 2 - boxSize / 2;
+        const boxSize = Math.min(3, rowHeight * 0.5);
+        [0,1,2,3].forEach(i => {
+          const bx = colX[2+i] + colWidths[2+i] / 2 - boxSize / 2;
           const by = y + rowHeight / 2 - boxSize / 2;
           if (score === i + 1) {
             pdf.setFillColor(76, 175, 80);
             pdf.rect(bx, by, boxSize, boxSize, 'FD');
-            // Centang
-            pdf.setDrawColor(255, 255, 255); pdf.setLineWidth(0.5);
-            pdf.line(bx + 0.5, by + boxSize * 0.55, bx + boxSize * 0.4, by + boxSize * 0.85);
-            pdf.line(bx + boxSize * 0.4, by + boxSize * 0.85, bx + boxSize - 0.5, by + boxSize * 0.2);
-            pdf.setDrawColor(180, 180, 180); pdf.setLineWidth(0.2);
+            pdf.setDrawColor(255,255,255); pdf.setLineWidth(0.5);
+            pdf.line(bx+0.4, by+boxSize*0.55, bx+boxSize*0.4, by+boxSize*0.85);
+            pdf.line(bx+boxSize*0.4, by+boxSize*0.85, bx+boxSize-0.4, by+boxSize*0.2);
+            pdf.setDrawColor(180,180,180); pdf.setLineWidth(0.15);
           } else {
-            pdf.setFillColor(255, 255, 255);
+            pdf.setFillColor(255,255,255);
             pdf.rect(bx, by, boxSize, boxSize, 'FD');
           }
         });
 
-        // Skor
-        pdf.setTextColor(0, 0, 0);
-        pdf.setFont(undefined, 'bold');
-        pdf.text(`${score}/4`, colX[6] + colWidths[6] / 2, textY, { align: 'center' });
-        pdf.setFont(undefined, 'normal');
+        pdf.setTextColor(0,0,0); pdf.setFont(undefined,'bold');
+        pdf.text(`${score}/4`, colX[6]+colWidths[6]/2, textY, { align: 'center' });
+        pdf.setFont(undefined,'normal');
 
         y += rowHeight;
       });
 
-      // Baris footer: Jumlah
-      const count1 = Object.values(data.scores).filter(s => s === 1).length;
-      const count2 = Object.values(data.scores).filter(s => s === 2).length;
-      const count3 = Object.values(data.scores).filter(s => s === 3).length;
-      const count4 = Object.values(data.scores).filter(s => s === 4).length;
-      const footRowH = 6;
+      // Footer rows
+      const count1 = Object.values(data.scores).filter(s=>s===1).length;
+      const count2 = Object.values(data.scores).filter(s=>s===2).length;
+      const count3 = Object.values(data.scores).filter(s=>s===3).length;
+      const count4 = Object.values(data.scores).filter(s=>s===4).length;
+      const footRowH = 5.5;
 
-      pdf.setFillColor(200, 230, 201); pdf.setFont(undefined, 'bold');
+      // Jumlah
+      pdf.setFillColor(200,230,201); pdf.setFont(undefined,'bold');
       pdf.rect(margin, y, tableWidth, footRowH, 'FD');
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('Jumlah', colX[1] + colWidths[1] - 2, y + 4, { align: 'right' });
-      [count1, count2, count3, count4].forEach((c, i) => {
-        pdf.text(String(c), colX[2 + i] + colWidths[2 + i] / 2, y + 4, { align: 'center' });
+      pdf.setTextColor(0,0,0);
+      pdf.text('Jumlah', colX[1]+colWidths[1]-2, y+3.5, { align:'right' });
+      [count1,count2,count3,count4].forEach((c,i)=>{
+        pdf.text(String(c), colX[2+i]+colWidths[2+i]/2, y+3.5, { align:'center' });
       });
-      pdf.text(`${data.totalScore}/${data.maxScore}`, colX[6] + colWidths[6] / 2, y + 4, { align: 'center' });
+      pdf.text(`${data.totalScore}/${data.maxScore}`, colX[6]+colWidths[6]/2, y+3.5, { align:'center' });
       y += footRowH;
 
       // % Capaian
-      pdf.setFillColor(165, 214, 167);
+      pdf.setFillColor(165,214,167);
       pdf.rect(margin, y, tableWidth, footRowH, 'FD');
-      pdf.text('Persentase Capaian', colX[1] + colWidths[1] - 2, y + 4, { align: 'right' });
-      pdf.text(`${data.percentage}%`, colX[2] + 5, y + 4);
+      pdf.text('Persentase Capaian', colX[1]+colWidths[1]-2, y+3.5, { align:'right' });
+      pdf.text(`${data.percentage}%`, colX[2]+2, y+3.5);
       y += footRowH;
 
       // Predikat
-      pdf.setFillColor(76, 175, 80); pdf.setTextColor(255, 255, 255);
+      pdf.setFillColor(76,175,80); pdf.setTextColor(255,255,255);
       pdf.rect(margin, y, tableWidth, footRowH, 'FD');
-      pdf.text('Predikat', colX[1] + colWidths[1] - 2, y + 4, { align: 'right' });
-      pdf.text(data.predicate || '-', colX[2] + 5, y + 4);
+      pdf.text('Predikat', colX[1]+colWidths[1]-2, y+3.5, { align:'right' });
+      pdf.text(data.predicate||'-', colX[2]+2, y+3.5);
       y += footRowH + 3;
 
-      // Keterangan
-      pdf.setTextColor(0, 0, 0); pdf.setFont(undefined, 'normal'); pdf.setFontSize(7);
-      pdf.text('Keterangan: • 91%-100% = Sangat Baik  • 81%-90% = Baik  • 71%-80% = Cukup  • <70% = Kurang', margin, y);
+      // Keterangan 1 baris
+      pdf.setTextColor(0,0,0); pdf.setFont(undefined,'normal'); pdf.setFontSize(6.5);
+      pdf.text('Ket: • 91-100%=Sangat Baik  • 81-90%=Baik  • 71-80%=Cukup  • <70%=Kurang', margin, y);
       y += 4;
     }
 
@@ -993,7 +979,6 @@ window.downloadPDF = async function(docId) {
     alert('❌ Gagal mendownload PDF: ' + error.message);
   }
 };
-
 window.previewDoc = async function(docId) { try { const snap = await db.collection('supervision_documents').doc(docId).get(); if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; } const data = snap.data(); if (data.type === 'link') { window.open(data.link, '_blank'); } else if (data.fileExt === 'pdf') { const newWindow = window.open('', '_blank'); newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;}.header{background:#3b82f6;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}.header h3{margin:0;font-size:1rem;}.header a{color:white;text-decoration:none;background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:6px;font-size:0.85rem;}iframe{width:100%;height:calc(100vh - 50px);border:none;}</style></head><body><div class="header"><h3>📄 ${data.nama}</h3><a href="${data.fileData}" download="${data.nama}.${data.fileExt}">⬇ Download</a></div><iframe src="${data.fileData}"></iframe></body></html>`); } else { alert(`File ${data.fileExt.toUpperCase()} tidak bisa di-preview langsung.`); window.previewDocOffice(docId, data.fileExt); } } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); } };
 window.previewDocOffice = async function(docId, fileExt) { try { const snap = await db.collection('supervision_documents').doc(docId).get(); if (!snap.exists) { alert('Dokumen tidak ditemukan'); return; } const data = snap.data(); if (data.type === 'link') { window.open(data.link, '_blank'); return; } const newWindow = window.open('', '_blank'); newWindow.document.write(`<html><head><title>Preview: ${data.nama}</title><style>body{margin:0;background:#f3f4f6;font-family:'Segoe UI',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;}.card{background:white;padding:30px;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.1);max-width:500px;text-align:center;}.icon{font-size:4rem;margin-bottom:15px;}h3{color:#1e40af;margin-bottom:10px;}p{color:#6b7280;margin-bottom:20px;}.btn{display:inline-block;background:#3b82f6;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;margin:5px;}.btn:hover{background:#2563eb;}.btn-secondary{background:#6b7280;}.btn-secondary:hover{background:#4b5563;}</style></head><body><div class="card"><div class="icon">${fileExt==='pdf'?'📕':['doc','docx'].includes(fileExt)?'📘':['xls','xlsx'].includes(fileExt)?'📗':'📄'}</div><h3>${data.nama}</h3><p>${data.kategori} • ${data.fileSize?(data.fileSize/1024/1024).toFixed(2)+' MB':''}</p><p style="font-size:0.85rem;">File ${fileExt.toUpperCase()} tidak bisa di-preview langsung.</p><a href="${data.fileData}" download="${data.nama}.${data.fileExt}" class="btn"> Download untuk Melihat</a><br><button onclick="window.close()" class="btn btn-secondary">Tutup</button></div></body></html>`); } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); } };
 
