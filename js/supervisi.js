@@ -948,8 +948,30 @@ function showDetailModal() {
     tableHTML = '<p style="color:#999;text-align:center;padding:20px;">Detail penilaian tidak tersedia</p>'; 
   }
   const date = new Date(data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt);
-  document.getElementById('detailContent').innerHTML = `<div style="margin-bottom:18px;"><div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</span></div><div class="detail-row"><span class="detail-label">Nama Madrasah</span><span class="detail-value">${data.schoolName || 'MAN BANTAENG'}</span></div><div class="detail-row"><span class="detail-label">Supervisor</span><span class="detail-value">${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</span></div><div class="detail-row"><span class="detail-label">Yang Disupervisi</span><span class="detail-value">${data.superviseeName}</span></div><div class="detail-row"><span class="detail-label">Mata Pelajaran</span><span class="detail-value">${data.subject || '-'}</span></div><div class="detail-row"><span class="detail-label">Kelas/Semester</span><span class="detail-value">${data.classSemester || '-'}</span></div><div class="detail-row"><span class="detail-label">Instrumen</span><span class="detail-value">${data.instrumentName || '-'}</span></div><div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${statusText}</span></div></div><h4 style="color:#1e40af;margin-bottom:10px;">Detail Penilaian</h4>${tableHTML}${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan Khusus</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}${data.actionPlan ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Rencana Tindak Lanjut</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.actionPlan}</div>` : ''}`;
-  document.getElementById('detailModal').classList.add('active');
+  document.getElementById('detailContent').innerHTML = `
+  <div style="margin-bottom:18px;">
+    <div class="detail-row"><span class="detail-label">Tanggal</span><span class="detail-value">${date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'})}</span></div>
+    <div class="detail-row"><span class="detail-label">Nama Madrasah</span><span class="detail-value">${data.schoolName || 'MAN BANTAENG'}</span></div>
+    <div class="detail-row"><span class="detail-label">Supervisor</span><span class="detail-value">${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</span></div>
+    <div class="detail-row"><span class="detail-label">Yang Disupervisi</span><span class="detail-value">${data.superviseeName}</span></div>
+    <div class="detail-row"><span class="detail-label">Mata Pelajaran</span><span class="detail-value">${data.subject || '-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Kelas/Semester</span><span class="detail-value">${data.classSemester || '-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Instrumen</span><span class="detail-value">${data.instrumentName || '-'}</span></div>
+    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${statusText}</span></div>
+  </div>
+  <h4 style="color:#1e40af;margin-bottom:10px;">Detail Penilaian</h4>
+  ${tableHTML}
+  ${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan Khusus</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}
+  ${data.actionPlan ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Rencana Tindak Lanjut</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.actionPlan}</div>` : ''}
+  
+  <!-- TOMBOL DOWNLOAD PDF -->
+  <div style="margin-top:20px;padding-top:15px;border-top:2px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;">
+    <button onclick="window.downloadPDF('${docId}')" style="background:#3b82f6;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;">
+      📄 Download PDF
+    </button>
+  </div>
+`;
+document.getElementById('detailModal').classList.add('active');
 }
 
 // ══════════════════════════════════════════════
