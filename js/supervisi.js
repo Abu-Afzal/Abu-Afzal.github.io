@@ -555,7 +555,7 @@ window.saveSupervision = async function() {
 };
 
 // ══════════════════════════════════════════════
-// DAFTAR SUPERVISI (DIPERBARUI DENGAN TOMBOL PRINT)
+// DAFTAR SUPERVISI (1 TOMBOL DOWNLOAD PDF)
 // ══════════════════════════════════════════════
 async function loadSupervisionList(){ 
   const snap = await db.collection('supervisions').where('supervisorEmail', '==', currentUser.email).get(); 
@@ -574,8 +574,7 @@ async function loadSupervisionList(){
       <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
       <td><span class="badge badge-done">Selesai</span></td>
       <td>
-        <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-        <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
+        <button class="btn btn-primary btn-sm" onclick="window.downloadPDF('${d.id}')" style="display:inline-flex;align-items:center;gap:5px;">📄 Download PDF</button>
       </td>
     </tr>`; 
   }).join(''); 
@@ -885,7 +884,7 @@ window.deleteMyDoc = async function(docId){
 };
 
 // ══════════════════════════════════════════════
-// HASIL SUPERVISI SAYA (DIPERBARUI DENGAN TOMBOL PRINT)
+// HASIL SUPERVISI SAYA (1 TOMBOL DOWNLOAD PDF)
 // ══════════════════════════════════════════════
 async function loadMySupervisionList(){ 
   const snap = await db.collection('supervisions').where('superviseeEmail', '==', currentUser.email).get(); 
@@ -904,8 +903,7 @@ async function loadMySupervisionList(){
       <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
       <td><span class="badge badge-done">${data.predicate || 'Selesai'}</span></td>
       <td>
-        <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-        <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
+        <button class="btn btn-primary btn-sm" onclick="window.downloadPDF('${d.id}')" style="display:inline-flex;align-items:center;gap:5px;">📄 Download PDF</button>
       </td>
     </tr>`; 
   }).join(''); 
@@ -953,7 +951,7 @@ function showDetailModal() {
 }
 
 // ══════════════════════════════════════════════
-// DOWNLOAD PDF — OPTIMIZED 1 HALAMAN A4 LANDSCAPE
+// DOWNLOAD PDF — OPTIMIZED 1 HALAMAN A4 LANDSCAPE + NIP OTOMATIS
 // ══════════════════════════════════════════════
 window.downloadPDF = async function(docId) {
   try {
@@ -962,6 +960,20 @@ window.downloadPDF = async function(docId) {
     if (!snap.exists) { alert('Data tidak ditemukan'); return; }
 
     const data = snap.data();
+    
+    // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
+    let superviseeNIP = '-';
+    if (data.superviseeEmail) {
+      try {
+        const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
+        if (userSnap.exists) {
+          superviseeNIP = userSnap.data().nip || '-';
+        }
+      } catch (e) {
+        console.error("Gagal mengambil NIP guru:", e);
+      }
+    }
+
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
@@ -1163,6 +1175,19 @@ window.downloadPDF = async function(docId) {
     pdf.text(data.superviseeName || '-', margin + 10, y);
     pdf.text(data.supervisorName || '-', rightX + 10, y);
 
+    // ✅ TAMPILKAN NIP GURU DI BAWAH NAMA
+    if (superviseeNIP && superviseeNIP !== '-') {
+      pdf.setFont(undefined, 'normal');
+      pdf.setFontSize(7); 
+      pdf.text(`NIP. ${superviseeNIP}`, margin + 10, y + 4);
+    }
+
+    if (data.supervisorNIP) {
+      pdf.setFont(undefined, 'normal');
+      pdf.setFontSize(7);
+      pdf.text(`NIP. ${data.supervisorNIP}`, rightX + 10, y + 4);
+    }
+
     const fileName = `Supervisi_${(data.superviseeName || 'guru').replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`;
     pdf.save(fileName);
 
@@ -1173,7 +1198,7 @@ window.downloadPDF = async function(docId) {
 };
 
 // ══════════════════════════════════════════════
-// PRINT LANGSUNG (TANPA DOWNLOAD)
+// PRINT LANGSUNG (TANPA DOWNLOAD) + NIP OTOMATIS
 // ══════════════════════════════════════════════
 window.printSupervision = async function(docId) {
   try {
@@ -1181,6 +1206,20 @@ window.printSupervision = async function(docId) {
     if (!snap.exists) { alert('Data tidak ditemukan'); return; }
     
     const data = snap.data();
+    
+    // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
+    let superviseeNIP = '-';
+    if (data.superviseeEmail) {
+      try {
+        const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
+        if (userSnap.exists) {
+          superviseeNIP = userSnap.data().nip || '-';
+        }
+      } catch (e) {
+        console.error("Gagal mengambil NIP guru:", e);
+      }
+    }
+    
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
@@ -1278,12 +1317,12 @@ window.printSupervision = async function(docId) {
           <div class="signature-box">
             <div>Guru yang Disupervisi</div>
             <div class="signature-line">${data.superviseeName}</div>
-            ${data.superviseeNIP ? `<div>NIP. ${data.superviseeNIP}</div>` : ''}
+            ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
           </div>
           <div class="signature-box">
             <div>Supervisor</div>
             <div class="signature-line">${data.supervisorName}</div>
-            ${data.supervisorNIP ? `<div>NIP. ${data.supervisorNIP}</div>` : ''}
+            ${data.supervisorNIP ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${data.supervisorNIP}</div>` : ''}
           </div>
         </div>
       </body>
