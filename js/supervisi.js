@@ -1212,8 +1212,24 @@ window.printSupervision = async function(docId) {
           .summary { background-color: #dcfce7; font-weight: bold; }
           .notes-section { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
           .notes-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; min-height: 80px; }
-          .signature { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; text-align: center; }
-          .signature-box { border-top: 1px solid #000; padding-top: 5px; margin-top: 60px; }
+          .signature { 
+            margin-top: 40px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 60px;
+            text-align: center;
+          }
+          .signature-box { 
+            padding-top: 10px;
+          }
+          .signature-line {
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            margin-top: 60px;
+            display: inline-block;
+            min-width: 180px;
+            font-weight: bold;
+          }
           .btn-print { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
           .btn-print:hover { background: #2563eb; }
         </style>
@@ -1259,19 +1275,17 @@ window.printSupervision = async function(docId) {
           <div class="notes-box"><h4 style="margin-top: 0; color: #1e40af;">Rencana Tindak Lanjut:</h4><p>${data.actionPlan || '-'}</p></div>
         </div>
         <div class="signature">
-  <div class="signature-box">
-    <div>Guru yang Disupervisi</div>
-    <div style="height: 60px;"></div> <!-- Ruang kosong untuk tanda tangan -->
-    <div style="font-weight: bold; border-top: 1px solid #000; padding-top: 5px; display: inline-block; min-width: 150px;">${data.superviseeName}</div>
-    ${data.superviseeNIP ? `<div>NIP. ${data.superviseeNIP}</div>` : ''}
-  </div>
-  <div class="signature-box">
-    <div>Supervisor</div>
-    <div style="height: 60px;"></div> <!-- Ruang kosong untuk tanda tangan -->
-    <div style="font-weight: bold; border-top: 1px solid #000; padding-top: 5px; display: inline-block; min-width: 150px;">${data.supervisorName}</div>
-    ${data.supervisorNIP ? `<div>NIP. ${data.supervisorNIP}</div>` : ''}
-  </div>
-</div>
+          <div class="signature-box">
+            <div>Guru yang Disupervisi</div>
+            <div class="signature-line">${data.superviseeName}</div>
+            ${data.superviseeNIP ? `<div>NIP. ${data.superviseeNIP}</div>` : ''}
+          </div>
+          <div class="signature-box">
+            <div>Supervisor</div>
+            <div class="signature-line">${data.supervisorName}</div>
+            ${data.supervisorNIP ? `<div>NIP. ${data.supervisorNIP}</div>` : ''}
+          </div>
+        </div>
       </body>
       </html>
     `;
