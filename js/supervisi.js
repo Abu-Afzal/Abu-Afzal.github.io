@@ -557,9 +557,9 @@ window.saveSupervision = async function() {
 // ══════════════════════════════════════════════
 // DAFTAR SUPERVISI (1 TOMBOL DOWNLOAD PDF)
 // ══════════════════════════════════════════════
-async function loadSupervisionList(){ 
-  const snap = await db.collection('supervisions').where('supervisorEmail', '==', currentUser.email).get(); 
-  const tbody = document.getElementById('supervisionList'); 
+async function loadMySupervisionList(){ 
+  const snap = await db.collection('supervisions').where('superviseeEmail', '==', currentUser.email).get(); 
+  const tbody = document.getElementById('mySupervisionList'); 
   if(snap.empty){ 
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px;">Belum ada supervisi</td></tr>'; 
     return; 
@@ -569,12 +569,13 @@ async function loadSupervisionList(){
     const data = d.data(); 
     return `<tr>
       <td>${new Date(data.createdAt).toLocaleDateString('id-ID')}</td>
-      <td>${data.superviseeName}</td>
+      <td>${data.supervisorName} (${getRoleLabel(data.supervisorRole)})</td>
       <td>${data.instrumentName || '-'}</td>
       <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
-      <td><span class="badge badge-done">Selesai</span></td>
+      <td><span class="badge badge-done">${data.predicate || 'Selesai'}</span></td>
       <td>
-        <button class="btn btn-primary btn-sm" onclick="window.downloadPDF('${d.id}')" style="display:inline-flex;align-items:center;gap:5px;">📄 Download PDF</button>
+        <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
+        <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
       </td>
     </tr>`; 
   }).join(''); 
