@@ -574,9 +574,8 @@ async function loadSupervisionList(){
       <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
       <td><span class="badge badge-done">Selesai</span></td>
       <td>
-        <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-        <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
-      </td>
+  <button class="btn btn-primary btn-sm" onclick="window.downloadPDF('${d.id}')" style="display:inline-flex;align-items:center;gap:5px;">📄 Download PDF</button>
+</td>
     </tr>`; 
   }).join(''); 
 }
@@ -904,9 +903,8 @@ async function loadMySupervisionList(){
       <td><strong>${data.totalScore}/${data.maxScore} (${data.percentage}%)</strong></td>
       <td><span class="badge badge-done">${data.predicate || 'Selesai'}</span></td>
       <td>
-        <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
-        <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
-      </td>
+  <button class="btn btn-primary btn-sm" onclick="window.downloadPDF('${d.id}')" style="display:inline-flex;align-items:center;gap:5px;">📄 Download PDF</button>
+</td>
     </tr>`; 
   }).join(''); 
 }
@@ -964,12 +962,10 @@ function showDetailModal() {
   ${data.notes ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Catatan Khusus</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.notes}</div>` : ''}
   ${data.actionPlan ? `<h4 style="color:#1e40af;margin:16px 0 10px;">Rencana Tindak Lanjut</h4><div style="background:#eff6ff;padding:14px;border-radius:8px;white-space:pre-wrap;">${data.actionPlan}</div>` : ''}
   
-  <!-- TOMBOL DOWNLOAD PDF -->
+   <!-- TOMBOL DOWNLOAD PDF -->
   <div style="margin-top:20px;padding-top:15px;border-top:2px solid #e5e7eb;display:flex;justify-content:flex-end;gap:10px;">
-    <button onclick="window.downloadPDF('${docId}')" style="background:#3b82f6;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;">
+    <button onclick="window.downloadPDF('${currentSupervision.id}')" style="background:#3b82f6;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem;display:inline-flex;align-items:center;gap:6px;">
       📄 Download PDF
-    </button>
-  </div>
 `;
 document.getElementById('detailModal').classList.add('active');
 }
