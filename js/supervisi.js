@@ -1259,17 +1259,19 @@ window.printSupervision = async function(docId) {
           <div class="notes-box"><h4 style="margin-top: 0; color: #1e40af;">Rencana Tindak Lanjut:</h4><p>${data.actionPlan || '-'}</p></div>
         </div>
         <div class="signature">
-          <div class="signature-box">
-            <div>Guru yang Disupervisi</div>
-            <div style="margin-top: 10px; font-weight: bold;">${data.superviseeName}</div>
-            ${data.superviseeNIP ? `<div>NIP. ${data.superviseeNIP}</div>` : ''}
-          </div>
-          <div class="signature-box">
-            <div>Supervisor</div>
-            <div style="margin-top: 10px; font-weight: bold;">${data.supervisorName}</div>
-            ${data.supervisorNIP ? `<div>NIP. ${data.supervisorNIP}</div>` : ''}
-          </div>
-        </div>
+  <div class="signature-box">
+    <div>Guru yang Disupervisi</div>
+    <div style="height: 60px;"></div> <!-- Ruang kosong untuk tanda tangan -->
+    <div style="font-weight: bold; border-top: 1px solid #000; padding-top: 5px; display: inline-block; min-width: 150px;">${data.superviseeName}</div>
+    ${data.superviseeNIP ? `<div>NIP. ${data.superviseeNIP}</div>` : ''}
+  </div>
+  <div class="signature-box">
+    <div>Supervisor</div>
+    <div style="height: 60px;"></div> <!-- Ruang kosong untuk tanda tangan -->
+    <div style="font-weight: bold; border-top: 1px solid #000; padding-top: 5px; display: inline-block; min-width: 150px;">${data.supervisorName}</div>
+    ${data.supervisorNIP ? `<div>NIP. ${data.supervisorNIP}</div>` : ''}
+  </div>
+</div>
       </body>
       </html>
     `;
