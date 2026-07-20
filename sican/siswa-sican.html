@@ -6,7 +6,10 @@
     <title>SICAN - Admin Master Siswa</title>
     <link rel="icon" type="image/png" href="../assets/images/sipelita-app.png">
     
-    <!-- Library QR Code -->
+    <!-- ✅ PERBAIKAN: Tambahkan Library SheetJS (XLSX) untuk Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    
+    <!-- Library QR Code & JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
@@ -240,18 +243,20 @@
         reader.onload = async (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
+                // ✅ XLSX sekarang akan berfungsi karena library sudah dimuat di <head>
                 const workbook = XLSX.read(data, { type: 'array' });
                 const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                 
                 const jsonSiswa = XLSX.utils.sheet_to_json(worksheet);
 
-                if (jsonSiswa.length === 0) throw new Error("File kosong.");
+                if (jsonSiswa.length === 0) throw new Error("File kosong atau format tidak sesuai.");
 
                 const batch = writeBatch(db);
                 const collectionRef = collection(db, "sican_siswa");
 
                 let totalData = 0;
                 jsonSiswa.forEach((item) => {
+                    // Pastikan key sesuai dengan header Excel (nis, nama, kelas)
                     const nisSiswa = item.nis ? String(item.nis).trim() : null;
                     const namaSiswa = item.nama ? String(item.nama).trim() : null;
                     const kelasSiswa = item.kelas ? String(item.kelas).trim() : '-';
@@ -268,10 +273,14 @@
                     }
                 });
 
-                await batch.commit();
-                alert(`Sukses! ${totalData} siswa telah ditambahkan ke database master SICAN.`);
-                excelFileInput.value = ''; 
-                loadMasterSiswaSICAN(); 
+                if (totalData > 0) {
+                    await batch.commit();
+                    alert(`Sukses! ${totalData} siswa telah ditambahkan ke database master SICAN.`);
+                    excelFileInput.value = ''; 
+                    loadMasterSiswaSICAN(); 
+                } else {
+                    alert("Tidak ada data valid yang ditemukan. Pastikan kolom Excel bernama 'nis', 'nama', dan 'kelas' (huruf kecil semua).");
+                }
 
             } catch (err) {
                 console.error(err);
@@ -338,7 +347,7 @@
 
         } catch (err) {
             console.error(err);
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Error otorisasi: ${err.message}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:red;">Error: ${err.message}</td></tr>`;
         }
     }
 
@@ -346,7 +355,6 @@
     // QR CODE GENERATION FUNCTIONS
     // =========================================================================
     
-    // Export ke window agar bisa dipanggil dari HTML
     window.openQRModal = async function() {
         if (allStudents.length === 0) {
             alert('Belum ada data siswa. Upload data terlebih dahulu!');
@@ -359,7 +367,6 @@
         modal.classList.add('show');
         container.innerHTML = '<div class="loading"><div class="spinner"></div>Generating QR Codes...</div>';
 
-        // Generate QR codes untuk semua siswa
         setTimeout(() => {
             container.innerHTML = '';
             
@@ -384,7 +391,6 @@
                 
                 container.appendChild(qrCard);
                 
-                // Generate QR Code
                 new QRCode(document.getElementById(`qr-${siswa.id}`), {
                     text: String(nis),
                     width: 128,
