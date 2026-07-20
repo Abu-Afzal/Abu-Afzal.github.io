@@ -3,196 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - SIPELITA</title>
     <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
-    
-    <!-- CSS LENGKAP (Bisa dipindah ke ../css/style.css nanti) -->
-    <style>
-        /* ===== RESET & BASE ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
-            line-height: 1.5;
-        }
-
-        /* ===== NAVBAR ===== */
-        .navbar {
-            background-color: #10b981;
-            color: white;
-            padding: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar .container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 18px;
-        }
-
-        .logo img {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            object-fit: cover;
-        }
-
-        .nav-links {
-            list-style: none;
-            display: flex;
-            gap: 20px;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 14px;
-            padding: 6px 12px;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        /* ===== MAIN CONTENT ===== */
-        .container.main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 24px 20px 40px;
-        }
-
-        .container.main-content h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            color: #111827;
-        }
-
-        .section-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #4b5563;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        /* ===== GRID SYSTEM (KUNCI PRESISI) ===== */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Tepat 3 kolom sama besar */
-            gap: 16px; /* Jarak antar card presisi */
-            margin-bottom: 32px;
-        }
-
-        /* ===== CARD STYLE (KUNCI SAMA BESAR) ===== */
-        .card {
-            background: #ffffff;
-            border-radius: 12px;
-            padding: 20px 12px;
-            text-align: center;
-            text-decoration: none;
-            color: #1f2937;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            border: 1px solid #f3f4f6;
-            
-            /* INI KUNCINYA: Memaksa rasio aspek tetap */
-            aspect-ratio: 1 / 1.15; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
-            border-color: #10b981;
-        }
-
-        .card-icon {
-            font-size: 32px;
-            margin-bottom: 12px;
-            line-height: 1;
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.3;
-            margin-bottom: 6px;
-            color: #111827;
-        }
-
-        .card-desc {
-            font-size: 11px;
-            color: #6b7280;
-            line-height: 1.3;
-        }
-
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr); /* 2 kolom di tablet */
-                gap: 12px;
-            }
-            .card {
-                aspect-ratio: 1 / 1.1;
-                padding: 16px 10px;
-            }
-            .card-icon { font-size: 28px; }
-            .card-title { font-size: 13px; }
-        }
-
-        @media (max-width: 480px) {
-            .grid {
-                grid-template-columns: repeat(2, 1fr); /* Tetap 2 kolom di HP agar tidak terlalu gepeng */
-                gap: 10px;
-            }
-            .container.main-content {
-                padding: 16px 12px 40px;
-            }
-            .card {
-                padding: 14px 8px;
-            }
-            .card-icon { font-size: 24px; margin-bottom: 8px; }
-            .card-title { font-size: 12px; }
-            .card-desc { font-size: 10px; }
-        }
-    </style>
+    <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-
     <nav class="navbar">
         <div class="container">
             <div class="logo">
-                <img src="../assets/images/logo-sipelita.png" alt="SIPELITA" onerror="this.src='https://via.placeholder.com/40/10b981/ffffff?text=S'">
+                <img src="../assets/images/logo-sipelita.png" alt="SIPELITA" onerror="this.src='https://via.placeholder.com/40'">
                 <span>SIPELITA</span>
             </div>
             <ul class="nav-links">
@@ -206,57 +28,13 @@
         <h1>Dashboard Administrasi</h1>
         
         <h2 class="section-title">Layanan Umum</h2>
-        <div class="grid" id="layanan-umum">
-            <!-- Card akan di-generate oleh JavaScript di bawah -->
-        </div>
+        <div class="grid" id="layanan-umum"></div>
 
         <h2 class="section-title">Layanan Madrasah</h2>
-        <div class="grid" id="layanan-madrasah">
-            <!-- Card akan di-generate oleh JavaScript di bawah -->
-        </div>
+        <div class="grid" id="layanan-madrasah"></div>
     </div>
 
-    <!-- SCRIPT LENGKAP (Bisa dipindah ke ../js/main.js nanti) -->
-    <script>
-        // Data simulasi untuk Layanan Umum
-        const layananUmumData = [
-            { icon: "📝", title: "Surat Menyurat", desc: "Buat & kelola surat dinas" },
-            { icon: "📅", title: "Agenda Kegiatan", desc: "Jadwal acara madrasah" },
-            { icon: "📁", title: "Arsip Digital", desc: "Penyimpanan dokumen" },
-            { icon: "📢", title: "Pengumuman", desc: "Info terbaru untuk warga" },
-            { icon: "👥", title: "Data Pegawai", desc: "Profil & data guru/staf" },
-            { icon: "⚙️", title: "Pengaturan", desc: "Konfigurasi sistem" }
-        ];
-
-        // Data simulasi untuk Layanan Madrasah
-        const layananMadrasahData = [
-            { icon: "🎓", title: "Data Siswa", desc: "Manajemen data peserta didik" },
-            { icon: "✅", title: "Absensi Siswa", desc: "Rekap kehadiran harian" },
-            { icon: "📚", title: "E-Learning", desc: "Akses materi & tugas online" },
-            { icon: "📊", title: "Nilai & Rapor", desc: "Input dan cetak rapor digital" },
-            { icon: "💰", title: "Keuangan", desc: "Pembayaran SPP & BOS" },
-            { icon: "🏆", title: "Prestasi", desc: "Catatan pencapaian siswa" }
-        ];
-
-        // Fungsi untuk membuat HTML Card
-        function createCard(item) {
-            return `
-                <a href="#" class="card">
-                    <div class="card-icon">${item.icon}</div>
-                    <div class="card-title">${item.title}</div>
-                    ${item.desc ? `<div class="card-desc">${item.desc}</div>` : ''}
-                </a>
-            `;
-        }
-
-        // Render ke DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            const gridUmum = document.getElementById('layanan-umum');
-            const gridMadrasah = document.getElementById('layanan-madrasah');
-
-            gridUmum.innerHTML = layananUmumData.map(createCard).join('');
-            gridMadrasah.innerHTML = layananMadrasahData.map(createCard).join('');
-        });
-    </script>
+    <script src="../js/config.js"></script>
+    <script src="../js/main.js"></script>
 </body>
 </html>
