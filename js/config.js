@@ -74,13 +74,13 @@ const CONFIG = {
         { icon: '✅', title: 'Tatib', desc: 'Tata Tertib MAN Bantaeng', color: '#f57c00', page: 'pages/sitaat.html' },
         { 
             icon: '📷', 
-            title: 'SICAN', 
-            desc: 'Scan Absensi Siswa', 
+            title: 'SISCA', 
+            desc: 'Sistem Scan Cepat', 
             color: '#0d47a1', 
             url: 'sican/sican.html'
         },
-        { icon: '🎓', title: 'E-Learning', desc: '', color: '#d32f2f', page: 'pages/elearning.html' },
-        { icon: '📁', title: 'E-Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
+        { icon: '🎓', title: 'SIBEL', desc: 'Sistem Belajar Digital', color: '#d32f2f', page: 'pages/elearning.html' },
+        { icon: '📁', title: 'Bank Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
         { icon: '🏥', title: 'UKSmart', desc: '', color: '#e91e63', page: 'pages/uksmart.html' },
         { icon: '📚', title: 'Jurnal Mengajar', desc: '', color: '#6d4c41', page: 'pages/jurnal-online.html' },
         { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
