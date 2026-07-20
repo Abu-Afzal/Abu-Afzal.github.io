@@ -208,7 +208,7 @@ tr.row-recent td{background:#f1f5f9 !important;}
         <div class="jadwal-info" id="jadwalInfoText"></div>
       </div>
       <div style="margin-top:12px;padding:12px;background:#fef3c7;border-radius:8px;border-left:4px solid #f59e0b;">
-        <strong style="color:#92400e;">💡 Tips:</strong>
+        <strong style="color:#92400e;"> Tips:</strong>
         <span style="color:#78350f;font-size:0.9rem;">Gunakan jadwal ini sebagai referensi saat membuat alarm. Klik gambar untuk memperbesar.</span>
       </div>
     </div>
@@ -331,7 +331,7 @@ const ROOT_JADWAL = db.ref("jadwal_alarm");
 const ROOT_SIPENA = db.ref("sipena2");
 const ROOT_JADWAL_GAMBAR = db.ref("jadwal_gambar");
 
-let currentUser = ''; // Untuk tampilan nama
+let currentUser = '';
 let daftarKelas = [];
 let daftarJadwal = [];
 let alarmEnabled = false;
@@ -339,6 +339,7 @@ let _alarmAudioCtx = null;
 let cachedIndonesianVoice = null;
 
 // ✅ SIMPEL TRACKING: Gunakan Set untuk track alarm yang sudah bunyi
+// Format: "YYYY-MM-DD_HH:MM" (tanggal + jam)
 let alarmFiredToday = new Set();
 
 function toArr(val){ return val ? Object.keys(val).map(k=>({__key:k,...val[k]})) : []; }
@@ -433,23 +434,20 @@ function initApp(){
   try{
     const s = localStorage.getItem('sipelita_user');
     const userData = s ? JSON.parse(s) : null;
-    
-    // ✅ PERBAIKAN: Pisahkan nama untuk tampilan dan email untuk database
-    window.currentUserEmail = userData ? userData.email : 'guru@sekolah.com';
+    currentUser = userData ? (userData.nama || userData.email || 'guru') : 'guru';
+    window.currentUserEmail = userData ? userData.email : '';
     window.currentUserRole = userData ? userData.role : 'guru';
-    currentUser = userData ? (userData.nama || window.currentUserEmail) : 'Guru';
-    
   } catch(e){ 
-    window.currentUserEmail = 'guru@sekolah.com';
+    currentUser = 'guru'; 
+    window.currentUserEmail = '';
     window.currentUserRole = 'guru';
-    currentUser = 'Guru';
   }
 
   const userDisplay = document.getElementById('userDisplay');
   if (userDisplay) {
     const roleIcon = {
       'admin': '👑', 'kepala': '👑', 'wakil': '⭐', 'guru': '👨‍🏫'
-    }[window.currentUserRole] || '👨‍🏫';
+    }[window.currentUserRole] || '👨🏫';
     userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
   }
   
@@ -522,8 +520,7 @@ function loadJadwalGambar(){
   const previewImg = document.getElementById('jadwalPreviewImg');
   const infoText = document.getElementById('jadwalInfoText');
 
-  // ✅ PERBAIKAN: Gunakan email yang di-sanitize sebagai kunci
-  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).on('value', snap => {
+  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).on('value', snap => {
     const data = snap.val();
     if(data && data.base64){
       previewImg.src = data.base64;
@@ -577,8 +574,7 @@ async function handleJadwalFile(file){
     const sizeKB = (base64.length * 0.75) / 1024;
     if(sizeKB > 5000){ toast('❌ Gambar terlalu besar setelah kompresi','err'); progressDiv.style.display = 'none'; return; }
     
-    // ✅ PERBAIKAN: Simpan menggunakan email
-    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).set({
+    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).set({
       base64: base64, fileName: file.name, originalSizeKB: (file.size / 1024).toFixed(1),
       sizeKB: sizeKB.toFixed(1), uploadedAt: nowISO(), uploadedBy: currentUser
     });
@@ -592,10 +588,8 @@ async function handleJadwalFile(file){
 
 window.hapusJadwalMengajar = async function(){
   if(!confirm('⚠️ Hapus gambar jadwal mengajar Anda?')) return;
-  try { 
-    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).remove(); 
-    toast('✅ Gambar jadwal dihapus'); 
-  } catch(err){ toast('❌ Gagal menghapus: ' + err.message,'err'); }
+  try { await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).remove(); toast('✅ Gambar jadwal dihapus'); }
+  catch(err){ toast(' Gagal menghapus: ' + err.message,'err'); }
 };
 
 window.openZoomModal = function(src){ document.getElementById('zoomModalImg').src = src; document.getElementById('zoomModal').classList.add('active'); };
@@ -611,13 +605,11 @@ function initDragDrop(){
 
 function initFirebaseListeners(){
   ROOT_SIPENA.on('value', snap=>{
-    // ✅ PERBAIKAN: Filter kelas menggunakan email
-    daftarKelas = toArr(snap.val()).filter(d => d.type==='class' && d.user_email === window.currentUserEmail);
+    daftarKelas = toArr(snap.val()).filter(d=>d.type==='class' && d.user_name===currentUser);
     populateKelasSelect();
   });
   ROOT_JADWAL.on('value', snap=>{
-    // ✅ PERBAIKAN: Filter jadwal menggunakan email
-    daftarJadwal = toArr(snap.val()).filter(d => d.user_email === window.currentUserEmail);
+    daftarJadwal = toArr(snap.val()).filter(d=>d.user_name===currentUser);
     renderJadwalTable();
     updatePeriodeInfo();
   });
@@ -724,9 +716,7 @@ async function simpanJadwal(){
     hari: document.getElementById('inputHari').value, kelas: kelas, mulai: jamMulai,
     selesai: document.getElementById('inputJamSelesai').value, mapel: document.getElementById('inputMapel').value.trim(),
     ruang: document.getElementById('inputRuang').value.trim(), materi: document.getElementById('inputMateri').value.trim(),
-    user_email: window.currentUserEmail, // ✅ PERBAIKAN: Kunci utama adalah email
-    user_name: currentUser, // Tetap simpan nama untuk referensi tampilan
-    periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
+    user_name: currentUser, periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
   };
 
   const btn = document.getElementById('btnSimpanJadwal');
@@ -825,14 +815,13 @@ function renderJadwalTable(){
 }
 
 function loadAlarmPref(){
-  // ✅ PERBAIKAN: Gunakan email untuk kunci localStorage
-  try{ alarmEnabled = localStorage.getItem('sipelita_alarm_'+window.currentUserEmail) === 'true'; } catch(e){ alarmEnabled = false; }
+  try{ alarmEnabled = localStorage.getItem('sipelita_alarm_'+currentUser) === 'true'; } catch(e){ alarmEnabled = false; }
   document.getElementById('toggleAlarm').checked = alarmEnabled;
   renderAlarmStatusBadge();
 }
 function setAlarmEnabled(val){
   alarmEnabled = val;
-  try{ localStorage.setItem('sipelita_alarm_'+window.currentUserEmail, val ? 'true':'false'); }catch(e){}
+  try{ localStorage.setItem('sipelita_alarm_'+currentUser, val ? 'true':'false'); }catch(e){}
   renderAlarmStatusBadge();
   toast(val ? '🔔 Alarm jadwal diaktifkan' : '🔕 Alarm jadwal dinonaktifkan');
   if(val) updateAlarmMonitor('🟢 Alarm aktif - monitoring setiap 1 detik...');
@@ -841,20 +830,20 @@ function setAlarmEnabled(val){
 function renderAlarmStatusBadge(){
   const badge = document.getElementById('alarmStatusBadge');
   if(alarmEnabled){ badge.textContent = '🔔 Aktif'; badge.className = 'alarm-status on'; }
-  else { badge.textContent = '🔕 Nonaktif'; badge.className = 'alarm-status off'; }
+  else { badge.textContent = ' Nonaktif'; badge.className = 'alarm-status off'; }
 }
 function renderNotifPermStatus(){
   const el = document.getElementById('notifPermStatus');
   if(!('Notification' in window)){ el.textContent = 'Tidak didukung browser ini'; return; }
   const perm = Notification.permission;
-  el.textContent = perm==='granted' ? '✅ Sudah diizinkan' : perm==='denied' ? '❌ Ditolak' : 'Belum diizinkan';
+  el.textContent = perm==='granted' ? '✅ Sudah diizinkan' : perm==='denied' ? ' Ditolak' : 'Belum diizinkan';
 }
 function requestNotifPermission(){
   if(!('Notification' in window)){ toast('Browser ini tidak mendukung notifikasi','err'); return; }
   Notification.requestPermission().then(perm=>{
     renderNotifPermStatus();
     if(perm==='granted') toast('✅ Notifikasi berhasil diizinkan!');
-    else if(perm==='denied') toast('❌ Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
+    else if(perm==='denied') toast(' Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
   });
 }
 
@@ -948,7 +937,7 @@ function fireScheduleAlarm(jadwalItem){
   const kelasDibaca = konversiKelas(jadwalItem.kelas);
   playAlarmSound(jadwalItem.kelas, jadwalItem.mapel);
   toast(`🔔 WAKTUNYA MENGAJAR! Kelas ${kelasDibaca} - ${jadwalItem.mapel||''} (${jadwalItem.mulai})`,'err');
-  updateAlarmMonitor(`🚨 ALARM FIRED: Kelas ${kelasDibaca} - ${jadwalItem.mapel||'-'} (${jadwalItem.mulai})`);
+  updateAlarmMonitor(` ALARM FIRED: Kelas ${kelasDibaca} - ${jadwalItem.mapel||'-'} (${jadwalItem.mulai})`);
   
   if('Notification' in window && Notification.permission==='granted'){
     try{ 
@@ -961,6 +950,9 @@ function fireScheduleAlarm(jadwalItem){
   }
 }
 
+// ══════════════════════════════════════════════
+// ✅ CHECK ALARM - TRACKING SEDERHANA (TANGGAL + JAM)
+// ══════════════════════════════════════════════
 function checkScheduleAlarms(){
   if(!alarmEnabled) return;
   
@@ -968,17 +960,29 @@ function checkScheduleAlarms(){
   const hariMap = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
   const hariIni = hariMap[now.getDay()];
   
+  // Format waktu sekarang: "YYYY-MM-DD_HH:MM"
   const todayStr = now.toISOString().slice(0,10);
   const jamSekarang = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const waktuSekarang = todayStr + '_' + jamSekarang;
   
   daftarJadwal.forEach(j=>{
+    // Skip jika bukan hari ini atau tidak aktif
     if(j.hari !== hariIni || !isJadwalActive(j)) return;
+    
+    // Skip jika jam tidak cocok
     if(j.mulai !== jamSekarang) return;
     
+    // ✅ TRACKING KEY: Tanggal + Jam (bukan ID database)
+    // Ini memungkinkan kelas sama di jam berbeda tetap berbunyi
     const trackingKey = todayStr + '_' + j.mulai;
+    
+    // Skip jika sudah bunyi di jam ini hari ini
     if(alarmFiredToday.has(trackingKey)) return;
     
+    // Mark sebagai sudah bunyi
     alarmFiredToday.add(trackingKey);
+    
+    // Fire alarm!
     fireScheduleAlarm(j);
     console.log(`✅ Alarm fired: ${j.kelas} at ${j.mulai} (tracking: ${trackingKey})`);
   });
@@ -1007,7 +1011,7 @@ function checkUpcomingSchedules(){
       alarmFiredToday.add(notifKey);
       const kelasDibaca = konversiKelas(j.kelas);
       toast(`⏰ 10 menit lagi mengajar: Kelas ${kelasDibaca} (${j.mulai})`, 'warn');
-      updateAlarmMonitor(`⏳ UPCOMING: Kelas ${kelasDibaca} dalam 10 menit (${j.mulai})`);
+      updateAlarmMonitor(` UPCOMING: Kelas ${kelasDibaca} dalam 10 menit (${j.mulai})`);
       
       if('Notification' in window && Notification.permission === 'granted'){
         try {
@@ -1055,14 +1059,23 @@ function scheduleDailyReset(){
 
 function initAlarmEngine(){
   renderNotifPermStatus();
+  
+  // ✅ CHECK ALARM SETIAP 1 DETIK
   setInterval(checkScheduleAlarms, 1000);
+  
+  // Cek upcoming setiap 30 detik
   setInterval(checkUpcomingSchedules, 30000);
+  
+  // Update live clock setiap 1 detik
   setInterval(updateLiveClock, 1000);
+  
+  // Refresh tabel setiap 60 detik
   setInterval(renderJadwalTable, 60000);
   
   updateLiveClock();
   checkScheduleAlarms();
   checkUpcomingSchedules();
+  
   scheduleDailyReset();
   
   console.log('🔔 Alarm engine initialized - checking every 1 SECOND');
