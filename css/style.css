@@ -91,7 +91,7 @@ header p {
 
 .card {
     background: #ffffff;
-    padding: 12px 6px;
+    padding: 22px 16px;
     border-radius: var(--card-radius);
     box-shadow: var(--shadow);
     transition: all 0.25s ease;
@@ -99,7 +99,7 @@ header p {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 6px;
+    gap: 10px;
     position: relative;
     overflow: hidden;
     height: 100%;
@@ -111,32 +111,32 @@ header p {
 }
 
 .card-icon {
-    font-size: 1.5rem;
-    margin-bottom: 4px;
+    font-size: 2.2rem;
+    margin-bottom: 6px;
 }
 
 .card-logo {
-    width: 36px;
-    height: 36px;
+    width: 56px;
+    height: 56px;
     object-fit: contain;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     border-radius: 12px;
 }
 
 .card-title {
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 1rem;
 }
 
 .card-desc {
-    font-size: 0.65rem;
+    font-size: 0.82rem;
     opacity: 0.9;
 }
 
 .status-tag {
-    font-size: 0.6rem;
-    margin-top: 4px;
-    padding: 2px 6px;
+    font-size: 0.72rem;
+    margin-top: 8px;
+    padding: 4px 10px;
     border-radius: 12px;
     font-weight: 600;
     display: inline-block;
@@ -250,7 +250,7 @@ footer {
 }
 
 @media (max-width: 640px) {
-    .grid { grid-template-columns: repeat(3, 1fr); }
+    .grid { grid-template-columns: repeat(2, 1fr); }
     .header-logo { height: 25px !important; width: auto; }
     header { flex-direction: column; align-items: flex-start; }
     #userPanel { display: flex; align-items: center; gap: 12px; }
