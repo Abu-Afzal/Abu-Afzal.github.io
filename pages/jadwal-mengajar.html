@@ -447,7 +447,7 @@ function initApp(){
   if (userDisplay) {
     const roleIcon = {
       'admin': '👑', 'kepala': '👑', 'wakil': '⭐', 'guru': '👨‍🏫'
-    }[window.currentUserRole] || '👨🏫';
+    }[window.currentUserRole] || '👨‍🏫';
     userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
   }
   
@@ -520,7 +520,8 @@ function loadJadwalGambar(){
   const previewImg = document.getElementById('jadwalPreviewImg');
   const infoText = document.getElementById('jadwalInfoText');
 
-  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).on('value', snap => {
+  // ✅ PERBAIKAN: Gunakan email yang di-sanitize sebagai kunci
+  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).on('value', snap => {
     const data = snap.val();
     if(data && data.base64){
       previewImg.src = data.base64;
@@ -574,7 +575,8 @@ async function handleJadwalFile(file){
     const sizeKB = (base64.length * 0.75) / 1024;
     if(sizeKB > 5000){ toast('❌ Gambar terlalu besar setelah kompresi','err'); progressDiv.style.display = 'none'; return; }
     
-    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).set({
+    // ✅ PERBAIKAN: Simpan menggunakan email
+    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).set({
       base64: base64, fileName: file.name, originalSizeKB: (file.size / 1024).toFixed(1),
       sizeKB: sizeKB.toFixed(1), uploadedAt: nowISO(), uploadedBy: currentUser
     });
@@ -588,8 +590,11 @@ async function handleJadwalFile(file){
 
 window.hapusJadwalMengajar = async function(){
   if(!confirm('⚠️ Hapus gambar jadwal mengajar Anda?')) return;
-  try { await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(currentUser)).remove(); toast('✅ Gambar jadwal dihapus'); }
-  catch(err){ toast(' Gagal menghapus: ' + err.message,'err'); }
+  try { 
+    // ✅ PERBAIKAN: Gunakan email
+    await ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).remove(); 
+    toast('✅ Gambar jadwal dihapus'); 
+  } catch(err){ toast('❌ Gagal menghapus: ' + err.message,'err'); }
 };
 
 window.openZoomModal = function(src){ document.getElementById('zoomModalImg').src = src; document.getElementById('zoomModal').classList.add('active'); };
@@ -605,11 +610,52 @@ function initDragDrop(){
 
 function initFirebaseListeners(){
   ROOT_SIPENA.on('value', snap=>{
-    daftarKelas = toArr(snap.val()).filter(d=>d.type==='class' && d.user_name===currentUser);
+    const allData = toArr(snap.val());
+    
+    // ✅ DUAL FILTER: Support email DAN nama (untuk masa transisi)
+    daftarKelas = allData.filter(d => {
+      if (d.type !== 'class') return false;
+      
+      // Prioritas: cocokkan dengan email
+      if (d.user_email === window.currentUserEmail) return true;
+      
+      // Fallback: cocokkan dengan nama (untuk data lama)
+      if (d.user_name === currentUser) return true;
+      
+      // Fallback extra: cocokkan nama depan (jika ada perbedaan gelar)
+      if (d.user_name && currentUser) {
+        const namaDepanDatabase = d.user_name.split(',')[0].trim().toLowerCase();
+        const namaDepanSekarang = currentUser.split(',')[0].trim().toLowerCase();
+        if (namaDepanDatabase === namaDepanSekarang) return true;
+      }
+      
+      return false;
+    });
+    
     populateKelasSelect();
   });
+  
   ROOT_JADWAL.on('value', snap=>{
-    daftarJadwal = toArr(snap.val()).filter(d=>d.user_name===currentUser);
+    const allData = toArr(snap.val());
+    
+    // ✅ DUAL FILTER: Support email DAN nama (untuk masa transisi)
+    daftarJadwal = allData.filter(d => {
+      // Prioritas: cocokkan dengan email
+      if (d.user_email === window.currentUserEmail) return true;
+      
+      // Fallback: cocokkan dengan nama (untuk data lama)
+      if (d.user_name === currentUser) return true;
+      
+      // Fallback extra: cocokkan nama depan (jika ada perbedaan gelar)
+      if (d.user_name && currentUser) {
+        const namaDepanDatabase = d.user_name.split(',')[0].trim().toLowerCase();
+        const namaDepanSekarang = currentUser.split(',')[0].trim().toLowerCase();
+        if (namaDepanDatabase === namaDepanSekarang) return true;
+      }
+      
+      return false;
+    });
+    
     renderJadwalTable();
     updatePeriodeInfo();
   });
@@ -716,14 +762,19 @@ async function simpanJadwal(){
     hari: document.getElementById('inputHari').value, kelas: kelas, mulai: jamMulai,
     selesai: document.getElementById('inputJamSelesai').value, mapel: document.getElementById('inputMapel').value.trim(),
     ruang: document.getElementById('inputRuang').value.trim(), materi: document.getElementById('inputMateri').value.trim(),
-    user_name: currentUser, periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
+    user_email: window.currentUserEmail, // ✅ Selalu simpan email
+    user_name: currentUser, // ✅ Tetap simpan nama untuk backward compatibility
+    periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
   };
 
   const btn = document.getElementById('btnSimpanJadwal');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
   try{
-    if(editKey){ await ROOT_JADWAL.child(editKey).update(payload); }
-    else { await ROOT_JADWAL.push().set({...payload, created_at: nowISO()}); }
+    if(editKey){ 
+      await ROOT_JADWAL.child(editKey).update(payload); 
+    } else { 
+      await ROOT_JADWAL.push().set({...payload, created_at: nowISO()}); 
+    }
     closeModal('modalJadwal');
     toast(editKey ? '✅ Jadwal berhasil diperbarui!' : '✅ Jadwal berhasil ditambahkan!');
   } catch(e){ toast('Gagal menyimpan: '+e.message, 'err'); }
@@ -815,13 +866,13 @@ function renderJadwalTable(){
 }
 
 function loadAlarmPref(){
-  try{ alarmEnabled = localStorage.getItem('sipelita_alarm_'+currentUser) === 'true'; } catch(e){ alarmEnabled = false; }
+  try{ alarmEnabled = localStorage.getItem('sipelita_alarm_'+window.currentUserEmail) === 'true'; } catch(e){ alarmEnabled = false; }
   document.getElementById('toggleAlarm').checked = alarmEnabled;
   renderAlarmStatusBadge();
 }
 function setAlarmEnabled(val){
   alarmEnabled = val;
-  try{ localStorage.setItem('sipelita_alarm_'+currentUser, val ? 'true':'false'); }catch(e){}
+  try{ localStorage.setItem('sipelita_alarm_'+window.currentUserEmail, val ? 'true':'false'); }catch(e){}
   renderAlarmStatusBadge();
   toast(val ? '🔔 Alarm jadwal diaktifkan' : '🔕 Alarm jadwal dinonaktifkan');
   if(val) updateAlarmMonitor('🟢 Alarm aktif - monitoring setiap 1 detik...');
@@ -830,20 +881,20 @@ function setAlarmEnabled(val){
 function renderAlarmStatusBadge(){
   const badge = document.getElementById('alarmStatusBadge');
   if(alarmEnabled){ badge.textContent = '🔔 Aktif'; badge.className = 'alarm-status on'; }
-  else { badge.textContent = ' Nonaktif'; badge.className = 'alarm-status off'; }
+  else { badge.textContent = '🔕 Nonaktif'; badge.className = 'alarm-status off'; }
 }
 function renderNotifPermStatus(){
   const el = document.getElementById('notifPermStatus');
   if(!('Notification' in window)){ el.textContent = 'Tidak didukung browser ini'; return; }
   const perm = Notification.permission;
-  el.textContent = perm==='granted' ? '✅ Sudah diizinkan' : perm==='denied' ? ' Ditolak' : 'Belum diizinkan';
+  el.textContent = perm==='granted' ? '✅ Sudah diizinkan' : perm==='denied' ? '❌ Ditolak' : 'Belum diizinkan';
 }
 function requestNotifPermission(){
   if(!('Notification' in window)){ toast('Browser ini tidak mendukung notifikasi','err'); return; }
   Notification.requestPermission().then(perm=>{
     renderNotifPermStatus();
     if(perm==='granted') toast('✅ Notifikasi berhasil diizinkan!');
-    else if(perm==='denied') toast(' Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
+    else if(perm==='denied') toast('❌ Notifikasi ditolak. Aktifkan manual di pengaturan browser.','err');
   });
 }
 
