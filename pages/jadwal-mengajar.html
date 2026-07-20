@@ -605,16 +605,42 @@ function initDragDrop(){
 
 function initFirebaseListeners(){
   ROOT_SIPENA.on('value', snap=>{
-    daftarKelas = toArr(snap.val()).filter(d=>d.type==='class' && d.user_name===currentUser);
+    const allData = toArr(snap.val());
+    
+    // ✅ DUAL FILTER: Support email DAN nama (untuk masa transisi)
+    daftarKelas = allData.filter(d => {
+      if (d.type !== 'class') return false;
+      
+      // Prioritas: cocokkan dengan email
+      if (d.user_email === window.currentUserEmail) return true;
+      
+      // Fallback: cocokkan dengan nama (untuk data lama)
+      if (d.user_name === currentUser) return true;
+      
+      return false;
+    });
+    
     populateKelasSelect();
   });
+  
   ROOT_JADWAL.on('value', snap=>{
-    daftarJadwal = toArr(snap.val()).filter(d=>d.user_name===currentUser);
+    const allData = toArr(snap.val());
+    
+    // ✅ DUAL FILTER: Support email DAN nama (untuk masa transisi)
+    daftarJadwal = allData.filter(d => {
+      // Prioritas: cocokkan dengan email
+      if (d.user_email === window.currentUserEmail) return true;
+      
+      // Fallback: cocokkan dengan nama (untuk data lama)
+      if (d.user_name === currentUser) return true;
+      
+      return false;
+    });
+    
     renderJadwalTable();
     updatePeriodeInfo();
   });
 }
-
 function populateKelasSelect(){
   const sel = document.getElementById('inputJadwalKelas');
   if(!daftarKelas.length){ sel.innerHTML = '<option value="">-- Belum ada kelas di SIPENA --</option>'; return; }
@@ -716,20 +742,24 @@ async function simpanJadwal(){
     hari: document.getElementById('inputHari').value, kelas: kelas, mulai: jamMulai,
     selesai: document.getElementById('inputJamSelesai').value, mapel: document.getElementById('inputMapel').value.trim(),
     ruang: document.getElementById('inputRuang').value.trim(), materi: document.getElementById('inputMateri').value.trim(),
-    user_name: currentUser, periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
+    user_email: window.currentUserEmail, // ✅ Selalu simpan email
+    user_name: currentUser, // ✅ Tetap simpan nama untuk backward compatibility
+    periode_mulai: periodeMulai, periode_sampai: periodeSampai, updated_at: nowISO()
   };
 
   const btn = document.getElementById('btnSimpanJadwal');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
   try{
-    if(editKey){ await ROOT_JADWAL.child(editKey).update(payload); }
-    else { await ROOT_JADWAL.push().set({...payload, created_at: nowISO()}); }
+    if(editKey){ 
+      await ROOT_JADWAL.child(editKey).update(payload); 
+    } else { 
+      await ROOT_JADWAL.push().set({...payload, created_at: nowISO()}); 
+    }
     closeModal('modalJadwal');
     toast(editKey ? '✅ Jadwal berhasil diperbarui!' : '✅ Jadwal berhasil ditambahkan!');
   } catch(e){ toast('Gagal menyimpan: '+e.message, 'err'); }
   btn.disabled = false; btn.textContent = '💾 Simpan';
 }
-
 function editJadwal(key){
   const j = daftarJadwal.find(d=>d.__key===key); if(!j) return;
   document.getElementById('jadwalEditKey').value = key;
