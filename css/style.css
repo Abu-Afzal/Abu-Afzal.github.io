@@ -250,7 +250,7 @@ footer {
 }
 
 @media (max-width: 640px) {
-    .grid { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: repeat(3, 1fr); }
     .header-logo { height: 25px !important; width: auto; }
     header { flex-direction: column; align-items: flex-start; }
     #userPanel { display: flex; align-items: center; gap: 12px; }
