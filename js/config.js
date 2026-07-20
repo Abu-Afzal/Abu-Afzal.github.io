@@ -81,7 +81,7 @@ const CONFIG = {
         },
         { icon: '🎓', title: 'SIBEL', desc: 'Sistem Belajar Digital', color: '#d32f2f', page: 'pages/elearning.html' },
         { icon: '📁', title: 'Bank Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
-        { icon: '🏥', title: 'SIHAT', desc: 'Sistem Informasi Kesehatan', color: '#e91e63', page: 'pages/uksmart.html' },
+        { icon: '🏥', title: 'SEHAT', desc: 'Sistem Informasi Kesehatan', color: '#e91e63', page: 'pages/uksmart.html' },
         { icon: '📚', title: 'Jurnal Mengajar', desc: '', color: '#6d4c41', page: 'pages/jurnal-online.html' },
         { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
