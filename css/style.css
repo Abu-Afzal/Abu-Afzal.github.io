@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SECTION 1: CSS LANDING PAGE UTAMA (PORTAL SIPELITA) - DIPERBAIKI PRESISI
+   SECTION 1: CSS LANDING PAGE UTAMA (PORTAL SIPELITA) - DIPERTAHANKAN ASLI
    ========================================================================== */
 :root {
     --bg: #f4f6f9;
@@ -75,11 +75,9 @@ header p {
     font-weight: 600;
 }
 
-/* ===== PERBAIKAN UTAMA: Grid Presisi ===== */
 .grid {
     display: grid;
-    /* GANTI auto-fill dengan repeat eksplisit agar konsisten */
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 18px;
     margin-bottom: 40px;
 }
@@ -89,29 +87,22 @@ header p {
     color: inherit;
     display: block;
     cursor: pointer;
-    height: 100%; /* Pastikan link mengisi penuh cell grid */
 }
 
-/* ===== PERBAIKAN UTAMA: Card Presisi ===== */
 .card {
     background: #ffffff;
-    padding: 16px 10px;
+    padding: 12px 6px;
     border-radius: var(--card-radius);
     box-shadow: var(--shadow);
     transition: all 0.25s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Center vertikal */
     text-align: center;
     gap: 6px;
     position: relative;
     overflow: hidden;
-    height: 100%; /* Penuhi cell grid */
-    
-    /* KUNCI PRESISI: Aspect ratio tetap */
-    aspect-ratio: 1 / 1.15;
-    min-height: 140px; /* Fallback jika aspect-ratio tidak didukung */
+    height: 100%;
 }
 
 .card-link:hover .card {
@@ -120,37 +111,32 @@ header p {
 }
 
 .card-icon {
-    font-size: 1.8rem; /* Sedikit lebih besar untuk proporsi */
-    margin-bottom: 6px;
-    line-height: 1;
+    font-size: 1.5rem;
+    margin-bottom: 4px;
 }
 
 .card-logo {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     border-radius: 12px;
 }
 
 .card-title {
-    font-weight: 700;
-    font-size: 0.8rem;
-    line-height: 1.3;
-    color: #1a237e;
+    font-weight: 600;
+    font-size: 0.75rem;
 }
 
 .card-desc {
-    font-size: 0.7rem;
-    opacity: 0.85;
-    line-height: 1.3;
-    color: var(--text-light);
+    font-size: 0.65rem;
+    opacity: 0.9;
 }
 
 .status-tag {
     font-size: 0.6rem;
-    margin-top: 6px;
-    padding: 3px 8px;
+    margin-top: 4px;
+    padding: 2px 6px;
     border-radius: 12px;
     font-weight: 600;
     display: inline-block;
@@ -263,33 +249,8 @@ footer {
     object-fit: contain;
 }
 
-/* ===== RESPONSIVE PRESISI - BREAKPOINT GRANULAR ===== */
-
-/* Tablet (768px - 1024px) */
-@media (max-width: 1024px) {
-    .grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-    }
-}
-
-/* Mobile Besar (641px - 768px) */
-@media (max-width: 768px) {
-    .grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-    }
-    
-    .card {
-        aspect-ratio: 1 / 1.1;
-        min-height: 120px;
-        padding: 12px 8px;
-    }
-    
-    .card-icon { font-size: 1.5rem; }
-    .card-title { font-size: 0.72rem; }
-    .card-desc { font-size: 0.62rem; }
-    
+@media (max-width: 640px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
     .header-logo { height: 25px !important; width: auto; }
     header { flex-direction: column; align-items: flex-start; }
     #userPanel { display: flex; align-items: center; gap: 12px; }
@@ -298,76 +259,12 @@ footer {
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
 }
 
-/* Mobile Kecil (481px - 640px) */
-@media (max-width: 640px) {
-    .container {
-        padding: 16px;
-    }
-    
-    .grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 kolom agar tidak terlalu sempit */
-        gap: 10px;
-    }
-    
-    .card {
-        aspect-ratio: 1 / 1.05;
-        min-height: 110px;
-        padding: 10px 6px;
-    }
-    
-    .card-icon { font-size: 1.4rem; margin-bottom: 4px; }
-    .card-title { font-size: 0.7rem; }
-    .card-desc { font-size: 0.6rem; }
-    
-    .section-title {
-        font-size: 1.1rem;
-        margin: 20px 0 12px;
-    }
-}
-
-/* Mobile Sangat Kecil (360px - 480px) */
-@media (max-width: 480px) {
-    .grid {
-        gap: 8px;
-    }
-    
-    .card {
-        aspect-ratio: 3/4;
-        min-height: 100px;
-        padding: 8px 5px;
-        border-radius: 10px;
-    }
-    
-    .card-icon { font-size: 1.2rem; }
-    .card-title { font-size: 0.65rem; }
-    .card-desc { font-size: 0.55rem; }
-}
-
-/* Mobile Ekstra Kecil (di bawah 360px) */
-@media (max-width: 360px) {
-    .container {
-        padding: 12px;
-    }
-    
-    .grid {
-        gap: 6px;
-    }
-    
-    .card {
-        min-height: 90px;
-        padding: 6px 4px;
-    }
-    
-    .card-icon { font-size: 1rem; }
-    .card-title { font-size: 0.6rem; }
-    .card-desc { font-size: 0.5rem; }
-}
-
 
 /* ==========================================================================
-   SECTION 2: CSS KHUSUS MODUL SIPENA - DIPERBAIKI PRESISI
+   SECTION 2: CSS KHUSUS MODUL SIPENA (MENGGUNAKAN SCOPED CLASS .sipena-modul)
    ========================================================================== */
 
+/* Background khusus aplikasi SIPENA */
 body.sipena-bg {
     background: linear-gradient(135deg, #115e59 0%, #047857 50%, #065f46 100%);
     min-height: 100vh;
@@ -380,6 +277,7 @@ body.sipena-bg {
     width: 100%;
 }
 
+/* SIPENA Header */
 .sipena-modul .sipena-header {
     background: white;
     padding: 20px;
@@ -428,7 +326,7 @@ body.sipena-bg {
 
 .sipena-modul .logout-btn-sp:hover { background: #c0392b; }
 
-/* ===== PERBAIKAN: Menu Grid SIPENA Presisi ===== */
+/* SIPENA Menu Grid Dashboard */
 .sipena-modul .menu-grid-sp {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
@@ -438,7 +336,7 @@ body.sipena-bg {
 
 .sipena-modul .menu-card-sp {
     background: rgb(255, 255, 255);
-    padding: 16px 8px;
+    padding: 20px 10px;
     border-radius: 10px;
     box-shadow: 0 3px 8px rgba(0,0,0,0.1);
     cursor: pointer;
@@ -448,11 +346,7 @@ body.sipena-bg {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    
-    /* KUNCI PRESISI SIPENA */
-    aspect-ratio: 1 / 1;
-    min-height: 100px;
-    height: 100%;
+    min-height: 110px;
 }
 
 .sipena-modul .menu-card-sp:hover {
@@ -468,6 +362,7 @@ body.sipena-bg {
     margin-top: 6px;
 }
 
+/* SIPENA Konten Area */
 .sipena-modul .content-area-sp {
     background: white;
     padding: 25px;
@@ -500,6 +395,7 @@ body.sipena-bg {
     text-align: center;
 }
 
+/* SIPENA Form & Input */
 .sipena-modul .form-group-sp {
     margin-bottom: 20px;
     text-align: left;
@@ -528,6 +424,7 @@ body.sipena-bg {
     box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
 }
 
+/* SIPENA Tombol & Tabs */
 .sipena-modul .action-bar-sp {
     display: flex;
     gap: 10px;
@@ -577,6 +474,7 @@ body.sipena-bg {
     border-bottom-color: #0a55f7;
 }
 
+/* SIPENA Tables */
 .sipena-modul .table-container-sp {
     overflow-x: auto;
     margin-top: 20px;
@@ -602,53 +500,99 @@ body.sipena-bg {
     color: #333;
 }
 
-/* ===== RESPONSIVE SIPENA PRESISI ===== */
-@media(max-width: 1024px) {
-    .sipena-modul .menu-grid-sp { 
-        grid-template-columns: repeat(4, 1fr); 
-        gap: 10px; 
-    }
-}
-
+/* Responsif khusus SIPENA */
 @media(max-width: 768px) {
-    .sipena-modul .sipena-header { 
-        flex-direction: column; 
-        text-align: center; 
-    }
-    .sipena-modul .menu-grid-sp { 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 8px; 
-    }
-    .sipena-modul .menu-card-sp {
-        aspect-ratio: 1 / 1;
-        min-height: 90px;
-        padding: 12px 6px;
-    }
-    .sipena-modul .menu-title-sp {
-        font-size: 10px;
-    }
+    .sipena-modul .sipena-header { flex-direction: column; text-align: center; }
+    .sipena-modul .menu-grid-sp { grid-template-columns: repeat(3, 1fr); gap: 8px; }
 }
 
-@media(max-width: 480px) {
-    .sipena-modul .menu-grid-sp { 
-        grid-template-columns: repeat(2, 1fr); 
-        gap: 6px; 
-    }
-    .sipena-modul .menu-card-sp {
-        aspect-ratio: 1 / 1;
-        min-height: 80px;
-        padding: 10px 5px;
-    }
-    .sipena-modul .menu-title-sp {
-        font-size: 9px;
-    }
+/* Container Utama Grid Galeri */
+.galeri-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 20px 0;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
+/* Kartu Utama Berbasis Glassmorphism */
+.galeri-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Efek Hover saat Kartu Disorot */
+.galeri-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Pembungkus Gambar */
+.card-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px; /* Tinggi seragam untuk semua sampul */
+    overflow: hidden;
+    background-color: #f1f5f9;
+}
+
+/* Pengaturan Foto Sampul Asli */
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Memotong gambar secara proporsional agar pas di kotak */
+    transition: transform 0.5s ease;
+}
+
+.galeri-card:hover .card-img {
+    transform: scale(1.08); /* Efek zoom-in halus saat dihover */
+}
+
+.card-image-placeholder {
+    width: 100%;
+    height: 100%;
+}
+
+/* Area Judul Kegiatan */
+.card-body {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.card-title {
+    font-size: 1.05rem;
+    color: #1e293b;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.4;
+    letter-spacing: 0.3px;
+    transition: color 0.3s ease;
+}
+
+.galeri-card:hover .card-title {
+    color: #4f46e5; /* Judul berubah warna ke ungu saat dihover */
+}
 
 /* ==========================================================================
    SECTION 3: CSS KHUSUS MODUL SCANNER & KARTU HASIL ABSENSI (SICAN MODERN)
    ========================================================================== */
 
+/* Kontainer Utama Hasil Scan Berbasis Glassmorphism Lembut */
 .scan-result-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(12px);
@@ -664,11 +608,13 @@ body.sipena-bg {
     animation: slideUpSican 0.4s ease forwards;
 }
 
+/* Efek Sorot saat Kartu Sukses Berhasil Ditampilkan */
 .scan-result-card:hover {
     box-shadow: var(--shadow-hover);
     border-color: rgba(46, 125, 50, 0.4);
 }
 
+/* Badge "ABSENSI BERHASIL" yang Segar */
 .card-badge {
     background-color: #e8f5e9;
     color: #2e7d32;
@@ -688,6 +634,7 @@ body.sipena-bg {
     font-weight: 900;
 }
 
+/* Penataan Data Profil Siswa */
 .student-name {
     color: var(--text);
     font-size: 1.4rem;
@@ -705,12 +652,14 @@ body.sipena-bg {
     letter-spacing: 0.5px;
 }
 
+/* Pembatas Garis Transparan Halus */
 .scan-result-card .divider {
     height: 1px;
     background: linear-gradient(to right, rgba(0,0,0,0.01), rgba(0,0,0,0.08), rgba(0,0,0,0.01));
     margin: 18px 0;
 }
 
+/* Baris Detail Informasi Kegiatan */
 .info-row {
     display: flex;
     justify-content: space-between;
@@ -733,6 +682,7 @@ body.sipena-bg {
     border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
+/* Indikator Penanda Jam Log Absensi Real-Time */
 .time-badge {
     background: #1a237e;
     color: #ffffff;
@@ -746,6 +696,7 @@ body.sipena-bg {
     box-shadow: 0 4px 12px rgba(26, 35, 126, 0.2);
 }
 
+/* Animasi Muncul Halus Mengikuti Logika CSS Utama */
 @keyframes slideUpSican {
     from {
         opacity: 0;
@@ -757,6 +708,7 @@ body.sipena-bg {
     }
 }
 
+/* Responsivitas untuk Layar Ponsel Pintar */
 @media (max-width: 640px) {
     .scan-result-card {
         width: 95%;
@@ -768,9 +720,8 @@ body.sipena-bg {
     }
 }
 
-
 /* ==========================================================================
-   SECTION 4: CSS KHUSUS MODUL PKKM - DIPERBAIKI PRESISI
+   SECTION 4: CSS KHUSUS MODUL PKKM (SISTEM KARTU MODERN E-DOKUMEN)
    ========================================================================== */
 
 .pkkm-wrapper {
@@ -781,17 +732,17 @@ body.sipena-bg {
     margin-bottom: 30px;
 }
 
-/* ===== PERBAIKAN: Grid PKKM Presisi ===== */
+/* Desain Kartu Grid Seperti E-Dokumen */
 .pkkm-grid-dokumen {
     display: grid;
-    /* GANTI auto-fill dengan repeat eksplisit */
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 16px;
     margin-top: 15px;
 }
 
 .pkkm-card-box {
     background: #f8fafc;
+    border-left: 4px solid #1a237e;
     border-radius: 12px;
     padding: 18px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.02);
@@ -801,11 +752,6 @@ body.sipena-bg {
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid #e2e8f0;
     border-left: 4px solid #1a237e;
-    
-    /* KUNCI PRESISI PKKM */
-    aspect-ratio: 1 / 1.1;
-    min-height: 150px;
-    height: 100%;
 }
 
 .pkkm-card-box:hover {
@@ -830,6 +776,7 @@ body.sipena-bg {
     padding-top: 12px;
 }
 
+/* Tombol Aksi Mini */
 .btn-action-mini {
     flex: 1;
     padding: 8px 10px;
@@ -852,6 +799,7 @@ body.sipena-bg {
 .btn-mini-hapus { background: #ffebee; color: #c62828; }
 .btn-mini-hapus:hover { background: #ffcdd2; }
 
+/* Status Alert Kosong */
 .status-empty-box {
     grid-column: 1 / -1;
     text-align: center;
@@ -861,174 +809,4 @@ body.sipena-bg {
     background: #f8fafc;
     border-radius: 12px;
     border: 2px dashed #cbd5e1;
-}
-
-/* ===== RESPONSIVE PKKM PRESISI ===== */
-@media (max-width: 1024px) {
-    .pkkm-grid-dokumen {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-    }
-}
-
-@media (max-width: 768px) {
-    .pkkm-grid-dokumen {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-    .pkkm-card-box {
-        aspect-ratio: 1 / 1;
-        min-height: 130px;
-        padding: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .pkkm-grid-dokumen {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-    .pkkm-card-box {
-        aspect-ratio: 1 / 1;
-        min-height: 110px;
-        padding: 12px 10px;
-    }
-    .pkkm-card-action {
-        flex-direction: column;
-        gap: 6px;
-    }
-}
-
-@media (max-width: 360px) {
-    .pkkm-grid-dokumen {
-        gap: 8px;
-    }
-    .pkkm-card-box {
-        min-height: 100px;
-        padding: 10px 8px;
-    }
-}
-
-
-/* ==========================================================================
-   SECTION 5: CSS GALERI - DIPERBAIKI PRESISI
-   ========================================================================== */
-
-.galeri-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* GANTI auto-fill dengan repeat */
-    gap: 25px;
-    padding: 20px 0;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.galeri-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 16px;
-    overflow: hidden;
-    text-decoration: none;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    display: flex;
-    flex-direction: column;
-}
-
-.galeri-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.card-image-wrapper {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    overflow: hidden;
-    background-color: #f1f5f9;
-}
-
-.card-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-}
-
-.galeri-card:hover .card-img {
-    transform: scale(1.08);
-}
-
-.card-image-placeholder {
-    width: 100%;
-    height: 100%;
-}
-
-.card-body {
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.5);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-}
-
-.card-title {
-    font-size: 1.05rem;
-    color: #1e293b;
-    font-weight: 600;
-    margin: 0;
-    line-height: 1.4;
-    letter-spacing: 0.3px;
-    transition: color 0.3s ease;
-}
-
-.galeri-card:hover .card-title {
-    color: #4f46e5;
-}
-
-/* ===== RESPONSIVE GALERI PRESISI ===== */
-@media (max-width: 1024px) {
-    .galeri-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .galeri-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-    }
-    .card-image-wrapper {
-        height: 160px;
-    }
-}
-
-@media (max-width: 480px) {
-    .galeri-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-    .card-image-wrapper {
-        height: 130px;
-    }
-    .card-body {
-        padding: 12px;
-    }
-    .card-title {
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 360px) {
-    .galeri-grid {
-        gap: 10px;
-    }
-    .card-image-wrapper {
-        height: 110px;
-    }
 }
