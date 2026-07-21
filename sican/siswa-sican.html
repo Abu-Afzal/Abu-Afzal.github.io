@@ -22,40 +22,22 @@
         .grid-input { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: .85rem; font-weight: 600; }
-        input[type="file"] { padding: 10px; border: 2px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; cursor: pointer; text-align: center; }
+        input[type="file"], input[type="text"] { padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; }
+        input[type="file"] { border-style: dashed; cursor: pointer; text-align: center; }
+        input[type="text"]:focus { outline: none; border-color: #2563eb; }
         
         .btn { border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: all 0.2s; }
-        .btn-primary { background: #2563eb; }
-        .btn-primary:hover { background: #1d4ed8; }
-        .btn-success { background: #16a34a; }
-        .btn-success:hover { background: #15803d; }
-        .btn-warning { background: #d97706; }
-        .btn-danger { background: #dc2626; padding: 6px 12px; font-size: 0.8rem; }
-        .btn-danger:hover { background: #b91c1c; }
-        .btn-info { background: #0891b2; }
-        .btn-info:hover { background: #0e7490; }
+        .btn-primary { background: #2563eb; } .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #16a34a; } .btn-success:hover { background: #15803d; }
+        .btn-warning { background: #d97706; } .btn-warning:hover { background: #b45309; }
+        .btn-danger { background: #dc2626; padding: 6px 12px; font-size: 0.8rem; } .btn-danger:hover { background: #b91c1c; }
+        .btn-info { background: #0891b2; } .btn-info:hover { background: #0e7490; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* Tab & Sheet Styles */
-        .class-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            border-bottom: 3px solid #e2e8f0;
-            padding-bottom: 10px;
-        }
-        .class-tab {
-            padding: 10px 18px;
-            background: #f1f5f9;
-            border: none;
-            border-radius: 8px 8px 0 0;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            color: #475569;
-            transition: all 0.2s;
-        }
+        .class-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 3px solid #e2e8f0; padding-bottom: 10px; }
+        .class-tab { padding: 10px 18px; background: #f1f5f9; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; font-size: 14px; color: #475569; transition: all 0.2s; }
         .class-tab:hover { background: #cbd5e1; }
         .class-tab.active { background: #1e3a8a; color: white; }
         .class-tab .count { background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 6px; }
@@ -64,18 +46,7 @@
         .class-sheet.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .sheet-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border-left: 4px solid #2563eb;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #2563eb; flex-wrap: wrap; gap: 10px; }
         .sheet-title { font-size: 16px; font-weight: 700; color: #1e3a8a; }
         .sheet-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
@@ -88,22 +59,30 @@
         .template-link { font-size: 0.9rem; color: #2563eb; text-decoration: none; font-weight: 600; }
         .template-link:hover { text-decoration: underline; }
         
-        /* QR Code Modal */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .modal.show { display: flex; }
-        .modal-content { background: white; border-radius: 16px; padding: 30px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-content.large { max-width: 900px; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }
+        .modal-header h2 { font-size: 1.2rem; color: #1e3a8a; }
+        
         .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
         .qr-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; background: white; }
         .qr-card h3 { margin: 10px 0 5px; font-size: 14px; color: #1e3a8a; }
         .qr-card p { margin: 3px 0; font-size: 12px; color: #64748b; }
         .qr-code-container { margin: 10px auto; display: inline-block; }
         .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        
         .loading { text-align: center; padding: 40px; font-size: 16px; color: #64748b; }
         .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Print Styles */
+        .form-modal-group { margin-bottom: 15px; }
+        .form-modal-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #334155; }
+        .form-modal-group input { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+        .form-modal-group input:focus { outline: none; border-color: #2563eb; }
+
         @media print {
             .no-print { display: none !important; }
             .class-sheet { display: none !important; }
@@ -125,36 +104,170 @@
 
 <div class="container">
 
+    <!-- Card Import Global -->
     <div class="card no-print">
-        <h3>📤 Import Data Siswa Baru (Global)</h3>
+        <h3>📤 Import Data Siswa Massal (Excel)</h3>
         <p style="color: #64748b; font-size: 0.85rem; margin: 5px 0 15px;">
-            Unggah data master siswa untuk referensi scanner. Kolom Excel wajib huruf kecil semua: <b>nis</b> | <b>nama</b> | <b>kelas</b>.
+            Kolom Excel wajib huruf kecil: <b>nis</b> | <b>nama</b> | <b>kelas</b>. Untuk tambahan 1-2 siswa, gunakan tombol "➕ Tambah" di tab kelas masing-masing.
         </p>
-        
         <div class="grid-input">
             <div class="form-group">
                 <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
             </div>
         </div>
-
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-primary" id="btnUpload">🚀 Unggah Data Master</button>
-                <button class="btn btn-success" id="btnGenerateQR" onclick="openQRModalGlobal()">📱 Generate QR Code</button>
+                <button class="btn btn-success" onclick="openQRModalGlobal()">📱 Generate QR Semua</button>
             </div>
-            <a href="#" id="downloadTemplate" class="template-link"> Download Format Excel</a>
+            <a href="#" id="downloadTemplate" class="template-link">📥 Download Format Excel</a>
+        </div
+</think>
+
+Berikut adalah file **`siswa-sican.html` yang telah ditingkatkan secara lengkap** sesuai permintaan Anda:
+
+1. ✅ **Urutan Nama A-Z**: Data siswa di setiap kelas otomatis diurutkan berdasarkan abjad (A-Z) menggunakan `localeCompare('id')`.
+2. ✅ **Tambah Siswa Manual**: Tombol "➕ Tambah" di setiap tab kelas untuk menambah 1-2 siswa tanpa perlu upload Excel.
+3. ✅ **Edit Data Siswa**: Tombol "✏️ Edit" di samping tombol hapus untuk mengubah NIS/Nama/Kelas siswa.
+4. ✅ **Hapus Satu Kelas**: Tombol "🗑️ Hapus Kelas Ini" untuk menghapus seluruh siswa di kelas tersebut sekaligus (dengan konfirmasi keamanan berlapis).
+
+Silakan **salin seluruh kode di bawah ini** dan timpa file `siswa-sican.html` Anda:
+
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SICAN - Admin Master Siswa</title>
+    <link rel="icon" type="image/png" href="../assets/images/sipelita-app.png">
+    
+    <!-- Library yang dibutuhkan -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; color: #334155; }
+        .header { background: linear-gradient(135deg, #0f172a, #1e3a8a); color: white; padding: 24px; text-align: center; }
+        .header h1 { margin-bottom: 6px; font-size: 1.8rem; }
+        .container { max-width: 1200px; margin: 25px auto; padding: 0 15px; }
+        .card { background: white; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,.06); }
+        
+        .grid-input { display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: .85rem; font-weight: 600; }
+        input[type="file"], input[type="text"] { padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; }
+        input[type="file"] { border-style: dashed; cursor: pointer; text-align: center; }
+        input[type="text"]:focus { outline: none; border-color: #2563eb; }
+        
+        .btn { border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; color: white; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; } .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #16a34a; } .btn-success:hover { background: #15803d; }
+        .btn-warning { background: #d97706; } .btn-warning:hover { background: #b45309; }
+        .btn-danger { background: #dc2626; padding: 6px 12px; font-size: 0.8rem; } .btn-danger:hover { background: #b91c1c; }
+        .btn-info { background: #0891b2; } .btn-info:hover { background: #0e7490; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Tab & Sheet Styles */
+        .class-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; border-bottom: 3px solid #e2e8f0; padding-bottom: 10px; }
+        .class-tab { padding: 10px 18px; background: #f1f5f9; border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: 600; font-size: 14px; color: #475569; transition: all 0.2s; }
+        .class-tab:hover { background: #cbd5e1; }
+        .class-tab.active { background: #1e3a8a; color: white; }
+        .class-tab .count { background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-left: 6px; }
+
+        .class-sheet { display: none; animation: fadeIn 0.3s; }
+        .class-sheet.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #2563eb; flex-wrap: wrap; gap: 10px; }
+        .sheet-title { font-size: 16px; font-weight: 700; color: #1e3a8a; }
+        .sheet-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .table-wrap { overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+        th { background: #f1f5f9; color: #1e3a8a; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        tr:hover { background: #fafafa; }
+        .text-center { text-align: center; }
+        .template-link { font-size: 0.9rem; color: #2563eb; text-decoration: none; font-weight: 600; }
+        .template-link:hover { text-decoration: underline; }
+        
+        /* Modals */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9999; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal.show { display: flex; }
+        .modal-content { background: white; border-radius: 16px; padding: 30px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-content.large { max-width: 900px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }
+        .modal-header h2 { font-size: 1.2rem; color: #1e3a8a; }
+        
+        .qr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+        .qr-card { border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; background: white; }
+        .qr-card h3 { margin: 10px 0 5px; font-size: 14px; color: #1e3a8a; }
+        .qr-card p { margin: 3px 0; font-size: 12px; color: #64748b; }
+        .qr-code-container { margin: 10px auto; display: inline-block; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        
+        .loading { text-align: center; padding: 40px; font-size: 16px; color: #64748b; }
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .form-modal-group { margin-bottom: 15px; }
+        .form-modal-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #334155; }
+        .form-modal-group input { width: 100%; padding: 10px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; }
+        .form-modal-group input:focus { outline: none; border-color: #2563eb; }
+
+        @media print {
+            .no-print { display: none !important; }
+            .class-sheet { display: none !important; }
+            .class-sheet.active { display: block !important; page-break-after: always; }
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>🛡️ Panel Admin: Master Data Siswa SICAN</h1>
+    <p>Database Pusat Presensi dan Pembiasaan Digital</p>
+    <div style="margin-top:15px;">
+        <a href="../index.html" style="color:white; text-decoration:none; border:1px solid rgba(255,255,255,.4); padding:8px 15px; border-radius:8px;">🏠 Dashboard Admin</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Card Import Global -->
+    <div class="card no-print">
+        <h3>📤 Import Data Siswa Massal (Excel)</h3>
+        <p style="color: #64748b; font-size: 0.85rem; margin: 5px 0 15px;">
+            Kolom Excel wajib huruf kecil: <b>nis</b> | <b>nama</b> | <b>kelas</b>. Untuk tambahan 1-2 siswa, gunakan tombol "➕ Tambah" di tab kelas masing-masing.
+        </p>
+        <div class="grid-input">
+            <div class="form-group">
+                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="btnUpload">🚀 Unggah Data Master</button>
+                <button class="btn btn-success" onclick="openQRModalGlobal()">📱 Generate QR Semua</button>
+            </div>
+            <a href="#" id="downloadTemplate" class="template-link">📥 Download Format Excel</a>
         </div>
     </div>
 
+    <!-- Card Daftar Siswa -->
     <div class="card">
         <h3>👥 Total Database Murid Terdaftar (<span id="totalSiswa">0</span> Siswa)</h3>
         
-        <!-- Tabs Container -->
         <div id="classTabs" class="class-tabs">
             <div class="loading"><div class="spinner"></div> Memuat data kelas...</div>
         </div>
 
-        <!-- Sheets Container -->
         <div id="classSheets">
             <!-- Sheets akan di-generate oleh JavaScript -->
         </div>
@@ -162,31 +275,73 @@
 
 </div>
 
-<!-- Modal QR Code -->
-<div id="qrModal" class="modal">
+<!-- Modal Tambah/Edit Siswa -->
+<div id="formModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="modalTitle">📱 QR Code Siswa SICAN</h2>
-            <button class="btn btn-danger" onclick="closeQRModal()" style="padding: 8px 16px;">✕ Tutup</button>
+            <h2 id="formModalTitle">Tambah Siswa</h2>
+            <button class="btn btn-danger btn-sm" onclick="closeFormModal()">✕</button>
         </div>
-        
+        <form id="studentForm" onsubmit="handleFormSubmit(event)">
+            <input type="hidden" id="editDocId">
+            <div class="form-modal-group">
+                <label>NIS / NISN</label>
+                <input type="text" id="inputNis" required placeholder="Contoh: 1001">
+            </div>
+            <div class="form-modal-group">
+                <label>Nama Lengkap</label>
+                <input type="text" id="inputNama" required placeholder="Contoh: Ahmad Fauzi">
+            </div>
+            <div class="form-modal-group">
+                <label>Kelas</label>
+                <input type="text" id="inputKelas" required placeholder="Contoh: X MIPA 1">
+            </div>
+            <div class="btn-group" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" id="btnSaveForm">💾 Simpan</button>
+                <button type="button" class="btn btn-warning" onclick="closeFormModal()">Batal</button>
+            </div>
+        </form
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Hapus Kelas -->
+<div id="deleteClassModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 style="color: #dc2626;">⚠️ Konfirmasi Hapus Kelas</h2>
+            <button class="btn btn-danger btn-sm" onclick="closeDeleteClassModal()">✕</button>
+        </div>
+        <p style="margin-bottom: 20px; color: #475569; line-height: 1.6;">
+            Anda akan menghapus <b>SELURUH</b> data siswa di kelas <b id="deleteClassName"></b>. 
+            Tindakan ini <b>tidak dapat dibatalkan</b>.
+        </p>
+        <div class="btn-group">
+            <button class="btn btn-danger" id="btnConfirmDeleteClass">🗑️ Ya, Hapus Semua</button>
+            <button class="btn btn-warning" onclick="closeDeleteClassModal()">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal QR Code -->
+<div id="qrModal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h2 id="qrModalTitle">📱 QR Code Siswa SICAN</h2>
+            <button class="btn btn-danger btn-sm" onclick="closeQRModal()">✕ Tutup</button>
+        </div>
         <div class="btn-group no-print">
             <button class="btn btn-success" onclick="downloadAllQR()">📥 Download Semua (ZIP)</button>
             <button class="btn btn-primary" onclick="printAllQR()">🖨️ Cetak Semua</button>
         </div>
-        
         <div id="qrContainer" class="qr-grid">
-            <div class="loading">
-                <div class="spinner"></div>
-                Memuat QR Code...
-            </div>
+            <div class="loading"><div class="spinner"></div> Memuat QR Code...</div>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { auth, db } from "../js/firebase-config.js";
-    import { collection, getDocs, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { collection, getDocs, deleteDoc, doc, writeBatch, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     // Proteksi halaman: Wajib login
@@ -202,16 +357,14 @@
     const excelFileInput = document.getElementById('excelFile');
     let allStudents = [];
     let currentQRClassData = [];
+    let classToDelete = '';
 
     // =========================================================================
     // UPLOAD DATA MASTER
     // =========================================================================
     btnUpload.addEventListener('click', () => {
         const file = excelFileInput.files[0];
-        if (!file) {
-            alert('Pilih file Excel terlebih dahulu!');
-            return;
-        }
+        if (!file) { alert('Pilih file Excel terlebih dahulu!'); return; }
 
         btnUpload.disabled = true;
         btnUpload.textContent = 'Menyimpan ke Sistem... ⏳';
@@ -237,12 +390,7 @@
 
                     if (nisSiswa && namaSiswa) {
                         const newDocRef = doc(collectionRef);
-                        batch.set(newDocRef, {
-                            nis: nisSiswa,
-                            nama: namaSiswa,
-                            kelas: kelasSiswa,
-                            createdAt: new Date().toISOString()
-                        });
+                        batch.set(newDocRef, { nis: nisSiswa, nama: namaSiswa, kelas: kelasSiswa, createdAt: new Date().toISOString() });
                         totalData++;
                     }
                 });
@@ -267,7 +415,7 @@
     });
 
     // =========================================================================
-    // LOAD & DISPLAY DATA BY CLASS
+    // LOAD & DISPLAY DATA BY CLASS (DENGAN SORTIR A-Z)
     // =========================================================================
     async function loadMasterSiswaSICAN() {
         const tabsContainer = document.getElementById('classTabs');
@@ -292,7 +440,7 @@
                 return;
             }
 
-            // Kelompokkan berdasarkan kelas
+            // 1. Kelompokkan berdasarkan kelas
             const grouped = {};
             allStudents.forEach(s => {
                 const k = s.kelas || 'Tanpa Kelas';
@@ -300,8 +448,18 @@
                 grouped[k].push(s);
             });
 
-            // Urutkan nama kelas
-            const sortedClasses = Object.keys(grouped).sort();
+            // 2. SORTIR NAMA SISWA A-Z di dalam setiap kelas
+            Object.keys(grouped).forEach(kelas => {
+                grouped[kelas].sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
+            });
+
+            // 3. Urutkan nama kelas (X, XI, XII)
+            const sortedClasses = Object.keys(grouped).sort((a, b) => {
+                const extractNum = (str) => parseInt(str.match(/\d+/)?.[0] || 0);
+                const extractRomawi = (str) => str.match(/^[A-Z]+/)?.[0] || '';
+                if (extractRomawi(a) !== extractRomawi(b)) return extractRomawi(a).localeCompare(extractRomawi(b));
+                return extractNum(a) - extractNum(b);
+            });
 
             tabsContainer.innerHTML = '';
             sheetsContainer.innerHTML = '';
@@ -327,9 +485,11 @@
                     <div class="sheet-header">
                         <div class="sheet-title">📚 Daftar Siswa Kelas ${kelas} <span style="font-size:0.85rem; color:#64748b; font-weight:400;">(${students.length} Siswa)</span></div>
                         <div class="sheet-actions no-print">
-                            <button class="btn btn-success" onclick="openQRModal('${kelas}')">📱 Generate QR Kelas Ini</button>
-                            <button class="btn btn-info" onclick="exportClassExcel('${kelas}')">📥 Export Excel</button>
-                            <button class="btn btn-primary" onclick="printClass('${kelas}')">🖨️ Cetak Kelas</button>
+                            <button class="btn btn-success btn-sm" onclick="openAddModal('${kelas}')">➕ Tambah</button>
+                            <button class="btn btn-info btn-sm" onclick="openQRModal('${kelas}')">📱 QR Kelas Ini</button>
+                            <button class="btn btn-primary btn-sm" onclick="exportClassExcel('${kelas}')">📥 Excel</button>
+                            <button class="btn btn-warning btn-sm" onclick="printClass('${kelas}')">🖨️ Cetak</button>
+                            <button class="btn btn-danger btn-sm" onclick="openDeleteClassModal('${kelas}')" style="margin-left: 10px;">🗑️ Hapus Kelas Ini</button>
                         </div>
                     </div>
                     <div class="table-wrap">
@@ -340,7 +500,7 @@
                                     <th>NIS / NISN</th>
                                     <th>Nama Lengkap</th>
                                     <th>Kelas</th>
-                                    <th class="text-center no-print" style="width: 100px;">Tindakan</th>
+                                    <th class="text-center no-print" style="width: 140px;">Tindakan</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -351,7 +511,8 @@
                                         <td><b>${siswa.nama}</b></td>
                                         <td>${siswa.kelas}</td>
                                         <td class="text-center no-print">
-                                            <button class="btn btn-danger btn-hapus" data-id="${siswa.id}">🗑️</button>
+                                            <button class="btn btn-info btn-sm" onclick="openEditModal('${siswa.id}')" style="margin-right: 5px;">✏️ Edit</button>
+                                            <button class="btn btn-danger btn-sm" onclick="deleteSingleStudent('${siswa.id}')">🗑️</button>
                                         </td>
                                     </tr>
                                 `).join('')}
@@ -360,17 +521,6 @@
                     </div>
                 `;
                 sheetsContainer.appendChild(sheet);
-            });
-
-            // Handler Hapus Dokumen
-            document.querySelectorAll('.btn-hapus').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const idDoc = e.target.getAttribute('data-id');
-                    if (confirm("Hapus siswa ini dari database master SICAN?")) {
-                        await deleteDoc(doc(db, 'sican_siswa', idDoc));
-                        loadMasterSiswaSICAN();
-                    }
-                });
             });
 
         } catch (err) {
@@ -386,27 +536,148 @@
     window.switchTab = function(classId) {
         document.querySelectorAll('.class-tab').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.class-sheet').forEach(sheet => sheet.classList.remove('active'));
-        
         document.getElementById(`tab-${classId}`).classList.add('active');
         document.getElementById(`sheet-${classId}`).classList.add('active');
     };
+
+    // =========================================================================
+    // MANAJEMEN FORM (TAMBAH / EDIT)
+    // =========================================================================
+    window.openAddModal = function(kelas) {
+        document.getElementById('formModalTitle').textContent = '➕ Tambah Siswa Manual';
+        document.getElementById('editDocId').value = '';
+        document.getElementById('inputNis').value = '';
+        document.getElementById('inputNama').value = '';
+        document.getElementById('inputKelas').value = kelas;
+        document.getElementById('btnSaveForm').textContent = '💾 Simpan Siswa';
+        document.getElementById('formModal').classList.add('show');
+    };
+
+    window.openEditModal = function(id) {
+        const s = allStudents.find(x => x.id === id);
+        if (!s) return;
+        document.getElementById('formModalTitle').textContent = '✏️ Edit Data Siswa';
+        document.getElementById('editDocId').value = s.id;
+        document.getElementById('inputNis').value = s.nis;
+        document.getElementById('inputNama').value = s.nama;
+        document.getElementById('inputKelas').value = s.kelas;
+        document.getElementById('btnSaveForm').textContent = '💾 Perbarui Data';
+        document.getElementById('formModal').classList.add('show');
+    };
+
+    window.closeFormModal = function() {
+        document.getElementById('formModal').classList.remove('show');
+    };
+
+    window.handleFormSubmit = async function(e) {
+        e.preventDefault();
+        const docId = document.getElementById('editDocId').value;
+        const nis = document.getElementById('inputNis').value.trim();
+        const nama = document.getElementById('inputNama').value.trim();
+        const kelas = document.getElementById('inputKelas').value.trim();
+
+        if (!nis || !nama || !kelas) {
+            alert('Semua kolom wajib diisi!');
+            return;
+        }
+
+        const btn = document.getElementById('btnSaveForm');
+        btn.disabled = true;
+        btn.textContent = 'Menyimpan...';
+
+        try {
+            if (docId) {
+                // Mode Edit
+                await updateDoc(doc(db, 'sican_siswa', docId), { nis, nama, kelas });
+                alert('Data siswa berhasil diperbarui!');
+            } else {
+                // Mode Tambah
+                await addDoc(collection(db, 'sican_siswa'), { 
+                    nis, nama, kelas, 
+                    createdAt: new Date().toISOString() 
+                });
+                alert('Siswa baru berhasil ditambahkan!');
+            }
+            closeFormModal();
+            loadMasterSiswaSICAN();
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menyimpan data: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = docId ? '💾 Perbarui Data' : '💾 Simpan Siswa';
+        }
+    };
+
+    // =========================================================================
+    // HAPUS DATA (SINGLE & CLASS)
+    // =========================================================================
+    window.deleteSingleStudent = async function(id) {
+        if (confirm("Hapus siswa ini dari database?")) {
+            await deleteDoc(doc(db, 'sican_siswa', id));
+            loadMasterSiswaSICAN();
+        }
+    };
+
+    window.openDeleteClassModal = function(kelas) {
+        classToDelete = kelas;
+        const count = allStudents.filter(s => s.kelas === kelas).length;
+        document.getElementById('deleteClassName').textContent = `${kelas} (${count} siswa)`;
+        document.getElementById('deleteClassModal').classList.add('show');
+    };
+
+    window.closeDeleteClassModal = function() {
+        document.getElementById('deleteClassModal').classList.remove('show');
+        classToDelete = '';
+    };
+
+    document.getElementById('btnConfirmDeleteClass').addEventListener('click', async () => {
+        if (!classToDelete) return;
+        
+        const btn = document.getElementById('btnConfirmDeleteClass');
+        btn.disabled = true;
+        btn.textContent = 'Menghapus...';
+
+        try {
+            const studentsToDelete = allStudents.filter(s => s.kelas === classToDelete);
+            const batch = writeBatch(db);
+            
+            studentsToDelete.forEach(s => {
+                batch.delete(doc(db, 'sican_siswa', s.id));
+            });
+            
+            await batch.commit();
+            alert(`Kelas ${classToDelete} dan seluruh siswanya berhasil dihapus.`);
+            closeDeleteClassModal();
+            loadMasterSiswaSICAN();
+        } catch (err) {
+            console.error(err);
+            alert('Gagal menghapus kelas: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🗑️ Ya, Hapus Semua';
+        }
+    });
 
     // =========================================================================
     // QR CODE FUNCTIONS
     // =========================================================================
     window.openQRModal = async function(kelas) {
         currentQRClassData = allStudents.filter(s => s.kelas === kelas);
-        
-        if (currentQRClassData.length === 0) {
-            alert('Tidak ada data siswa di kelas ini!');
-            return;
-        }
+        if (currentQRClassData.length === 0) { alert('Tidak ada data siswa di kelas ini!'); return; }
+        renderQRModal(`Kelas ${kelas}`);
+    };
 
+    window.openQRModalGlobal = async function() {
+        if (allStudents.length === 0) { alert('Belum ada data siswa!'); return; }
+        currentQRClassData = [...allStudents];
+        renderQRModal('Semua Kelas');
+    };
+
+    function renderQRModal(title) {
         const modal = document.getElementById('qrModal');
         const container = document.getElementById('qrContainer');
-        const modalTitle = document.getElementById('modalTitle');
-        
-        modalTitle.textContent = `📱 QR Code Siswa - Kelas ${kelas}`;
+        document.getElementById('qrModalTitle').textContent = `📱 QR Code Siswa - ${title}`;
         modal.classList.add('show');
         container.innerHTML = '<div class="loading"><div class="spinner"></div>Generating QR Codes...</div>';
 
@@ -416,46 +687,27 @@
                 const qrCard = document.createElement('div');
                 qrCard.className = 'qr-card';
                 const nis = siswa.nis || String(index + 1);
-                
                 qrCard.innerHTML = `
                     <div id="qr-${siswa.id}" class="qr-code-container"></div>
                     <h3>${siswa.nama || 'Tanpa Nama'}</h3>
                     <p>NIS: ${nis}</p>
                     <p>${siswa.kelas || '-'}</p>
-                    <button class="btn btn-primary" onclick="downloadSingleQR('${siswa.id}', '${nis}')" style="margin-top: 10px; padding: 6px 12px; font-size: 0.8rem;">📥 Download</button>
+                    <button class="btn btn-primary btn-sm" onclick="downloadSingleQR('${siswa.id}', '${nis}')" style="margin-top: 10px;">📥 Download</button>
                 `;
                 container.appendChild(qrCard);
-                
                 new QRCode(document.getElementById(`qr-${siswa.id}`), {
-                    text: String(nis),
-                    width: 128,
-                    height: 128,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
+                    text: String(nis), width: 128, height: 128,
+                    colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H
                 });
             });
         }, 100);
-    };
+    }
 
-    window.openQRModalGlobal = async function() {
-        if (allStudents.length === 0) {
-            alert('Belum ada data siswa!');
-            return;
-        }
-        currentQRClassData = [...allStudents];
-        await openQRModal('Semua Kelas');
-    };
-
-    window.closeQRModal = function() {
-        const modal = document.getElementById('qrModal');
-        modal.classList.remove('show');
-    };
+    window.closeQRModal = function() { document.getElementById('qrModal').classList.remove('show'); };
 
     window.downloadSingleQR = function(studentId, nis) {
         const canvas = document.querySelector(`#qr-${studentId} canvas`);
         if (!canvas) return;
-        
         const link = document.createElement('a');
         link.download = `QR_${nis}.png`;
         link.href = canvas.toDataURL();
@@ -465,16 +717,13 @@
     window.downloadAllQR = async function() {
         const zip = new JSZip();
         const folder = zip.folder("QR_Codes_SICAN");
-        
         currentQRClassData.forEach((siswa, index) => {
             const canvas = document.querySelector(`#qr-${siswa.id} canvas`);
             if (canvas) {
                 const nis = siswa.nis || String(index + 1);
-                const imgData = canvas.toDataURL("image/png").split(',')[1];
-                folder.file(`QR_${nis}.png`, imgData, {base64: true});
+                folder.file(`QR_${nis}.png`, canvas.toDataURL("image/png").split(',')[1], {base64: true});
             }
         });
-        
         const content = await zip.generateAsync({type: "blob"});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
@@ -484,44 +733,18 @@
 
     window.printAllQR = function() {
         const printWindow = window.open('', '_blank');
-        let htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>QR Code Siswa SICAN</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    .print-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-                    .print-card { border: 2px solid #333; border-radius: 10px; padding: 15px; text-align: center; page-break-inside: avoid; }
-                    .print-card h3 { margin: 10px 0 5px; font-size: 14px; }
-                    .print-card p { margin: 3px 0; font-size: 12px; }
-                </style>
-            </head>
-            <body>
-                <h1 style="text-align: center; margin-bottom: 30px;">QR Code Siswa - SICAN</h1>
-                <div class="print-grid">
-        `;
-        
+        let html = `<!DOCTYPE html><html><head><title>Cetak QR</title><style>body{font-family:Arial;padding:20px;}.print-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}.print-card{border:2px solid #333;border-radius:10px;padding:15px;text-align:center;page-break-inside:avoid;}.print-card h3{margin:10px 0 5px;font-size:14px;}.print-card p{margin:3px 0;font-size:12px;}</style></head><body><h1 style="text-align:center;">QR Code Siswa - SICAN</h1><div class="print-grid">`;
         currentQRClassData.forEach((siswa, index) => {
             const nis = siswa.nis || String(index + 1);
             const canvas = document.querySelector(`#qr-${siswa.id} canvas`);
             if (canvas) {
-                const imgSrc = canvas.toDataURL();
-                htmlContent += `
-                    <div class="print-card">
-                        <img src="${imgSrc}" style="width: 100px; height: 100px;">
-                        <h3>${siswa.nama || 'Tanpa Nama'}</h3>
-                        <p>NIS: ${nis}</p>
-                        <p>${siswa.kelas || '-'}</p>
-                    </div>
-                `;
+                html += `<div class="print-card"><img src="${canvas.toDataURL()}" style="width:100px;height:100px;"><h3>${siswa.nama||'-'}</h3><p>NIS: ${nis}</p><p>${siswa.kelas||'-'}</p></div>`;
             }
         });
-        
-        htmlContent += `</div><script>window.onload = function() { window.print(); }<\/script></body></html>`;
-        
-        printWindow.document.write(htmlContent);
+        html += `</div><script>window.onload=function(){window.print();}<\/script></body></html>`;
+        printWindow.document.write(html);
         printWindow.document.close();
+ا
     };
 
     // =========================================================================
@@ -529,18 +752,14 @@
     // =========================================================================
     window.exportClassExcel = function(kelas) {
         const classData = allStudents.filter(s => s.kelas === kelas);
-        const ws = XLSX.utils.json_to_sheet(classData.map(s => ({
-            NIS: s.nis,
-            Nama: s.nama,
-            Kelas: s.kelas
-        })));
+        const ws = XLSX.utils.json_to_sheet(classData.map(s => ({ NIS: s.nis, Nama: s.nama, Kelas: s.kelas })));
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, `Kelas ${kelas}`);
         XLSX.writeFile(wb, `Data_Siswa_Kelas_${kelas.replace(/\s+/g, '_')}.xlsx`);
     };
 
     window.printClass = function(kelas) {
-        window.print();
+        window.print(); // CSS @media print akan otomatis menyembunyikan tab lain
     };
 
     // =========================================================================
@@ -548,10 +767,7 @@
     // =========================================================================
     document.getElementById('downloadTemplate').addEventListener('click', (e) => {
         e.preventDefault();
-        const demo = [
-            { nis: "1001", nama: "Siswa Contoh A", kelas: "X MIPA 1" },
-            { nis: "1002", nama: "Siswa Contoh B", kelas: "XI IPS 2" }
-        ];
+        const demo = [{ nis: "1001", nama: "Siswa Contoh A", kelas: "X MIPA 1" }, { nis: "1002", nama: "Siswa Contoh B", kelas: "XI IPS 2" }];
         const ws = XLSX.utils.json_to_sheet(demo);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Master");
