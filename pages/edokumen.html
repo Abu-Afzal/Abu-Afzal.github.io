@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="theme-color" content="#10b981">
-<link rel="manifest" href="../manifest.json">
-<link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>E-Dokumen - SIPELITA</title>
   <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
@@ -15,34 +15,43 @@
     .back-btn { display: inline-block; margin-top: 20px; padding: 10px 24px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 8px; transition: background 0.3s; }
     .back-btn:hover { background: rgba(255,255,255,0.3); }
     .content { background: white; padding: 30px; border-radius: 14px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
-    .upload-box { background: #e3f2fd; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
+    .upload-box { background: #e3f2fd; padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #bbdefb; }
     .upload-box h3 { margin-top: 0; color: #1565c0; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
     @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
     input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
     
-    /* Style Tambahan untuk Pilihan Metode */
-    .radio-group { display: flex; gap: 20px; margin-bottom: 15px; font-weight: 600; color: #333; }
-    .radio-option { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .radio-group { display: flex; gap: 20px; margin-bottom: 15px; font-weight: 600; color: #333; flex-wrap: wrap; }
+    .radio-option { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem; }
     .radio-option input { width: auto; cursor: pointer; }
     
     .btn-upload { background: #1e88e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
     .btn-upload:hover { background: #1565c0; }
     .btn-upload:disabled { background: #90caf9; cursor: not-allowed; }
+    
     .dokumen-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-    .dokumen-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #1e88e5; transition: transform 0.2s; }
+    .dokumen-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border-left: 4px solid #1e88e5; transition: transform 0.2s; position: relative; }
     .dokumen-item:hover { transform: translateX(4px); }
-    .dokumen-item h4 { margin: 0 0 5px; font-size: 1rem; }
-    .dokumen-item .meta { font-size: 0.8rem; color: #666; margin-bottom: 8px; }
-    .dokumen-item .actions { display: flex; gap: 10px; }
-    .dokumen-item a, .dokumen-item button { text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .dokumen-item h4 { margin: 0 0 5px; font-size: 1rem; padding-right: 60px; }
+    .dokumen-item .meta { font-size: 0.8rem; color: #666; margin-bottom: 8px; line-height: 1.4; }
+    .dokumen-item .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .dokumen-item a, .dokumen-item button { text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    
     .btn-download { background: #e3f2fd; color: #1565c0; }
     .btn-delete { background: #ffebee; color: #c62828; }
-    .loading { text-align: center; padding: 40px; color: #666; }
-    .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; }
-    .error.show { display: block; }
     .btn-view { background: #e8f5e9; color: #2e7d32; }
-    .btn-view:hover { background: #c8e6c9; }
+    
+    .badge-visibilitas {
+      position: absolute; top: 15px; right: 15px;
+      padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+    }
+    .badge-public { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .badge-private { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+
+    .loading { text-align: center; padding: 40px; color: #666; }
+    .error { background: #ffebee; color: #c62828; padding: 15px; border-radius: 8px; margin-top: 10px; display: none; font-size: 0.9rem; }
+    .error.show { display: block; }
+    .info-text { font-size: 0.8rem; color: #555; background: #fff; padding: 10px; border-radius: 6px; margin-bottom: 15px; border-left: 3px solid #1e88e5; }
   </style>
 </head>
 <body>
@@ -55,8 +64,13 @@
     </div>
     
     <div class="content">
+      <!-- BOX UPLOAD (Sekarang Terbuka untuk Semua User) -->
       <div class="upload-box" id="uploadBox">
         <h3>📤 Upload Dokumen Baru</h3>
+        <div class="info-text">
+          💡 <b>Tips:</b> Gunakan mode <b>Pribadi</b> untuk arsip pribadi (RPP, SK pribadi). Gunakan mode <b>Publik</b> untuk dokumen yang perlu dibagikan ke seluruh warga madrasah.
+        </div>
+
         <div class="form-row">
           <select id="kategori" required>
             <option value="">Pilih Kategori</option>
@@ -70,9 +84,21 @@
           <input type="text" id="namaDokumen" placeholder="Nama Dokumen (contoh: SK Kepala Sekolah 2026)" required>
         </div>
         
-        <div class="radio-group">
+        <!-- Opsi Visibilitas -->
+        <div class="radio-group" style="margin-top: 10px;">
+          <span style="width: 100%; font-size: 0.9rem; margin-bottom: 5px; color: #1565c0;">👁️ Visibilitas Dokumen:</span>
           <label class="radio-option">
-            <input type="radio" name="sumberDokumen" value="lokal" checked> 📁 Dokumen
+            <input type="radio" name="visibilitas" value="public" checked> 🌐 Publik (Dilihat semua user)
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="visibilitas" value="private"> 🔒 Pribadi (Hanya Saya & Admin)
+          </label
+        </div>
+
+        <div class="radio-group" style="margin-top: 15px; border-top: 1px dashed #bbdefb; padding-top: 15px;">
+          <span style="width: 100%; font-size: 0.9rem; margin-bottom: 5px; color: #1565c0;">📂 Sumber Dokumen:</span>
+          <label class="radio-option">
+            <input type="radio" name="sumberDokumen" value="lokal" checked> 📁 File Perangkat
           </label>
           <label class="radio-option">
             <input type="radio" name="sumberDokumen" value="link"> 🔗 Link Google Drive
@@ -92,7 +118,10 @@
         <button id="btnUpload" class="btn-upload">Simpan Dokumen</button>
       </div>
 
-      <h3 style="margin-bottom: 15px; color: #1e88e5;">📚 Dokumen Tersimpan</h3>
+      <h3 style="margin-bottom: 15px; color: #1e88e5; display: flex; align-items: center; gap: 10px;">
+        📚 Daftar Dokumen 
+        <span id="userInfoBadge" style="font-size: 0.8rem; background: #e3f2fd; color: #1565c0; padding: 4px 10px; border-radius: 20px; font-weight: 500;"></span>
+      </h3>
       <div id="loadingState" class="loading">⏳ Memuat dokumen...</div>
       <div id="dokumenContainer" class="dokumen-list"></div>
     </div>
@@ -103,9 +132,11 @@
     import { collection, addDoc, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     // ====================================================================
-    // 🔒 DETEKSI ROLE SATEPAM (ANTI-CRASH)
+    // 🔒 DETEKSI USER & ROLE
     // ====================================================================
     let currentRole = 'guru'; 
+    let currentUserName = 'Pengguna';
+    
     try {
         const authKeys = ['sipelita_user', 'user', 'userData', 'auth'];
         for (const key of authKeys) {
@@ -113,8 +144,9 @@
             if (data) {
                 try {
                     const parsed = JSON.parse(data);
-                    if (parsed && parsed.role) {
-                        currentRole = parsed.role;
+                    if (parsed) {
+                        if (parsed.role) currentRole = parsed.role;
+                        if (parsed.nama || parsed.name || parsed.username) currentUserName = parsed.nama || parsed.name || parsed.username;
                         break;
                     }
                 } catch (e) {
@@ -126,17 +158,13 @@
             }
         }
     } catch (err) {
-        console.error("Gagal mendeteksi session role:", err);
+        console.error("Gagal mendeteksi session:", err);
     }
 
-    // Sembunyikan Box Upload secara realtime jika user bukan Admin
-    const uploadBox = document.getElementById('uploadBox');
-    if (uploadBox) {
-        if (currentRole === 'admin') {
-            uploadBox.style.display = 'block';
-        } else {
-            uploadBox.style.display = 'none'; // Sembunyikan total form upload untuk Guru
-        }
+    // Tampilkan nama user di UI
+    const userInfoBadge = document.getElementById('userInfoBadge');
+    if (userInfoBadge) {
+        userInfoBadge.textContent = currentRole === 'admin' ? '👑 Mode Admin' : `👤 Masuk sebagai: ${currentUserName}`;
     }
 
     // DOM Elements
@@ -149,8 +177,8 @@
     const container = document.getElementById('dokumenContainer');
     const loadingState = document.getElementById('loadingState');
     
-    const radioLokal = document.querySelector('input[value="lokal"]');
-    const radioLink = document.querySelector('input[value="link"]');
+    const radioLokal = document.querySelector('input[name="sumberDokumen"][value="lokal"]');
+    const radioLink = document.querySelector('input[name="sumberDokumen"][value="link"]');
     const inputLokalContainer = document.getElementById('inputLokalContainer');
     const inputLinkContainer = document.getElementById('inputLinkContainer');
 
@@ -167,7 +195,7 @@
       errorMsg.classList.remove('show');
     });
 
-    // Tampilkan daftar dokumen dari Firestore
+    // Tampilkan daftar dokumen dari Firestore dengan FILTER VISIBILITAS
     async function loadDokumen() {
       loadingState.style.display = 'block';
       container.innerHTML = '';
@@ -177,38 +205,59 @@
         loadingState.style.display = 'none';
         
         if (querySnapshot.empty) {
-          container.innerHTML = '<p style="text-align:center; color:#666; padding:40px;">📭 Belum ada dokumen. Silakan upload terlebih dahulu.</p>';
+          container.innerHTML = '<p style="text-align:center; color:#666; padding:40px; grid-column: 1/-1;">📭 Belum ada dokumen.</p>';
           return;
         }
         
-        const docs = [];
-        querySnapshot.forEach((doc) => {
-          docs.push({ id: doc.id, ...doc.data() });
+        let docs = [];
+        querySnapshot.forEach((docSnap) => {
+          docs.push({ id: docSnap.id, ...docSnap.data() });
         });
         
+        // Urutkan berdasarkan tanggal terbaru
         docs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
         
-        docs.forEach(d => {
+        // FILTER: Admin lihat semua. User biasa lihat Publik + Pribadi milik sendiri.
+        const filteredDocs = docs.filter(d => {
+            if (currentRole === 'admin') return true;
+            if (d.visibility === 'public') return true;
+            if (d.visibility === 'private' && d.uploader === currentUserName) return true;
+            return false;
+        });
+
+        if (filteredDocs.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#666; padding:40px; grid-column: 1/-1;">📭 Tidak ada dokumen yang dapat Anda lihat saat ini.</p>';
+            return;
+        }
+        
+        filteredDocs.forEach(d => {
           const sizeText = d.size === 0 ? "🔗 Tautan Cloud" : `${(d.size / (1024*1024)).toFixed(2)} MB`;
-          const date = new Date(d.uploadedAt).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'long', year: 'numeric'
-          });
-          
-          // Deteksi apakah data berupa Link Google Drive atau Base64 Lokal
+          const date = new Date(d.uploadedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
           const isLink = d.url && d.url.startsWith('http');
+          const isPrivate = d.visibility === 'private';
           
-          // 🔒 KONDISI TOMBOL HAPUS: Hanya dibuat jika role-nya adalah 'admin'
-          const tombolHapusHTML = (currentRole === 'admin') 
+          // Badge Visibilitas
+          const badgeHTML = isPrivate 
+            ? `<span class="badge-visibilitas badge-private">🔒 Pribadi</span>` 
+            : `<span class="badge-visibilitas badge-public">🌐 Publik</span>`;
+          
+          // Logika Tombol Hapus: Admin bisa hapus apa saja. User bisa hapus dokumen pribadinya sendiri.
+          const canDelete = (currentRole === 'admin') || (isPrivate && d.uploader === currentUserName);
+          const tombolHapusHTML = canDelete 
             ? `<button class="btn-delete" onclick="hapusDokumen('${d.id}')">🗑️ Hapus</button>` 
             : '';
           
+          // Info Pengunggah (kecuali jika admin melihat dokumen sendiri, atau user melihat dokumen sendiri)
+          const uploaderInfo = (d.uploader && d.uploader !== currentUserName) ? `<br>👤 Diunggah oleh: ${d.uploader}` : '';
+          
           container.innerHTML += `
-            <div class="dokumen-item">
+            <div class="dokumen-item" style="border-left-color: ${isPrivate ? '#f57c00' : '#1e88e5'}">
+              ${badgeHTML}
               <h4>${d.nama}</h4>
-              <div class="meta">📂 ${d.kategori} •  ${date} • ${sizeText}</div>
+              <div class="meta">📂 ${d.kategori} • 📅 ${date} • 💾 ${sizeText}${uploaderInfo}</div>
               <div class="actions">
                 <button onclick="lihatDokumen('${d.url}')" class="btn-view">🖥️ Lihat</button>
-                <a href="${d.url}" ${isLink ? 'target="_blank"' : `download="${d.fileName}"`} class="btn-download">${isLink ? '🔗 Buka Link' : '⬇️ Download'}</a>
+                <a href="${d.url}" ${isLink ? 'target="_blank"' : `download="${d.fileName}"`} class="btn-download">${isLink ? '🔗 Buka' : '⬇️ Unduh'}</a>
                 ${tombolHapusHTML}
               </div>
             </div>
@@ -244,6 +293,7 @@
       let finalSize = 0;
       
       const mode = document.querySelector('input[name="sumberDokumen"]:checked').value;
+      const visibilitas = document.querySelector('input[name="visibilitas"]:checked').value;
       
       if (mode === 'lokal') {
         if (!fileInput.files[0]) {
@@ -282,6 +332,8 @@
           url: finalUrl, 
           fileName: finalFileName,
           size: finalSize,
+          visibility: visibilitas,       // BARU: Simpan status visibilitas
+          uploader: currentUserName,     // BARU: Simpan nama pengunggah
           uploadedAt: new Date().toISOString()
         });
         
@@ -290,6 +342,8 @@
         linkInput.value = '';
         namaDokumen.value = '';
         kategori.value = '';
+        // Reset radio ke default
+        document.querySelector('input[name="visibilitas"][value="public"]').checked = true;
         loadDokumen();
       } catch (err) {
         errorMsg.textContent = '❌ Gagal menyimpan: ' + err.message;
@@ -302,7 +356,7 @@
 
     // Fungsi Hapus
     window.hapusDokumen = async (id) => {
-      if (!confirm('Yakin ingin menghapus dokumen ini?')) return;
+      if (!confirm('Yakin ingin menghapus dokumen ini? Tindakan ini tidak dapat dibatalkan.')) return;
       try {
         await deleteDoc(doc(db, "dokumen", id));
         alert('✅ Dokumen berhasil dihapus');
@@ -312,7 +366,7 @@
       }
     };
 
-    // Fungsi Lihat/Preview (Mendukung Tautan maupun Blob Lokal)
+    // Fungsi Lihat/Preview
     window.lihatDokumen = (urlOrBase64) => {
       try {
         if (urlOrBase64.startsWith('http')) {
