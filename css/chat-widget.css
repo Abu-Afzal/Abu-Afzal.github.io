@@ -227,3 +227,52 @@
         height: 70vh;
     }
 }
+/* Tambahkan di file chat-widget.css */
+
+.chat-widget-message {
+    margin-bottom: 15px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-widget-message .message-sender {
+    margin-bottom: 3px;
+}
+
+.chat-widget-message.sent {
+    text-align: right;
+}
+
+.chat-widget-message.sent .message-sender {
+    color: #075e54;
+}
+
+.chat-widget-message.received .message-sender {
+    color: #075e54;
+}
+
+/* Header dengan online counter */
+.chat-widget-header small {
+    font-size: 11px;
+}
+
+/* Badge untuk jumlah pesan baru */
+.chat-widget-btn .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #f44336;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
