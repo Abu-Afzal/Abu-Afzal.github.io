@@ -1,0 +1,229 @@
+/* Floating Chat Button */
+.chat-widget-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: #075e54;
+    border-radius: 50%;
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: transform 0.3s;
+}
+
+.chat-widget-btn:hover {
+    transform: scale(1.1);
+}
+
+.chat-widget-btn .badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #f44336;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Chat Widget Container */
+.chat-widget-container {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    z-index: 9998;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-widget-container.active {
+    display: flex;
+}
+
+/* Chat Header */
+.chat-widget-header {
+    background: #075e54;
+    color: white;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.chat-widget-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.chat-widget-header .close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* User List */
+.chat-widget-users {
+    flex: 1;
+    overflow-y: auto;
+    border-bottom: 1px solid #ddd;
+}
+
+.chat-widget-user {
+    padding: 12px 15px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.chat-widget-user:hover {
+    background: #f5f5f5;
+}
+
+.chat-widget-user.active {
+    background: #e9edef;
+}
+
+.chat-widget-user .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #075e54;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    position: relative;
+}
+
+.chat-widget-user .status-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #25d366;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.chat-widget-user .user-info {
+    flex: 1;
+}
+
+.chat-widget-user .user-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.chat-widget-user .user-status {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Chat Area */
+.chat-widget-chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #e5ddd5;
+}
+
+.chat-widget-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chat-widget-message {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.chat-widget-message.sent {
+    align-self: flex-end;
+    background: #dcf8c6;
+}
+
+.chat-widget-message.received {
+    align-self: flex-start;
+    background: white;
+}
+
+.chat-widget-input {
+    padding: 10px;
+    background: white;
+    display: flex;
+    gap: 8px;
+}
+
+.chat-widget-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+}
+
+.chat-widget-input button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #075e54;
+    color: white;
+    cursor: pointer;
+}
+
+/* Placeholder */
+.chat-widget-placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    background: #f5f5f5;
+}
+
+.chat-widget-placeholder i {
+    font-size: 48px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .chat-widget-container {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+        height: 70vh;
+    }
+}
