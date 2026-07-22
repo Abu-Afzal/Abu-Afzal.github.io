@@ -1,12 +1,9 @@
 // Import Firebase SDK (Modular v10.7.1)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     getDatabase, ref, set, push, onValue, onDisconnect, serverTimestamp, query, orderByChild 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-import { 
-    getFirestore, doc, getDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Konfigurasi Firebase Anda
 const firebaseConfig = {
@@ -24,16 +21,26 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
-const dbFirestore = getFirestore(app); // Initialize Firestore
 
 // State Aplikasi
 let currentUserId = null;
+let currentUserIdSafe = null; // Email yang sudah di-encode (tanpa titik)
 let currentChatPartnerId = null;
 let currentChatRoomId = null;
 let currentUserName = 'User';
 
 // DOM Elements
 let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetPlaceholder;
+
+// Fungsi untuk encode email (replace . dengan _)
+function encodeEmail(email) {
+    return email.replace(/\./g, '_').replace(/@/g, '_at_');
+}
+
+// Fungsi untuk decode email (kembalikan ke format asli)
+function decodeEmail(encodedEmail) {
+    return encodedEmail.replace(/_at_/g, '@').replace(/_/g, '.');
+}
 
 // Initialize Widget
 export function initChatWidget() {
@@ -70,10 +77,12 @@ function checkExistingUser() {
     if (userData) {
         try {
             const user = JSON.parse(userData);
-            currentUserId = user.email; // Gunakan email sebagai ID
+            currentUserId = user.email; // Email asli
+            currentUserIdSafe = encodeEmail(user.email); // Email yang aman untuk RTDB
             currentUserName = user.nama || user.name || user.email.split('@')[0];
             
             console.log('✅ User terdeteksi:', currentUserName, '(', currentUserId, ')');
+            console.log('🔑 User ID Safe:', currentUserIdSafe);
             
             // Simpan ke RTDB untuk chat
             setupUserInRTDB();
@@ -90,7 +99,7 @@ function checkExistingUser() {
 
 // Simpan user info ke RTDB
 function setupUserInRTDB() {
-    const userRef = ref(db, `users/${currentUserId}`);
+    const userRef = ref(db, `users/${currentUserIdSafe}`);
     set(userRef, {
         name: currentUserName,
         email: currentUserId,
@@ -153,8 +162,8 @@ function toggleChat() {
 
 // Setup Presence (Online/Offline)
 function setupPresence() {
-    const userStatusRef = ref(db, `users/${currentUserId}/status`);
-    const userLastSeenRef = ref(db, `users/${currentUserId}/lastSeen`);
+    const userStatusRef = ref(db, `users/${currentUserIdSafe}/status`);
+    const userLastSeenRef = ref(db, `users/${currentUserIdSafe}/lastSeen`);
     const connectedRef = ref(db, '.info/connected');
     
     onValue(connectedRef, (snap) => {
@@ -180,16 +189,16 @@ function loadUsers() {
             return;
         }
         
-        Object.keys(users).forEach(uid => {
-            if (uid === currentUserId) return; // Jangan tampilkan diri sendiri
+        Object.keys(users).forEach(uidSafe => {
+            if (uidSafe === currentUserIdSafe) return; // Jangan tampilkan diri sendiri
             
-            const user = users[uid];
+            const user = users[uidSafe];
             const isOnline = user.status === 'online';
-            const displayName = user.name || uid.split('@')[0]; // Tampilkan nama atau email tanpa domain
+            const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
             
             const userEl = document.createElement('div');
             userEl.className = 'chat-widget-user';
-            userEl.dataset.uid = uid;
+            userEl.dataset.uid = uidSafe; // Simpan ID yang sudah di-encode
             userEl.innerHTML = `
                 <div class="avatar">
                     ${displayName.charAt(0).toUpperCase()}
@@ -201,18 +210,19 @@ function loadUsers() {
                 </div>
             `;
             
-            userEl.addEventListener('click', () => openChat(uid, displayName));
+            userEl.addEventListener('click', () => openChat(uidSafe, displayName));
             chatWidgetUsers.appendChild(userEl);
         });
     });
 }
 
 // Open Chat
-function openChat(partnerId, partnerName) {
-    console.log(' Membuka chat dengan:', partnerId, partnerName);
+function openChat(partnerIdSafe, partnerName) {
+    console.log(' Membuka chat dengan:', partnerIdSafe, partnerName);
     
-    currentChatPartnerId = partnerId;
-    currentChatRoomId = [currentUserId, partnerId].sort().join('_');
+    currentChatPartnerId = partnerIdSafe;
+    // Buat room ID dari ID yang sudah di-encode
+    currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
     console.log('🔑 Room ID yang dibuat:', currentChatRoomId);
     
     // Tampilkan area chat, sembunyikan placeholder
@@ -221,7 +231,7 @@ function openChat(partnerId, partnerName) {
     
     // Highlight user aktif
     document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.chat-widget-user[data-uid="${partnerId}"]`)?.classList.add('active');
+    document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"]`)?.classList.add('active');
     
     listenMessages();
 }
@@ -242,7 +252,7 @@ function listenMessages() {
         
         Object.keys(messages).forEach(key => {
             const msg = messages[key];
-            const isSent = msg.senderId === currentUserId;
+            const isSent = msg.senderId === currentUserIdSafe;
             
             const msgEl = document.createElement('div');
             msgEl.className = `chat-widget-message ${isSent ? 'sent' : 'received'}`;
@@ -273,14 +283,14 @@ function sendMessage() {
         const messagesRef = ref(db, `chats/${currentChatRoomId}/messages`);
         
         push(messagesRef, {
-            senderId: currentUserId,
+            senderId: currentUserIdSafe,
             text: text,
             timestamp: serverTimestamp()
         }).then(() => {
             chatWidgetInput.value = '';
             chatWidgetInput.focus();
         }).catch((error) => {
-            console.error(' Error kirim pesan:', error);
+            console.error('❌ Error kirim pesan:', error);
             alert('Gagal kirim pesan: ' + error.message);
         });
     } catch (error) {
