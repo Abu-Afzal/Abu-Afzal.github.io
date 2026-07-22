@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
-    getDatabase, ref, set, push, onValue, onDisconnect, serverTimestamp, query, orderByChild 
+    getDatabase, ref, set, push, onValue, onDisconnect, serverTimestamp, query, orderByChild, limitToLast 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Konfigurasi Firebase Anda
@@ -24,38 +24,30 @@ const db = getDatabase(app);
 
 // State Aplikasi
 let currentUserId = null;
-let currentUserIdSafe = null; // Email yang sudah di-encode (tanpa titik)
-let currentChatPartnerId = null;
-let currentChatRoomId = null;
+let currentUserIdSafe = null;
 let currentUserName = 'User';
+const GROUP_CHAT_ID = 'group_chat_sipelita'; // ID room chat grup
 
 // DOM Elements
-let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetPlaceholder;
+let chatWidgetBtn, chatWidgetContainer, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetOnlineUsers;
 
 // Fungsi untuk encode email (replace . dengan _)
 function encodeEmail(email) {
     return email.replace(/\./g, '_').replace(/@/g, '_at_');
 }
 
-// Fungsi untuk decode email (kembalikan ke format asli)
-function decodeEmail(encodedEmail) {
-    return encodedEmail.replace(/_at_/g, '@').replace(/_/g, '.');
-}
-
 // Initialize Widget
 export function initChatWidget() {
-    console.log('🚀 Initializing chat widget...');
+    console.log('🚀 Initializing group chat widget...');
     createWidgetHTML();
     
-    // Ambil elemen DOM setelah HTML dibuat
+    // Ambil elemen DOM
     chatWidgetBtn = document.getElementById('chatWidgetBtn');
     chatWidgetContainer = document.getElementById('chatWidgetContainer');
-    chatWidgetUsers = document.getElementById('chatWidgetUsers');
     chatWidgetMessages = document.getElementById('chatWidgetMessages');
     chatWidgetInput = document.getElementById('chatWidgetInput');
     sendBtn = document.getElementById('chatWidgetSendBtn');
-    chatWidgetChatArea = document.getElementById('chatWidgetChatArea');
-    chatWidgetPlaceholder = document.getElementById('chatWidgetPlaceholder');
+    chatWidgetOnlineUsers = document.getElementById('chatWidgetOnlineUsers');
     
     // Event Listeners
     if (chatWidgetBtn) chatWidgetBtn.addEventListener('click', toggleChat);
@@ -66,28 +58,27 @@ export function initChatWidget() {
         });
     }
     
-    // Cek apakah user sudah login di aplikasi utama
+    // Cek user login
     checkExistingUser();
 }
 
-// Cek user yang sedang login dari localStorage
+// Cek user yang sedang login
 function checkExistingUser() {
     const userData = localStorage.getItem('sipelita_user');
     
     if (userData) {
         try {
             const user = JSON.parse(userData);
-            currentUserId = user.email; // Email asli
-            currentUserIdSafe = encodeEmail(user.email); // Email yang aman untuk RTDB
+            currentUserId = user.email;
+            currentUserIdSafe = encodeEmail(user.email);
             currentUserName = user.nama || user.name || user.email.split('@')[0];
             
-            console.log('✅ User terdeteksi:', currentUserName, '(', currentUserId, ')');
-            console.log('🔑 User ID Safe:', currentUserIdSafe);
+            console.log('✅ User terdeteksi:', currentUserName);
             
-            // Simpan ke RTDB untuk chat
             setupUserInRTDB();
             setupPresence();
-            loadUsers();
+            loadGroupMessages();
+            trackOnlineUsers();
             
         } catch (error) {
             console.error('❌ Error parsing user data:', error);
@@ -105,14 +96,12 @@ function setupUserInRTDB() {
         email: currentUserId,
         status: 'online',
         lastSeen: serverTimestamp()
-    }).then(() => {
-        console.log('✅ User disimpan ke RTDB');
     }).catch((error) => {
         console.error('❌ Error simpan ke RTDB:', error);
     });
 }
 
-// Create Widget HTML
+// Create Widget HTML (Group Chat Version)
 function createWidgetHTML() {
     const widgetHTML = `
         <button id="chatWidgetBtn" class="chat-widget-btn">
@@ -122,34 +111,29 @@ function createWidgetHTML() {
         
         <div id="chatWidgetContainer" class="chat-widget-container">
             <div class="chat-widget-header">
-                <h3><i class="fas fa-comments"></i> Chat Sipelita</h3>
+                <div>
+                    <h3><i class="fas fa-users"></i> Grup Sipelita</h3>
+                    <small id="chatWidgetOnlineUsers" style="opacity:0.8">0 online</small>
+                </div>
                 <button class="close-btn" id="chatWidgetCloseBtn">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div id="chatWidgetUsers" class="chat-widget-users">
-                <div style="padding:20px;text-align:center;color:#999">Memuat pengguna...</div>
+            <div id="chatWidgetMessages" class="chat-widget-messages">
+                <div style="text-align:center;color:#999;padding:20px">Memuat pesan...</div>
             </div>
             
-            <div id="chatWidgetChatArea" class="chat-widget-chat-area" style="display: none;">
-                <div id="chatWidgetMessages" class="chat-widget-messages"></div>
-                <div class="chat-widget-input">
-                    <input type="text" id="chatWidgetInput" placeholder="Ketik pesan...">
-                    <button id="chatWidgetSendBtn"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
-            
-            <div id="chatWidgetPlaceholder" class="chat-widget-placeholder">
-                <i class="fas fa-comments"></i>
-                <p>Pilih pengguna untuk chat</p>
+            <div class="chat-widget-input">
+                <input type="text" id="chatWidgetInput" placeholder="Ketik pesan untuk grup...">
+                <button id="chatWidgetSendBtn"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     `;
     
     document.body.insertAdjacentHTML('beforeend', widgetHTML);
     
-    // Tambahkan event listener untuk tombol close
+    // Event listener close button
     document.getElementById('chatWidgetCloseBtn').addEventListener('click', () => {
         chatWidgetContainer.classList.remove('active');
     });
@@ -160,7 +144,7 @@ function toggleChat() {
     chatWidgetContainer.classList.toggle('active');
 }
 
-// Setup Presence (Online/Offline)
+// Setup Presence
 function setupPresence() {
     const userStatusRef = ref(db, `users/${currentUserIdSafe}/status`);
     const userLastSeenRef = ref(db, `users/${currentUserIdSafe}/lastSeen`);
@@ -171,92 +155,68 @@ function setupPresence() {
             set(userStatusRef, 'online');
             onDisconnect(userStatusRef).set('offline');
             onDisconnect(userLastSeenRef).set(serverTimestamp());
-            console.log('🟢 Status diatur ke: Online');
         }
     });
 }
 
-// Load Users dari RTDB
-function loadUsers() {
+// Track Online Users
+function trackOnlineUsers() {
     const usersRef = ref(db, 'users');
     
     onValue(usersRef, (snapshot) => {
-        chatWidgetUsers.innerHTML = '';
         const users = snapshot.val();
+        let onlineCount = 0;
         
-        if (!users) {
-            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Belum ada pengguna online</div>';
-            return;
+        if (users) {
+            Object.values(users).forEach(user => {
+                if (user.status === 'online') {
+                    onlineCount++;
+                }
+            });
         }
         
-        Object.keys(users).forEach(uidSafe => {
-            if (uidSafe === currentUserIdSafe) return; // Jangan tampilkan diri sendiri
-            
-            const user = users[uidSafe];
-            const isOnline = user.status === 'online';
-            const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
-            
-            const userEl = document.createElement('div');
-            userEl.className = 'chat-widget-user';
-            userEl.dataset.uid = uidSafe; // Simpan ID yang sudah di-encode
-            userEl.innerHTML = `
-                <div class="avatar">
-                    ${displayName.charAt(0).toUpperCase()}
-                    ${isOnline ? '<div class="status-dot"></div>' : ''}
-                </div>
-                <div class="user-info">
-                    <div class="user-name">${displayName}</div>
-                    <div class="user-status">${isOnline ? 'Online' : 'Offline'}</div>
-                </div>
-            `;
-            
-            userEl.addEventListener('click', () => openChat(uidSafe, displayName));
-            chatWidgetUsers.appendChild(userEl);
-        });
+        const onlineUsersEl = document.getElementById('chatWidgetOnlineUsers');
+        if (onlineUsersEl) {
+            onlineUsersEl.textContent = `${onlineCount} pengguna online`;
+        }
     });
 }
 
-// Open Chat
-function openChat(partnerIdSafe, partnerName) {
-    console.log(' Membuka chat dengan:', partnerIdSafe, partnerName);
-    
-    currentChatPartnerId = partnerIdSafe;
-    // Buat room ID dari ID yang sudah di-encode
-    currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
-    console.log('🔑 Room ID yang dibuat:', currentChatRoomId);
-    
-    // Tampilkan area chat, sembunyikan placeholder
-    chatWidgetPlaceholder.style.display = 'none';
-    chatWidgetChatArea.style.display = 'flex';
-    
-    // Highlight user aktif
-    document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
-    document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"]`)?.classList.add('active');
-    
-    listenMessages();
-}
-
-// Listen Messages
-function listenMessages() {
-    const messagesRef = ref(db, `chats/${currentChatRoomId}/messages`);
-    const messagesQuery = query(messagesRef, orderByChild('timestamp'));
+// Load Group Messages
+function loadGroupMessages() {
+    const messagesRef = ref(db, `chats/${GROUP_CHAT_ID}/messages`);
+    const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(50));
     
     onValue(messagesQuery, (snapshot) => {
         chatWidgetMessages.innerHTML = '';
         const messages = snapshot.val();
         
         if (!messages) {
-            chatWidgetMessages.innerHTML = '<div style="text-align:center;color:#999;padding:20px">Belum ada pesan. Sapa dia!</div>';
+            chatWidgetMessages.innerHTML = `
+                <div style="text-align:center;color:#999;padding:40px">
+                    <i class="fas fa-comments" style="font-size:48px;opacity:0.3;margin-bottom:10px"></i>
+                    <p>Belum ada pesan. Jadilah yang pertama mengobrol!</p>
+                </div>
+            `;
             return;
         }
         
         Object.keys(messages).forEach(key => {
             const msg = messages[key];
             const isSent = msg.senderId === currentUserIdSafe;
+            const senderName = msg.senderName || 'User';
+            const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
             
             const msgEl = document.createElement('div');
             msgEl.className = `chat-widget-message ${isSent ? 'sent' : 'received'}`;
-            msgEl.textContent = msg.text;
+            
+            msgEl.innerHTML = `
+                <div class="message-sender" style="font-size:11px;color:#075e54;font-weight:600;margin-bottom:3px">
+                    ${senderName}
+                </div>
+                <div class="message-text">${msg.text}</div>
+                <div class="message-time" style="font-size:10px;color:#999;text-align:right;margin-top:3px">${time}</div>
+            `;
             
             chatWidgetMessages.appendChild(msgEl);
         });
@@ -274,23 +234,20 @@ function sendMessage() {
         return;
     }
     
-    if (!currentChatRoomId) {
-        alert('Pilih pengguna di daftar terlebih dahulu');
-        return;
-    }
-    
     try {
-        const messagesRef = ref(db, `chats/${currentChatRoomId}/messages`);
+        const messagesRef = ref(db, `chats/${GROUP_CHAT_ID}/messages`);
         
         push(messagesRef, {
             senderId: currentUserIdSafe,
+            senderName: currentUserName,
+            senderEmail: currentUserId,
             text: text,
             timestamp: serverTimestamp()
         }).then(() => {
             chatWidgetInput.value = '';
             chatWidgetInput.focus();
         }).catch((error) => {
-            console.error('❌ Error kirim pesan:', error);
+            console.error(' Error kirim pesan:', error);
             alert('Gagal kirim pesan: ' + error.message);
         });
     } catch (error) {
@@ -299,7 +256,7 @@ function sendMessage() {
     }
 }
 
-// Auto-init ketika DOM sudah siap
+// Auto-init
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initChatWidget);
 } else {
