@@ -229,46 +229,124 @@ window.simpanKonfigKolom = async (tipe, kolom) => {
 };
 
 window.eksporNilai = () => {
-  const kelas = currentNilaiClass || '–';
-  let rows = []; let filename = '';
-  if (currentNilaiTab === 'pengetahuan') {
-    if (!nilaiKolom.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-    const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
-    rows.push(['No', 'Nama Siswa', ...nilaiKolom.map(k => k.label), 'Rerata']);
-    siswa.forEach((s, i) => {
-      const nd = allData.find(d => d.type === 'nilai_pengetahuan' && d.student_key === s.__key && d.class_name === currentNilaiClass && d.user_name === currentUser);
-      const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
-      const vals = nilaiKolom.map(k => parseFloat(nilai[k.id])).filter(v => !isNaN(v));
-      const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '';
-      rows.push([i + 1, s.student_name, ...nilaiKolom.map(k => nilai[k.id] ?? ''), avg]);
-    });
-    filename = `Nilai_Pengetahuan_${kelas}.csv`;
-  } else if (currentNilaiTab === 'sikap') {
-    const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
-    const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
-    rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
-    siswa.forEach((s, i) => {
-      const sd = allData.find(d => d.type === 'nilai_sikap' && d.student_key === s.__key && d.class_name === currentNilaiClass && d.user_name === currentUser);
-      let sikapVal = {}; try { sikapVal = sd?.sikap_detail ? JSON.parse(sd.sikap_detail) : {}; } catch (e) {}
-      rows.push([i + 1, s.student_name, ...aspek.map(a => sikapVal[a] || ''), sd?.catatan || '']);
-    });
-    filename = `Nilai_Sikap_${kelas}.csv`;
-  } else if (currentNilaiTab === 'keterampilan') {
-    if (!nilaiKolomKet.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-    const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
-    rows.push(['No', 'Nama Siswa', ...nilaiKolomKet.map(k => k.label), 'Rerata']);
-    siswa.forEach((s, i) => {
-      const nd = allData.find(d => d.type === 'nilai_keterampilan' && d.student_key === s.__key && d.class_name === currentNilaiClass && d.user_name === currentUser);
-      const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
-      const vals = nilaiKolomKet.map(k => parseFloat(nilai[k.id])).filter(v => !isNaN(v));
-      const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '';
-      rows.push([i + 1, s.student_name, ...nilaiKolomKet.map(k => nilai[k.id] ?? ''), avg]);
-    });
-    filename = `Nilai_Keterampilan_${kelas}.csv`;
-  }
-  if (!rows.length) { window.toast('Tidak ada data untuk diekspor.', 'err'); return; }
-  const csv = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-  window.toast(`File ${filename} berhasil diekspor!`);
+    // 1. Pastikan library SheetJS sudah dimuat
+    if (typeof XLSX === 'undefined') {
+        alert('⚠️ Library Excel belum siap. Silakan refresh halaman dan coba lagi.');
+        return;
+    }
+
+    const kelas = currentNilaiClass || 'Tanpa_Kelas';
+    let rows = [];
+    let filename = '';
+    let sheetName = 'Data';
+
+    // 2. Bangun data berdasarkan tab yang sedang aktif
+    if (currentNilaiTab === 'pengetahuan') {
+        if (!nilaiKolom || !nilaiKolom.length) {
+            window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err');
+            return;
+        }
+        const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+
+        // Header Laporan
+        rows.push([`LAPORAN NILAI PENGETAHUAN`]);
+        rows.push([`Kelas: ${kelas}`, `Tanggal Export: ${new Date().toLocaleDateString('id-ID')}`]);
+        rows.push([]); // Baris kosong pemisah
+        rows.push(['No', 'Nama Siswa', ...nilaiKolom.map(k => k.label), 'Rerata']);
+
+        // Isi Data (Mengambil nilai LIVE dari input di layar)
+        siswa.forEach((s, i) => {
+            const inputs = document.querySelectorAll(`.nilai-input[data-sid="${s.__key}"]`);
+            const vals = [];
+            inputs.forEach(inp => vals.push(inp.value !== '' ? inp.value : ''));
+
+            const numericVals = vals.map(v => parseFloat(v)).filter(v => !isNaN(v));
+            const avg = numericVals.length ? (numericVals.reduce((a, b) => a + b, 0) / numericVals.length).toFixed(1) : '';
+
+            rows.push([i + 1, s.student_name, ...vals, avg]);
+        });
+        filename = `SIPENA_Pengetahuan_${kelas}.xlsx`;
+        sheetName = 'Pengetahuan';
+
+    } else if (currentNilaiTab === 'sikap') {
+        const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
+        const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+
+        rows.push([`LAPORAN PENILAIAN SIKAP`]);
+        rows.push([`Kelas: ${kelas}`, `Tanggal Export: ${new Date().toLocaleDateString('id-ID')}`]);
+        rows.push([]);
+        rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
+
+        siswa.forEach((s, i) => {
+            const selects = document.querySelectorAll(`.sikap-select[data-sid="${s.__key}"]`);
+            const catatanInput = document.querySelector(`.sikap-catatan[data-sid="${s.__key}"]`);
+
+            const sikapVals = [];
+            aspek.forEach(a => {
+                const sel = Array.from(selects).find(x => x.dataset.aspek === a);
+                sikapVals.push(sel ? sel.value : '');
+            });
+            const catatan = catatanInput ? catatanInput.value : '';
+
+            rows.push([i + 1, s.student_name, ...sikapVals, catatan]);
+        });
+        filename = `SIPENA_Sikap_${kelas}.xlsx`;
+        sheetName = 'Sikap';
+
+    } else if (currentNilaiTab === 'keterampilan') {
+        if (!nilaiKolomKet || !nilaiKolomKet.length) {
+            window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err');
+            return;
+        }
+        const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+
+        rows.push([`LAPORAN NILAI KETERAMPILAN`]);
+        rows.push([`Kelas: ${kelas}`, `Tanggal Export: ${new Date().toLocaleDateString('id-ID')}`]);
+        rows.push([]);
+        rows.push(['No', 'Nama Siswa', ...nilaiKolomKet.map(k => k.label), 'Rerata']);
+
+        siswa.forEach((s, i) => {
+            const inputs = document.querySelectorAll(`.nilai-ket-input[data-sid="${s.__key}"]`);
+            const vals = [];
+            inputs.forEach(inp => vals.push(inp.value !== '' ? inp.value : ''));
+
+            const numericVals = vals.map(v => parseFloat(v)).filter(v => !isNaN(v));
+            const avg = numericVals.length ? (numericVals.reduce((a, b) => a + b, 0) / numericVals.length).toFixed(1) : '';
+
+            rows.push([i + 1, s.student_name, ...vals, avg]);
+        });
+        filename = `SIPENA_Keterampilan_${kelas}.xlsx`;
+        sheetName = 'Keterampilan';
+    }
+
+    // Validasi jika tidak ada data siswa
+    if (rows.length <= 3) { 
+        window.toast('Tidak ada data untuk diekspor.', 'err');
+        return;
+    }
+
+    // 3. Konversi Array ke Worksheet Excel
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // 4. Formatting Excel (Merge Judul & Lebar Kolom)
+    const lastColIndex = rows[3].length - 1; // Mendeteksi jumlah kolom dari baris header tabel
+    
+    // Merge cell untuk Judul Laporan (Baris 1, dari kolom A sampai kolom terakhir)
+    ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIndex } }
+    ];
+
+    // Atur lebar kolom agar rapi (Kolom No=5, Nama=30, Sisanya=15)
+    const colWidths = [{ wch: 5 }, { wch: 30 }];
+    for (let i = 2; i <= lastColIndex; i++) {
+        colWidths.push({ wch: 15 });
+    }
+    ws['!cols'] = colWidths;
+
+    // 5. Generate dan Download File
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+
+    window.toast(`✅ File ${filename} berhasil diunduh!`, 'success');
 };
