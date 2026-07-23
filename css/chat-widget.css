@@ -358,3 +358,53 @@
     justify-content: center;
     font-weight: bold;
 }
+/* Tombol Kembali (Panah Kecil seperti WA) */
+.chat-widget-back-icon {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-right: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-widget-back-icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.chat-widget-chat-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Badge Notifikasi */
+.chat-widget-btn .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border-radius: 10px;
+    min-width: 20px;
+    height: 20px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    padding: 0 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
