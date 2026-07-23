@@ -280,3 +280,38 @@ tr:hover td{background:#fafbff;}
         size: A4 portrait;
     }
 }
+
+// Fungsi Export ke Excel Format Tabel
+function exportToExcelTable(filename = 'nilai_sipena') {
+    // Ambil data dari tabel
+    const table = document.querySelector('#tabelNilai table') || document.querySelector('.tbl-wrap table');
+    
+    if (!table) {
+        alert('Tidak ada data untuk diekspor!');
+        return;
+    }
+
+    // Buat workbook baru
+    const wb = XLSX.utils.table_to_book(table, {sheet: "Nilai"});
+    
+    // Style untuk header
+    const ws = wb.Sheets["Nilai"];
+    
+    // Set lebar kolom
+    const colWidths = [
+        {wch: 5},  // No
+        {wch: 30}, // Nama
+        {wch: 15}, // UH 1
+        {wch: 15}, // UH 2
+        {wch: 15}, // UH 3
+        {wch: 15}, // PH 1
+        {wch: 15}, // PH 2
+        {wch: 15}, // PH 3
+        {wch: 15}, // Rerata
+    ];
+    
+    ws['!cols'] = colWidths;
+    
+    // Download file
+    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
+}
