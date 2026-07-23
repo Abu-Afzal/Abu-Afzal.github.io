@@ -294,6 +294,61 @@ function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     listenPartnerStatus(partnerIdSafe);
 }
 
+// Show User List (Kembali ke daftar pengguna)
+function showUserList() {
+    chatWidgetUsers.style.display = 'block';
+    chatWidgetChatArea.style.display = 'none';
+    
+    // Reset current chat
+    currentChatPartnerId = null;
+    currentChatRoomId = null;
+    
+    // Remove active class from all users
+    document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
+}
+
+// Open Chat
+function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
+    console.log('👤 Membuka chat dengan:', partnerName);
+    
+    currentChatPartnerId = partnerIdSafe;
+    currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
+    
+    // Update header chat
+    chatWidgetHeaderName.textContent = partnerName;
+    
+    // Format status di header
+    if (isOnline) {
+        chatWidgetHeaderStatus.textContent = '🟢 Online';
+        chatWidgetHeaderStatus.style.color = '#10b981';
+    } else if (lastSeen) {
+        const date = new Date(lastSeen);
+        const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        chatWidgetHeaderStatus.textContent = ` Terakhir dilihat ${timeStr}`;
+        chatWidgetHeaderStatus.style.color = '#94a3b8';
+    } else {
+        chatWidgetHeaderStatus.textContent = 'Offline';
+        chatWidgetHeaderStatus.style.color = '#94a3b8';
+    }
+    
+    // Update avatar
+    document.getElementById('chatWidgetAvatar').textContent = partnerName.charAt(0).toUpperCase();
+    
+    // Tampilkan area chat, sembunyikan user list
+    chatWidgetUsers.style.display = 'none';
+    chatWidgetChatArea.style.display = 'flex';
+    
+    // Highlight user aktif
+    document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"]`)?.classList.add('active');
+    
+    // Load messages
+    listenMessages();
+    
+    // Listen partner status changes
+    listenPartnerStatus(partnerIdSafe);
+}
+
 // Listen Partner Status Changes
 function listenPartnerStatus(partnerIdSafe) {
     const partnerRef = ref(db, `users/${partnerIdSafe}`);
