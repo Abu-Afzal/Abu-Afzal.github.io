@@ -96,6 +96,7 @@ function checkExistingUser() {
             setupUserInRTDB();
             setupPresence();
             loadUsers();
+            listenForNewMessages();
         } catch (error) {
             console.error('❌ [Chat Widget] Error parsing user data:', error);
         }
@@ -369,6 +370,45 @@ function listenMessages() {
     });
 }
 
+// Listen untuk pesan baru (untuk notifikasi)
+function listenForNewMessages() {
+    const chatsRef = ref(db, 'chats');
+    
+    onValue(chatsRef, (snapshot) => {
+        const chats = snapshot.val();
+        if (!chats) return;
+        
+        let totalUnread = 0;
+        
+        Object.keys(chats).forEach(roomId => {
+            // Cek apakah room ini adalah chat dengan current user
+            if (roomId.includes(currentUserIdSafe)) {
+                const messages = chats[roomId].messages;
+                if (!messages) return;
+                
+                // Dapatkan partner ID dari room ID
+                const [user1, user2] = roomId.split('_');
+                const partnerId = user1 === currentUserIdSafe ? user2 : user1;
+                
+                // Hitung pesan yang belum dibaca (dari partner, dan chat sedang tidak dibuka)
+                Object.values(messages).forEach(msg => {
+                    if (msg.senderId !== currentUserIdSafe && partnerId !== currentOpenChat) {
+                        // Pesan dari orang lain dan chat sedang tidak dibuka
+                        if (!unreadMessages[partnerId]) unreadMessages[partnerId] = 0;
+                        unreadMessages[partnerId]++;
+                    }
+                });
+                
+                if (unreadMessages[partnerId]) {
+                    totalUnread += unreadMessages[partnerId];
+                }
+            }
+        });
+        
+        updateNotificationBadge(totalUnread);
+    });
+}
+
 // Send Message
 function sendMessage() {
     const text = chatWidgetInput.value.trim();
@@ -387,6 +427,19 @@ function sendMessage() {
         console.error('❌ Error kirim pesan:', error);
         alert('Gagal kirim pesan: ' + error.message);
     });
+}
+
+// Update notifikasi badge
+function updateNotificationBadge(totalCount) {
+    const badge = document.getElementById('chatWidgetBadge');
+    if (!badge) return;
+    
+    if (totalCount && totalCount > 0) {
+        badge.textContent = totalCount > 99 ? '99+' : totalCount;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
 }
 
 // Auto-init
