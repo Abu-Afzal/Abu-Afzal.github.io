@@ -28,7 +28,9 @@ let currentUserIdSafe = null;
 let currentChatPartnerId = null;
 let currentChatRoomId = null;
 let currentUserName = 'User';
-
+// State untuk notifikasi
+let unreadMessages = {}; // { userIdSafe: count }
+let currentOpenChat = null; // Chat yang sedang dibuka
 // DOM Elements
 let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetHeaderName, chatWidgetHeaderStatus;
 
@@ -178,6 +180,14 @@ function showUserList() {
     chatWidgetChatArea.style.display = 'none';
     currentChatPartnerId = null;
     currentChatRoomId = null;
+    
+    // Tandai pesan sebagai sudah dibaca saat kembali ke list
+    if (currentOpenChat) {
+        unreadMessages[currentOpenChat] = 0;
+        updateNotificationBadge();
+        currentOpenChat = null;
+    }
+    
     document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
 }
 
@@ -260,6 +270,11 @@ function loadUsers() {
 function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     currentChatPartnerId = partnerIdSafe;
     currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
+    currentOpenChat = partnerIdSafe; // Set chat yang sedang dibuka
+    
+    // Clear notifikasi untuk chat ini
+    unreadMessages[partnerIdSafe] = 0;
+    updateNotificationBadge();
     
     chatWidgetHeaderName.textContent = partnerName;
     if (isOnline) {
@@ -284,7 +299,6 @@ function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     listenMessages();
     listenPartnerStatus(partnerIdSafe);
 }
-
 // Listen Partner Status Changes
 function listenPartnerStatus(partnerIdSafe) {
     const partnerRef = ref(db, `users/${partnerIdSafe}`);
