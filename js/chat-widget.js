@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
-    getDatabase, ref, set, push, onValue, onDisconnect, serverTimestamp, query, orderByChild, limitToLast 
+    getDatabase, ref, set, push, onValue, onDisconnect, serverTimestamp, query, orderByChild 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 // Konfigurasi Firebase Anda
@@ -25,11 +25,12 @@ const db = getDatabase(app);
 // State Aplikasi
 let currentUserId = null;
 let currentUserIdSafe = null;
+let currentChatPartnerId = null;
+let currentChatRoomId = null;
 let currentUserName = 'User';
-const GROUP_CHAT_ID = 'group_chat_sipelita'; // ID room chat grup
 
 // DOM Elements
-let chatWidgetBtn, chatWidgetContainer, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetOnlineUsers;
+let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetPlaceholder, chatWidgetHeaderName, chatWidgetHeaderStatus;
 
 // Fungsi untuk encode email (replace . dengan _)
 function encodeEmail(email) {
@@ -38,16 +39,20 @@ function encodeEmail(email) {
 
 // Initialize Widget
 export function initChatWidget() {
-    console.log('🚀 Initializing group chat widget...');
+    console.log('🚀 Initializing personal chat widget...');
     createWidgetHTML();
     
     // Ambil elemen DOM
     chatWidgetBtn = document.getElementById('chatWidgetBtn');
     chatWidgetContainer = document.getElementById('chatWidgetContainer');
+    chatWidgetUsers = document.getElementById('chatWidgetUsers');
     chatWidgetMessages = document.getElementById('chatWidgetMessages');
     chatWidgetInput = document.getElementById('chatWidgetInput');
     sendBtn = document.getElementById('chatWidgetSendBtn');
-    chatWidgetOnlineUsers = document.getElementById('chatWidgetOnlineUsers');
+    chatWidgetChatArea = document.getElementById('chatWidgetChatArea');
+    chatWidgetPlaceholder = document.getElementById('chatWidgetPlaceholder');
+    chatWidgetHeaderName = document.getElementById('chatWidgetHeaderName');
+    chatWidgetHeaderStatus = document.getElementById('chatWidgetHeaderStatus');
     
     // Event Listeners
     if (chatWidgetBtn) chatWidgetBtn.addEventListener('click', toggleChat);
@@ -77,8 +82,7 @@ function checkExistingUser() {
             
             setupUserInRTDB();
             setupPresence();
-            loadGroupMessages();
-            trackOnlineUsers();
+            loadUsers();
             
         } catch (error) {
             console.error('❌ Error parsing user data:', error);
@@ -101,7 +105,7 @@ function setupUserInRTDB() {
     });
 }
 
-// Create Widget HTML (Group Chat Version)
+// Create Widget HTML (Personal Chat Version)
 function createWidgetHTML() {
     const widgetHTML = `
         <button id="chatWidgetBtn" class="chat-widget-btn">
@@ -112,21 +116,38 @@ function createWidgetHTML() {
         <div id="chatWidgetContainer" class="chat-widget-container">
             <div class="chat-widget-header">
                 <div>
-                    <h3><i class="fas fa-users"></i> Grup Sipelita</h3>
-                    <small id="chatWidgetOnlineUsers" style="opacity:0.8">0 online</small>
+                    <h3><i class="fas fa-user"></i> Chat Sipelita</h3>
+                    <small style="opacity:0.8">Personal Chat</small>
                 </div>
                 <button class="close-btn" id="chatWidgetCloseBtn">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <div id="chatWidgetMessages" class="chat-widget-messages">
-                <div style="text-align:center;color:#999;padding:20px">Memuat pesan...</div>
+            <div id="chatWidgetUsers" class="chat-widget-users">
+                <div style="padding:20px;text-align:center;color:#999">Memuat pengguna...</div>
             </div>
             
-            <div class="chat-widget-input">
-                <input type="text" id="chatWidgetInput" placeholder="Ketik pesan untuk grup...">
-                <button id="chatWidgetSendBtn"><i class="fas fa-paper-plane"></i></button>
+            <div id="chatWidgetChatArea" class="chat-widget-chat-area" style="display: none;">
+                <div class="chat-widget-chat-header">
+                    <div class="chat-widget-chat-user-info">
+                        <div class="chat-widget-avatar" id="chatWidgetAvatar">U</div>
+                        <div>
+                            <div class="chat-widget-chat-name" id="chatWidgetHeaderName">Nama User</div>
+                            <div class="chat-widget-chat-status" id="chatWidgetHeaderStatus">Offline</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="chatWidgetMessages" class="chat-widget-messages">
+                    <div style="text-align:center;color:#999;padding:40px">
+                        <i class="fas fa-comments" style="font-size:48px;opacity:0.3;margin-bottom:10px"></i>
+                        <p>Pilih pengguna untuk memulai chat</p>
+                    </div>
+                </div>
+                <div class="chat-widget-input">
+                    <input type="text" id="chatWidgetInput" placeholder="Ketik pesan...">
+                    <button id="chatWidgetSendBtn"><i class="fas fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     `;
@@ -144,7 +165,7 @@ function toggleChat() {
     chatWidgetContainer.classList.toggle('active');
 }
 
-// Setup Presence
+// Setup Presence (Online/Offline)
 function setupPresence() {
     const userStatusRef = ref(db, `users/${currentUserIdSafe}/status`);
     const userLastSeenRef = ref(db, `users/${currentUserIdSafe}/lastSeen`);
@@ -155,37 +176,179 @@ function setupPresence() {
             set(userStatusRef, 'online');
             onDisconnect(userStatusRef).set('offline');
             onDisconnect(userLastSeenRef).set(serverTimestamp());
+            console.log('🟢 Status diatur ke: Online');
         }
     });
 }
 
-// Track Online Users
-function trackOnlineUsers() {
+// Load Users dari RTDB
+function loadUsers() {
     const usersRef = ref(db, 'users');
     
     onValue(usersRef, (snapshot) => {
+        chatWidgetUsers.innerHTML = '';
         const users = snapshot.val();
-        let onlineCount = 0;
         
-        if (users) {
-            Object.values(users).forEach(user => {
-                if (user.status === 'online') {
-                    onlineCount++;
-                }
-            });
+        if (!users) {
+            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Belum ada pengguna lain</div>';
+            return;
         }
         
-        const onlineUsersEl = document.getElementById('chatWidgetOnlineUsers');
-        if (onlineUsersEl) {
-            onlineUsersEl.textContent = `${onlineCount} pengguna online`;
+        let userCount = 0;
+        Object.keys(users).forEach(uidSafe => {
+            if (uidSafe === currentUserIdSafe) return; // Jangan tampilkan diri sendiri
+            
+            const user = users[uidSafe];
+            const isOnline = user.status === 'online';
+            const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+            const lastSeen = user.lastSeen || 0;
+            
+            // Format last seen
+            let statusText = 'Offline';
+            if (isOnline) {
+                statusText = 'Online';
+            } else if (lastSeen) {
+                const date = new Date(lastSeen);
+                const now = new Date();
+                const diffMinutes = Math.floor((now - date) / 60000);
+                
+                if (diffMinutes < 1) {
+                    statusText = 'Baru saja';
+                } else if (diffMinutes < 60) {
+                    statusText = `${diffMinutes} menit yang lalu`;
+                } else if (diffMinutes < 1440) {
+                    const hours = Math.floor(diffMinutes / 60);
+                    statusText = `${hours} jam yang lalu`;
+                } else {
+                    statusText = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                }
+            }
+            
+            const userEl = document.createElement('div');
+            userEl.className = 'chat-widget-user';
+            userEl.dataset.uid = uidSafe;
+            userEl.innerHTML = `
+                <div class="avatar">
+                    ${displayName.charAt(0).toUpperCase()}
+                    ${isOnline ? '<div class="status-dot"></div>' : ''}
+                </div>
+                <div class="user-info">
+                    <div class="user-name">${displayName}</div>
+                    <div class="user-status" style="color: ${isOnline ? '#10b981' : '#94a3b8'}">
+                        ${isOnline ? ' Online' : `⏰ ${statusText}`}
+                    </div>
+                </div>
+            `;
+            
+            userEl.addEventListener('click', () => openChat(uidSafe, displayName, isOnline, lastSeen));
+            chatWidgetUsers.appendChild(userEl);
+            userCount++;
+        });
+        
+        if (userCount === 0) {
+            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Anda satu-satunya yang online</div>';
         }
     });
 }
 
-// Load Group Messages
-function loadGroupMessages() {
-    const messagesRef = ref(db, `chats/${GROUP_CHAT_ID}/messages`);
-    const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(50));
+// Open Chat
+function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
+    console.log('👤 Membuka chat dengan:', partnerName);
+    
+    currentChatPartnerId = partnerIdSafe;
+    currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
+    
+    // Update header chat
+    chatWidgetHeaderName.textContent = partnerName;
+    
+    // Format status di header
+    if (isOnline) {
+        chatWidgetHeaderStatus.textContent = ' Online';
+        chatWidgetHeaderStatus.style.color = '#10b981';
+    } else if (lastSeen) {
+        const date = new Date(lastSeen);
+        const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        chatWidgetHeaderStatus.textContent = ` Terakhir dilihat ${timeStr}`;
+        chatWidgetHeaderStatus.style.color = '#94a3b8';
+    } else {
+        chatWidgetHeaderStatus.textContent = 'Offline';
+        chatWidgetHeaderStatus.style.color = '#94a3b8';
+    }
+    
+    // Update avatar
+    document.getElementById('chatWidgetAvatar').textContent = partnerName.charAt(0).toUpperCase();
+    
+    // Tampilkan area chat, sembunyikan placeholder
+    chatWidgetPlaceholder.style.display = 'none';
+    chatWidgetChatArea.style.display = 'flex';
+    
+    // Highlight user aktif
+    document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
+    document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"]`)?.classList.add('active');
+    
+    // Load messages
+    listenMessages();
+    
+    // Listen partner status changes
+    listenPartnerStatus(partnerIdSafe);
+}
+
+// Listen Partner Status Changes
+function listenPartnerStatus(partnerIdSafe) {
+    const partnerRef = ref(db, `users/${partnerIdSafe}`);
+    
+    onValue(partnerRef, (snapshot) => {
+        const user = snapshot.val();
+        if (!user) return;
+        
+        const isOnline = user.status === 'online';
+        const lastSeen = user.lastSeen || 0;
+        
+        if (isOnline) {
+            chatWidgetHeaderStatus.textContent = '🟢 Online';
+            chatWidgetHeaderStatus.style.color = '#10b981';
+        } else if (lastSeen) {
+            const date = new Date(lastSeen);
+            const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            chatWidgetHeaderStatus.textContent = `⏰ Terakhir dilihat ${timeStr}`;
+            chatWidgetHeaderStatus.style.color = '#94a3b8';
+        } else {
+            chatWidgetHeaderStatus.textContent = 'Offline';
+            chatWidgetHeaderStatus.style.color = '#94a3b8';
+        }
+        
+        // Update status di user list juga
+        const userEl = document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"] .user-status`);
+        if (userEl) {
+            if (isOnline) {
+                userEl.textContent = '🟢 Online';
+                userEl.style.color = '#10b981';
+            } else if (lastSeen) {
+                const date = new Date(lastSeen);
+                const diffMinutes = Math.floor((new Date() - date) / 60000);
+                let statusText = 'Offline';
+                if (diffMinutes < 1) statusText = 'Baru saja';
+                else if (diffMinutes < 60) statusText = `${diffMinutes} menit yang lalu`;
+                else if (diffMinutes < 1440) statusText = `${Math.floor(diffMinutes / 60)} jam yang lalu`;
+                else statusText = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                
+                userEl.textContent = `⏰ ${statusText}`;
+                userEl.style.color = '#94a3b8';
+            }
+        }
+        
+        // Update online dot di avatar
+        const statusDot = document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"] .status-dot`);
+        if (statusDot) {
+            statusDot.style.display = isOnline ? 'block' : 'none';
+        }
+    });
+}
+
+// Listen Messages
+function listenMessages() {
+    const messagesRef = ref(db, `chats/${currentChatRoomId}/messages`);
+    const messagesQuery = query(messagesRef, orderByChild('timestamp'));
     
     onValue(messagesQuery, (snapshot) => {
         chatWidgetMessages.innerHTML = '';
@@ -195,7 +358,7 @@ function loadGroupMessages() {
             chatWidgetMessages.innerHTML = `
                 <div style="text-align:center;color:#999;padding:40px">
                     <i class="fas fa-comments" style="font-size:48px;opacity:0.3;margin-bottom:10px"></i>
-                    <p>Belum ada pesan. Jadilah yang pertama mengobrol!</p>
+                    <p>Belum ada pesan. Sapa dia!</p>
                 </div>
             `;
             return;
@@ -204,18 +367,14 @@ function loadGroupMessages() {
         Object.keys(messages).forEach(key => {
             const msg = messages[key];
             const isSent = msg.senderId === currentUserIdSafe;
-            const senderName = msg.senderName || 'User';
             const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
             
             const msgEl = document.createElement('div');
             msgEl.className = `chat-widget-message ${isSent ? 'sent' : 'received'}`;
             
             msgEl.innerHTML = `
-                <div class="message-sender" style="font-size:11px;color:#075e54;font-weight:600;margin-bottom:3px">
-                    ${senderName}
-                </div>
                 <div class="message-text">${msg.text}</div>
-                <div class="message-time" style="font-size:10px;color:#999;text-align:right;margin-top:3px">${time}</div>
+                <div class="message-time">${time}</div>
             `;
             
             chatWidgetMessages.appendChild(msgEl);
@@ -234,20 +393,24 @@ function sendMessage() {
         return;
     }
     
+    if (!currentChatRoomId) {
+        alert('Pilih pengguna di daftar terlebih dahulu');
+        return;
+    }
+    
     try {
-        const messagesRef = ref(db, `chats/${GROUP_CHAT_ID}/messages`);
+        const messagesRef = ref(db, `chats/${currentChatRoomId}/messages`);
         
         push(messagesRef, {
             senderId: currentUserIdSafe,
             senderName: currentUserName,
-            senderEmail: currentUserId,
             text: text,
             timestamp: serverTimestamp()
         }).then(() => {
             chatWidgetInput.value = '';
             chatWidgetInput.focus();
         }).catch((error) => {
-            console.error(' Error kirim pesan:', error);
+            console.error('❌ Error kirim pesan:', error);
             alert('Gagal kirim pesan: ' + error.message);
         });
     } catch (error) {
