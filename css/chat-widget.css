@@ -276,3 +276,85 @@
     justify-content: center;
     font-weight: bold;
 }
+/* Header Chat Personal */
+.chat-widget-chat-header {
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.chat-widget-chat-user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-widget-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #075e54;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.chat-widget-chat-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.chat-widget-chat-status {
+    font-size: 12px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Status dot untuk online indicator */
+.status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: none;
+}
+
+.status-dot[style*="display: block"],
+.status-dot.online {
+    display: block !important;
+}
+
+/* User list item */
+.chat-widget-user {
+    position: relative;
+}
+
+.chat-widget-user.active {
+    background: #f0f9ff;
+    border-left: 3px solid #075e54;
+}
+
+/* Badge untuk notifikasi */
+.chat-widget-btn .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
