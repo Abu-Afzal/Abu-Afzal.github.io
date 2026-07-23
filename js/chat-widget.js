@@ -211,6 +211,7 @@ function setupPresence() {
 // Load Users dari RTDB
 function loadUsers() {
     const usersRef = ref(db, 'users');
+    
     onValue(usersRef, (snapshot) => {
         if (!chatWidgetUsers) return;
         chatWidgetUsers.innerHTML = '';
@@ -222,12 +223,21 @@ function loadUsers() {
         }
         
         let userCount = 0;
+        
         Object.keys(users).forEach(uidSafe => {
+            // 1. Jangan tampilkan diri sendiri
             if (uidSafe === currentUserIdSafe) return;
             
             const user = users[uidSafe];
+            
+            // 2. FILTER: SKIP user yang tidak punya nama, namanya cuma "User", atau terlalu pendek
+            // (Ini akan menyembunyikan akun testing/anonim yang tidak memiliki nama lengkap)
+            if (!user.name || user.name === 'User' || user.name.length < 3 || user.name.toLowerCase().includes('user p')) {
+                return; // Lewati user ini, jangan tampilkan di daftar
+            }
+            
             const isOnline = user.status === 'online';
-            const displayName = user.name || (user.email ? user.email.split('@')[0] : 'User');
+            const displayName = user.name; // Karena sudah difilter, kita yakin ini nama lengkap
             const lastSeen = user.lastSeen || 0;
             
             let statusText = 'Offline';
@@ -264,11 +274,10 @@ function loadUsers() {
         });
         
         if (userCount === 0) {
-            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Anda satu-satunya yang online</div>';
+            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Tidak ada pengguna lain dengan nama lengkap</div>';
         }
     });
 }
-
 // Open Chat
 function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     currentChatPartnerId = partnerIdSafe;
