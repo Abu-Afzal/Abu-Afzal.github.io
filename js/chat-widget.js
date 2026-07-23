@@ -129,6 +129,9 @@ function createWidgetHTML() {
             
             <div id="chatWidgetChatArea" class="chat-widget-chat-area" style="display: none;">
                 <div class="chat-widget-chat-header">
+                    <button class="chat-widget-back-btn" id="chatWidgetBackBtn">
+                        <i class="fas fa-arrow-left"></i> Kembali
+                    </button>
                     <div class="chat-widget-chat-user-info">
                         <div class="chat-widget-avatar" id="chatWidgetAvatar">U</div>
                         <div>
@@ -152,8 +155,12 @@ function createWidgetHTML() {
     document.getElementById('chatWidgetCloseBtn').addEventListener('click', () => {
         chatWidgetContainer.classList.remove('active');
     });
+    
+    // Event listener back button
+    document.getElementById('chatWidgetBackBtn').addEventListener('click', () => {
+        showUserList();
+    });
 }
-
 // Toggle Chat Widget
 function toggleChat() {
     chatWidgetContainer.classList.toggle('active');
