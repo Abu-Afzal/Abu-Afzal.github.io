@@ -30,7 +30,7 @@ let currentChatRoomId = null;
 let currentUserName = 'User';
 
 // DOM Elements
-let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetPlaceholder, chatWidgetHeaderName, chatWidgetHeaderStatus;
+let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetHeaderName, chatWidgetHeaderStatus;
 
 // Fungsi untuk encode email (replace . dengan _)
 function encodeEmail(email) {
@@ -50,7 +50,6 @@ export function initChatWidget() {
     chatWidgetInput = document.getElementById('chatWidgetInput');
     sendBtn = document.getElementById('chatWidgetSendBtn');
     chatWidgetChatArea = document.getElementById('chatWidgetChatArea');
-    chatWidgetPlaceholder = document.getElementById('chatWidgetPlaceholder');
     chatWidgetHeaderName = document.getElementById('chatWidgetHeaderName');
     chatWidgetHeaderStatus = document.getElementById('chatWidgetHeaderStatus');
     
@@ -138,12 +137,7 @@ function createWidgetHTML() {
                         </div>
                     </div>
                 </div>
-                <div id="chatWidgetMessages" class="chat-widget-messages">
-                    <div style="text-align:center;color:#999;padding:40px">
-                        <i class="fas fa-comments" style="font-size:48px;opacity:0.3;margin-bottom:10px"></i>
-                        <p>Pilih pengguna untuk memulai chat</p>
-                    </div>
-                </div>
+                <div id="chatWidgetMessages" class="chat-widget-messages"></div>
                 <div class="chat-widget-input">
                     <input type="text" id="chatWidgetInput" placeholder="Ketik pesan...">
                     <button id="chatWidgetSendBtn"><i class="fas fa-paper-plane"></i></button>
@@ -235,7 +229,7 @@ function loadUsers() {
                 <div class="user-info">
                     <div class="user-name">${displayName}</div>
                     <div class="user-status" style="color: ${isOnline ? '#10b981' : '#94a3b8'}">
-                        ${isOnline ? ' Online' : `⏰ ${statusText}`}
+                        ${isOnline ? '🟢 Online' : `⏰ ${statusText}`}
                     </div>
                 </div>
             `;
@@ -263,12 +257,12 @@ function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     
     // Format status di header
     if (isOnline) {
-        chatWidgetHeaderStatus.textContent = ' Online';
+        chatWidgetHeaderStatus.textContent = '🟢 Online';
         chatWidgetHeaderStatus.style.color = '#10b981';
     } else if (lastSeen) {
         const date = new Date(lastSeen);
         const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        chatWidgetHeaderStatus.textContent = ` Terakhir dilihat ${timeStr}`;
+        chatWidgetHeaderStatus.textContent = `⏰ Terakhir dilihat ${timeStr}`;
         chatWidgetHeaderStatus.style.color = '#94a3b8';
     } else {
         chatWidgetHeaderStatus.textContent = 'Offline';
@@ -278,8 +272,8 @@ function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     // Update avatar
     document.getElementById('chatWidgetAvatar').textContent = partnerName.charAt(0).toUpperCase();
     
-    // Tampilkan area chat, sembunyikan placeholder
-    chatWidgetPlaceholder.style.display = 'none';
+    // Tampilkan area chat, sembunyikan user list
+    chatWidgetUsers.style.display = 'none';
     chatWidgetChatArea.style.display = 'flex';
     
     // Highlight user aktif
@@ -321,7 +315,7 @@ function listenPartnerStatus(partnerIdSafe) {
         const userEl = document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"] .user-status`);
         if (userEl) {
             if (isOnline) {
-                userEl.textContent = '🟢 Online';
+                userEl.textContent = ' Online';
                 userEl.style.color = '#10b981';
             } else if (lastSeen) {
                 const date = new Date(lastSeen);
@@ -332,7 +326,7 @@ function listenPartnerStatus(partnerIdSafe) {
                 else if (diffMinutes < 1440) statusText = `${Math.floor(diffMinutes / 60)} jam yang lalu`;
                 else statusText = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
                 
-                userEl.textContent = `⏰ ${statusText}`;
+                userEl.textContent = ` ${statusText}`;
                 userEl.style.color = '#94a3b8';
             }
         }
