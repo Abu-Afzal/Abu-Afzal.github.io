@@ -1,6 +1,6 @@
 // Import Firebase SDK (Modular v10.7.1)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { 
     getDatabase, ref, set, push, onValue, onDisconnect, serverTimestamp, query, orderByChild 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -28,13 +28,16 @@ let currentUserIdSafe = null;
 let currentChatPartnerId = null;
 let currentChatRoomId = null;
 let currentUserName = 'User';
-// State untuk notifikasi
-let unreadMessages = {}; // { userIdSafe: count }
-let currentOpenChat = null; // Chat yang sedang dibuka
+
+// State untuk notifikasi & pembacaan
+let unreadMessages = {}; 
+let lastReadTimestamp = {}; // Menyimpan waktu terakhir chat dibuka
+let currentOpenChat = null; 
+
 // DOM Elements
 let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetHeaderName, chatWidgetHeaderStatus;
 
-// Fungsi untuk encode email
+// Fungsi untuk encode email (aman untuk path RTDB)
 function encodeEmail(email) {
     return email.replace(/\./g, '_').replace(/@/g, '_at_');
 }
@@ -44,7 +47,7 @@ export function initChatWidget() {
     console.log('🚀 [Chat Widget] Memulai inisialisasi...');
     createWidgetHTML();
     
-    // Ambil elemen DOM dengan safety check
+    // Ambil elemen DOM
     chatWidgetBtn = document.getElementById('chatWidgetBtn');
     chatWidgetContainer = document.getElementById('chatWidgetContainer');
     chatWidgetUsers = document.getElementById('chatWidgetUsers');
@@ -56,12 +59,12 @@ export function initChatWidget() {
     chatWidgetHeaderStatus = document.getElementById('chatWidgetHeaderStatus');
     
     if (!chatWidgetBtn) {
-        console.error('❌ [Chat Widget] Gagal membuat elemen HTML. Cek console di atas.');
+        console.error('❌ [Chat Widget] Gagal membuat elemen HTML.');
         return;
     }
     console.log('✅ [Chat Widget] Elemen HTML berhasil dibuat.');
 
-    // Event Listeners
+    // Event Listeners (Hanya di sini, tidak diduplikasi di createWidgetHTML)
     chatWidgetBtn.addEventListener('click', toggleChat);
     if (sendBtn) sendBtn.addEventListener('click', sendMessage);
     if (chatWidgetInput) {
@@ -76,7 +79,6 @@ export function initChatWidget() {
     const backBtn = document.getElementById('chatWidgetBackBtn');
     if (backBtn) backBtn.addEventListener('click', showUserList);
     
-    // Cek user login
     checkExistingUser();
 }
 
@@ -101,7 +103,10 @@ function checkExistingUser() {
             console.error('❌ [Chat Widget] Error parsing user data:', error);
         }
     } else {
-        console.warn('⚠️ [Chat Widget] Tidak ada user login di localStorage. Widget tetap tampil tapi tidak bisa chat.');
+        console.warn('⚠️ [Chat Widget] Tidak ada user login. Widget tampil tapi nonaktif.');
+        if (chatWidgetUsers) {
+            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#ef4444">⚠️ Silakan login terlebih dahulu.</div>';
+        }
     }
 }
 
@@ -159,36 +164,32 @@ function createWidgetHTML() {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', widgetHTML);
-    
-    // Event listeners
-    document.getElementById('chatWidgetCloseBtn').addEventListener('click', () => {
-        chatWidgetContainer.classList.remove('active');
-    });
-    
-    document.getElementById('chatWidgetBackBtn').addEventListener('click', () => {
-        showUserList();
-    });
 }
 
 // Toggle Chat Widget
 function toggleChat() {
-    chatWidgetContainer.classList.toggle('active');
+    console.log('🖱️ [Chat Widget] Tombol diklik!');
+    if (chatWidgetContainer) {
+        chatWidgetContainer.classList.toggle('active');
+        console.log('✅ [Chat Widget] Status container:', window.getComputedStyle(chatWidgetContainer).display);
+    }
 }
 
-// Show User List (Kembali ke daftar pengguna)
+// Show User List (Kembali ke daftar)
 function showUserList() {
     chatWidgetUsers.style.display = 'block';
     chatWidgetChatArea.style.display = 'none';
-    currentChatPartnerId = null;
-    currentChatRoomId = null;
     
-    // Tandai pesan sebagai sudah dibaca saat kembali ke list
     if (currentOpenChat) {
+        // Tandai sebagai sudah dibaca saat kembali ke list
+        lastReadTimestamp[currentOpenChat] = Date.now();
         unreadMessages[currentOpenChat] = 0;
         updateNotificationBadge();
         currentOpenChat = null;
     }
     
+    currentChatPartnerId = null;
+    currentChatRoomId = null;
     document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
 }
 
@@ -211,6 +212,7 @@ function setupPresence() {
 function loadUsers() {
     const usersRef = ref(db, 'users');
     onValue(usersRef, (snapshot) => {
+        if (!chatWidgetUsers) return;
         chatWidgetUsers.innerHTML = '';
         const users = snapshot.val();
         
@@ -271,9 +273,10 @@ function loadUsers() {
 function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     currentChatPartnerId = partnerIdSafe;
     currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
-    currentOpenChat = partnerIdSafe; // Set chat yang sedang dibuka
+    currentOpenChat = partnerIdSafe; 
     
-    // Clear notifikasi untuk chat ini
+    // Tandai waktu baca dan reset notifikasi
+    lastReadTimestamp[partnerIdSafe] = Date.now();
     unreadMessages[partnerIdSafe] = 0;
     updateNotificationBadge();
     
@@ -300,6 +303,7 @@ function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     listenMessages();
     listenPartnerStatus(partnerIdSafe);
 }
+
 // Listen Partner Status Changes
 function listenPartnerStatus(partnerIdSafe) {
     const partnerRef = ref(db, `users/${partnerIdSafe}`);
@@ -319,7 +323,6 @@ function listenPartnerStatus(partnerIdSafe) {
             chatWidgetHeaderStatus.style.color = '#94a3b8';
         }
         
-        // Update di list juga
         const userEl = document.querySelector(`.chat-widget-user[data-uid="${partnerIdSafe}"] .user-status`);
         if (userEl) {
             if (isOnline) {
@@ -348,6 +351,7 @@ function listenMessages() {
     const messagesQuery = query(messagesRef, orderByChild('timestamp'));
     
     onValue(messagesQuery, (snapshot) => {
+        if (!chatWidgetMessages) return;
         chatWidgetMessages.innerHTML = '';
         const messages = snapshot.val();
         
@@ -370,8 +374,9 @@ function listenMessages() {
     });
 }
 
-// Listen untuk pesan baru (untuk notifikasi)
+// Listen untuk pesan baru (DIPERBAIKI: Menggunakan lastReadTimestamp agar tidak menghitung pesan lama)
 function listenForNewMessages() {
+    if (!currentUserIdSafe) return;
     const chatsRef = ref(db, 'chats');
     
     onValue(chatsRef, (snapshot) => {
@@ -381,27 +386,33 @@ function listenForNewMessages() {
         let totalUnread = 0;
         
         Object.keys(chats).forEach(roomId => {
-            // Cek apakah room ini adalah chat dengan current user
             if (roomId.includes(currentUserIdSafe)) {
-                const messages = chats[roomId].messages;
+                const roomData = chats[roomId];
+                const messages = roomData.messages;
                 if (!messages) return;
                 
-                // Dapatkan partner ID dari room ID
                 const [user1, user2] = roomId.split('_');
                 const partnerId = user1 === currentUserIdSafe ? user2 : user1;
                 
-                // Hitung pesan yang belum dibaca (dari partner, dan chat sedang tidak dibuka)
+                // Jika chat ini sedang dibuka, anggap sudah dibaca
+                if (partnerId === currentOpenChat) {
+                    lastReadTimestamp[partnerId] = Date.now();
+                    return;
+                }
+                
+                let roomUnread = 0;
+                const lastRead = lastReadTimestamp[partnerId] || 0;
+                
                 Object.values(messages).forEach(msg => {
-                    if (msg.senderId !== currentUserIdSafe && partnerId !== currentOpenChat) {
-                        // Pesan dari orang lain dan chat sedang tidak dibuka
-                        if (!unreadMessages[partnerId]) unreadMessages[partnerId] = 0;
-                        unreadMessages[partnerId]++;
+                    const msgTime = typeof msg.timestamp === 'object' ? 0 : (msg.timestamp || 0);
+                    // Hanya hitung jika pengirim bukan kita, DAN waktu pesan lebih baru dari terakhir dibaca
+                    if (msg.senderId !== currentUserIdSafe && msgTime > lastRead) {
+                        roomUnread++;
                     }
                 });
                 
-                if (unreadMessages[partnerId]) {
-                    totalUnread += unreadMessages[partnerId];
-                }
+                unreadMessages[partnerId] = roomUnread;
+                totalUnread += roomUnread;
             }
         });
         
