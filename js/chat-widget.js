@@ -136,10 +136,10 @@ function createWidgetHTML() {
             
             <div id="chatWidgetChatArea" class="chat-widget-chat-area" style="display: none;">
                 <div class="chat-widget-chat-header">
-                    <button class="chat-widget-back-btn" id="chatWidgetBackBtn">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </button>
                     <div class="chat-widget-chat-user-info">
+                        <button class="chat-widget-back-icon" id="chatWidgetBackBtn">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
                         <div class="chat-widget-avatar" id="chatWidgetAvatar">U</div>
                         <div>
                             <div class="chat-widget-chat-name" id="chatWidgetHeaderName">Nama User</div>
@@ -156,6 +156,15 @@ function createWidgetHTML() {
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', widgetHTML);
+    
+    // Event listeners
+    document.getElementById('chatWidgetCloseBtn').addEventListener('click', () => {
+        chatWidgetContainer.classList.remove('active');
+    });
+    
+    document.getElementById('chatWidgetBackBtn').addEventListener('click', () => {
+        showUserList();
+    });
 }
 
 // Toggle Chat Widget
