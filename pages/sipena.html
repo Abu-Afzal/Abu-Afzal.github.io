@@ -47,7 +47,7 @@
     }
 }
 </style>
-    <!-- Library SheetJS untuk Export Excel Format Tabel yang Rapi -->
+<!-- Library SheetJS untuk Export Excel Format Tabel yang Rapi -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -106,10 +106,10 @@
         <button class="tab" data-rtab="semester">Semester</button>
       </div>
       <div class="action-bar">
-    <button class="btn btn-primary" id="btnCetakRekap">🖨️ Cetak</button>
-    <button class="btn btn-success" id="btnExportRekap"> Export CSV</button>
-    <button class="btn btn-danger" id="btnHapusRekap">🗑️ Hapus Rekap</button>
-</div>
+        <button class="btn btn-primary" id="btnCetakRekap">🖨️ Cetak</button>
+        <button class="btn btn-success" id="btnExportRekap">📥 Export CSV</button>
+        <button class="btn btn-danger" id="btnHapusRekap">🗑️ Hapus Rekap</button>
+      </div>
       <div id="rekapFilters" style="margin-bottom:14px;"></div>
       <div id="rekapContent"></div>
     </div>
@@ -211,18 +211,17 @@
   </div>
 </div>
 
-    <!-- Modal Hapus Rekap -->
+<!-- Modal Hapus Rekap -->
 <div class="modal" id="modalHapusRekap">
     <div class="modal-box">
         <div class="modal-title" style="color:#ef4444;">🗑️ Hapus Data Rekap Absensi</div>
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;margin-bottom:16px;font-size:0.88rem;color:#991b1b;">
-            <strong>️ PERHATIAN:</strong> Tindakan ini akan menghapus data absensi secara permanen dan tidak bisa dikembalikan!
+            <strong>⚠️ PERHATIAN:</strong> Tindakan ini akan menghapus data absensi secara permanen dan tidak bisa dikembalikan!
         </div>
         <div class="fg">
             <label>Pilih Kelas yang akan dihapus rekapnya:</label>
             <select id="selectKelasHapus" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;">
                 <option value="all">-- SEMUA KELAS --</option>
-                <!-- Opsi kelas akan di-generate oleh JS -->
             </select>
         </div>
         <div class="fg">
@@ -263,139 +262,164 @@ function bindEvents(){
   document.getElementById('btnHadirSemua').onclick = window.hadirSemua;
   document.getElementById('btnKirimAbsen').onclick = window.simpanAbsensi;
 
-  document.querySelectorAll('#rekapTabs .tab').forEach(t=>{ t.onclick = () => { document.querySelectorAll('#rekapTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); currentRekapTab = t.dataset.rtab; window.renderRekap(); }; });
+  document.querySelectorAll('#rekapTabs .tab').forEach(t=>{ 
+      t.onclick = () => { 
+          document.querySelectorAll('#rekapTabs .tab').forEach(x=>x.classList.remove('active')); 
+          t.classList.add('active'); 
+          currentRekapTab = t.dataset.rtab; 
+          window.renderRekap(); 
+      }; 
+  });
 
-    // Event untuk tombol Hapus Rekap
-document.getElementById('btnHapusRekap').onclick = () => {
-    // Generate daftar kelas di dropdown
-    const selectKelas = document.getElementById('selectKelasHapus');
-    selectKelas.innerHTML = '<option value="all">-- SEMUA KELAS --</option>';
-    
-    const kelasList = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
-    kelasList.forEach(k => {
-        selectKelas.innerHTML += `<option value="${k.class_name}">${k.class_name}</option>`;
-    });
-    
-    document.getElementById('inputKonfirmasiHapusRekap').value = '';
-    window.openModal('modalHapusRekap');
-};
+  // Event untuk tombol Hapus Rekap
+  document.getElementById('btnHapusRekap').onclick = () => {
+      const selectKelas = document.getElementById('selectKelasHapus');
+      selectKelas.innerHTML = '<option value="all">-- SEMUA KELAS --</option>';
+      
+      const kelasList = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+      kelasList.forEach(k => {
+          selectKelas.innerHTML += `<option value="${k.class_name}">${k.class_name}</option>`;
+      });
+      
+      document.getElementById('inputKonfirmasiHapusRekap').value = '';
+      window.openModal('modalHapusRekap');
+  };
 
-document.getElementById('btnBatalHapusRekap').onclick = () => window.closeModal('modalHapusRekap');
+  document.getElementById('btnBatalHapusRekap').onclick = () => window.closeModal('modalHapusRekap');
 
-document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
-    const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
-    const kelasDipilih = document.getElementById('selectKelasHapus').value;
-    
-    if (konfirmasi !== 'HAPUS') {
-        window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS dengan huruf kapital.', 'err');
-        return;
-    }
-    
-    // Cek apakah ROOT dan allData tersedia
-    if (typeof ROOT === 'undefined') {
-        window.toast('❌ Error: Database tidak terinisialisasi. Refresh halaman.', 'err');
-        return;
-    }
-    
-    if (typeof allData === 'undefined' || !allData) {
-        window.toast('❌ Error: Data belum dimuat. Refresh halaman.', 'err');
-        return;
-    }
-    
-    const btn = document.getElementById('btnKonfirmasiHapusRekap');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Menghapus...';
-    
-    try {
-        let deletedCount = 0;
-        let absensiData = [];
-        
-        if (kelasDipilih === 'all') {
-            // Hapus SEMUA data absensi user ini
-            absensiData = allData.filter(d => d.type === 'absensi' && d.user_name === currentUser);
-        } else {
-            // Hapus hanya untuk kelas tertentu
-            absensiData = allData.filter(d => 
-                d.type === 'absensi' && 
-                d.user_name === currentUser && 
-                d.class_name === kelasDipilih
-            );
-        }
-        
-        console.log(' Data yang akan dihapus:', absensiData.length, 'item');
-        
-        if (absensiData.length === 0) {
-            window.toast('️ Tidak ada data absensi untuk dihapus.', 'warn');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            return;
-        }
-        
-        // Hapus satu per satu dari Firebase
-        for (const item of absensiData) {
-            if (!item.__key) {
-                console.error('❌ Item tidak memiliki __key:', item);
-                continue;
-            }
-            
-            try {
-                await ROOT.child(item.__key).remove();
-                deletedCount++;
-                console.log('✅ Berhasil hapus:', item.__key);
-            } catch (err) {
-                console.error('❌ Gagal hapus item:', item.__key, err);
-            }
-        }
-        
-        window.closeModal('modalHapusRekap');
-        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi!`, 'success');
-        
-        // PERBAIKAN: Hapus window.loadData() yang tidak ada
-        // Langsung render ulang rekap (Firebase listener akan otomatis update allData)
-        setTimeout(() => {
-            if (typeof window.renderRekap === 'function') {
-                window.renderRekap();
-            }
-        }, 500); // Delay 500ms agar Firebase sempat sync
-        
-    } catch (error) {
-        console.error('❌ Error di hapus rekap:', error);
-        window.toast('❌ Gagal menghapus: ' + error.message, 'err');
-    }
-    
-    btn.disabled = false;
-    btn.innerHTML = originalText;
-    
-};  // ✅ PERBAIKAN: Menggunakan fungsi cetakRekap agar info kelas muncul
+  document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
+      const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
+      const kelasDipilih = document.getElementById('selectKelasHapus').value;
+      
+      if (konfirmasi !== 'HAPUS') {
+          window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
+          return;
+      }
+      
+      if (typeof ROOT === 'undefined' || typeof allData === 'undefined' || !allData) {
+          window.toast('❌ Error: Data belum siap. Refresh halaman.', 'err');
+          return;
+      }
+      
+      const btn = document.getElementById('btnKonfirmasiHapusRekap');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Menghapus...';
+      
+      try {
+          let deletedCount = 0;
+          const absensiData = allData.filter(d => 
+              d.type === 'absensi' && 
+              d.user_name === currentUser && 
+              (kelasDipilih === 'all' || d.class_name === kelasDipilih)
+          );
+          
+          if (absensiData.length === 0) {
+              window.toast('⚠️ Tidak ada data absensi untuk dihapus.', 'warn');
+              btn.disabled = false;
+              btn.innerHTML = originalText;
+              return;
+          }
+          
+          for (const item of absensiData) {
+              if (item.__key) {
+                  await ROOT.child(item.__key).remove();
+                  deletedCount++;
+              }
+          }
+          
+          window.closeModal('modalHapusRekap');
+          window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap!`, 'success');
+          
+          setTimeout(() => {
+              if (typeof window.renderRekap === 'function') {
+                  window.renderRekap();
+              }
+          }, 500);
+          
+      } catch (error) {
+          console.error('❌ Error di hapus rekap:', error);
+          window.toast('❌ Gagal menghapus: ' + error.message, 'err');
+      }
+      
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+  };
+
   document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
           window.cetakRekap();
       } else {
-          window.print(); // Fallback jika fungsi belum dimuat
+          window.print();
       }
   };
   
   document.getElementById('btnExportRekap').onclick = window.exportRekap;
 
-  document.querySelectorAll('#nilaiTabs .tab').forEach(t=>{ t.onclick = () => { document.querySelectorAll('#nilaiTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); currentNilaiTab = t.dataset.ntab; window.renderPenilaian(); }; });
-  document.getElementById('nilaiKelasSelect').onchange = e => { currentNilaiClass=e.target.value; window.renderPenilaian(); };
+  document.querySelectorAll('#nilaiTabs .tab').forEach(t=>{ 
+      t.onclick = () => { 
+          document.querySelectorAll('#nilaiTabs .tab').forEach(x=>x.classList.remove('active')); 
+          t.classList.add('active'); 
+          currentNilaiTab = t.dataset.ntab; 
+          window.renderPenilaian(); 
+      }; 
+  });
+  
+  document.getElementById('nilaiKelasSelect').onchange = e => { 
+      currentNilaiClass = e.target.value; 
+      window.renderPenilaian(); 
+  };
+  
   document.getElementById('btnSimpanNilai').onclick = window.simpanNilai;
   document.getElementById('btnExportNilai').onclick = window.eksporNilai;
 
-  document.getElementById('btnAddKolom').onclick = () => { document.getElementById('inputJenisKolom').value = 'PH'; document.getElementById('modalKolom').dataset.target = 'pengetahuan'; window.openModal('modalKolom'); };
-  document.getElementById('btnAddKolomKet').onclick = () => { document.getElementById('inputJenisKolom').value = 'Praktik'; document.getElementById('modalKolom').dataset.target = 'keterampilan'; window.openModal('modalKolom'); };
+  document.getElementById('btnAddKolom').onclick = () => { 
+      document.getElementById('inputJenisKolom').value = 'PH'; 
+      document.getElementById('modalKolom').dataset.target = 'pengetahuan'; 
+      window.openModal('modalKolom'); 
+  };
+  
+  document.getElementById('btnAddKolomKet').onclick = () => { 
+      document.getElementById('inputJenisKolom').value = 'Praktik'; 
+      document.getElementById('modalKolom').dataset.target = 'keterampilan'; 
+      window.openModal('modalKolom'); 
+  };
+  
   document.getElementById('btnBatalKolom').onclick = () => window.closeModal('modalKolom');
-  document.getElementById('btnSimpanKolom').onclick = async () => { try { await window.tambahKolom(document.getElementById('modalKolom').dataset.target); } catch(e) { window.toast('❌ Gagal: ' + e.message, 'err'); } };
+  document.getElementById('btnSimpanKolom').onclick = async () => { 
+      try { 
+          await window.tambahKolom(document.getElementById('modalKolom').dataset.target); 
+      } catch(e) { 
+          window.toast('❌ Gagal: ' + e.message, 'err'); 
+      } 
+  };
 
-  document.getElementById('btnTambahDokumen').onclick = () => { selectedFileData=null; document.getElementById('inputNamaDokumen').value=''; document.getElementById('inputFileDokumen').value=''; document.getElementById('filePreview').style.display='none'; document.getElementById('dropZone').style.display='block'; document.getElementById('uploadProgress').style.display='none'; window.openModal('modalDokumen'); setTimeout(()=>window.bindDropZone(), 100); };
-  document.getElementById('btnBatalDokumen').onclick = () => { selectedFileData=null; window.closeModal('modalDokumen'); };
+  document.getElementById('btnTambahDokumen').onclick = () => { 
+      selectedFileData = null; 
+      document.getElementById('inputNamaDokumen').value = ''; 
+      document.getElementById('inputFileDokumen').value = ''; 
+      document.getElementById('filePreview').style.display = 'none'; 
+      document.getElementById('dropZone').style.display = 'block'; 
+      document.getElementById('uploadProgress').style.display = 'none'; 
+      window.openModal('modalDokumen'); 
+      setTimeout(()=>window.bindDropZone(), 100); 
+  };
+  
+  document.getElementById('btnBatalDokumen').onclick = () => { 
+      selectedFileData = null; 
+      window.closeModal('modalDokumen'); 
+  };
+  
   document.getElementById('btnSimpanDokumen').onclick = window.simpanDokumen;
 
   document.getElementById('btnBatalHapus').onclick = () => window.closeModal('modalHapus');
   document.getElementById('btnKonfirmasiHapus').onclick = window.hapusSemuaData;
 
-  document.querySelectorAll('.modal').forEach(m=>{ m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('active'); }); });
+  document.querySelectorAll('.modal').forEach(m=>{ 
+      m.addEventListener('click', e=>{ 
+          if(e.target === m) m.classList.remove('active'); 
+      }); 
+  });
 }
 
 // Jalankan bindEvents saat DOM siap
