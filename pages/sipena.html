@@ -314,33 +314,41 @@ function bindEvents(){
     try {
         let deletedCount = 0;
         
-        // Debug: Lihat semua data absensi
-        const semuaAbsensi = allData.filter(d => d.type === 'absensi');
-        console.log('📊 Total data absensi:', semuaAbsensi.length);
+        // Debug: Lihat sample data untuk memahami strukturnya
+        const sampleData = allData.slice(0, 5);
+        console.log('📋 Sample data:', sampleData);
+        
+        // Cari data yang mengandung informasi absensi
+        // Kemungkinan: data memiliki field 'date', 'students', atau 'class_name'
+        const semuaAbsensi = allData.filter(d => {
+            // Cek berbagai kemungkinan field yang menandakan data absensi
+            return d.date || d.tanggal || d.students || d.class_name || d.className || d.kelas;
+        });
+        
+        console.log('📊 Total data absensi (dengan filter baru):', semuaAbsensi.length);
         
         if (semuaAbsensi.length > 0) {
-            console.log(' Sample data absensi pertama:', semuaAbsensi[0]);
+            console.log('📝 Sample data absensi:', semuaAbsensi[0]);
             console.log(' Field yang tersedia:', Object.keys(semuaAbsensi[0]));
             
             // Cek kelas yang ada di data
-            const kelasTersedia = [...new Set(semuaAbsensi.map(d => d.class_name || d.className || d.kelas || 'unknown'))];
-            console.log('📚 Kelas yang tersedia di data:', kelasTersedia);
+            const kelasTersedia = [...new Set(semuaAbsensi.map(d => 
+                d.class_name || d.className || d.kelas || d.ClassName || 'unknown'
+            ))];
+            console.log('📚 Kelas yang tersedia:', kelasTersedia);
         }
         
-        // Cari data dengan berbagai kemungkinan field name
+        // Filter data berdasarkan kelas dan user
         let absensiData = [];
         
         if (kelasDipilih === 'all') {
-            absensiData = semuaAbsensi.filter(d => d.user_name === currentUser);
+            // Hapus semua data yang terdeteksi sebagai absensi
+            absensiData = semuaAbsensi;
         } else {
-            // Coba berbagai kemungkinan field name untuk class
+            // Filter berdasarkan kelas
             absensiData = semuaAbsensi.filter(d => {
-                const matchUser = d.user_name === currentUser;
-                const matchClass = (d.class_name === kelasDipilih) || 
-                                   (d.className === kelasDipilih) || 
-                                   (d.kelas === kelasDipilih) ||
-                                   (d.ClassName === kelasDipilih);
-                return matchUser && matchClass;
+                const dataClass = d.class_name || d.className || d.kelas || d.ClassName;
+                return dataClass === kelasDipilih;
             });
         }
         
@@ -348,10 +356,7 @@ function bindEvents(){
         
         if (absensiData.length === 0) {
             console.error('❌ TIDAK ADA DATA YANG COCOK!');
-            console.error('- Mungkin user_name tidak cocok:', semuaAbsensi[0]?.user_name, 'vs', currentUser);
-            console.error('- Mungkin class_name tidak cocok');
-            
-            window.toast('⚠️ Tidak ada data absensi untuk kelas "' + kelasDipilih + '". Lihat console untuk detail.', 'warn');
+            window.toast('⚠️ Tidak ada data absensi untuk kelas "' + kelasDipilih + '". Lihat console.', 'warn');
             btn.disabled = false;
             btn.innerHTML = originalText;
             return;
