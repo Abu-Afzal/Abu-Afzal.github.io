@@ -294,7 +294,6 @@ function bindEvents(){
     console.log('🔍 DEBUG INFO:');
     console.log('- Kelas dipilih:', kelasDipilih);
     console.log('- Current user:', currentUser);
-    console.log('- Total data di allData:', allData ? allData.length : 0);
     
     if (konfirmasi !== 'HAPUS') {
         window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
@@ -314,65 +313,83 @@ function bindEvents(){
     try {
         let deletedCount = 0;
         
-        // Debug: Lihat sample data untuk memahami strukturnya
-        const sampleData = allData.slice(0, 5);
-        console.log('📋 Sample data:', sampleData);
+        // Debug: Lihat semua tipe data yang ada
+        const tipeData = [...new Set(allData.map(d => d.type).filter(t => t))];
+        console.log(' Tipe data yang ada:', tipeData);
         
-        // Cari data yang mengandung informasi absensi
-        // Kemungkinan: data memiliki field 'date', 'students', atau 'class_name'
-        const semuaAbsensi = allData.filter(d => {
-            // Cek berbagai kemungkinan field yang menandakan data absensi
-            return d.date || d.tanggal || d.students || d.class_name || d.className || d.kelas;
+        // Sample data untuk setiap tipe
+        tipeData.forEach(tipe => {
+            const sample = allData.find(d => d.type === tipe);
+            console.log(`📝 Sample data type '${tipe}':`, sample);
         });
         
-        console.log('📊 Total data absensi (dengan filter baru):', semuaAbsensi.length);
-        
-        if (semuaAbsensi.length > 0) {
-            console.log('📝 Sample data absensi:', semuaAbsensi[0]);
-            console.log(' Field yang tersedia:', Object.keys(semuaAbsensi[0]));
-            
-            // Cek kelas yang ada di data
-            const kelasTersedia = [...new Set(semuaAbsensi.map(d => 
-                d.class_name || d.className || d.kelas || d.ClassName || 'unknown'
-            ))];
-            console.log('📚 Kelas yang tersedia:', kelasTersedia);
-        }
-        
-        // Filter data berdasarkan kelas dan user
+        // HANYA hapus data dengan type 'absensi'
+        // JANGAN hapus data dengan type 'student' atau 'class'
         let absensiData = [];
         
         if (kelasDipilih === 'all') {
-            // Hapus semua data yang terdeteksi sebagai absensi
-            absensiData = semuaAbsensi;
+            absensiData = allData.filter(d => 
+                d.type === 'absensi' && 
+                d.user_name === currentUser
+            );
         } else {
-            // Filter berdasarkan kelas
-            absensiData = semuaAbsensi.filter(d => {
-                const dataClass = d.class_name || d.className || d.kelas || d.ClassName;
-                return dataClass === kelasDipilih;
-            });
+            absensiData = allData.filter(d => 
+                d.type === 'absensi' && 
+                d.user_name === currentUser && 
+                (d.class_name === kelasDipilih || 
+                 d.className === kelasDipilih || 
+                 d.kelas === kelasDipilih)
+            );
         }
         
-        console.log('✅ Data yang ditemukan untuk dihapus:', absensiData.length);
+        console.log('✅ Data absensi yang ditemukan:', absensiData.length);
         
         if (absensiData.length === 0) {
-            console.error('❌ TIDAK ADA DATA YANG COCOK!');
-            window.toast('⚠️ Tidak ada data absensi untuk kelas "' + kelasDipilih + '". Lihat console.', 'warn');
+            console.log('️ Tidak ada data absensi. Mungkin type-nya berbeda?');
+            
+            // Coba cari data yang bukan student atau class
+            const dataLain = allData.filter(d => 
+                d.type !== 'student' && 
+                d.type !== 'class' &&
+                d.user_name === currentUser
+            );
+            
+            console.log(' Data lain (bukan student/class):', dataLain.length);
+            if (dataLain.length > 0) {
+                console.log('Sample:', dataLain[0]);
+                console.log('Tipe yang ada:', [...new Set(dataLain.map(d => d.type))]);
+            }
+            
+            window.toast('️ Tidak ada data rekap absensi untuk dihapus.', 'warn');
             btn.disabled = false;
             btn.innerHTML = originalText;
             return;
         }
         
-        // Hapus data
+        // Konfirmasi ulang sebelum hapus
+        const confirmMsg = `Yakin ingin menghapus ${absensiData.length} data rekap absensi?\n\nData siswa TIDAK akan terhapus.`;
+        if (!confirm(confirmMsg)) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+        }
+        
+        // Hapus HANYA data absensi
         for (const item of absensiData) {
             if (item.__key) {
-                await ROOT.child(item.__key).remove();
-                deletedCount++;
-                console.log('✅ Berhasil hapus:', item.__key);
+                // Pastikan bukan data siswa
+                if (item.type === 'absensi') {
+                    await ROOT.child(item.__key).remove();
+                    deletedCount++;
+                    console.log('✅ Berhasil hapus absensi:', item.__key);
+                } else {
+                    console.warn('⚠️ Lewati data (bukan absensi):', item.type);
+                }
             }
         }
         
         window.closeModal('modalHapusRekap');
-        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap!`, 'success');
+        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi! Data siswa tetap aman.`, 'success');
         
         setTimeout(() => {
             if (typeof window.renderRekap === 'function') {
@@ -382,13 +399,13 @@ function bindEvents(){
         
     } catch (error) {
         console.error('❌ Error di hapus rekap:', error);
-        window.toast('❌ Gagal menghapus: ' + error.message, 'err');
+        window.toast(' Gagal menghapus: ' + error.message, 'err');
     }
     
     btn.disabled = false;
     btn.innerHTML = originalText;
-};
-  document.getElementById('btnCetakRekap').onclick = () => {
+};  
+    document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
           window.cetakRekap();
       } else {
