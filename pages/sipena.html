@@ -288,64 +288,101 @@ function bindEvents(){
   document.getElementById('btnBatalHapusRekap').onclick = () => window.closeModal('modalHapusRekap');
 
   document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
-      const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
-      const kelasDipilih = document.getElementById('selectKelasHapus').value;
-      
-      if (konfirmasi !== 'HAPUS') {
-          window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
-          return;
-      }
-      
-      if (typeof ROOT === 'undefined' || typeof allData === 'undefined' || !allData) {
-          window.toast('❌ Error: Data belum siap. Refresh halaman.', 'err');
-          return;
-      }
-      
-      const btn = document.getElementById('btnKonfirmasiHapusRekap');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Menghapus...';
-      
-      try {
-          let deletedCount = 0;
-          const absensiData = allData.filter(d => 
-              d.type === 'absensi' && 
-              d.user_name === currentUser && 
-              (kelasDipilih === 'all' || d.class_name === kelasDipilih)
-          );
-          
-          if (absensiData.length === 0) {
-              window.toast('⚠️ Tidak ada data absensi untuk dihapus.', 'warn');
-              btn.disabled = false;
-              btn.innerHTML = originalText;
-              return;
-          }
-          
-          for (const item of absensiData) {
-              if (item.__key) {
-                  await ROOT.child(item.__key).remove();
-                  deletedCount++;
-              }
-          }
-          
-          window.closeModal('modalHapusRekap');
-          window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap!`, 'success');
-          
-          setTimeout(() => {
-              if (typeof window.renderRekap === 'function') {
-                  window.renderRekap();
-              }
-          }, 500);
-          
-      } catch (error) {
-          console.error('❌ Error di hapus rekap:', error);
-          window.toast('❌ Gagal menghapus: ' + error.message, 'err');
-      }
-      
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-  };
-
+    const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
+    const kelasDipilih = document.getElementById('selectKelasHapus').value;
+    
+    console.log('🔍 DEBUG INFO:');
+    console.log('- Kelas dipilih:', kelasDipilih);
+    console.log('- Current user:', currentUser);
+    console.log('- Total data di allData:', allData ? allData.length : 0);
+    
+    if (konfirmasi !== 'HAPUS') {
+        window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
+        return;
+    }
+    
+    if (typeof ROOT === 'undefined' || typeof allData === 'undefined' || !allData) {
+        window.toast('❌ Error: Data belum siap. Refresh halaman.', 'err');
+        return;
+    }
+    
+    const btn = document.getElementById('btnKonfirmasiHapusRekap');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Menghapus...';
+    
+    try {
+        let deletedCount = 0;
+        
+        // Debug: Lihat semua data absensi
+        const semuaAbsensi = allData.filter(d => d.type === 'absensi');
+        console.log('📊 Total data absensi:', semuaAbsensi.length);
+        
+        if (semuaAbsensi.length > 0) {
+            console.log(' Sample data absensi pertama:', semuaAbsensi[0]);
+            console.log(' Field yang tersedia:', Object.keys(semuaAbsensi[0]));
+            
+            // Cek kelas yang ada di data
+            const kelasTersedia = [...new Set(semuaAbsensi.map(d => d.class_name || d.className || d.kelas || 'unknown'))];
+            console.log('📚 Kelas yang tersedia di data:', kelasTersedia);
+        }
+        
+        // Cari data dengan berbagai kemungkinan field name
+        let absensiData = [];
+        
+        if (kelasDipilih === 'all') {
+            absensiData = semuaAbsensi.filter(d => d.user_name === currentUser);
+        } else {
+            // Coba berbagai kemungkinan field name untuk class
+            absensiData = semuaAbsensi.filter(d => {
+                const matchUser = d.user_name === currentUser;
+                const matchClass = (d.class_name === kelasDipilih) || 
+                                   (d.className === kelasDipilih) || 
+                                   (d.kelas === kelasDipilih) ||
+                                   (d.ClassName === kelasDipilih);
+                return matchUser && matchClass;
+            });
+        }
+        
+        console.log('✅ Data yang ditemukan untuk dihapus:', absensiData.length);
+        
+        if (absensiData.length === 0) {
+            console.error('❌ TIDAK ADA DATA YANG COCOK!');
+            console.error('- Mungkin user_name tidak cocok:', semuaAbsensi[0]?.user_name, 'vs', currentUser);
+            console.error('- Mungkin class_name tidak cocok');
+            
+            window.toast('⚠️ Tidak ada data absensi untuk kelas "' + kelasDipilih + '". Lihat console untuk detail.', 'warn');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            return;
+        }
+        
+        // Hapus data
+        for (const item of absensiData) {
+            if (item.__key) {
+                await ROOT.child(item.__key).remove();
+                deletedCount++;
+                console.log('✅ Berhasil hapus:', item.__key);
+            }
+        }
+        
+        window.closeModal('modalHapusRekap');
+        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap!`, 'success');
+        
+        setTimeout(() => {
+            if (typeof window.renderRekap === 'function') {
+                window.renderRekap();
+            }
+        }, 500);
+        
+    } catch (error) {
+        console.error('❌ Error di hapus rekap:', error);
+        window.toast('❌ Gagal menghapus: ' + error.message, 'err');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+};
   document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
           window.cetakRekap();
