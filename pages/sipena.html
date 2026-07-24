@@ -286,12 +286,16 @@ document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
     const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
     const kelasDipilih = document.getElementById('selectKelasHapus').value;
     
+    console.log('🔍 Debug Info:');
+    console.log('- Kelas dipilih:', kelasDipilih);
+    console.log('- Konfirmasi:', konfirmasi);
+    console.log('- Total data di allData:', allData ? allData.length : 0);
+    
     if (konfirmasi !== 'HAPUS') {
         window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS dengan huruf kapital.', 'err');
         return;
     }
     
-    // Cek apakah ROOT dan allData tersedia
     if (typeof ROOT === 'undefined') {
         window.toast('❌ Error: Database tidak terinisialisasi. Refresh halaman.', 'err');
         return;
@@ -311,22 +315,44 @@ document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
         let deletedCount = 0;
         let absensiData = [];
         
-        if (kelasDipilih === 'all') {
-            // Hapus SEMUA data absensi user ini
-            absensiData = allData.filter(d => d.type === 'absensi' && d.user_name === currentUser);
-        } else {
-            // Hapus hanya untuk kelas tertentu
-            absensiData = allData.filter(d => 
-                d.type === 'absensi' && 
-                d.user_name === currentUser && 
-                d.class_name === kelasDipilih
-            );
+        // Debug: Lihat semua data absensi yang ada
+        const semuaAbsensi = allData.filter(d => d.type === 'absensi');
+        console.log('📊 Total data absensi:', semuaAbsensi.length);
+        if (semuaAbsensi.length > 0) {
+            console.log('📋 Sample data absensi pertama:', semuaAbsensi[0]);
+            console.log(' Field yang tersedia:', Object.keys(semuaAbsensi[0]));
         }
         
-        console.log(' Data yang akan dihapus:', absensiData.length, 'item');
+        if (kelasDipilih === 'all') {
+            // Hapus SEMUA data absensi user ini
+            absensiData = semuaAbsensi.filter(d => d.user_name === currentUser);
+            console.log(' Hapus semua kelas - Ditemukan:', absensiData.length, 'data');
+        } else {
+            // Hapus hanya untuk kelas tertentu
+            // Coba beberapa kemungkinan field name
+            absensiData = semuaAbsensi.filter(d => {
+                const matchClass = (d.class_name === kelasDipilih) || 
+                                   (d.className === kelasDipilih) || 
+                                   (d.kelas === kelasDipilih);
+                const matchUser = d.user_name === currentUser;
+                return matchClass && matchUser;
+            });
+            
+            console.log('🎯 Hapus kelas', kelasDipilih, '- Ditemukan:', absensiData.length, 'data');
+            
+            // Jika tidak ketemu, coba lihat class_name yang ada
+            if (absensiData.length === 0) {
+                const uniqueClasses = [...new Set(semuaAbsensi.map(d => d.class_name || d.className || d.kelas))];
+                console.log('⚠️ Kelas yang tersedia di database:', uniqueClasses);
+                console.log('⚠️ Kelas yang dicari:', kelasDipilih);
+            }
+        }
         
         if (absensiData.length === 0) {
-            window.toast('️ Tidak ada data absensi untuk dihapus.', 'warn');
+            window.toast('⚠️ Tidak ada data absensi untuk kelas "' + kelasDipilih + '". Cek console untuk detail.', 'warn');
+            console.error('❌ Data tidak ditemukan. Kemungkinan penyebab:');
+            console.error('1. class_name di data tidak sama dengan "' + kelasDipilih + '"');
+            console.error('2. user_name tidak sama dengan "' + currentUser + '"');
             btn.disabled = false;
             btn.innerHTML = originalText;
             return;
@@ -351,13 +377,11 @@ document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
         window.closeModal('modalHapusRekap');
         window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi!`, 'success');
         
-        // PERBAIKAN: Hapus window.loadData() yang tidak ada
-        // Langsung render ulang rekap (Firebase listener akan otomatis update allData)
         setTimeout(() => {
             if (typeof window.renderRekap === 'function') {
                 window.renderRekap();
             }
-        }, 500); // Delay 500ms agar Firebase sempat sync
+        }, 500);
         
     } catch (error) {
         console.error('❌ Error di hapus rekap:', error);
@@ -366,7 +390,7 @@ document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
     
     btn.disabled = false;
     btn.innerHTML = originalText;
-    
+};    
 };  // ✅ PERBAIKAN: Menggunakan fungsi cetakRekap agar info kelas muncul
   document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
