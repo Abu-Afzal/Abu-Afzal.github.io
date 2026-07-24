@@ -106,9 +106,10 @@
         <button class="tab" data-rtab="semester">Semester</button>
       </div>
       <div class="action-bar">
-        <button class="btn btn-primary" id="btnCetakRekap">🖨️ Cetak</button>
-        <button class="btn btn-success" id="btnExportRekap">📥 Export CSV</button>
-      </div>
+    <button class="btn btn-primary" id="btnCetakRekap">🖨️ Cetak</button>
+    <button class="btn btn-success" id="btnExportRekap"> Export CSV</button>
+    <button class="btn btn-danger" id="btnHapusRekap">🗑️ Hapus Rekap</button>
+</div>
       <div id="rekapFilters" style="margin-bottom:14px;"></div>
       <div id="rekapContent"></div>
     </div>
@@ -210,6 +211,31 @@
   </div>
 </div>
 
+    <!-- Modal Hapus Rekap -->
+<div class="modal" id="modalHapusRekap">
+    <div class="modal-box">
+        <div class="modal-title" style="color:#ef4444;">🗑️ Hapus Data Rekap Absensi</div>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;margin-bottom:16px;font-size:0.88rem;color:#991b1b;">
+            <strong>️ PERHATIAN:</strong> Tindakan ini akan menghapus data absensi secara permanen dan tidak bisa dikembalikan!
+        </div>
+        <div class="fg">
+            <label>Pilih Kelas yang akan dihapus rekapnya:</label>
+            <select id="selectKelasHapus" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;">
+                <option value="all">-- SEMUA KELAS --</option>
+                <!-- Opsi kelas akan di-generate oleh JS -->
+            </select>
+        </div>
+        <div class="fg">
+            <label>Ketik <strong>HAPUS</strong> untuk konfirmasi:</label>
+            <input type="text" id="inputKonfirmasiHapusRekap" placeholder="Ketik HAPUS">
+        </div>
+        <div class="modal-foot">
+            <button class="btn btn-secondary" id="btnBatalHapusRekap">Batal</button>
+            <button class="btn btn-danger" id="btnKonfirmasiHapusRekap">🗑️ Hapus Permanen</button>
+        </div>
+    </div>
+</div>
+
 <!-- SCRIPT MODULAR -->
 <script src="../js/sipena-core.js"></script>
 <script src="../js/sipena-kelas.js"></script>
@@ -238,7 +264,74 @@ function bindEvents(){
   document.getElementById('btnKirimAbsen').onclick = window.simpanAbsensi;
 
   document.querySelectorAll('#rekapTabs .tab').forEach(t=>{ t.onclick = () => { document.querySelectorAll('#rekapTabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); currentRekapTab = t.dataset.rtab; window.renderRekap(); }; });
-  
+
+    // Event untuk tombol Hapus Rekap
+document.getElementById('btnHapusRekap').onclick = () => {
+    // Generate daftar kelas di dropdown
+    const selectKelas = document.getElementById('selectKelasHapus');
+    selectKelas.innerHTML = '<option value="all">-- SEMUA KELAS --</option>';
+    
+    const kelasList = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+    kelasList.forEach(k => {
+        selectKelas.innerHTML += `<option value="${k.class_name}">${k.class_name}</option>`;
+    });
+    
+    document.getElementById('inputKonfirmasiHapusRekap').value = '';
+    window.openModal('modalHapusRekap');
+};
+
+document.getElementById('btnBatalHapusRekap').onclick = () => window.closeModal('modalHapusRekap');
+
+document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
+    const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
+    const kelasDipilih = document.getElementById('selectKelasHapus').value;
+    
+    if (konfirmasi !== 'HAPUS') {
+        window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS dengan huruf kapital.', 'err');
+        return;
+    }
+    
+    const btn = document.getElementById('btnKonfirmasiHapusRekap');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Menghapus...';
+    
+    try {
+        let deletedCount = 0;
+        
+        if (kelasDipilih === 'all') {
+            // Hapus SEMUA data absensi user ini
+            const absensiData = allData.filter(d => d.type === 'absensi' && d.user_name === currentUser);
+            for (const item of absensiData) {
+                await ROOT.child(item.__key).remove();
+                deletedCount++;
+            }
+        } else {
+            // Hapus hanya untuk kelas tertentu
+            const absensiData = allData.filter(d => 
+                d.type === 'absensi' && 
+                d.user_name === currentUser && 
+                d.class_name === kelasDipilih
+            );
+            for (const item of absensiData) {
+                await ROOT.child(item.__key).remove();
+                deletedCount++;
+            }
+        }
+        
+        window.closeModal('modalHapusRekap');
+        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi!`, 'success');
+        
+        // Refresh data
+        await window.loadData();
+        window.renderRekap();
+        
+    } catch (error) {
+        window.toast('❌ Gagal menghapus: ' + error.message, 'err');
+    }
+    
+    btn.disabled = false;
+    btn.innerHTML = '🗑️ Hapus Permanen';
+};
   // ✅ PERBAIKAN: Menggunakan fungsi cetakRekap agar info kelas muncul
   document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
