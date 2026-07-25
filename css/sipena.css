@@ -92,7 +92,7 @@ tr:hover td{background:#fafbff;}
   border:2px solid #e2e8f0;
   background:#fff;
   border-radius:6px;
-  font-size:0.75rem; /* Perkecil font tombol H/I/S/A/B */
+  font-size:0.9rem; /* Perkecil font tombol H/I/S/A/B */
   font-weight:700;
   cursor:pointer;
   transition:all .18s;
