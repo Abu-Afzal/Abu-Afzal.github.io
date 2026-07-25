@@ -1,12 +1,12 @@
 // ══════════════════════════════════════════════
-// SIPENA: Presensi (Versi Stabil & Backdate)
+// SIPENA: Presensi (Versi Final & Stabil)
 // ══════════════════════════════════════════════
 
-// Pastikan variabel global aman
 window.attendanceData = window.attendanceData || {};
+window.presensiDate = window.presensiDate || new Date().toISOString().split('T')[0];
 
 window.renderPresensi = () => {
-  // Cek keamanan data
+  // PENGAMAN: Jika data belum siap, hentikan sementara agar tidak error
   if (typeof allData === 'undefined' || !allData) return;
 
   const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
@@ -19,43 +19,52 @@ window.renderPresensi = () => {
     return;
   }
   
-  // Gunakan currentClass (global) seperti kode asli Anda
   if (!currentClass || !kelas.find(k => k.class_name === currentClass)) currentClass = kelas[0].class_name;
 
   tabs.innerHTML = kelas.map(k => `<button class="tab ${currentClass === k.class_name ? 'active' : ''}" data-kelas="${k.class_name}">${k.class_name}</button>`).join('');
   tabs.querySelectorAll('.tab').forEach(t => { t.onclick = () => { currentClass = t.dataset.kelas; window.renderPresensi(); }; });
 
-  // Setup Date Picker (Aman jika elemen tidak ada di HTML)
+  // Setup Date Picker secara internal (AMAN)
   if (dateInput) {
-    const today = window.todayStr ? window.todayStr() : new Date().toISOString().split('T')[0];
-    if (!dateInput.value) dateInput.value = today; // Hanya isi jika kosong
-    dateInput.max = today;
+    if (!dateInput.value) {
+        dateInput.value = window.presensiDate;
+        dateInput.max = new Date().toISOString().split('T')[0];
+    }
+    // Saat tanggal diubah, muat ulang data untuk tanggal tersebut
+    dateInput.onchange = (e) => {
+        window.presensiDate = e.target.value;
+        window.loadPresensiDataForDate(window.presensiDate);
+    };
   }
 
-  // Load data berdasarkan tanggal
-  const targetDate = dateInput && dateInput.value ? dateInput.value : (window.todayStr ? window.todayStr() : new Date().toISOString().split('T')[0]);
-  window.loadPresensiDataForDate(targetDate);
+  window.loadPresensiDataForDate(window.presensiDate);
 };
 
 window.loadPresensiDataForDate = (targetDate) => {
-  if (typeof allData === 'undefined' || !allData) return;
-  
-  window.attendanceData = {};
-  
-  const existingLog = allData.find(d => 
-    d.type === 'attendance_log' && 
-    d.class_name === currentClass && 
-    d.date === targetDate && 
-    d.user_name === currentUser
-  );
+  try {
+    if (typeof allData === 'undefined' || !allData) return;
+    
+    window.attendanceData = {}; // Reset sementara
+    
+    // Cari data absensi yang sudah ada di tanggal & kelas tersebut
+    const existingLog = allData.find(d => 
+      d.type === 'attendance_log' && 
+      d.class_name === currentClass && 
+      d.date === targetDate && 
+      d.user_name === currentUser
+    );
 
-  if (existingLog && existingLog.records) {
-    Object.keys(existingLog.records).forEach(sid => {
-      window.attendanceData[sid] = existingLog.records[sid].status;
-    });
+    if (existingLog && existingLog.records) {
+      Object.keys(existingLog.records).forEach(sid => {
+        window.attendanceData[sid] = existingLog.records[sid].status;
+      });
+    }
+
+    window.renderDaftarSiswa();
+  } catch (err) {
+    console.error("Error loadPresensiDataForDate:", err);
+    window.renderDaftarSiswa(); // Fallback: tetap render meski ada error kecil
   }
-
-  window.renderDaftarSiswa();
 };
 
 window.renderDaftarSiswa = () => {
@@ -64,7 +73,7 @@ window.renderDaftarSiswa = () => {
   const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
   const cont = document.getElementById('studentListContainer');
 
-  if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei"></div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
+  if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
 
   cont.innerHTML = siswa.map(s => {
     const st = window.attendanceData[s.__key] || '';
@@ -102,8 +111,7 @@ window.hadirSemua = () => {
 window.simpanAbsensi = async () => {
   if (typeof allData === 'undefined' || !allData) return;
 
-  const dateInput = document.getElementById('inputTanggalPresensi');
-  const targetDate = dateInput && dateInput.value ? dateInput.value : (window.todayStr ? window.todayStr() : new Date().toISOString().split('T')[0]);
+  const targetDate = window.presensiDate || new Date().toISOString().split('T')[0];
 
   const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
   if (!siswa.length) { window.toast('Tidak ada siswa!', 'err'); return; }
