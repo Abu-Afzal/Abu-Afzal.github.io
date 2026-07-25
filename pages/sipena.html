@@ -87,11 +87,7 @@
   <div id="presensi" class="content-area">
     <div class="content-card">
       <div class="section-title">✅ Presensi Siswa</div>
-      <div class="date-bar" style="display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
-    <span style="font-weight: 600; color: #854d0e;">📅 Tanggal Presensi:</span>
-    <input type="date" id="inputTanggalPresensi" 
-           style="padding: 8px 14px; border-radius: 8px; border: 2px solid #fde047; font-weight: 700; color: #334155; font-size: 0.95rem; outline: none; cursor: pointer;">
-</div>
+      <div class="date-bar" id="currentDate"></div>
       <div class="action-bar">
         <button class="btn btn-success" id="btnHadirSemua">✅ Hadir Semua</button>
         <button class="btn btn-primary" id="btnKirimAbsen">💾 Simpan Absensi</button>
@@ -265,19 +261,7 @@ function bindEvents(){
 
   document.getElementById('btnHadirSemua').onclick = window.hadirSemua;
   document.getElementById('btnKirimAbsen').onclick = window.simpanAbsensi;
-  // --- TAMBAHAN: Event listener untuk pemilih tanggal presensi ---
-  const dateInput = document.getElementById('inputTanggalPresensi');
-  if (dateInput) {
-      dateInput.addEventListener('change', (e) => {
-          // Pastikan data sudah dimuat dan kelas sudah dipilih sebelum memproses
-          if (typeof allData !== 'undefined' && allData.length > 0 && typeof currentClass !== 'undefined' && currentClass) {
-              if (typeof window.loadPresensiDataForDate === 'function') {
-                  window.loadPresensiDataForDate(e.target.value);
-              }
-          }
-      });
-  }
-  // -----------------------------------------------------------------
+
   document.querySelectorAll('#rekapTabs .tab').forEach(t=>{ 
       t.onclick = () => { 
           document.querySelectorAll('#rekapTabs .tab').forEach(x=>x.classList.remove('active')); 
