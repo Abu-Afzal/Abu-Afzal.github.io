@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA: Kelola Kelas & Integrasi SICAN
+// SIPENA: Kelola Kelas & Integrasi SICAN (UPDATED)
 // ══════════════════════════════════════════════
 
 window.renderKelolaKelas = () => {
@@ -16,7 +16,7 @@ window.renderKelolaKelas = () => {
       <td><span class="badge badge-green">👥 ${cnt} Siswa</span></td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" data-action="kelola" data-class="${k.class_name}">👥 Kelola Siswa</button>
+          <button class="btn btn-primary btn-sm" data-action="kelola" data-class="${k.class_name}"> Kelola Siswa</button>
           <button class="btn btn-danger btn-sm" data-action="hapuskelas" data-key="${k.__key}" data-class="${k.class_name}">🗑 Hapus</button>
         </div>
       </td>
@@ -70,51 +70,67 @@ window.bukaKelolaSwiswa = (className) => {
   window.renderSiswaModal(className);
 };
 
-// Track siswa yang sudah ditambahkan
-let siswaSudahDitambahkan = new Set();
-
+// Track siswa yang sudah ada di kelas (untuk mencegah duplikasi)
 window.renderSiswaModal = async (className) => {
   const tbody = document.getElementById('siswaTableBody');
   tbody.innerHTML = '<tr><td colspan="3" class="text-center"><div class="spinner"></div> Memuat data...</td></tr>';
 
   try {
-    // 1. Ambil dari SICAN (Firestore)
+    // 1. Ambil siswa yang SUDAH ADA di kelas ini dari SIPENA (RTDB)
+    const siswaDiKelas = allData.filter(d => 
+      d.type === 'student' && 
+      d.class_name === className && 
+      d.user_name === currentUser
+    );
+
+    // Buat Set untuk tracking NIS dan nama yang sudah ada (case-insensitive)
+    const nisSudahAda = new Set(siswaDiKelas.map(s => (s.nis || '').toLowerCase().trim()).filter(n => n));
+    const namaSudahAda = new Set(siswaDiKelas.map(s => s.student_name.toLowerCase().trim()));
+
+    // 2. Ambil dari SICAN (Firestore)
     const sicanSnap = await firestore.collection('sican_siswa').where('kelas', '==', className).get();
     const sicanSiswa = [];
-    sicanSnap.forEach(doc => sicanSiswa.push({ id: doc.id, ...doc.data(), source: 'sican' }));
-
-    // 2. Ambil dari SIPENA (RTDB) yang sudah diinput manual
-    const sipenaSiswa = allData.filter(d => d.type === 'student' && d.class_name === className && d.user_name === currentUser);
-
-    // 3. Gabungkan & Hapus Duplikat (berdasarkan NIS atau Nama)
-    const combined = [...sicanSiswa];
-    sipenaSiswa.forEach(sp => {
-      const exists = combined.some(sc => sc.nis === sp.nis || sc.nama.toLowerCase() === sp.student_name.toLowerCase());
-      if (!exists) combined.push({ ...sp, source: 'sipena' });
+    sicanSnap.forEach(doc => {
+      const data = doc.data();
+      // Filter: Hanya tampilkan yang BELUM ada di kelas
+      const nisLower = (data.nis || '').toLowerCase().trim();
+      const namaLower = data.nama.toLowerCase().trim();
+      
+      if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
+        sicanSiswa.push({ 
+          id: doc.id, 
+          ...data, 
+          source: 'sican' 
+        });
+      }
     });
 
-    // 4. Filter siswa yang BELUM ditambahkan
-    const belumDitambahkan = combined.filter(s => !siswaSudahDitambahkan.has(s.id || s.__key));
+    // 3. Gabungkan dengan siswa manual yang sudah ada di kelas
+    const combined = [
+      ...sicanSiswa,
+      ...siswaDiKelas.map(s => ({ ...s, source: 'sipena' }))
+    ];
 
-    if (!belumDitambahkan.length) {
-      tbody.innerHTML = `<tr><td colspan="3"><div class="empty"><div class="ei">✅</div><p>Semua siswa sudah ditambahkan!</p><button class="btn btn-secondary btn-sm" onclick="window.resetSiswaDitambahkan()" style="margin-top:10px;">🔄 Reset</button></div></td></tr>`;
+    if (!combined.length) {
+      tbody.innerHTML = `<tr><td colspan="3"><div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p><button class="btn btn-secondary btn-sm" onclick="window.resetSiswaDitambahkan()" style="margin-top:10px;">🔄 Refresh</button></div></td></tr>`;
       return;
     }
 
-    // 5. Hitung jumlah yang sudah ditambahkan
-    const sudahDitambahkanCount = combined.length - belumDitambahkan.length;
+    // 4. Pisahkan: siswa SICAN (belum ditambahkan) dan siswa SIPENA (sudah di kelas)
+    const siswaSican = combined.filter(s => s.source === 'sican');
+    const siswaSipena = combined.filter(s => s.source === 'sipena');
 
-    // 6. Render dengan tombol "Tambahkan Semua"
+    // 5. Render dengan informasi yang jelas
     let html = `
       <tr style="background:#f0f9ff;">
         <td colspan="3" style="padding:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
             <div style="font-weight:600;color:#0369a1;">
-              📋 Total: ${combined.length} siswa | Ditambahkan: ${sudahDitambahkanCount} | Tersisa: ${belumDitambahkan.length}
+              📊 Total di Kelas: ${siswaDiKelas.length} | Tersedia dari SICAN: ${siswaSican.length}
             </div>
-            ${belumDitambahkan.length > 0 ? `
+            ${siswaSican.length > 0 ? `
               <button class="btn btn-success" onclick="window.tambahkanSemua()" style="padding:8px 16px;font-size:0.85rem;">
-                ➕ Tambahkan Semua (${belumDitambahkan.length})
+                 Tambahkan Semua (${siswaSican.length})
               </button>
             ` : ''}
           </div>
@@ -122,33 +138,41 @@ window.renderSiswaModal = async (className) => {
       </tr>
     `;
 
-    belumDitambahkan.forEach((s, i) => {
-      const foto = s.student_photo || s.foto ? `<img src="${s.student_photo || s.foto}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='👤'">` : '👤';
-      const isSican = s.source === 'sican';
-      const deleteBtn = isSican 
-        ? `<button class="btn btn-success btn-sm" onclick="window.syncSicanToSipena('${s.id}', '${s.nama}', '${s.nis || ''}', '${s.foto || ''}')" style="font-size:0.75rem;padding:6px 10px;">+ Tambah ke SIPENA</button>`
-        : `<button class="btn btn-danger btn-sm" data-key="${s.__key}" data-name="${s.student_name || s.nama}" data-action="hapussiswa">🗑 Hapus</button>`;
-      
-      html += `<tr id="row-${s.id || s.__key}">
-        <td>${foto}</td>
-        <td style="font-weight:600;">${i + 1}. ${s.student_name || s.nama} ${isSican ? '<span class="badge badge-green" style="font-size:0.65rem;">SICAN</span>' : ''}</td>
-        <td>${deleteBtn}</td>
-      </tr>`;
-    });
+    // Render siswa yang SUDAH ada di kelas (dengan tombol HAPUS)
+    if (siswaSipena.length > 0) {
+      html += `<tr style="background:#fef3c7;"><td colspan="3" style="padding:8px;font-weight:600;color:#92400e;"> Siswa di Kelas (${siswaSipena.length})</td></tr>`;
+      siswaSipena.forEach((s, i) => {
+        const foto = s.student_photo ? `<img src="${s.student_photo}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='👤'">` : '👤';
+        html += `<tr id="row-${s.__key}">
+          <td>${foto}</td>
+          <td style="font-weight:600;">${i + 1}. ${s.student_name}</td>
+          <td><button class="btn btn-danger btn-sm" onclick="window.hapusSiswa('${s.__key}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button></td>
+        </tr>`;
+      });
+    }
+
+    // Render siswa dari SICAN yang BELUM ditambahkan (dengan tombol TAMBAH)
+    if (siswaSican.length > 0) {
+      html += `<tr style="background:#dcfce7;"><td colspan="3" style="padding:8px;font-weight:600;color:#166534;"> Dari Master SICAN (${siswaSican.length})</td></tr>`;
+      siswaSican.forEach((s, i) => {
+        const foto = s.foto ? `<img src="${s.foto}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML=''">` : '👤';
+        html += `<tr id="row-${s.id}">
+          <td>${foto}</td>
+          <td style="font-weight:600;">${siswaSipena.length + i + 1}. ${s.nama} <span class="badge badge-green" style="font-size:0.65rem;">SICAN</span></td>
+          <td><button class="btn btn-success btn-sm" onclick="window.syncSicanToSipena('${s.id}', '${s.nama.replace(/'/g, "\\'")}', '${s.nis || ''}', '${s.foto || ''}')">+ Tambah ke SIPENA</button></td>
+        </tr>`;
+      });
+    }
 
     tbody.innerHTML = html;
 
-    tbody.querySelectorAll('[data-action="hapussiswa"]').forEach(btn => {
-      btn.onclick = () => window.hapusSiswa(btn.dataset.key, btn.dataset.name);
-    });
-
   } catch (e) {
     console.error(e);
-    tbody.innerHTML = `<tr><td colspan="3" style="color:red;text-align:center;">Gagal memuat data SICAN. Pastikan koneksi internet baik.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="color:red;text-align:center;">Gagal memuat data SICAN. Pastikan koneksi internet baik.<br><small>${e.message}</small></td></tr>`;
   }
 };
 
-// Fungsi untuk menambahkan semua siswa sekaligus
+// Fungsi untuk menambahkan semua siswa SICAN sekaligus
 window.tambahkanSemua = async () => {
   const className = currentManajeKelas;
   if (!className) {
@@ -166,20 +190,23 @@ window.tambahkanSemua = async () => {
     const sicanSnap = await firestore.collection('sican_siswa').where('kelas', '==', className).get();
     
     // 2. Ambil siswa yang sudah ada di SIPENA
-    const sipenaSiswa = allData.filter(d => d.type === 'student' && d.class_name === className && d.user_name === currentUser);
+    const siswaDiKelas = allData.filter(d => 
+      d.type === 'student' && 
+      d.class_name === className && 
+      d.user_name === currentUser
+    );
     
+    const nisSudahAda = new Set(siswaDiKelas.map(s => (s.nis || '').toLowerCase().trim()).filter(n => n));
+    const namaSudahAda = new Set(siswaDiKelas.map(s => s.student_name.toLowerCase().trim()));
+
     // 3. Filter yang belum ditambahkan
     const belumDitambahkan = [];
     sicanSnap.forEach(doc => {
       const s = { id: doc.id, ...doc.data() };
-      // Cek apakah sudah ada di SIPENA (berdasarkan NIS atau nama)
-      const sudahAda = sipenaSiswa.some(sp => 
-        sp.nis === s.nis || sp.student_name.toLowerCase() === s.nama.toLowerCase()
-      );
-      // Cek apakah sudah ditambahkan di sesi ini
-      const sudahDitambahkan = siswaSudahDitambahkan.has(s.id);
+      const nisLower = (s.nis || '').toLowerCase().trim();
+      const namaLower = s.nama.toLowerCase().trim();
       
-      if (!sudahAda && !sudahDitambahkan) {
+      if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
         belumDitambahkan.push(s);
       }
     });
@@ -203,8 +230,6 @@ window.tambahkanSemua = async () => {
         user_name: currentUser,
         created_at: window.nowISO()
       }));
-      // Tandai sebagai sudah ditambahkan
-      siswaSudahDitambahkan.add(s.id);
     });
 
     await Promise.all(batch);
@@ -222,14 +247,13 @@ window.tambahkanSemua = async () => {
   btn.innerHTML = originalText;
 };
 
-// Fungsi untuk reset tracking siswa yang sudah ditambahkan
+// Fungsi untuk reset tracking (refresh data)
 window.resetSiswaDitambahkan = () => {
-  siswaSudahDitambahkan.clear();
   window.renderSiswaModal(currentManajeKelas);
-  window.toast('Daftar siswa direset');
+  window.toast('🔄 Daftar siswa di-refresh');
 };
 
-// Fungsi untuk menyalin siswa dari SICAN ke SIPENA (tetap sama, tapi update tracking)
+// Fungsi untuk menyalin siswa dari SICAN ke SIPENA
 window.syncSicanToSipena = async (sicanId, nama, nis, foto) => {
   try {
     await ROOT.push().set({ 
@@ -242,12 +266,9 @@ window.syncSicanToSipena = async (sicanId, nama, nis, foto) => {
       created_at: window.nowISO() 
     });
     
-    // Tandai sebagai sudah ditambahkan
-    siswaSudahDitambahkan.add(sicanId);
-    
     window.toast(`Siswa "${nama}" berhasil ditambahkan!`);
     
-    // Re-render untuk menghilangkan dari daftar
+    // Re-render untuk menghilangkan dari daftar SICAN dan muncul di daftar kelas
     await window.renderSiswaModal(currentManajeKelas);
     
   } catch (e) { 
@@ -260,17 +281,34 @@ window.importDariSICAN = async (className) => {
   btn.disabled = true; btn.textContent = '⏳ Mengimpor...';
   try {
     const sicanSnap = await firestore.collection('sican_siswa').where('kelas', '==', className).get();
+    
+    // Ambil yang sudah ada
+    const siswaDiKelas = allData.filter(d => 
+      d.type === 'student' && 
+      d.class_name === className && 
+      d.user_name === currentUser
+    );
+    const nisSudahAda = new Set(siswaDiKelas.map(s => (s.nis || '').toLowerCase().trim()).filter(n => n));
+    const namaSudahAda = new Set(siswaDiKelas.map(s => s.student_name.toLowerCase().trim()));
+    
     const batch = [];
     let count = 0;
     sicanSnap.forEach(doc => {
       const d = doc.data();
-      batch.push(ROOT.push().set({
-        type: 'student', class_name: className,
-        student_name: d.nama, nis: d.nis || '', student_photo: d.foto || '',
-        user_name: currentUser, created_at: window.nowISO()
-      }));
-      count++;
+      const nisLower = (d.nis || '').toLowerCase().trim();
+      const namaLower = d.nama.toLowerCase().trim();
+      
+      // Hanya tambahkan yang belum ada
+      if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
+        batch.push(ROOT.push().set({
+          type: 'student', class_name: className,
+          student_name: d.nama, nis: d.nis || '', student_photo: d.foto || '',
+          user_name: currentUser, created_at: window.nowISO()
+        }));
+        count++;
+      }
     });
+    
     await Promise.all(batch);
     window.toast(`Berhasil mengimpor ${count} siswa dari SICAN!`);
     window.renderSiswaModal(className);
@@ -289,7 +327,14 @@ window.simpanSiswa = async () => {
   const btn = document.getElementById('btnSimpanSiswa');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
   try {
-    await ROOT.push().set({ type: 'student', class_name: currentManajeKelas, student_name: nama, student_photo: foto || '', user_name: currentUser, created_at: window.nowISO() });
+    await ROOT.push().set({ 
+      type: 'student', 
+      class_name: currentManajeKelas, 
+      student_name: nama, 
+      student_photo: foto || '', 
+      user_name: currentUser, 
+      created_at: window.nowISO() 
+    });
     document.getElementById('inputNamaSiswa').value = '';
     document.getElementById('inputFotoSiswa').value = '';
     window.toast(`Siswa "${nama}" ditambahkan!`);
@@ -300,10 +345,10 @@ window.simpanSiswa = async () => {
 };
 
 window.hapusSiswa = async (key, nama) => {
-  if (!confirm(`Hapus siswa "${nama}"?`)) return;
+  if (!confirm(`Hapus siswa "${nama}" dari kelas ini?`)) return;
   try {
     await ROOT.child(key).remove();
-    window.toast(`Siswa "${nama}" dihapus.`);
+    window.toast(`Siswa "${nama}" dihapus dari kelas.`);
     window.renderSiswaModal(currentManajeKelas);
   } catch (e) { window.toast('Gagal: ' + e.message, 'err'); }
 };
