@@ -43,25 +43,62 @@ body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea
 .tab.active{color:#4f46e5;border-bottom-color:#4f46e5;}
 .tab:hover:not(.active){color:#334155;}
 
-/* ── TABLE & STUDENT LIST ── */
+/* ── TABLE & STUDENT LIST (DIPERKECIL & DIRAPIKAN) ── */
 .tbl-wrap{overflow-x:auto;margin-top:10px;}
-table{width:100%;border-collapse:collapse;font-size:0.88rem;}
-th{background:#f8fafc;color:#334155;font-weight:700;padding:11px 13px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;}
-td{padding:11px 13px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+th{background:#f8fafc;color:#334155;font-weight:700;padding:10px 12px;text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;}
+td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
 tr:hover td{background:#fafbff;}
-.student-list{display:flex;flex-direction:column;gap:10px;}
-.student-card{display:flex;align-items:center;gap:14px;padding:13px 16px;background:#f8fafc;border-radius:10px;border:2px solid #e2e8f0;transition:border-color .2s;}
+
+.student-list{display:flex;flex-direction:column;gap:8px;} /* Kurangi jarak antar kartu */
+
+.student-card{
+  display:flex;
+  align-items:center;
+  gap:10px; /* Kurangi jarak antar elemen */
+  padding:10px 12px; /* Kurangi padding kartu */
+  background:#f8fafc;
+  border-radius:8px;
+  border:2px solid #e2e8f0;
+  transition:border-color .2s;
+}
 .student-card:hover{border-color:#667eea;}
-.student-photo{width:48px;height:48px;border-radius:50%;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;overflow:hidden;}
+
+.student-photo{
+  width:38px; /* Perkecil dari 48px */
+  height:38px;
+  border-radius:50%;
+  background:#dbeafe;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.1rem; /* Perkecil ikon default */
+  flex-shrink:0;
+  overflow:hidden;
+}
 .student-photo img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-.student-name{font-weight:700;color:#1e293b;margin-bottom:6px;}
-.status-buttons{display:flex;gap:5px;flex-wrap:wrap;}
-.status-btn{padding:5px 10px;border:2px solid #e2e8f0;background:#fff;border-radius:6px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all .18s;}
-.status-btn.hadir.active{background:#10b981;border-color:#10b981;color:#fff;}
-.status-btn.izin.active{background:#3b82f6;border-color:#3b82f6;color:#fff;}
-.status-btn.sakit.active{background:#f59e0b;border-color:#f59e0b;color:#fff;}
-.status-btn.alpa.active{background:#ef4444;border-color:#ef4444;color:#fff;}
-.status-btn.bolos.active{background:#8b5cf6;border-color:#8b5cf6;color:#fff;}
+
+.student-name{
+  font-size: 0.9rem; /* Tambahkan ukuran font yang lebih kecil */
+  font-weight:700;
+  color:#1e293b;
+  margin-bottom:4px;
+}
+
+.status-buttons{display:flex;gap:4px;flex-wrap:wrap;}
+
+.status-btn{
+  padding:4px 8px; /* Kurangi padding tombol */
+  border:2px solid #e2e8f0;
+  background:#fff;
+  border-radius:6px;
+  font-size:0.75rem; /* Perkecil font tombol H/I/S/A/B */
+  font-weight:700;
+  cursor:pointer;
+  transition:all .18s;
+  min-width: 32px;
+  text-align: center;
+}
 
 /* ── MODAL & FORM ── */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;padding:16px;}
