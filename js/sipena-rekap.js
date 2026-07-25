@@ -183,14 +183,17 @@ window.cetakRekap = () => {
 
 window.exportRekap = () => {
   const table = document.getElementById('rekapTable');
-  if (!table) { window.toast('Tampilkan rekap terlebih dahulu.', 'err'); return; }
-  let csv = '';
-  table.querySelectorAll('tr').forEach(row => {
-    const cols = [...row.querySelectorAll('th,td')].map(c => `"${c.textContent.trim()}"`);
-    csv += cols.join(',') + '\n';
-  });
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `Rekap_${currentRekapClass}_${currentRekapTab}.csv`; a.click();
-  window.toast('File CSV diekspor!');
+  if (!table) { 
+    window.toast('Tampilkan rekap terlebih dahulu.', 'err'); 
+    return; 
+  }
+
+  // Konversi tabel HTML ke Excel menggunakan SheetJS
+  const ws = XLSX.utils.table_to_sheet(table);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Rekap Kehadiran');
+
+  // Simpan sebagai file Excel
+  XLSX.writeFile(wb, `Rekap_${currentRekapClass}_${currentRekapTab}.xlsx`);
+  window.toast('✅ File Excel diekspor!', 'success');
 };
