@@ -99,7 +99,36 @@ tr:hover td{background:#fafbff;}
   min-width: 32px;
   text-align: center;
 }
+/* ── STATE ACTIVE UNTUK TOMBOL STATUS (WAJIB ADA) ── */
+.status-btn.hadir.active {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #fff !important;
+}
 
+.status-btn.izin.active {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: #fff !important;
+}
+
+.status-btn.sakit.active {
+  background: #f59e0b !important;
+  border-color: #f59e0b !important;
+  color: #fff !important;
+}
+
+.status-btn.alpa.active {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #fff !important;
+}
+
+.status-btn.bolos.active {
+  background: #8b5cf6 !important;
+  border-color: #8b5cf6 !important;
+  color: #fff !important;
+}
 /* ── MODAL & FORM ── */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:center;justify-content:center;padding:16px;}
 .modal.active{display:flex;animation:fadeIn .2s ease;}
@@ -327,28 +356,3 @@ function exportToExcelTable(filename = 'nilai_sipena') {
         alert('Tidak ada data untuk diekspor!');
         return;
     }
-
-    // Buat workbook baru
-    const wb = XLSX.utils.table_to_book(table, {sheet: "Nilai"});
-    
-    // Style untuk header
-    const ws = wb.Sheets["Nilai"];
-    
-    // Set lebar kolom
-    const colWidths = [
-        {wch: 5},  // No
-        {wch: 30}, // Nama
-        {wch: 15}, // UH 1
-        {wch: 15}, // UH 2
-        {wch: 15}, // UH 3
-        {wch: 15}, // PH 1
-        {wch: 15}, // PH 2
-        {wch: 15}, // PH 3
-        {wch: 15}, // Rerata
-    ];
-    
-    ws['!cols'] = colWidths;
-    
-    // Download file
-    XLSX.writeFile(wb, `${filename}_${new Date().toISOString().split('T')[0]}.xlsx`);
-}
