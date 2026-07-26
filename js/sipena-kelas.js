@@ -352,3 +352,51 @@ window.hapusSiswa = async (key, nama) => {
     window.renderSiswaModal(currentManajeKelas);
   } catch (e) { window.toast('Gagal: ' + e.message, 'err'); }
 };
+
+// Buka modal edit siswa
+window.bukaEditSiswa = (key, nama, foto) => {
+  document.getElementById('editSiswaKey').value = key;
+  document.getElementById('editNamaSiswa').value = nama;
+  document.getElementById('editFotoSiswa').value = foto || '';
+  window.openModal('modalEditSiswa');
+};
+
+// Simpan perubahan edit siswa
+window.simpanEditSiswa = async () => {
+  const key = document.getElementById('editSiswaKey').value;
+  const nama = document.getElementById('editNamaSiswa').value.trim();
+  const foto = document.getElementById('editFotoSiswa').value.trim();
+  
+  if (!nama) {
+    window.toast('Nama siswa tidak boleh kosong!', 'err');
+    return;
+  }
+  
+  try {
+    await ROOT.child(key).update({
+      student_name: nama,
+      student_photo: foto || '',
+      updated_at: window.nowISO()
+    });
+    
+    window.closeModal('modalEditSiswa');
+    window.toast('✅ Data siswa berhasil diperbarui!', 'success');
+    window.renderSiswaModal(currentManajeKelas);
+  } catch (e) {
+    window.toast('❌ Gagal mengedit: ' + e.message, 'err');
+  }
+};
+
+// Event listener untuk tombol batal dan simpan edit
+document.addEventListener('DOMContentLoaded', () => {
+  const btnBatalEdit = document.getElementById('btnBatalEdit');
+  const btnSimpanEdit = document.getElementById('btnSimpanEdit');
+  
+  if (btnBatalEdit) {
+    btnBatalEdit.onclick = () => window.closeModal('modalEditSiswa');
+  }
+  
+  if (btnSimpanEdit) {
+    btnSimpanEdit.onclick = window.simpanEditSiswa;
+  }
+});
