@@ -346,13 +346,3 @@ tr:hover td{background:#fafbff;}
         size: A4 portrait;
     }
 }
-
-// Fungsi Export ke Excel Format Tabel
-function exportToExcelTable(filename = 'nilai_sipena') {
-    // Ambil data dari tabel
-    const table = document.querySelector('#tabelNilai table') || document.querySelector('.tbl-wrap table');
-    
-    if (!table) {
-        alert('Tidak ada data untuk diekspor!');
-        return;
-    }
