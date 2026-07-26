@@ -146,7 +146,10 @@ window.renderSiswaModal = async (className) => {
         html += `<tr id="row-${s.__key}">
           <td>${foto}</td>
           <td style="font-weight:600;">${i + 1}. ${s.student_name}</td>
-          <td><button class="btn btn-danger btn-sm" onclick="window.hapusSiswa('${s.__key}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button></td>
+          <td style="display:flex;gap:6px;">
+  <button class="btn btn-warning btn-sm" onclick="window.bukaEditSiswa('${s.__key}', '${s.student_name.replace(/'/g, "\\'")}', '${s.student_photo || ''}')" style="flex:1;">✏️ Edit</button>
+  <button class="btn btn-danger btn-sm" onclick="window.hapusSiswa('${s.__key}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button>
+</td>
         </tr>`;
       });
     }
