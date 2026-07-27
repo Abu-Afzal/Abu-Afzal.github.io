@@ -29,10 +29,6 @@ let currentChatPartnerId = null;
 let currentChatRoomId = null;
 let currentUserName = 'User';
 
-// State untuk notifikasi
-let lastReadTimestamp = {}; // Waktu terakhir chat dibuka per partner
-let currentOpenChat = null; 
-
 // DOM Elements
 let chatWidgetBtn, chatWidgetContainer, chatWidgetUsers, chatWidgetMessages, chatWidgetInput, sendBtn, chatWidgetChatArea, chatWidgetHeaderName, chatWidgetHeaderStatus;
 
@@ -78,7 +74,6 @@ export function initChatWidget() {
 
 function checkExistingUser() {
     const userData = localStorage.getItem('sipelita_user');
-    
     if (userData) {
         try {
             const user = JSON.parse(userData);
@@ -86,10 +81,12 @@ function checkExistingUser() {
             currentUserIdSafe = encodeEmail(user.email);
             currentUserName = user.nama || user.name || user.email.split('@')[0];
             
-            setupUserInRTDB();
+            // 1. SETUP PRESENCE: Online saat aplikasi dibuka
             setupPresence();
-            loadUsers();
-            listenForNewMessages();
+            
+            // 2. Load data
+            setupUserInRTDB();
+            loadUsers(); // Ini sekarang akan mengurutkan berdasarkan chat terbaru
         } catch (error) {
             console.error('❌ [Chat Widget] Error parsing user data:', error);
         }
@@ -104,6 +101,30 @@ function setupUserInRTDB() {
         status: 'online',
         lastSeen: serverTimestamp()
     }).catch((error) => console.error('❌ Error simpan ke RTDB:', error));
+}
+
+// ✅ PERBAIKAN 2: Status online lebih agresif saat aplikasi aktif
+function setupPresence() {
+    const userStatusRef = ref(db, `users/${currentUserIdSafe}/status`);
+    const userLastSeenRef = ref(db, `users/${currentUserIdSafe}/lastSeen`);
+    const connectedRef = ref(db, '.info/connected');
+    
+    // Saat koneksi terdeteksi
+    onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+            set(userStatusRef, 'online');
+            set(userLastSeenRef, serverTimestamp()); // Update last seen saat online
+            
+            onDisconnect(userStatusRef).set('offline');
+            onDisconnect(userLastSeenRef).set(serverTimestamp());
+        }
+    });
+
+    // Juga update status saat window browser difokuskan kembali
+    window.addEventListener('focus', () => {
+        set(userStatusRef, 'online');
+        set(userLastSeenRef, serverTimestamp());
+    });
 }
 
 function createWidgetHTML() {
@@ -144,7 +165,7 @@ function createWidgetHTML() {
                     <input type="text" id="chatWidgetInput" placeholder="Ketik pesan...">
                     <button id="chatWidgetSendBtn"><i class="fas fa-paper-plane"></i></button>
                 </div>
-            </div>
+            </div
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', widgetHTML);
@@ -158,102 +179,148 @@ function showUserList() {
     chatWidgetUsers.style.display = 'block';
     chatWidgetChatArea.style.display = 'none';
     
-    if (currentOpenChat) {
-        // Tandai waktu baca saat kembali ke list
-        lastReadTimestamp[currentOpenChat] = Date.now();
-        updateNotificationBadge();
-        currentOpenChat = null;
+    if (currentChatPartnerId) {
+        // ✅ PERBAIKAN 1: Simpan lastRead ke DATABASE, bukan hanya memori
+        const lastReadRef = ref(db, `chats/${currentChatRoomId}/lastRead/${currentUserIdSafe}`);
+        set(lastReadRef, serverTimestamp());
+        
+        currentChatPartnerId = null;
+        currentChatRoomId = null;
     }
     
-    currentChatPartnerId = null;
-    currentChatRoomId = null;
     document.querySelectorAll('.chat-widget-user').forEach(el => el.classList.remove('active'));
+    loadUsers(); // Reload untuk update urutan dan badge
 }
 
-function setupPresence() {
-    const userStatusRef = ref(db, `users/${currentUserIdSafe}/status`);
-    const userLastSeenRef = ref(db, `users/${currentUserIdSafe}/lastSeen`);
-    const connectedRef = ref(db, '.info/connected');
-    
-    onValue(connectedRef, (snap) => {
-        if (snap.val() === true) {
-            set(userStatusRef, 'online');
-            onDisconnect(userStatusRef).set('offline');
-            onDisconnect(userLastSeenRef).set(serverTimestamp());
-        }
-    });
-}
-
+// ✅ PERBAIKAN 3: Load users dengan pengurutan berdasarkan chat terbaru & badge unread
 function loadUsers() {
     const usersRef = ref(db, 'users');
-    onValue(usersRef, (snapshot) => {
-        if (!chatWidgetUsers) return;
-        chatWidgetUsers.innerHTML = '';
-        const users = snapshot.val();
-        
-        if (!users) {
-            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Belum ada pengguna lain</div>';
-            return;
-        }
-        
-        let userCount = 0;
-        Object.keys(users).forEach(uidSafe => {
-            if (uidSafe === currentUserIdSafe) return;
+    const chatsRef = ref(db, 'chats');
+    
+    // Kita perlu data users dan chats sekaligus untuk mengurutkan
+    onValue(usersRef, (usersSnap) => {
+        onValue(chatsRef, (chatsSnap) => {
+            if (!chatWidgetUsers) return;
             
-            const user = users[uidSafe];
-            if (!user.name || user.name === 'User' || user.name.length < 3) return;
+            const users = usersSnap.val() || {};
+            const chats = chatsSnap.val() || {};
             
-            const isOnline = user.status === 'online';
-            const displayName = user.name;
-            const lastSeen = user.lastSeen || 0;
+            // Array untuk menampung data user yang akan dirender
+            let renderList = [];
             
-            let statusText = 'Offline';
-            if (isOnline) {
-                statusText = 'Online';
-            } else if (lastSeen) {
-                const date = new Date(lastSeen);
-                const diffMinutes = Math.floor((new Date() - date) / 60000);
-                if (diffMinutes < 1) statusText = 'Baru saja';
-                else if (diffMinutes < 60) statusText = `${diffMinutes} menit yang lalu`;
-                else if (diffMinutes < 1440) statusText = `${Math.floor(diffMinutes / 60)} jam yang lalu`;
-                else statusText = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            Object.keys(users).forEach(uidSafe => {
+                if (uidSafe === currentUserIdSafe) return;
+                const user = users[uidSafe];
+                if (!user.name || user.name === 'User' || user.name.length < 3) return;
+                
+                // Cari chat room dengan user ini
+                const roomId = [currentUserIdSafe, uidSafe].sort().join('_');
+                const roomData = chats[roomId] || {};
+                const messages = roomData.messages || {};
+                const lastRead = roomData.lastRead?.[currentUserIdSafe] || 0;
+                
+                // Hitung unread dan cari pesan terakhir
+                let unreadCount = 0;
+                let lastMessageText = 'Belum ada pesan';
+                let lastTimestamp = 0;
+                
+                const msgKeys = Object.keys(messages);
+                if (msgKeys.length > 0) {
+                    // Urutkan key pesan untuk mendapatkan yang terbaru
+                    // (Asumsi key push Firebase sudah kronologis, ambil yang terakhir)
+                    const lastMsgKey = msgKeys[msgKeys.length - 1];
+                    const lastMsg = messages[lastMsgKey];
+                    lastMessageText = lastMsg.text;
+                    lastTimestamp = lastMsg.timestamp || 0;
+                    
+                    // Hitung unread
+                    Object.values(messages).forEach(msg => {
+                        if (msg.senderId !== currentUserIdSafe && (msg.timestamp || 0) > lastRead) {
+                            unreadCount++;
+                        }
+                    });
+                }
+                
+                const isOnline = user.status === 'online';
+                const lastSeen = user.lastSeen || 0;
+                
+                let statusText = 'Offline';
+                if (isOnline) statusText = 'Online';
+                else if (lastSeen) {
+                    const diffMinutes = Math.floor((Date.now() - lastSeen) / 60000);
+                    if (diffMinutes < 1) statusText = 'Baru saja';
+                    else if (diffMinutes < 60) statusText = `${diffMinutes} menit lalu`;
+                    else statusText = new Date(lastSeen).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                }
+                
+                renderList.push({
+                    uidSafe,
+                    name: user.name,
+                    isOnline,
+                    statusText,
+                    lastMessageText,
+                    lastTimestamp,
+                    unreadCount
+                });
+            });
+            
+            // ✅ SORTING: Yang punya chat terbaru (lastTimestamp terbesar) naik ke atas
+            renderList.sort((a, b) => b.lastTimestamp - a.lastTimestamp);
+            
+            // Render ke HTML
+            chatWidgetUsers.innerHTML = '';
+            if (renderList.length === 0) {
+                chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Tidak ada pengguna lain</div>';
+                return;
             }
             
-            const userEl = document.createElement('div');
-            userEl.className = 'chat-widget-user';
-            userEl.dataset.uid = uidSafe;
-            userEl.innerHTML = `
-                <div class="avatar">
-                    ${displayName.charAt(0).toUpperCase()}
-                    ${isOnline ? '<div class="status-dot"></div>' : ''}
-                </div>
-                <div class="user-info">
-                    <div class="user-name">${displayName}</div>
-                    <div class="user-status" style="color: ${isOnline ? '#10b981' : '#94a3b8'}">
-                        ${isOnline ? ' Online' : statusText}
+            renderList.forEach(u => {
+                const userEl = document.createElement('div');
+                userEl.className = `chat-widget-user ${u.unreadCount > 0 ? 'has-unread' : ''}`;
+                userEl.dataset.uid = u.uidSafe;
+                
+                // Badge unread di samping nama
+                const unreadBadge = u.unreadCount > 0 ? `<span class="unread-badge">${u.unreadCount}</span>` : '';
+                
+                userEl.innerHTML = `
+                    <div class="avatar">
+                        ${u.name.charAt(0).toUpperCase()}
+                        ${u.isOnline ? '<div class="status-dot"></div>' : ''}
                     </div>
-                </div>
-            `;
+                    <div class="user-info">
+                        <div class="user-name-row">
+                            <span class="user-name">${u.name}</span>
+                            ${unreadBadge}
+                        </div>
+                        <div class="user-status-row">
+                            <span class="user-status" style="color: ${u.isOnline ? '#10b981' : '#94a3b8'}">
+                                ${u.isOnline ? 'Online' : u.statusText}
+                            </span>
+                            <span class="last-message" style="color:#64748b; font-size:0.8rem; margin-left:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;">
+                                ${u.lastMessageText}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                
+                userEl.addEventListener('click', () => openChat(u.uidSafe, u.name, u.isOnline, u.lastSeen));
+                chatWidgetUsers.appendChild(userEl);
+            });
             
-            userEl.addEventListener('click', () => openChat(uidSafe, displayName, isOnline, lastSeen));
-            chatWidgetUsers.appendChild(userEl);
-            userCount++;
+            // Update total badge di tombol widget
+            const totalUnread = renderList.reduce((sum, u) => sum + u.unreadCount, 0);
+            updateNotificationBadge(totalUnread);
         });
-        
-        if (userCount === 0) {
-            chatWidgetUsers.innerHTML = '<div style="padding:20px;text-align:center;color:#999">Tidak ada pengguna lain</div>';
-        }
     });
 }
 
 function openChat(partnerIdSafe, partnerName, isOnline, lastSeen) {
     currentChatPartnerId = partnerIdSafe;
     currentChatRoomId = [currentUserIdSafe, partnerIdSafe].sort().join('_');
-    currentOpenChat = partnerIdSafe; 
     
-    // Tandai waktu baca dan reset notifikasi
-    lastReadTimestamp[partnerIdSafe] = Date.now();
-    updateNotificationBadge();
+    // ✅ PERBAIKAN 1: Tandai sudah dibaca di DATABASE segera saat dibuka
+    const lastReadRef = ref(db, `chats/${currentChatRoomId}/lastRead/${currentUserIdSafe}`);
+    set(lastReadRef, serverTimestamp());
     
     chatWidgetHeaderName.textContent = partnerName;
     if (isOnline) {
@@ -289,7 +356,7 @@ function listenPartnerStatus(partnerIdSafe) {
         const lastSeen = user.lastSeen || 0;
         
         if (isOnline) {
-            chatWidgetHeaderStatus.textContent = ' Online';
+            chatWidgetHeaderStatus.textContent = '🟢 Online';
             chatWidgetHeaderStatus.style.color = '#10b981';
         } else if (lastSeen) {
             const timeStr = new Date(lastSeen).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -324,55 +391,6 @@ function listenMessages() {
             chatWidgetMessages.appendChild(msgEl);
         });
         chatWidgetMessages.scrollTop = chatWidgetMessages.scrollHeight;
-    });
-}
-
-// === DIPERBAIKI: Logika notifikasi yang akurat ===
-function listenForNewMessages() {
-    if (!currentUserIdSafe) return;
-    const chatsRef = ref(db, 'chats');
-    
-    onValue(chatsRef, (snapshot) => {
-        const chats = snapshot.val();
-        if (!chats) return;
-        
-        let totalUnread = 0;
-        
-        Object.keys(chats).forEach(roomId => {
-            if (roomId.includes(currentUserIdSafe)) {
-                const roomData = chats[roomId];
-                const messages = roomData.messages;
-                if (!messages) return;
-                
-                const [user1, user2] = roomId.split('_');
-                const partnerId = user1 === currentUserIdSafe ? user2 : user1;
-                
-                // Jika chat ini sedang dibuka, anggap sudah dibaca
-                if (partnerId === currentOpenChat) {
-                    lastReadTimestamp[partnerId] = Date.now();
-                    return;
-                }
-                
-                // Dapatkan waktu terakhir dibaca untuk partner ini
-                const lastRead = lastReadTimestamp[partnerId] || 0;
-                let roomUnread = 0;
-                
-                // Hitung HANYA pesan yang belum dibaca (timestamp > lastRead)
-                Object.values(messages).forEach(msg => {
-                    const msgTime = msg.timestamp || 0;
-                    // Pesan dianggap belum dibaca jika:
-                    // 1. Dari partner (bukan diri sendiri)
-                    // 2. Timestamp pesan LEBIH BARU dari waktu terakhir dibaca
-                    if (msg.senderId !== currentUserIdSafe && msgTime > lastRead) {
-                        roomUnread++;
-                    }
-                });
-                
-                totalUnread += roomUnread;
-            }
-        });
-        
-        updateNotificationBadge(totalUnread);
     });
 }
 
