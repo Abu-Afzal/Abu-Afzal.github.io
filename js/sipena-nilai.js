@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA: Penilaian (Dengan TP & Semester)
+// SIPENA: Penilaian (Dengan TP, Semester & Rekap)
 // ══════════════════════════════════════════════
 
 window.renderPenilaian = () => {
@@ -8,8 +8,12 @@ window.renderPenilaian = () => {
   const cont = document.getElementById('penilaianContent');
   const info = document.getElementById('infoSiswaKelas');
 
+  // Atur visibilitas tombol berdasarkan tab yang aktif
+  const isRekap = currentNilaiTab === 'rekap';
+  document.getElementById('btnSimpanNilai').style.display = isRekap ? 'none' : 'inline-flex';
   document.getElementById('btnAddKolom').style.display = currentNilaiTab === 'pengetahuan' ? 'inline-flex' : 'none';
   document.getElementById('btnAddKolomKet').style.display = currentNilaiTab === 'keterampilan' ? 'inline-flex' : 'none';
+  document.getElementById('btnExportNilai').style.display = 'inline-flex'; // Export selalu tersedia
 
   if (!kelas.length) {
     cont.innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>';
@@ -28,9 +32,11 @@ window.renderPenilaian = () => {
     return;
   }
 
+  // Routing ke fungsi render yang sesuai
   if (currentNilaiTab === 'pengetahuan') window.renderNilaiPengetahuan(siswa);
   else if (currentNilaiTab === 'sikap') window.renderNilaiSikap(siswa);
   else if (currentNilaiTab === 'keterampilan') window.renderNilaiKeterampilan(siswa);
+  else if (currentNilaiTab === 'rekap') window.renderRekapNilai(siswa);
 };
 
 // Helper untuk mendapatkan filter dasar
@@ -38,8 +44,8 @@ window.getNilaiFilter = () => {
   return {
     class_name: currentNilaiClass,
     user_name: currentUser,
-    semester: document.getElementById('nilaiSemesterSelect').value,
-    kode_tp: document.getElementById('nilaiKodeTP').value.trim()
+    semester: document.getElementById('nilaiSemesterSelect')?.value || 'ganjil',
+    kode_tp: document.getElementById('nilaiKodeTP')?.value.trim() || ''
   };
 };
 
@@ -75,7 +81,6 @@ window.renderNilaiPengetahuan = (siswa) => {
   html += `</tr></thead><tbody>`;
 
   siswa.forEach((s, idx) => {
-    // PERBAIKAN: Filter juga berdasarkan semester dan kode_tp
     const nd = allData.find(d => d.type === 'nilai_pengetahuan' && d.student_key === s.__key && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
     const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
     
@@ -209,6 +214,92 @@ window.renderNilaiKeterampilan = (siswa) => {
   }
 };
 
+// ══════════════════════════════════════════════
+// FITUR BARU: REKAP NILAI (SEMUA TP/KD)
+// ══════════════════════════════════════════════
+window.renderRekapNilai = (siswa) => {
+  const filter = window.getNilaiFilter();
+  const cont = document.getElementById('penilaianContent');
+  
+  // Ambil SEMUA data nilai (Pengetahuan & Keterampilan) untuk kelas & semester ini
+  const allNilaiData = allData.filter(d => 
+    (d.type === 'nilai_pengetahuan' || d.type === 'nilai_keterampilan') && 
+    d.class_name === filter.class_name && 
+    d.user_name === filter.user_name && 
+    d.semester === filter.semester
+  );
+
+  // Dapatkan daftar unik Kode TP yang pernah diinput
+  const uniqueTPs = [...new Set(allNilaiData.map(d => d.kode_tp))].sort();
+
+  if (uniqueTPs.length === 0) {
+    cont.innerHTML = `<div class="empty"><div class="ei">📊</div><p>Belum ada data nilai di semester ${filter.semester} ini.</p></div>`;
+    return;
+  }
+
+  // Bangun Header Tabel
+  let html = `<div class="tbl-wrap"><table id="rekapNilaiTable"><thead><tr>
+    <th width="40">No</th>
+    <th style="min-width:150px;">Nama Siswa</th>`;
+  
+  uniqueTPs.forEach(tp => {
+    html += `<th style="min-width:100px; text-align:center;">TP ${tp}<br><small style="font-weight:400;color:#64748b;">Rerata</small></th>`;
+  });
+  
+  html += `<th width="100" style="background:#f0fdf4; color:#065f46;">Nilai Akhir<br>Semester</th>
+  </tr></thead><tbody>`;
+
+  // Isi Data Per Siswa
+  siswa.forEach((s, idx) => {
+    html += `<tr><td style="color:#94a3b8;">${idx + 1}</td><td style="font-weight:600;">${s.student_name}</td>`;
+    
+    let totalNilaiSemester = 0;
+    let countTP = 0;
+
+    uniqueTPs.forEach(tp => {
+      const dataTP = allNilaiData.find(d => d.student_key === s.__key && d.kode_tp === tp);
+      
+      if (dataTP && dataTP.nilai) {
+        try {
+          const nilaiObj = JSON.parse(dataTP.nilai);
+          const vals = Object.values(nilaiObj).map(v => parseFloat(v)).filter(v => !isNaN(v));
+          
+          if (vals.length > 0) {
+            const avgTP = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+            totalNilaiSemester += parseFloat(avgTP);
+            countTP++;
+            
+            const color = avgTP >= 75 ? '#10b981' : (avgTP >= 60 ? '#f59e0b' : '#ef4444');
+            html += `<td style="text-align:center;font-weight:700;color:${color};">${avgTP}</td>`;
+          } else {
+            html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
+          }
+        } catch (e) {
+          html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
+        }
+      } else {
+        html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
+      }
+    });
+
+    // Hitung Nilai Akhir Semester (Rerata dari semua Rerata TP)
+    const nilaiAkhir = countTP > 0 ? (totalNilaiSemester / countTP).toFixed(1) : '-';
+    const colorAkhir = nilaiAkhir !== '-' ? (parseFloat(nilaiAkhir) >= 75 ? '#065f46' : (parseFloat(nilaiAkhir) >= 60 ? '#92400e' : '#991b1b')) : '#94a3b8';
+    
+    html += `<td style="text-align:center;font-weight:800;color:${colorAkhir};background:#f0fdf4;">${nilaiAkhir}</td></tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  
+  // Tambahkan info deskripsi di atas tabel
+  const mapel = document.getElementById('nilaiMapel')?.value || 'Umum';
+  html = `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.9rem;color:#0369a1;">
+    📌 <strong>Rekapitulasi Nilai Semester ${filter.semester === 'ganjil' ? 'Ganjil' : 'Genap'}</strong> | Mapel: ${mapel} | Total TP Terdata: ${uniqueTPs.length}
+  </div>` + html;
+
+  cont.innerHTML = html;
+};
+
 window.simpanNilai = async () => {
   const filter = window.getNilaiFilter();
   if (!filter.kode_tp) {
@@ -305,21 +396,23 @@ window.eksporNilai = () => {
 
     const filter = window.getNilaiFilter();
     const kelas = currentNilaiClass || 'Tanpa_Kelas';
-    const tahunAjaran = document.getElementById('nilaiTahunAjaran').value || '2024/2025';
-    const mapel = document.getElementById('nilaiMapel').value || '-';
-    const deskripsi = document.getElementById('nilaiDeskripsiTP').value || '-';
+    const tahunAjaran = document.getElementById('nilaiTahunAjaran')?.value || '2024/2025';
+    const mapel = document.getElementById('nilaiMapel')?.value || '-';
+    const deskripsi = document.getElementById('nilaiDeskripsiTP')?.value || '-';
     const semesterText = filter.semester === 'ganjil' ? 'Ganjil' : 'Genap';
-    const jenisNilaiText = currentNilaiTab === 'pengetahuan' ? 'PENGETAHUAN' : (currentNilaiTab === 'sikap' ? 'SIKAP' : 'KETERAMPILAN');
-
+    
     let rows = [];
     let filename = '';
     let sheetName = 'Data';
 
-    // Header Laporan Lengkap
-    rows.push([`LAPORAN NILAI ${jenisNilaiText}`]);
+    // Header Laporan Lengkap (Default)
+    rows.push([`LAPORAN NILAI`]);
     rows.push([`Kelas: ${kelas}`, `Semester: ${semesterText}`, `Tahun Ajaran: ${tahunAjaran}`]);
-    rows.push([`Kode TP/KD: ${filter.kode_tp || '-'}`, `Mata Pelajaran: ${mapel}`]);
-    rows.push([`Deskripsi: ${deskripsi}`]);
+    
+    if (currentNilaiTab !== 'rekap') {
+        rows.push([`Kode TP/KD: ${filter.kode_tp || '-'}`, `Mata Pelajaran: ${mapel}`]);
+        rows.push([`Deskripsi: ${deskripsi}`]);
+    }
     rows.push([]); // Baris kosong pemisah
 
     if (currentNilaiTab === 'pengetahuan') {
@@ -371,17 +464,54 @@ window.eksporNilai = () => {
         });
         filename = `SIPENA_Keterampilan_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
         sheetName = 'Keterampilan';
+        
+    } else if (currentNilaiTab === 'rekap') {
+        // LOGIKA EXPORT KHUSUS REKAP
+        const allNilaiData = allData.filter(d => 
+            (d.type === 'nilai_pengetahuan' || d.type === 'nilai_keterampilan') && 
+            d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester
+        );
+        const uniqueTPs = [...new Set(allNilaiData.map(d => d.kode_tp))].sort();
+
+        if (uniqueTPs.length === 0) { window.toast('Tidak ada data rekap untuk diekspor.', 'err'); return; }
+
+        rows.push(['No', 'Nama Siswa', ...uniqueTPs.map(tp => `Rerata TP ${tp}`), 'Nilai Akhir Semester']);
+        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
+
+        siswa.forEach((s, i) => {
+            const row = [i + 1, s.student_name];
+            let totalSemester = 0, countTP = 0;
+
+            uniqueTPs.forEach(tp => {
+                const dataTP = allNilaiData.find(d => d.student_key === s.__key && d.kode_tp === tp);
+                if (dataTP && dataTP.nilai) {
+                    try {
+                        const vals = Object.values(JSON.parse(dataTP.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v));
+                        if (vals.length > 0) {
+                            const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+                            row.push(avg);
+                            totalSemester += parseFloat(avg);
+                            countTP++;
+                        } else { row.push(''); }
+                    } catch(e) { row.push(''); }
+                } else { row.push(''); }
+            });
+
+            const akhir = countTP > 0 ? (totalSemester / countTP).toFixed(1) : '';
+            row.push(akhir);
+            rows.push(row);
+        });
+        filename = `SIPENA_Rekap_Nilai_${kelas}_${filter.semester}.xlsx`;
+        sheetName = 'Rekap Nilai';
     }
 
     if (rows.length <= 5) { window.toast('Tidak ada data untuk diekspor.', 'err'); return; }
 
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    const lastColIndex = rows[4].length - 1; 
+    const lastColIndex = rows[rows.length > 5 ? 4 : (rows.length - 1)].length - 1; 
     
     // Merge cell untuk Judul Laporan
-    ws['!merges'] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIndex } }
-    ];
+    ws['!merges'] = [ { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIndex } } ];
 
     const colWidths = [{ wch: 5 }, { wch: 30 }];
     for (let i = 2; i <= lastColIndex; i++) colWidths.push({ wch: 15 });
