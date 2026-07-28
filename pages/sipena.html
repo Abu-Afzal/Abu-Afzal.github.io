@@ -187,8 +187,8 @@
         <button class="btn btn-primary" id="btnAddKolomKet" style="display:none;">+ Tambah Kolom</button>
         <button class="btn btn-warning" id="btnExportNilai">📥 Export Excel</button>
         <button class="btn btn-primary" id="btnExportAnalisis" style="display:none;">📥 Export Analisis</button>
-        <button class="btn btn-danger" id="btnCetakAnalisis" style="display:none;">🖨️ Cetak
-      </div>
+        <button class="btn btn-danger" id="btnCetakAnalisis" style="display:none;">🖨️ Cetak PDF</button>
+        </div>
       <div id="penilaianContent"></div>
     </div>
   </div>
@@ -515,6 +515,8 @@ function bindEvents(){
   
   document.getElementById('btnSimpanNilai').onclick = window.simpanNilai;
   document.getElementById('btnExportNilai').onclick = window.eksporNilai;
+document.getElementById('btnExportAnalisis').onclick = window.exportAnalisisNilai;
+document.getElementById('btnCetakAnalisis').onclick = window.cetakAnalisisPDF;
 
   document.getElementById('btnAddKolom').onclick = () => { 
       document.getElementById('inputJenisKolom').value = 'PH'; 
