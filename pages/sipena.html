@@ -125,18 +125,55 @@
     </div>
   </div>
 
-  <div id="penilaian" class="content-area">
+    <div id="penilaian" class="content-area">
     <div class="content-card">
       <div class="section-title">📝 Penilaian</div>
+      
+      <!-- Informasi Kelas, Tahun Ajaran & Semester -->
       <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;">
-        <div class="fg" style="margin:0;flex:1;min-width:180px;"><label>Kelas</label><select id="nilaiKelasSelect" style="font-weight:600;"></select></div>
+        <div class="fg" style="margin:0;flex:1;min-width:150px;">
+          <label>Kelas</label>
+          <select id="nilaiKelasSelect" style="font-weight:600;width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;"></select>
+        </div>
+        <div class="fg" style="margin:0;min-width:120px;">
+          <label>Tahun Ajaran</label>
+          <input type="text" id="nilaiTahunAjaran" value="2024/2025" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;">
+        </div>
+        <div class="fg" style="margin:0;min-width:120px;">
+          <label>Semester</label>
+          <select id="nilaiSemesterSelect" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;">
+            <option value="ganjil">Ganjil</option>
+            <option value="genap">Genap</option>
+          </select>
+        </div>
         <div id="infoSiswaKelas" style="font-size:0.82rem;color:#64748b;align-self:flex-end;padding-bottom:2px;"></div>
       </div>
+
+      <!-- Identitas Penilaian (TP/KD) -->
+      <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:16px;margin-bottom:18px;">
+        <div style="font-weight:700;color:#92400e;margin-bottom:12px;">📋 Identitas Penilaian (TP/KD)</div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;">
+          <div class="fg" style="margin:0;">
+            <label>Kode TP/KD *</label>
+            <input type="text" id="nilaiKodeTP" placeholder="Cth: 3.1 atau TP.1" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:6px;">
+          </div>
+          <div class="fg" style="margin:0;">
+            <label>Mata Pelajaran</label>
+            <input type="text" id="nilaiMapel" placeholder="Cth: Matematika" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:6px;">
+          </div>
+        </div>
+        <div class="fg" style="margin:0;margin-top:12px;">
+          <label>Deskripsi TP/KD</label>
+          <textarea id="nilaiDeskripsiTP" rows="2" placeholder="Deskripsi tujuan pembelajaran yang dinilai..." style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:6px;"></textarea>
+        </div>
+      </div>
+
       <div class="tabs" id="nilaiTabs">
         <button class="tab active" data-ntab="pengetahuan">📘 Pengetahuan</button>
         <button class="tab" data-ntab="sikap">💚 Sikap</button>
         <button class="tab" data-ntab="keterampilan">🛠️ Keterampilan</button>
       </div>
+      
       <div class="action-bar">
         <button class="btn btn-success" id="btnSimpanNilai">💾 Simpan Nilai</button>
         <button class="btn btn-primary" id="btnAddKolom" style="display:none;">+ Tambah Kolom</button>
