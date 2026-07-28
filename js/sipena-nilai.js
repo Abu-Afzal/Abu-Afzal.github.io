@@ -8,12 +8,20 @@ window.renderPenilaian = () => {
   const cont = document.getElementById('penilaianContent');
   const info = document.getElementById('infoSiswaKelas');
 
-  // Atur visibilitas tombol berdasarkan tab yang aktif
+  // PERBAIKAN: Atur visibilitas tombol berdasarkan tab yang aktif
   const isRekap = currentNilaiTab === 'rekap';
-  document.getElementById('btnSimpanNilai').style.display = isRekap ? 'none' : 'inline-flex';
+  const isAnalisis = currentNilaiTab === 'analisis'; // TAMBAHAN
+
+  document.getElementById('btnSimpanNilai').style.display = (isRekap || isAnalisis) ? 'none' : 'inline-flex';
   document.getElementById('btnAddKolom').style.display = currentNilaiTab === 'pengetahuan' ? 'inline-flex' : 'none';
   document.getElementById('btnAddKolomKet').style.display = currentNilaiTab === 'keterampilan' ? 'inline-flex' : 'none';
-  document.getElementById('btnExportNilai').style.display = 'inline-flex'; // Export selalu tersedia
+  document.getElementById('btnExportNilai').style.display = (isRekap || isAnalisis) ? 'none' : 'inline-flex';
+  
+  // TAMBAHAN: Tampilkan tombol khusus analisis
+  const btnExportAnalisis = document.getElementById('btnExportAnalisis');
+  const btnCetakAnalisis = document.getElementById('btnCetakAnalisis');
+  if (btnExportAnalisis) btnExportAnalisis.style.display = isAnalisis ? 'inline-flex' : 'none';
+  if (btnCetakAnalisis) btnCetakAnalisis.style.display = isAnalisis ? 'inline-flex' : 'none';
 
   if (!kelas.length) {
     cont.innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>';
@@ -32,12 +40,12 @@ window.renderPenilaian = () => {
     return;
   }
 
-    // Routing ke fungsi render yang sesuai
+  // PERBAIKAN: Routing ke fungsi render yang sesuai (TAMBAHAN 'analisis')
   if (currentNilaiTab === 'pengetahuan') window.renderNilaiPengetahuan(siswa);
   else if (currentNilaiTab === 'sikap') window.renderNilaiSikap(siswa);
   else if (currentNilaiTab === 'keterampilan') window.renderNilaiKeterampilan(siswa);
   else if (currentNilaiTab === 'rekap') window.renderRekapNilai(siswa);
-  else if (currentNilaiTab === 'analisis') window.renderAnalisisNilai(siswa);
+  else if (currentNilaiTab === 'analisis') window.renderAnalisisNilai(siswa); // <-- INI KUNCINYA
 };
 
 // Helper untuk mendapatkan filter dasar
