@@ -22,7 +22,8 @@ const CONFIG = {
             title: 'MyASN BKN', 
             desc: '', 
             color: '#673ab7', 
-            url: 'https://myasn.bkn.go.id/' 
+            url: 'https://myasn.bkn.go.id/',
+            logo: 'assets/images/logobkn-app.png'
         },
         { 
             id: 'emis', 
