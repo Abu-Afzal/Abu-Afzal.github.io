@@ -235,6 +235,61 @@
             margin-bottom: 10px !important;
         }
     </style>
+
+        <!-- ══════════════════════════════════════════════ -->
+    <!-- 🛡️ PERBAIKAN VISIBILITAS INPUT LOGIN (KHUSUS HOME) -->
+    <!-- ══════════════════════════════════════════════ -->
+    <style>
+        /* Target spesifik untuk input di dalam wrapper ikon login */
+        .input-icon-wrapper input[type="email"],
+        .input-icon-wrapper input[type="password"],
+        .input-icon-wrapper input[type="text"] {
+            color: #0f172a !important; /* Teks sangat gelap agar kontras dan jelas */
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            background: rgba(255, 255, 255, 0.9) !important; /* Background putih solid tapi sedikit transparan */
+            border: 2px solid rgba(255, 255, 255, 0.5) !important;
+            border-radius: 8px !important;
+            padding: 12px 45px 12px 40px !important; /* Padding kiri & kanan disesuaikan agar tidak menabrak ikon */
+            transition: all 0.3s ease !important;
+        }
+
+        /* Saat input diklik / di-hover (Fokus) */
+        .input-icon-wrapper input[type="email"]:focus,
+        .input-icon-wrapper input[type="password"]:focus,
+        .input-icon-wrapper input[type="text"]:focus {
+            color: #0f172a !important;
+            background: #ffffff !important; /* Putih penuh saat aktif */
+            border-color: #10b981 !important; /* Border hijau khas SIPELITA */
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2) !important; /* Efek glow hijau halus */
+            outline: none !important;
+        }
+
+        /* Placeholder text (teks contoh) */
+        .input-icon-wrapper input::placeholder {
+            color: #64748b !important;
+            font-weight: 400 !important;
+            opacity: 1 !important;
+        }
+
+        /* Memastikan ikon amplop/gembok tetap terlihat rapi */
+        .input-icon-wrapper .icon-main {
+            color: #10b981 !important;
+            font-size: 1.1rem !important;
+            z-index: 2 !important;
+        }
+        
+        /* Memastikan ikon mata (toggle password) tetap terlihat dan bisa diklik */
+        .input-icon-wrapper .toggle-password {
+            color: #64748b !important;
+            cursor: pointer !important;
+            z-index: 2 !important;
+            transition: color 0.2s !important;
+        }
+        .input-icon-wrapper .toggle-password:hover {
+            color: #10b981 !important;
+        }
+    </style>
 </head>
 <body>
 
