@@ -40,7 +40,8 @@ const CONFIG = {
             title: 'SIMPEG 5', 
             desc: '', 
             color: '#546e7a', 
-            url: 'https://simpeg5.kemenag.go.id/' 
+            url: 'https://simpeg5.kemenag.go.id/',
+            logo: 'assets/images/simpeg-app.png'
         },
         { 
             id: 'pelatihan', 
