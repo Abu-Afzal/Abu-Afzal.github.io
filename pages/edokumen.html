@@ -246,10 +246,9 @@
           // - User biasa bisa hapus dokumen yang DIA UPLOAD sendiri (tidak peduli Publik atau Pribadi).
           const canDelete = (currentRole === 'admin') || (d.uploader === currentUserName);
           
-          // 3. Tombol Hapus dengan Konfirmasi (Mencegah hapus tidak sengaja)
-          // .replace(/'/g, "\\'") digunakan agar nama dokumen yang mengandung tanda kutip (') tidak merusak kode JavaScript
+          // 3. Tombol Hapus dengan Konfirmasi
           const tombolHapusHTML = canDelete 
-            ? `<button class="btn-delete" onclick="konfirmasiHapusDokumen('${d.id}', '${d.nama_dokumen ? d.nama_dokumen.replace(/'/g, "\\'") : 'Dokumen ini'}')">🗑️ Hapus</button>` 
+            ? `<button class="btn-delete" onclick="hapusDokumen('${d.id}', '${d.nama ? d.nama.replace(/'/g, "\\'") : 'Dokumen ini'}')">🗑️ Hapus</button>` 
             : '';
           
           // Info Pengunggah (kecuali jika admin melihat dokumen sendiri, atau user melihat dokumen sendiri)
@@ -359,15 +358,27 @@
       }
     });
 
-    // Fungsi Hapus
-    window.hapusDokumen = async (id) => {
-      if (!confirm('Yakin ingin menghapus dokumen ini? Tindakan ini tidak dapat dibatalkan.')) return;
+        // Fungsi Hapus dengan Konfirmasi Nama Dokumen
+    window.hapusDokumen = async (id, namaDokumen) => {
+      const yakin = confirm(`⚠️ Yakin ingin menghapus dokumen "${namaDokumen}"?\n\nTindakan ini tidak dapat dibatalkan.`);
+      if (!yakin) return;
+      
       try {
+        // Opsional: Ubah teks tombol sementara agar user tahu sedang diproses
+        const btn = event.target;
+        const teksAsli = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Menghapus...';
+
         await deleteDoc(doc(db, "dokumen", id));
+        
         alert('✅ Dokumen berhasil dihapus');
-        loadDokumen();
+        loadDokumen(); // Refresh daftar
       } catch (err) {
         alert('❌ Gagal menghapus: ' + err.message);
+        const btn = event.target;
+        btn.disabled = false;
+        btn.innerHTML = '🗑️ Hapus';
       }
     };
 
