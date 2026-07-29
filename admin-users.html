@@ -1,9 +1,32 @@
-<!DOCTYPE html>
-<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kelola User - SIPELITA</title>
+    
+    <!-- 🔒 CEK KEAMANAN SINCRONOUS (Mencegah Flash Halaman) -->
+    <script>
+      (function() {
+        const sessionData = localStorage.getItem('sipelita_user'); // Sesuaikan key jika berbeda
+        
+        if (!sessionData) {
+          // Jika tidak ada session, redirect INSTAN sebelum halaman dirender
+          window.location.replace('../home.html');
+        } else {
+          try {
+            const currentUser = JSON.parse(sessionData);
+            if (currentUser.role !== 'admin') {
+              // Jika bukan admin, redirect INSTAN ke dashboard
+              window.location.replace('../index.html');
+            }
+          } catch (e) {
+            // Jika data session rusak, hapus dan redirect ke login
+            localStorage.removeItem('sipelita_user');
+            window.location.replace('../home.html');
+          }
+        }
+      })();
+    </script>
+
     <link rel="icon" type="image/png" href="assets/images/icon-app.png">
     <style>
         *{margin:0;padding:0;box-sizing:border-box;}
