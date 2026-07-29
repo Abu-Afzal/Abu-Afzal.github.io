@@ -875,7 +875,7 @@ window.resetSetupAsesmen = async (setupKey) => {
 };
 
 // ══════════════════════════════════════════════
-// EXPORT ANALISIS SOAL ASESMEN KE EXCEL (FORMAT 100% SESUAI TEMPLATE)
+// EXPORT ANALISIS SOAL ASESMEN (FORMAT PRINT-READY)
 // ══════════════════════════════════════════════
 window.exportAnalisisAsesmenExcel = () => {
   if (typeof XLSX === 'undefined') {
@@ -900,23 +900,23 @@ window.exportAnalisisAsesmenExcel = () => {
   rows.push([]);
   rows.push(['Mata Pelajaran', ':', mata_pelajaran]);
   rows.push(['Kelas', ':', class_name]);
+  rows.push(['Semester', ':', semester === 'ganjil' ? 'Ganjil' : 'Genap']);
   rows.push([]);
   
   // TABEL HEADER (3 Baris)
-  const header1 = ['Nomor', 'Nomor', 'Nomor Soal', 'Nomor Soal'];
-  for (let i = 1; i <= jumlah_soal; i++) header1.push(i);
-  header1.push('Jml', '% Ketercapaian', 'Tuntas', 'NILAI', 'NILAI', 'NILAI');
-  rows.push(header1);
+  const headerRow1 = ['Nomor', 'Induk', 'Nama Peserta', 'L/P'];
+  for (let i = 1; i <= jumlah_soal; i++) {
+    headerRow1.push(i);
+  }
+  headerRow1.push('Jml Skor', '% Ketercapaian', 'Tuntas', 'Remedial I', 'Remedial II', 'Nilai Akhir');
+  rows.push(headerRow1);
   
-  const header2 = ['Nomor', 'Nomor', 'Skor Maximal', 'Skor Maximal'];
-  for (let i = 1; i <= jumlah_soal; i++) header2.push(skor_max_per_soal[i-1]);
-  header2.push('skor', '% Ketercapaian', 'Tuntas', 'Remedial', 'Remedial', 'Akhir');
-  rows.push(header2);
-  
-  const header3 = ['Urt', 'Induk', 'Nama Peserta', 'L/P'];
-  for (let i = 1; i <= jumlah_soal; i++) header3.push(skor_max_per_soal[i-1]);
-  header3.push('100', '% Ketercapaian', 'Tuntas', 'I', 'II', '');
-  rows.push(header3);
+  const headerRow2 = ['', '', '', ''];
+  for (let i = 1; i <= jumlah_soal; i++) {
+    headerRow2.push(skor_max_per_soal[i-1]);
+  }
+  headerRow2.push('', '', '', '', '', '');
+  rows.push(headerRow2);
   
   // DATA SISWA
   let totalSkorPerSoal = Array(jumlah_soal).fill(0);
@@ -940,99 +940,128 @@ window.exportAnalisisAsesmenExcel = () => {
     
     const row = [idx + 1, '', s.student_name, ''];
     skorPerSoal.forEach(skor => row.push(skor));
-    row.push(jumlahSkor, persenKetercapaian + '%', tuntas ? 'Ya' : 'Tidak', '', '', '');
+    row.push(jumlahSkor, persenKetercapaian + '%', tuntas ? 'Ya' : 'Tidak', '', '', persenKetercapaian);
     rows.push(row);
   });
   
-  // BARIS JUMLAH TOTAL & RATA-RATA
-  const rowJumlah = ['Jumlah Total', 'Jumlah Total', 'Jumlah Total', ''];
+  // BARIS JUMLAH TOTAL
+  const rowJumlah = ['Jumlah Total', '', '', ''];
   totalSkorPerSoal.forEach(skor => rowJumlah.push(skor));
-  rowJumlah.push('', '', '', '', '', '');
+  const totalJmlSkor = totalSkorPerSoal.reduce((a, b) => a + b, 0);
+  rowJumlah.push(totalJmlSkor, '', '', '', '', '');
   rows.push(rowJumlah);
   
-  const rowRata = ['Rata-rata/daya serap', 'Rata-rata/daya serap', 'Rata-rata/daya serap', ''];
+  // BARIS RATA-RATA
+  const rowRata = ['Rata-rata/daya serap', '', '', ''];
   totalSkorPerSoal.forEach(skor => rowRata.push((skor / jmlSiswa).toFixed(1)));
-  rowRata.push('', '', '', '', '', '');
+  rowRata.push((totalJmlSkor / jmlSiswa).toFixed(1), '', '', '', '', '');
   rows.push(rowRata);
   
   rows.push([]);
   
   // HASIL ANALISIS
-  rows.push(['Hasil Analisis :', '', '', '', '', '', '', '', '', '', '', '', '', 'Kesimpulan', '', '', '', '', '']);
+  rows.push(['Hasil Analisis:']);
   
+  // 1. Jumlah skor yang diperoleh
   const row1 = ['1', 'Jumlah skor yang diperoleh', '', ''];
   totalSkorPerSoal.forEach(skor => row1.push(skor));
-  const persentaseKlasikal = ((jumlahTuntas / jmlSiswa) * 100).toFixed(1);
-  row1.push('', '', '', 'a.', 'Ketuntasan klasikal', '', '', persentaseKlasikal + '%', '');
+  row1.push('', '', '', '', '', '');
   rows.push(row1);
   
+  // 2. Jumlah skor Ideal
   const row2 = ['2', 'Juml. skor Ideal (seharusnya)', '', ''];
   skor_max_per_soal.forEach(skorMax => row2.push(skorMax * jmlSiswa));
-  row2.push('', '', '', 'b.', 'Ketuntasan individual', '', '', '', '');
+  row2.push('', '', '', '', '', '');
   rows.push(row2);
   
+  // 3. % Ketercapaian
   const row3 = ['3', '% Ketercapaian', '', ''];
   totalSkorPerSoal.forEach((skor, i) => {
     const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
     row3.push(skorIdeal > 0 ? ((skor / skorIdeal) * 100).toFixed(2) : 0);
   });
-  row3.push('', '', '', '', 'Perlu remedial', '', '', jumlahTidakTuntas.toString(), '');
+  row3.push('', '', '', '', '', '');
   rows.push(row3);
   
+  // 4. % Kegagalan
   const row4 = ['4', '% Kegagalan', '', ''];
   totalSkorPerSoal.forEach((skor, i) => {
     const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
     row4.push(skorIdeal > 0 ? (((skorIdeal - skor) / skorIdeal) * 100).toFixed(2) : 0);
   });
-  row4.push('', '', '', 'c.', 'Bentuk remedial :', '', '', '', '');
+  row4.push('', '', '', '', '', '');
   rows.push(row4);
   
-  const bentukRemedial = '> Pemberian tugas individu untuk menjawab Soal-soal dan melaporkan hasilnya';
-  
+  // 5. Skor maksimal tiap nomor
   const row5 = ['5', 'Skor maksimal tiap nomor', '', ''];
   skor_max_per_soal.forEach(skorMax => row5.push(skorMax));
-  row5.push('', '', '', '', bentukRemedial, '', '', '', '');
+  row5.push('', '', '', '', '', '');
   rows.push(row5);
   
+  // 6. Jumlah peserta ujian
   const row6 = ['6', 'Jumlah peserta ujian', '', jmlSiswa];
   for (let i = 0; i < jumlah_soal; i++) row6.push(jmlSiswa);
-  row6.push('', '', '', '', bentukRemedial, '', '', '', '');
+  row6.push('', '', '', '', '', '');
   rows.push(row6);
   
+  // 7. Jumlah peserta yang tidak tuntas
   const row7 = ['7', 'Jumlah peserta yang tidak tuntas', '', jumlahTidakTuntas, 'Orang'];
   for (let i = 0; i < jumlah_soal - 1; i++) row7.push('');
-  row7.push('', '', '', '', bentukRemedial, '', '', '', '');
+  row7.push('', '', '', '', '', '');
   rows.push(row7);
   
+  // 8. Jumlah peserta yang tuntas
   const row8 = ['8', 'Jumlah peserta yang tuntas', '', jumlahTuntas, 'Orang'];
   for (let i = 0; i < jumlah_soal - 1; i++) row8.push('');
-  row8.push('', '', '', '', bentukRemedial, '', '', '', '');
+  row8.push('', '', '', '', '', '');
   rows.push(row8);
   
-  // FOOTER TANDA TANGAN
-  rows.push([]); rows.push([]); rows.push([]); rows.push([]); rows.push([]); rows.push([]);
-  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Guru Mata Pelajaran', '', '', '']);
-  rows.push([]); rows.push([]); rows.push([]); rows.push([]);
-  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'ELIS HARIANTO, S.Pd', '', '', '']);
-  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'NIP. 19900211 202012 1 007', '', '', '']);
+  rows.push([]);
+  
+  // KESIMPULAN
+  const persentaseKlasikal = ((jumlahTuntas / jmlSiswa) * 100).toFixed(1);
+  rows.push(['Kesimpulan:']);
+  rows.push(['a. Ketuntasan klasikal: ' + persentaseKlasikal + '%']);
+  rows.push(['b. Ketuntasan individual: ' + jumlahTuntas + ' siswa tuntas, ' + jumlahTidakTuntas + ' siswa perlu remedial']);
+  rows.push(['c. Bentuk remedial: Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya']);
+  
+  rows.push([]);
+  rows.push([]);
+  rows.push([]);
+  
+  // TANDA TANGAN
+  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Guru Mata Pelajaran']);
+  rows.push([]);
+  rows.push([]);
+  rows.push([]);
+  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'ELIS HARIANTO, S.Pd']);
+  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'NIP. 19900211 202012 1 007']);
   
   // EXPORT KE EXCEL
   const ws = XLSX.utils.aoa_to_sheet(rows);
   
+  // SET COLUMN WIDTHS
   const colWidths = [
-    { wch: 6 },  // No Urt
-    { wch: 15 }, // Induk
-    { wch: 30 }, // Nama
-    { wch: 6 },  // L/P
-    ...Array(jumlah_soal).fill({ wch: 8 }), // Skor per soal
-    { wch: 10 }, // Jml
-    { wch: 15 }, // %
-    { wch: 10 }, // Tuntas
-    { wch: 12 }, // Remedial I
-    { wch: 12 }, // Remedial II
-    { wch: 10 }  // Akhir
+    { wch: 5 },   // No
+    { wch: 10 },  // Induk
+    { wch: 30 },  // Nama
+    { wch: 5 },   // L/P
+    ...Array(jumlah_soal).fill({ wch: 6 }), // Skor per soal
+    { wch: 10 },  // Jml Skor
+    { wch: 15 },  // % Ketercapaian
+    { wch: 10 },  // Tuntas
+    { wch: 12 },  // Remedial I
+    { wch: 12 },  // Remedial II
+    { wch: 12 }   // Nilai Akhir
   ];
   ws['!cols'] = colWidths;
+  
+  // MERGE CELLS FOR HEADER
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: jumlah_soal + 7 } }, // Title
+    { s: { r: 8, c: 0 }, e: { r: 8, c: jumlah_soal + 7 } }, // Hasil Analisis header
+    { s: { r: 18, c: 0 }, e: { r: 18, c: jumlah_soal + 7 } } // Kesimpulan header
+  ];
   
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Analisis Asesmen');
