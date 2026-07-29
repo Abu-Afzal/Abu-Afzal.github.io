@@ -10,18 +10,22 @@ window.renderPenilaian = () => {
 
   // PERBAIKAN: Atur visibilitas tombol berdasarkan tab yang aktif
   const isRekap = currentNilaiTab === 'rekap';
-  const isAnalisis = currentNilaiTab === 'analisis'; // TAMBAHAN
+  const isAnalisis = currentNilaiTab === 'analisis';
+  const isAsesmen = currentNilaiTab === 'asesmen'; // TAMBAHAN
 
-  document.getElementById('btnSimpanNilai').style.display = (isRekap || isAnalisis) ? 'none' : 'inline-flex';
+  document.getElementById('btnSimpanNilai').style.display = (isRekap || isAnalisis || isAsesmen) ? 'none' : 'inline-flex';
   document.getElementById('btnAddKolom').style.display = currentNilaiTab === 'pengetahuan' ? 'inline-flex' : 'none';
   document.getElementById('btnAddKolomKet').style.display = currentNilaiTab === 'keterampilan' ? 'inline-flex' : 'none';
-  document.getElementById('btnExportNilai').style.display = (isRekap || isAnalisis) ? 'none' : 'inline-flex';
+  document.getElementById('btnExportNilai').style.display = (isRekap || isAnalisis || isAsesmen) ? 'none' : 'inline-flex';
   
   // TAMBAHAN: Tampilkan tombol khusus analisis
   const btnExportAnalisis = document.getElementById('btnExportAnalisis');
   const btnCetakAnalisis = document.getElementById('btnCetakAnalisis');
+  const btnExportAsesmen = document.getElementById('btnExportAsesmen');
+  
   if (btnExportAnalisis) btnExportAnalisis.style.display = isAnalisis ? 'inline-flex' : 'none';
   if (btnCetakAnalisis) btnCetakAnalisis.style.display = isAnalisis ? 'inline-flex' : 'none';
+  if (btnExportAsesmen) btnExportAsesmen.style.display = isAsesmen ? 'inline-flex' : 'none'; // TAMBAHAN
 
   if (!kelas.length) {
     cont.innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>';
@@ -40,12 +44,13 @@ window.renderPenilaian = () => {
     return;
   }
 
-  // PERBAIKAN: Routing ke fungsi render yang sesuai (TAMBAHAN 'analisis')
+  // PERBAIKAN: Routing ke fungsi render yang sesuai (TAMBAHAN 'asesmen')
   if (currentNilaiTab === 'pengetahuan') window.renderNilaiPengetahuan(siswa);
   else if (currentNilaiTab === 'sikap') window.renderNilaiSikap(siswa);
   else if (currentNilaiTab === 'keterampilan') window.renderNilaiKeterampilan(siswa);
   else if (currentNilaiTab === 'rekap') window.renderRekapNilai(siswa);
   else if (currentNilaiTab === 'analisis') window.renderAnalisisNilai(siswa);
+  else if (currentNilaiTab === 'asesmen') window.renderAnalisisAsesmen(siswa); // TAMBAHAN
 };
 
 // Helper untuk mendapatkan filter dasar
@@ -309,10 +314,213 @@ window.renderRekapNilai = (siswa) => {
   cont.innerHTML = html;
 };
 
+// ══════════════════════════════════════════════
+// FITUR ANALISIS NILAI (DIPERBAIKI - SEBELUMNYA HILANG)
+// ══════════════════════════════════════════════
+let chartHistogram = null;
+
+window.getKKMDefault = (className) => {
+  if (!className) return 75;
+  const kelas = className.toString().toUpperCase();
+  if (kelas.includes('XII') || kelas.includes('12')) return 80;
+  if (kelas.includes('XI') || kelas.includes('11')) return 78;
+  if (kelas.includes('X') || kelas.includes('10')) return 75;
+  return 75;
+};
+
+window.hitungRerataSiswaPerTP = (studentKey, kodeTP, semuaNilaiData) => {
+  const dataTP = semuaNilaiData.find(d => d.student_key === studentKey && d.kode_tp === kodeTP && d.nilai);
+  if (!dataTP) return null;
+  try {
+    const nilaiObj = JSON.parse(dataTP.nilai);
+    const vals = Object.values(nilaiObj).map(v => parseFloat(v)).filter(v => !isNaN(v));
+    return vals.length === 0 ? null : vals.reduce((a, b) => a + b, 0) / vals.length;
+  } catch (e) { return null; }
+};
+
+window.renderAnalisisNilai = (siswa) => {
+  const filter = window.getNilaiFilter();
+  const cont = document.getElementById('penilaianContent');
+  
+  const semuaNilaiData = allData.filter(d => 
+    (d.type === 'nilai_pengetahuan' || d.type === 'nilai_keterampilan') && 
+    d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester
+  );
+  
+  const uniqueTPs = [...new Set(semuaNilaiData.map(d => d.kode_tp))].sort();
+  
+  if (uniqueTPs.length === 0 || siswa.length === 0) {
+    cont.innerHTML = `<div class="empty"><div class="ei"></div><p>Belum ada data nilai untuk dianalisis di semester ${filter.semester}.</p></div>`;
+    return;
+  }
+  
+  const kkmInput = document.getElementById('nilaiKKM');
+  let kkm = kkmInput ? parseFloat(kkmInput.value) : window.getKKMDefault(filter.class_name);
+  if (isNaN(kkm) || kkm < 0 || kkm > 100) kkm = 75;
+  
+  // 1. Statistik Per Siswa
+  const statistikSiswa = siswa.map(s => {
+    let totalRerataTP = 0, countTP = 0;
+    uniqueTPs.forEach(tp => {
+      const rerata = window.hitungRerataSiswaPerTP(s.__key, tp, semuaNilaiData);
+      if (rerata !== null) { totalRerataTP += rerata; countTP++; }
+    });
+    const nilaiAkhir = countTP > 0 ? totalRerataTP / countTP : null;
+    return { student: s, nilaiAkhir, tuntas: nilaiAkhir !== null && nilaiAkhir >= kkm };
+  }).filter(s => s.nilaiAkhir !== null);
+  
+  // 2. Statistik Kelas
+  const nilaiAkhirList = statistikSiswa.map(s => s.nilaiAkhir);
+  const rataKelas = nilaiAkhirList.reduce((a, b) => a + b, 0) / nilaiAkhirList.length;
+  const nilaiTertinggi = Math.max(...nilaiAkhirList);
+  const nilaiTerendah = Math.min(...nilaiAkhirList);
+  const siswaTuntas = statistikSiswa.filter(s => s.tuntas).length;
+  const siswaRemedial = statistikSiswa.length - siswaTuntas;
+  const persentaseTuntas = ((siswaTuntas / statistikSiswa.length) * 100).toFixed(1);
+  
+  // 3. Analisis Per TP
+  const analisisTP = uniqueTPs.map(tp => {
+    const rerataPerSiswa = siswa.map(s => window.hitungRerataSiswaPerTP(s.__key, tp, semuaNilaiData)).filter(v => v !== null);
+    const rerataTP = rerataPerSiswa.length > 0 ? rerataPerSiswa.reduce((a, b) => a + b, 0) / rerataPerSiswa.length : 0;
+    let status, statusColor;
+    if (rerataTP >= kkm + 5) { status = '✅ Dikuasai'; statusColor = '#10b981'; }
+    else if (rerataTP >= kkm - 5) { status = '⚠️ Perlu Penguatan'; statusColor = '#f59e0b'; }
+    else { status = '🔴 Kritikal'; statusColor = '#ef4444'; }
+    return { kode: tp, rerata: rerataTP.toFixed(1), status, statusColor };
+  });
+  
+  // 4. Distribusi Nilai
+  const distribusi = { '0-59': 0, '60-69': 0, '70-79': 0, '80-89': 0, '90-100': 0 };
+  nilaiAkhirList.forEach(n => {
+    if (n < 60) distribusi['0-59']++;
+    else if (n < 70) distribusi['60-69']++;
+    else if (n < 80) distribusi['70-79']++;
+    else if (n < 90) distribusi['80-89']++;
+    else distribusi['90-100']++;
+  });
+  
+  // 5. Daftar Remedial & Pengayaan
+  const daftarRemedial = statistikSiswa.filter(s => !s.tuntas).sort((a, b) => a.nilaiAkhir - b.nilaiAkhir);
+  const daftarPengayaan = statistikSiswa.filter(s => s.nilaiAkhir >= 90).sort((a, b) => b.nilaiAkhir - a.nilaiAkhir);
+  
+  // RENDER HTML
+  let html = `
+    <div id="analisisContent">
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-weight:700;color:#0369a1;">🎯 KKM:</div>
+        <input type="number" id="nilaiKKM" value="${kkm}" min="0" max="100" style="width:80px;padding:6px 10px;border:2px solid #0284c7;border-radius:6px;font-weight:700;font-size:1rem;text-align:center;">
+        <button onclick="window.renderAnalisisNilai(allData.filter(d => d.type === 'student' && d.class_name === '${filter.class_name}' && d.user_name === '${filter.user_name}'))" style="padding:6px 14px;background:#0284c7;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">🔄 Hitung Ulang</button>
+        <div style="font-size:0.82rem;color:#64748b;margin-left:auto;">Default: X=75, XI=78, XII=80</div>
+      </div>
+      
+      <div class="stat-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-box sb-h"><h4>${rataKelas.toFixed(1)}</h4><p>📊 Rata-rata Kelas</p></div>
+        <div class="stat-box sb-i"><h4>${nilaiTertinggi.toFixed(0)}<small style="font-size:0.9rem;color:#64748b;"> / ${nilaiTerendah.toFixed(0)}</small></h4><p>🏆 Tertinggi / Terendah</p></div>
+        <div class="stat-box sb-s"><h4>${siswaTuntas}<small style="font-size:0.9rem;"> / ${statistikSiswa.length}</small></h4><p>✅ Tuntas (${persentaseTuntas}%)</p></div>
+        <div class="stat-box sb-a"><h4>${siswaRemedial}</h4><p>⚠️ Perlu Remedial</p></div>
+      </div>
+      
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px;margin-bottom:18px;">
+        <div style="font-weight:700;color:#1e293b;margin-bottom:12px;">📊 Distribusi Nilai Siswa</div>
+        <div style="height:250px;position:relative;"><canvas id="chartHistogram"></canvas></div>
+      </div>
+      
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:18px;margin-bottom:18px;">
+        <div style="font-weight:700;color:#1e293b;margin-bottom:12px;">📋 Analisis Pencapaian per TP/KD</div>
+        <div class="tbl-wrap"><table><thead><tr><th width="80">Kode TP</th><th>Rata-rata Kelas</th><th width="180">Status</th></tr></thead><tbody>
+          ${analisisTP.map(tp => `<tr><td style="font-weight:700;">TP ${tp.kode}</td><td style="text-align:center;font-weight:700;color:${tp.statusColor};">${tp.rerata}</td><td style="color:${tp.statusColor};font-weight:600;">${tp.status}</td></tr>`).join('')}
+        </tbody></table></div>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:16px;">
+          <div style="font-weight:700;color:#991b1b;margin-bottom:10px;">🔴 Siswa Perlu Remedial (${daftarRemedial.length})</div>
+          ${daftarRemedial.length === 0 ? '<div style="color:#64748b;font-size:0.85rem;">Tidak ada siswa remedial. 🎉</div>' : '<ul style="list-style:none;padding:0;margin:0;">' + daftarRemedial.map(s => `<li style="padding:6px 0;border-bottom:1px dashed #fecaca;display:flex;justify-content:space-between;"><span style="font-weight:600;color:#1e293b;">${s.student.student_name}</span><span style="font-weight:700;color:#ef4444;">${s.nilaiAkhir.toFixed(1)}</span></li>`).join('') + '</ul>'}
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;">
+          <div style="font-weight:700;color:#166534;margin-bottom:10px;">🟢 Siswa Perlu Pengayaan (${daftarPengayaan.length})</div>
+          ${daftarPengayaan.length === 0 ? '<div style="color:#64748b;font-size:0.85rem;">Belum ada siswa dengan nilai ≥ 90.</div>' : '<ul style="list-style:none;padding:0;margin:0;">' + daftarPengayaan.map(s => `<li style="padding:6px 0;border-bottom:1px dashed #bbf7d0;display:flex;justify-content:space-between;"><span style="font-weight:600;color:#1e293b;">${s.student.student_name}</span><span style="font-weight:700;color:#10b981;">${s.nilaiAkhir.toFixed(1)}</span></li>`).join('') + '</ul>'}
+        </div>
+      </div>
+    </div>
+  `;
+  cont.innerHTML = html;
+  
+  // RENDER CHART
+  if (chartHistogram) chartHistogram.destroy();
+  const ctx = document.getElementById('chartHistogram');
+  if (ctx) {
+    chartHistogram = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(distribusi),
+        datasets: [{ label: 'Jumlah Siswa', data: Object.values(distribusi), backgroundColor: ['#ef4444', '#f59e0b', '#eab308', '#3b82f6', '#10b981'], borderRadius: 8, borderWidth: 0 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+  }
+};
+
+window.exportAnalisisNilai = () => {
+  if (typeof XLSX === 'undefined') { window.toast('️ Library Excel belum siap.', 'err'); return; }
+  const filter = window.getNilaiFilter();
+  const kkm = parseFloat(document.getElementById('nilaiKKM')?.value) || 75;
+  const semuaNilaiData = allData.filter(d => (d.type === 'nilai_pengetahuan' || d.type === 'nilai_keterampilan') && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester);
+  const uniqueTPs = [...new Set(semuaNilaiData.map(d => d.kode_tp))].sort();
+  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+  
+  const rows = [['LAPORAN ANALISIS NILAI'], [`Kelas: ${currentNilaiClass}`, `Semester: ${filter.semester === 'ganjil' ? 'Ganjil' : 'Genap'}`, `KKM: ${kkm}`], []];
+  
+  const statistikSiswa = siswa.map(s => {
+    let total = 0, count = 0;
+    uniqueTPs.forEach(tp => { const r = window.hitungRerataSiswaPerTP(s.__key, tp, semuaNilaiData); if (r !== null) { total += r; count++; } });
+    return { name: s.student_name, nilai: count > 0 ? total / count : null };
+  }).filter(s => s.nilai !== null);
+  
+  const nilaiList = statistikSiswa.map(s => s.nilai);
+  rows.push(['STATISTIK KELAS'], ['Rata-rata', (nilaiList.reduce((a,b)=>a+b,0)/nilaiList.length).toFixed(2)], ['Tertinggi', Math.max(...nilaiList).toFixed(2)], ['Terendah', Math.min(...nilaiList).toFixed(2)], []);
+  
+  rows.push(['ANALISIS PER TP/KD'], ['Kode TP', 'Rata-rata', 'Status']);
+  uniqueTPs.forEach(tp => {
+    const rerataPerSiswa = siswa.map(s => window.hitungRerataSiswaPerTP(s.__key, tp, semuaNilaiData)).filter(v => v !== null);
+    const rerata = rerataPerSiswa.length > 0 ? rerataPerSiswa.reduce((a, b) => a + b, 0) / rerataPerSiswa.length : 0;
+    rows.push([`TP ${tp}`, rerata.toFixed(2), rerata >= kkm + 5 ? 'Dikuasai' : (rerata >= kkm - 5 ? 'Perlu Penguatan' : 'Kritikal')]);
+  });
+  
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Analisis');
+  XLSX.writeFile(wb, `SIPENA_Analisis_${currentNilaiClass}_${filter.semester}.xlsx`);
+  window.toast('✅ File analisis berhasil diunduh!', 'success');
+};
+
+window.cetakAnalisisPDF = async () => {
+  const { jsPDF } = window.jspdf;
+  const btn = document.getElementById('btnCetakAnalisis');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
+  try {
+    const element = document.getElementById('analisisContent');
+    if (!element) throw new Error('Tidak ada data');
+    const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.setFontSize(14); pdf.setFont(undefined, 'bold');
+    pdf.text(`ANALISIS NILAI - ${currentNilaiClass}`, 10, 10);
+    pdf.setFontSize(10); pdf.setFont(undefined, 'normal');
+    pdf.text(`KKM: ${document.getElementById('nilaiKKM')?.value || 75}`, 10, 16);
+    pdf.addImage(imgData, 'PNG', 10, 22, pdfWidth - 20, pdfHeight);
+    pdf.save(`Analisis_Nilai_${currentNilaiClass}.pdf`);
+    window.toast('✅ PDF berhasil dibuat!', 'success');
+  } catch (e) { window.toast('❌ Gagal membuat PDF', 'err'); }
+  btn.disabled = false; btn.innerHTML = '🖨️ Cetak PDF';
+};
+
 window.simpanNilai = async () => {
   const filter = window.getNilaiFilter();
   if (!filter.kode_tp) {
-    window.toast('❌ Kode TP/KD harus diisi!', 'err');
+    window.toast(' Kode TP/KD harus diisi!', 'err');
     return;
   }
 
@@ -571,7 +779,7 @@ window.renderAnalisisAsesmen = (siswa) => {
     // Tampilkan form setup
     cont.innerHTML = `
       <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:20px;margin-bottom:20px;">
-        <h3 style="margin:0 0 15px;color:#0369a1;">🎯 Setup Asesmen Per Butir Soal</h3>
+        <h3 style="margin:0 0 15px;color:#0369a1;"> Setup Asesmen Per Butir Soal</h3>
         <p style="margin:0 0 20px;color:#64748b;">Konfigurasi asesmen untuk kelas <strong>${filter.class_name}</strong> semester <strong>${filter.semester}</strong></p>
         
         <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
@@ -708,7 +916,7 @@ window.tampilkanInputAsesmen = (setupAsesmen, siswa) => {
     <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:15px;margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
         <div>
-          <h3 style="margin:0 0 5px;color:#0369a1;"> Asesmen: ${mata_pelajaran}</h3>
+          <h3 style="margin:0 0 5px;color:#0369a1;">📝 Asesmen: ${mata_pelajaran}</h3>
           <p style="margin:0;color:#64748b;font-size:0.9rem;">Kelas: ${setupAsesmen.class_name} | Semester: ${setupAsesmen.semester} | KKM: ${kkm} | Total Skor: ${total_skor_max}</p>
         </div>
         <button onclick="window.resetSetupAsesmen('${setupAsesmen.__key}')" style="padding:8px 16px;background:#ef4444;color:white;border:none;border-radius:6px;font-size:0.85rem;cursor:pointer;">
@@ -881,14 +1089,13 @@ window.resetSetupAsesmen = async (setupKey) => {
     const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
     window.renderAnalisisAsesmen(siswa);
   } catch (error) {
-    window.toast(' Gagal mereset: ' + error.message, 'err');
+    window.toast('❌ Gagal mereset: ' + error.message, 'err');
   }
 };
 
 // ══════════════════════════════════════════════
-// EXPORT ASESMEN KE EXCEL (FORMAT TEMPLATE)
+// EXPORT ASESMEN KE EXCEL (FORMAT 100% SESUAI TEMPLATE)
 // ══════════════════════════════════════════════
-
 window.exportAnalisisAsesmenExcel = () => {
   if (typeof XLSX === 'undefined') {
     window.toast('⚠️ Library Excel belum siap.', 'err');
@@ -905,6 +1112,7 @@ window.exportAnalisisAsesmenExcel = () => {
   const siswa = allData.filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser);
   
   const rows = [];
+  const jmlSiswa = siswa.length || 1; // Mencegah division by zero
   
   // HEADER
   rows.push(['Analisis Hasil Asesmen']);
@@ -913,21 +1121,21 @@ window.exportAnalisisAsesmenExcel = () => {
   rows.push(['Kelas', ':', class_name]);
   rows.push([]);
   
-  // TABEL HEADER
-  const headerRow = ['Nomor', 'Nomor', 'Nomor Soal', 'Nomor Soal'];
-  for (let i = 1; i <= jumlah_soal; i++) headerRow.push(i);
-  headerRow.push('Jml', '% Ketercapaian', 'Tuntas', 'NILAI', 'NILAI', 'NILAI');
-  rows.push(headerRow);
+  // TABEL HEADER (3 Baris agar sesuai template)
+  const header1 = ['Nomor', 'Nomor', 'Nomor Soal', 'Nomor Soal'];
+  for (let i = 1; i <= jumlah_soal; i++) header1.push(i);
+  header1.push('Jml', '% Ketercapaian', 'Tuntas', 'NILAI', 'NILAI', 'NILAI');
+  rows.push(header1);
   
-  const headerRow2 = ['Nomor', 'Nomor', 'Skor Maximal', 'Skor Maximal'];
-  for (let i = 1; i <= jumlah_soal; i++) headerRow2.push(skor_max_per_soal[i-1]);
-  headerRow2.push('skor', '% Ketercapaian', 'Tuntas', 'Remedial', 'Remedial', 'Akhir');
-  rows.push(headerRow2);
+  const header2 = ['Nomor', 'Nomor', 'Skor Maximal', 'Skor Maximal'];
+  for (let i = 1; i <= jumlah_soal; i++) header2.push(skor_max_per_soal[i-1]);
+  header2.push('skor', '% Ketercapaian', 'Tuntas', 'Remedial', 'Remedial', 'Akhir');
+  rows.push(header2);
   
-  const headerRow3 = ['Urt', 'Induk', 'Nama Peserta', 'L/P'];
-  for (let i = 1; i <= jumlah_soal; i++) headerRow3.push(skor_max_per_soal[i-1]);
-  headerRow3.push('100', '% Ketercapaian', 'Tuntas', 'I', 'II', '');
-  rows.push(headerRow3);
+  const header3 = ['Urt', 'Induk', 'Nama Peserta', 'L/P'];
+  for (let i = 1; i <= jumlah_soal; i++) header3.push(skor_max_per_soal[i-1]);
+  header3.push('100', '% Ketercapaian', 'Tuntas', 'I', 'II', '');
+  rows.push(header3);
   
   // DATA SISWA
   let totalSkorPerSoal = Array(jumlah_soal).fill(0);
@@ -936,11 +1144,8 @@ window.exportAnalisisAsesmenExcel = () => {
   
   siswa.forEach((s, idx) => {
     const nilaiAsesmen = allData.find(d => 
-      d.type === 'asesmen_nilai' && 
-      d.student_key === s.__key && 
-      d.class_name === class_name && 
-      d.user_name === currentUser && 
-      d.semester === semester
+      d.type === 'asesmen_nilai' && d.student_key === s.__key && 
+      d.class_name === class_name && d.user_name === currentUser && d.semester === semester
     );
     
     const skorPerSoal = nilaiAsesmen?.skor_per_soal || Array(jumlah_soal).fill(0);
@@ -948,13 +1153,9 @@ window.exportAnalisisAsesmenExcel = () => {
     const persenKetercapaian = total_skor_max > 0 ? ((jumlahSkor / total_skor_max) * 100).toFixed(1) : 0;
     const tuntas = parseFloat(persenKetercapaian) >= kkm;
     
-    if (tuntas) jumlahTuntas++;
-    else jumlahTidakTuntas++;
+    if (tuntas) jumlahTuntas++; else jumlahTidakTuntas++;
     
-    // Akumulasi skor per soal
-    skorPerSoal.forEach((skor, i) => {
-      totalSkorPerSoal[i] += skor;
-    });
+    skorPerSoal.forEach((skor, i) => { totalSkorPerSoal[i] += skor; });
     
     const row = [idx + 1, '', s.student_name, ''];
     skorPerSoal.forEach(skor => row.push(skor));
@@ -962,104 +1163,93 @@ window.exportAnalisisAsesmenExcel = () => {
     rows.push(row);
   });
   
-  // JUMLAH TOTAL
+  // BARIS JUMLAH TOTAL & RATA-RATA
   const rowJumlah = ['Jumlah Total', 'Jumlah Total', 'Jumlah Total', ''];
   totalSkorPerSoal.forEach(skor => rowJumlah.push(skor));
   rowJumlah.push('', '', '', '', '', '');
   rows.push(rowJumlah);
   
-  // RATA-RATA
   const rowRata = ['Rata-rata/daya serap', 'Rata-rata/daya serap', 'Rata-rata/daya serap', ''];
-  totalSkorPerSoal.forEach(skor => {
-    const rata = siswa.length > 0 ? (skor / siswa.length).toFixed(1) : 0;
-    rowRata.push(rata);
-  });
+  totalSkorPerSoal.forEach(skor => rowRata.push((skor / jmlSiswa).toFixed(1)));
   rowRata.push('', '', '', '', '', '');
   rows.push(rowRata);
   
   rows.push([]);
   
-  // HASIL ANALISIS
+  // HASIL ANALISIS (Disesuaikan persis dengan kolom template)
+  // Total kolom = 4 (awal) + jumlah_soal + 5 (akhir) = 9 + jumlah_soal
   rows.push(['Hasil Analisis :', '', '', '', '', '', '', '', '', '', '', '', '', 'Kesimpulan', '', '', '', '', '']);
   
   // 1. Jumlah skor yang diperoleh
   const row1 = ['1', 'Jumlah skor yang diperoleh', '', ''];
   totalSkorPerSoal.forEach(skor => row1.push(skor));
-  row1.push('', '', '', 'a.', 'Ketuntasan klasikal', '', '', `${((jumlahTuntas / siswa.length) * 100).toFixed(1)}%`, '');
+  const persentaseKlasikal = ((jumlahTuntas / jmlSiswa) * 100).toFixed(1);
+  row1.push('', '', '', 'a.', 'Ketuntasan klasikal', '', '', persentaseKlasikal + '%', '');
   rows.push(row1);
   
   // 2. Jumlah skor Ideal
   const row2 = ['2', 'Juml. skor Ideal (seharusnya)', '', ''];
-  skor_max_per_soal.forEach(skorMax => {
-    row2.push(skorMax * siswa.length);
-  });
+  skor_max_per_soal.forEach(skorMax => row2.push(skorMax * jmlSiswa));
   row2.push('', '', '', 'b.', 'Ketuntasan individual', '', '', '', '');
   rows.push(row2);
   
   // 3. % Ketercapaian
   const row3 = ['3', '% Ketercapaian', '', ''];
   totalSkorPerSoal.forEach((skor, i) => {
-    const skorIdeal = skor_max_per_soal[i] * siswa.length;
-    const ketercapaian = skorIdeal > 0 ? ((skor / skorIdeal) * 100).toFixed(2) : 0;
-    row3.push(ketercapaian);
+    const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
+    row3.push(skorIdeal > 0 ? ((skor / skorIdeal) * 100).toFixed(2) : 0);
   });
-  row3.push('', '', '', '', 'Perlu remedial', '', '', `${jumlahTidakTuntas}`, '');
+  row3.push('', '', '', '', 'Perlu remedial', '', '', jumlahTidakTuntas.toString(), '');
   rows.push(row3);
   
   // 4. % Kegagalan
   const row4 = ['4', '% Kegagalan', '', ''];
   totalSkorPerSoal.forEach((skor, i) => {
-    const skorIdeal = skor_max_per_soal[i] * siswa.length;
-    const kegagalan = skorIdeal > 0 ? (((skorIdeal - skor) / skorIdeal) * 100).toFixed(2) : 0;
-    row4.push(kegagalan);
+    const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
+    row4.push(skorIdeal > 0 ? (((skorIdeal - skor) / skorIdeal) * 100).toFixed(2) : 0);
   });
   row4.push('', '', '', 'c.', 'Bentuk remedial :', '', '', '', '');
   rows.push(row4);
   
-  // 5. Skor maksimal tiap nomor
+  // 5, 6, 7, 8 (Skor maksimal, Jumlah peserta, Tidak tuntas, Tuntas)
+  const bentukRemedial = '> Pemberian tugas individu untuk menjawab Soal-soal dan melaporkan hasilnya';
+  
   const row5 = ['5', 'Skor maksimal tiap nomor', '', ''];
   skor_max_per_soal.forEach(skorMax => row5.push(skorMax));
-  row5.push('', '', '', '', '> Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya', '', '', '', '');
+  row5.push('', '', '', '', bentukRemedial, '', '', '', '');
   rows.push(row5);
   
-  // 6. Jumlah peserta ujian
-  const row6 = ['6', 'Jumlah peserta ujian', '', siswa.length];
-  for (let i = 0; i < jumlah_soal; i++) row6.push(siswa.length);
-  row6.push('', '', '', '', '> Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya', '', '', '', '');
+  const row6 = ['6', 'Jumlah peserta ujian', '', jmlSiswa];
+  for (let i = 0; i < jumlah_soal; i++) row6.push(jmlSiswa);
+  row6.push('', '', '', '', bentukRemedial, '', '', '', '');
   rows.push(row6);
   
-  // 7. Jumlah peserta yang tidak tuntas
   const row7 = ['7', 'Jumlah peserta yang tidak tuntas', '', jumlahTidakTuntas, 'Orang'];
   for (let i = 0; i < jumlah_soal - 1; i++) row7.push('');
-  row7.push('', '', '', '', '> Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya', '', '', '', '');
+  row7.push('', '', '', '', bentukRemedial, '', '', '', '');
   rows.push(row7);
   
-  // 8. Jumlah peserta yang tuntas
   const row8 = ['8', 'Jumlah peserta yang tuntas', '', jumlahTuntas, 'Orang'];
   for (let i = 0; i < jumlah_soal - 1; i++) row8.push('');
-  row8.push('', '', '', '', '> Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya', '', '', '', '');
+  row8.push('', '', '', '', bentukRemedial, '', '', '', '');
   rows.push(row8);
   
-  rows.push([]);
-  rows.push([]);
+  // FOOTER TANDA TANGAN
+  rows.push([]); rows.push([]); rows.push([]); rows.push([]); rows.push([]); rows.push([]);
   rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Guru Mata Pelajaran', '', '', '']);
-  rows.push([]);
-  rows.push([]);
-  rows.push([]);
-  rows.push([]);
-  rows.push([]);
-  rows.push([]);
+  rows.push([]); rows.push([]); rows.push([]); rows.push([]);
   rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'ELIS HARIANTO, S.Pd', '', '', '']);
   rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 'NIP. 19900211 202012 1 007', '', '', '']);
   
-  // Export ke Excel
+  // EXPORT KE EXCEL
   const ws = XLSX.utils.aoa_to_sheet(rows);
   
-  // Set lebar kolom
-  ws['!cols'] = [
-    { wch: 8 },  // Nomor urut
+  // Set lebar kolom DINAMIS (agar tidak error jika jumlah soal > 10)
+  const colWidths = [
+    { wch: 6 },  // No Urt
+    { wch: 15 }, // Induk
     { wch: 30 }, // Nama
-    { wch: 8 },  // L/P
+    { wch: 6 },  // L/P
     ...Array(jumlah_soal).fill({ wch: 8 }), // Skor per soal
     { wch: 10 }, // Jml
     { wch: 15 }, // %
@@ -1068,6 +1258,7 @@ window.exportAnalisisAsesmenExcel = () => {
     { wch: 12 }, // Remedial II
     { wch: 10 }  // Akhir
   ];
+  ws['!cols'] = colWidths;
   
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Analisis Asesmen');
