@@ -16,6 +16,21 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script> <!-- TAMBAHAN: Wajib untuk Auth -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <!-- 🔒 CEK KEAMANAN SINCRONOUS (Mencegah Flash Halaman Dashboard) -->
+    <script>
+      (function() {
+        // Cek apakah ada data session user di localStorage
+        // (Sesuaikan 'sipelita_user' dengan key localStorage yang Anda gunakan)
+        const sessionData = localStorage.getItem('sipelita_user');
+        
+        if (!sessionData) {
+          // Jika TIDAK ADA data login, redirect INSTAN ke halaman login
+          // window.location.replace() mencegah user menekan tombol "Back" di browser
+          window.location.replace('home.html'); 
+        }
+      })();
+    </script>
     
     <style>
         /* Style Khusus untuk Tombol Pengaturan Akun */
