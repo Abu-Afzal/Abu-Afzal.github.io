@@ -522,11 +522,10 @@ function bindEvents(){
       window.renderPenilaian(); 
   };
   
-  document.getElementById('btnSimpanNilai').onclick = window.simpanNilai;
+    document.getElementById('btnSimpanNilai').onclick = window.simpanNilai;
   document.getElementById('btnExportNilai').onclick = window.eksporNilai;
-document.getElementById('btnExportAnalisis').onclick = window.exportAnalisisNilai;
-document.getElementById('btnCetakAnalisis').onclick = window.cetakAnalisisPDF;
-
+  document.getElementById('btnExportAnalisisSoal').onclick = window.exportAnalisisAsesmenExcel;
+    
   document.getElementById('btnAddKolom').onclick = () => { 
       document.getElementById('inputJenisKolom').value = 'PH'; 
       document.getElementById('modalKolom').dataset.target = 'pengetahuan'; 
