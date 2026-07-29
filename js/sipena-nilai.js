@@ -10,22 +10,18 @@ window.renderPenilaian = () => {
 
   // PERBAIKAN: Atur visibilitas tombol berdasarkan tab yang aktif
   const isRekap = currentNilaiTab === 'rekap';
-  const isAnalisis = currentNilaiTab === 'analisis';
-  const isAsesmen = currentNilaiTab === 'asesmen'; // TAMBAHAN
+  const isAnalisisSoal = currentNilaiTab === 'analisis-soal'; // Fokus baru
 
-  document.getElementById('btnSimpanNilai').style.display = (isRekap || isAnalisis || isAsesmen) ? 'none' : 'inline-flex';
+  document.getElementById('btnSimpanNilai').style.display = (isRekap || isAnalisisSoal) ? 'none' : 'inline-flex';
   document.getElementById('btnAddKolom').style.display = currentNilaiTab === 'pengetahuan' ? 'inline-flex' : 'none';
   document.getElementById('btnAddKolomKet').style.display = currentNilaiTab === 'keterampilan' ? 'inline-flex' : 'none';
-  document.getElementById('btnExportNilai').style.display = (isRekap || isAnalisis || isAsesmen) ? 'none' : 'inline-flex';
+  document.getElementById('btnExportNilai').style.display = (isRekap || isAnalisisSoal) ? 'none' : 'inline-flex';
   
-  // TAMBAHAN: Tampilkan tombol khusus analisis
-  const btnExportAnalisis = document.getElementById('btnExportAnalisis');
-  const btnCetakAnalisis = document.getElementById('btnCetakAnalisis');
-  const btnExportAsesmen = document.getElementById('btnExportAsesmen');
-  
-  if (btnExportAnalisis) btnExportAnalisis.style.display = isAnalisis ? 'inline-flex' : 'none';
-  if (btnCetakAnalisis) btnCetakAnalisis.style.display = isAnalisis ? 'inline-flex' : 'none';
-  if (btnExportAsesmen) btnExportAsesmen.style.display = isAsesmen ? 'inline-flex' : 'none'; // TAMBAHAN
+  // Tampilkan tombol khusus Analisis Soal
+  const btnExportAnalisisSoal = document.getElementById('btnExportAnalisisSoal');
+  if (btnExportAnalisisSoal) {
+    btnExportAnalisisSoal.style.display = isAnalisisSoal ? 'inline-flex' : 'none';
+  }
 
   if (!kelas.length) {
     cont.innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>';
@@ -44,13 +40,12 @@ window.renderPenilaian = () => {
     return;
   }
 
-  // PERBAIKAN: Routing ke fungsi render yang sesuai (TAMBAHAN 'asesmen')
+  // ROUTING: Arahkan ke fungsi yang sesuai
   if (currentNilaiTab === 'pengetahuan') window.renderNilaiPengetahuan(siswa);
   else if (currentNilaiTab === 'sikap') window.renderNilaiSikap(siswa);
   else if (currentNilaiTab === 'keterampilan') window.renderNilaiKeterampilan(siswa);
   else if (currentNilaiTab === 'rekap') window.renderRekapNilai(siswa);
-  else if (currentNilaiTab === 'analisis') window.renderAnalisisNilai(siswa);
-  else if (currentNilaiTab === 'asesmen') window.renderAnalisisAsesmen(siswa); // TAMBAHAN
+  else if (currentNilaiTab === 'analisis-soal') window.renderAnalisisAsesmen(siswa); // <-- Mengarah ke fitur Asesmen
 };
 
 // Helper untuk mendapatkan filter dasar
