@@ -236,15 +236,20 @@
           const isLink = d.url && d.url.startsWith('http');
           const isPrivate = d.visibility === 'private';
           
-          // Badge Visibilitas
+          // 1. Badge Visibilitas
           const badgeHTML = isPrivate 
             ? `<span class="badge-visibilitas badge-private">🔒 Pribadi</span>` 
             : `<span class="badge-visibilitas badge-public">🌐 Publik</span>`;
           
-          // Logika Tombol Hapus: Admin bisa hapus apa saja. User bisa hapus dokumen pribadinya sendiri.
-          const canDelete = (currentRole === 'admin') || (isPrivate && d.uploader === currentUserName);
+          // 2. PERBAIKAN LOGIKA HAPUS:
+          // - Admin bisa hapus SEMUA dokumen.
+          // - User biasa bisa hapus dokumen yang DIA UPLOAD sendiri (tidak peduli Publik atau Pribadi).
+          const canDelete = (currentRole === 'admin') || (d.uploader === currentUserName);
+          
+          // 3. Tombol Hapus dengan Konfirmasi (Mencegah hapus tidak sengaja)
+          // .replace(/'/g, "\\'") digunakan agar nama dokumen yang mengandung tanda kutip (') tidak merusak kode JavaScript
           const tombolHapusHTML = canDelete 
-            ? `<button class="btn-delete" onclick="hapusDokumen('${d.id}')">🗑️ Hapus</button>` 
+            ? `<button class="btn-delete" onclick="konfirmasiHapusDokumen('${d.id}', '${d.nama_dokumen ? d.nama_dokumen.replace(/'/g, "\\'") : 'Dokumen ini'}')">🗑️ Hapus</button>` 
             : '';
           
           // Info Pengunggah (kecuali jika admin melihat dokumen sendiri, atau user melihat dokumen sendiri)
