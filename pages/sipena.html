@@ -187,6 +187,7 @@
         <button class="btn btn-primary" id="btnAddKolomKet" style="display:none;">+ Tambah Kolom</button>
         <button class="btn btn-warning" id="btnExportNilai">📥 Export Excel</button>
         <button class="btn btn-success" id="btnExportAnalisisSoal" style="display:none;">📥 Export Analisis Soal</button>
+        <button class="btn btn-info" id="btnPreviewPDF" style="display:none;">👁️ Preview PDF<
       </div>
       <div id="penilaianContent"></div>
     </div>
@@ -310,6 +311,17 @@
     </div>
 </div>
 
+            <!-- Modal Preview PDF -->
+<div class="modal" id="modalPreviewPDF">
+  <div class="modal-box" style="max-width:900px;width:95%;">
+    <div class="modal-title">👁️ Preview Analisis Soal Asesmen</div>
+    <div id="pdfPreviewContent" style="background:white;padding:20px;max-height:70vh;overflow-y:auto;"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="btnTutupPreview">Tutup</button>
+      <button class="btn btn-primary" id="btnCetakPDF">🖨️ Cetak PDF</button>
+    </div>
+  </div>
+</div>
 <!-- SCRIPT MODULAR -->
 <script src="../js/sipena-core.js"></script>
 <script src="../js/sipena-kelas.js"></script>
@@ -346,6 +358,11 @@ function bindEvents(){
       }; 
   });
 
+document.getElementById('btnExportAnalisisSoal').onclick = window.exportAnalisisAsesmenExcel;
+document.getElementById('btnPreviewPDF').onclick = window.previewAnalisisPDF;
+document.getElementById('btnTutupPreview').onclick = () => window.closeModal('modalPreviewPDF');
+document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
+    
   // Event untuk tombol Hapus Rekap
   document.getElementById('btnHapusRekap').onclick = () => {
       const selectKelas = document.getElementById('selectKelasHapus');
