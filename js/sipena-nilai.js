@@ -558,6 +558,8 @@ window.renderAnalisisAsesmen = (siswa) => {
   
   const btnExportAnalisisSoal = document.getElementById('btnExportAnalisisSoal');
   if (btnExportAnalisisSoal) btnExportAnalisisSoal.style.display = 'inline-flex';
+  const btnPreviewPDF = document.getElementById('btnPreviewPDF');
+if (btnPreviewPDF) btnPreviewPDF.style.display = 'inline-flex';
   
   const setupAsesmen = allData.find(d => 
     d.type === 'asesmen_setup' && 
@@ -692,6 +694,8 @@ window.simpanSetupAsesmen = async () => {
 };
 
 window.tampilkanInputAsesmen = (setupAsesmen, siswa) => {
+  const btnPreviewPDF = document.getElementById('btnPreviewPDF');
+if (btnPreviewPDF) btnPreviewPDF.style.display = 'inline-flex';
   const cont = document.getElementById('penilaianContent');
   const { mata_pelajaran, jumlah_soal, skor_max_per_soal, total_skor_max, kkm } = setupAsesmen;
   
@@ -1068,4 +1072,213 @@ window.exportAnalisisAsesmenExcel = () => {
   XLSX.writeFile(wb, `Analisis_Asesmen_${mata_pelajaran}_${class_name}_${semester}.xlsx`);
   
   window.toast('✅ File analisis asesmen berhasil diunduh!', 'success');
+};
+
+// ══════════════════════════════════════════════
+// PREVIEW & CETAK PDF ANALISIS SOAL ASESMEN
+// ═════════════════════════════════════════════
+
+window.previewAnalisisPDF = () => {
+  const setupAsesmen = allData.find(d => d.type === 'asesmen_setup' && d.class_name === currentNilaiClass);
+  if (!setupAsesmen) {
+    window.toast('❌ Setup asesmen tidak ditemukan!', 'err');
+    return;
+  }
+  
+  const { mata_pelajaran, jumlah_soal, skor_max_per_soal, total_skor_max, kkm, class_name, semester } = setupAsesmen;
+  const siswa = allData.filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser);
+  
+  // Ambil data user untuk tanda tangan
+  const userData = JSON.parse(localStorage.getItem('sipelita_user') || '{}');
+  const namaGuru = userData.nama || currentUser || 'ELIS HARIANTO, S.Pd';
+  const nipGuru = userData.nip || '19900211 202012 1 007';
+  
+  const jmlSiswa = siswa.length || 1;
+  let totalSkorPerSoal = Array(jumlah_soal).fill(0);
+  let jumlahTuntas = 0;
+  let jumlahTidakTuntas = 0;
+  let dataSiswa = [];
+  
+  siswa.forEach((s, idx) => {
+    const nilaiAsesmen = allData.find(d => 
+      d.type === 'asesmen_nilai' && d.student_key === s.__key && 
+      d.class_name === class_name && d.user_name === currentUser && d.semester === semester
+    );
+    
+    const skorPerSoal = nilaiAsesmen?.skor_per_soal || Array(jumlah_soal).fill(0);
+    const jumlahSkor = skorPerSoal.reduce((a, b) => a + b, 0);
+    const persenKetercapaian = total_skor_max > 0 ? ((jumlahSkor / total_skor_max) * 100).toFixed(1) : 0;
+    const tuntas = parseFloat(persenKetercapaian) >= kkm;
+    
+    if (tuntas) jumlahTuntas++; else jumlahTidakTuntas++;
+    skorPerSoal.forEach((skor, i) => { totalSkorPerSoal[i] += skor; });
+    
+    dataSiswa.push({
+      no: idx + 1,
+      nama: s.student_name,
+      skor: skorPerSoal,
+      total: jumlahSkor,
+      persen: persenKetercapaian,
+      tuntas: tuntas ? 'Ya' : 'Tidak'
+    });
+  });
+  
+  const persentaseKlasikal = ((jumlahTuntas / jmlSiswa) * 100).toFixed(1);
+  
+  // Generate HTML untuk preview
+  let html = `
+    <div style="font-family:Arial,sans-serif;font-size:11px;line-height:1.4;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <h2 style="margin:0 0 5px 0;font-size:16px;">Analisis Hasil Asesmen</h2>
+        <p style="margin:0;">Mata Pelajaran: <strong>${mata_pelajaran}</strong> | Kelas: <strong>${class_name}</strong> | Semester: <strong>${semester === 'ganjil' ? 'Ganjil' : 'Genap'}</strong></p>
+      </div>
+      
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+        <thead>
+          <tr>
+            <th rowspan="2" style="border:1px solid #000;padding:6px;text-align:center;">No</th>
+            <th rowspan="2" style="border:1px solid #000;padding:6px;text-align:center;">Nama Peserta</th>
+            <th colspan="${jumlah_soal}" style="border:1px solid #000;padding:6px;text-align:center;">Nomor Soal</th>
+            <th rowspan="2" style="border:1px solid #000;padding:6px;text-align:center;">Jml<br>Skor</th>
+            <th rowspan="2" style="border:1px solid #000;padding:6px;text-align:center;">%<br>Ketercapaian</th>
+            <th rowspan="2" style="border:1px solid #000;padding:6px;text-align:center;">Tuntas</th>
+          </tr>
+          <tr>
+            ${Array.from({length: jumlah_soal}, (_, i) => `<th style="border:1px solid #000;padding:4px;text-align:center;font-size:10px;">${i+1}<br><small>(${skor_max_per_soal[i]})</small></th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${dataSiswa.map(s => `
+            <tr>
+              <td style="border:1px solid #000;padding:6px;text-align:center;">${s.no}</td>
+              <td style="border:1px solid #000;padding:6px;">${s.nama}</td>
+              ${s.skor.map(skor => `<td style="border:1px solid #000;padding:6px;text-align:center;">${skor}</td>`).join('')}
+              <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${s.total}</td>
+              <td style="border:1px solid #000;padding:6px;text-align:center;">${s.persen}%</td>
+              <td style="border:1px solid #000;padding:6px;text-align:center;color:${s.tuntas === 'Ya' ? 'green' : 'red'};">${s.tuntas}</td>
+            </tr>
+          `).join('')}
+          <tr style="background:#f0f0f0;">
+            <td colspan="2" style="border:1px solid #000;padding:6px;font-weight:bold;">Jumlah Total</td>
+            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:6px;text-align:center;">${skor}</td>`).join('')}
+            <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${totalSkorPerSoal.reduce((a,b) => a+b, 0)}</td>
+            <td colspan="2" style="border:1px solid #000;padding:6px;"></td>
+          </tr>
+          <tr style="background:#f0f0f0;">
+            <td colspan="2" style="border:1px solid #000;padding:6px;font-weight:bold;">Rata-rata/Daya Serap</td>
+            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:6px;text-align:center;">${(skor/jmlSiswa).toFixed(1)}</td>`).join('')}
+            <td style="border:1px solid #000;padding:6px;text-align:center;font-weight:bold;">${(totalSkorPerSoal.reduce((a,b) => a+b, 0)/jmlSiswa).toFixed(1)}</td>
+            <td colspan="2" style="border:1px solid #000;padding:6px;"></td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div style="margin-bottom:20px;">
+        <h3 style="margin:0 0 10px 0;font-size:13px;">Hasil Analisis:</h3>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="border:1px solid #000;padding:6px;width:30px;">1</td>
+            <td style="border:1px solid #000;padding:6px;">Jumlah skor yang diperoleh</td>
+            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:6px;text-align:center;">${skor}</td>`).join('')}
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">2</td>
+            <td style="border:1px solid #000;padding:6px;">Jumlah skor Ideal (seharusnya)</td>
+            ${skor_max_per_soal.map(skorMax => `<td style="border:1px solid #000;padding:6px;text-align:center;">${skorMax * jmlSiswa}</td>`).join('')}
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">3</td>
+            <td style="border:1px solid #000;padding:6px;">% Ketercapaian</td>
+            ${totalSkorPerSoal.map((skor, i) => {
+              const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
+              const ketercapaian = skorIdeal > 0 ? ((skor / skorIdeal) * 100).toFixed(2) : 0;
+              return `<td style="border:1px solid #000;padding:6px;text-align:center;">${ketercapaian}</td>`;
+            }).join('')}
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">4</td>
+            <td style="border:1px solid #000;padding:6px;">% Kegagalan</td>
+            ${totalSkorPerSoal.map((skor, i) => {
+              const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
+              const kegagalan = skorIdeal > 0 ? (((skorIdeal - skor) / skorIdeal) * 100).toFixed(2) : 0;
+              return `<td style="border:1px solid #000;padding:6px;text-align:center;">${kegagalan}</td>`;
+            }).join('')}
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">5</td>
+            <td style="border:1px solid #000;padding:6px;">Skor maksimal tiap nomor</td>
+            ${skor_max_per_soal.map(skorMax => `<td style="border:1px solid #000;padding:6px;text-align:center;">${skorMax}</td>`).join('')}
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">6</td>
+            <td style="border:1px solid #000;padding:6px;">Jumlah peserta ujian</td>
+            ${Array(jumlah_soal).fill(jmlSiswa).map(n => `<td style="border:1px solid #000;padding:6px;text-align:center;">${n}</td>`).join('')}
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">7</td>
+            <td style="border:1px solid #000;padding:6px;">Jumlah peserta yang tidak tuntas</td>
+            <td colspan="${jumlah_soal}" style="border:1px solid #000;padding:6px;">${jumlahTidakTuntas} Orang</td>
+          </tr>
+          <tr>
+            <td style="border:1px solid #000;padding:6px;">8</td>
+            <td style="border:1px solid #000;padding:6px;">Jumlah peserta yang tuntas</td>
+            <td colspan="${jumlah_soal}" style="border:1px solid #000;padding:6px;">${jumlahTuntas} Orang</td>
+          </tr>
+        </table>
+      </div>
+      
+      <div style="margin-bottom:20px;">
+        <h3 style="margin:0 0 10px 0;font-size:13px;">Kesimpulan:</h3>
+        <p style="margin:5px 0;">a. Ketuntasan klasikal: <strong>${persentaseKlasikal}%</strong></p>
+        <p style="margin:5px 0;">b. Ketuntasan individual: <strong>${jumlahTuntas}</strong> siswa tuntas, <strong>${jumlahTidakTuntas}</strong> siswa perlu remedial</p>
+        <p style="margin:5px 0;">c. Bentuk remedial: Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya</p>
+      </div>
+      
+      <div style="margin-top:40px;text-align:right;">
+        <p style="margin:0 0 60px 0;">Bantaeng, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        <p style="margin:0 0 5px 0;">Guru Mata Pelajaran</p>
+        <div style="height:80px;"></div>
+        <p style="margin:0;font-weight:bold;text-decoration:underline;">${namaGuru}</p>
+        <p style="margin:5px 0 0 0;">NIP. ${nipGuru}</p>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('pdfPreviewContent').innerHTML = html;
+  window.openModal('modalPreviewPDF');
+};
+
+window.cetakAnalisisPDF = async () => {
+  const { jsPDF } = window.jspdf;
+  const btn = document.getElementById('btnCetakPDF');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
+  
+  try {
+    const element = document.getElementById('pdfPreviewContent');
+    if (!element) throw new Error('Tidak ada data preview');
+    
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+    
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight);
+    pdf.save(`Analisis_Asesmen_${currentNilaiClass}.pdf`);
+    
+    window.toast('✅ PDF berhasil dicetak!', 'success');
+    window.closeModal('modalPreviewPDF');
+  } catch (e) {
+    console.error('Error cetak PDF:', e);
+    window.toast(' Gagal membuat PDF: ' + e.message, 'err');
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = '🖨️ Cetak PDF';
 };
