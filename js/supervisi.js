@@ -1372,3 +1372,13 @@ function formatDate(dateStr) { if (!dateStr) return '-'; const date = new Date(d
 
 window.addEventListener('load', async () => { showLoading(); await new Promise(resolve => setTimeout(resolve, 500)); const isValid = await checkSipelitaSession(); if (isValid) { showDashboard(); } });
 window.viewDetail = viewDetail; window.downloadPDF = downloadPDF;
+window.deleteHistory = async function(historyId) { 
+  if (!confirm('Hapus data riwayat supervisi ini? Data hasil penilaian yang dihapus tidak dapat dikembalikan.')) return; 
+  try { 
+    await db.collection('supervision_results').doc(historyId).delete(); 
+    alert('✅ Riwayat berhasil dihapus');
+    if (typeof loadHistoryList === 'function') loadHistoryList(); 
+  } catch(e) { 
+    alert('❌ ' + e.message); 
+  } 
+};
