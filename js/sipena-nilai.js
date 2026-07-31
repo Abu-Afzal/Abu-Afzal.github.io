@@ -1236,7 +1236,7 @@ window.previewAnalisisPDF = () => {
       </div>
       
             <!-- TANDA TANGAN DI KANAN, TEKS RATA KIRI -->
-      <div style="margin-top:20px;margin-left:auto;width:t:auto;width:280px;text-align:left;padding-right:80px;">
+      <div style="margin-top:20px;margin-left:auto;width:t:auto;width:280px;text-align:left;padding-right:120px;">
         <p style="margin:0 0 10px 0;color:#000;">Bantaeng, ${tanggalSekarang}</p>
         <p style="margin:0 0 5px 0;color:#000;">Guru Mata Pelajaran</p>
         <div style="height:60px;"></div>
