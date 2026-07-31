@@ -576,6 +576,7 @@ async function loadSupervisionList(){
       <td>
         <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
         <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteHistory('${item.id}')">🗑️ Hapus</button>
       </td>
     </tr>`; 
   }).join(''); 
