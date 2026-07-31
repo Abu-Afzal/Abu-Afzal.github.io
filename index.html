@@ -330,58 +330,32 @@
                     adminSection.style.display = (user.role === 'admin') ? 'block' : 'none';
                 }
 
-                           // ══════════════════════════════════════════════
-                // LOGIKA LOGOUT (DIPERBAIKI & DIOPTIMALKAN UNTUK MOBILE)
-                // ══════════════════════════════════════════════
                 const btnLogout = document.getElementById('btnLogout');
                 if (btnLogout) {
-                    btnLogout.addEventListener('click', async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        // 1. Tampilkan loading state agar user tahu sedang diproses
-                        btnLogout.disabled = true;
-                        btnLogout.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Keluar...';
-                        
-                        try {
-                            // 2. Clear SEMUA storage (lebih aman dan bersih)
-                            localStorage.clear();
-                            sessionStorage.clear();
-                            
-                            // 3. Clear Firebase Auth jika tersedia
+                    btnLogout.addEventListener('click', async () => {
+                        if (confirm('Yakin ingin keluar dari SIPELITA?')) {
+                            localStorage.removeItem('sipelita_user');
+                            sessionStorage.removeItem('sipelita_user');
                             if (typeof AuthService !== 'undefined' && AuthService.logout) {
-                                try {
-                                    await AuthService.logout();
-                                } catch (err) {
-                                    console.warn('Firebase logout warning:', err);
-                                }
+                                await AuthService.logout();
+                            } else {
+                                window.location.href = 'home.html';
                             }
-                            
-                            // 4. Force redirect menggunakan replace (mencegah tombol Back browser)
-                            window.location.replace('home.html');
-                            
-                        } catch (error) {
-                            console.error('Logout error:', error);
-                            // Fallback redirect jika terjadi error tak terduga
-                            window.location.replace('home.html');
                         }
                     });
                 }
-                // ══════════════════════════════════════════════
 
             } else {
-                // Jika tidak ada data user di AuthService, lempar ke login
-                window.location.replace('home.html');
+                window.location.href = 'home.html';
             }
 
         } catch (error) {
-            // Fallback jika terjadi error kritis di seluruh script module
             console.error('❌ Error di script module:', error);
-            const btnLogoutFallback = document.getElementById('btnLogout');
-            if (btnLogoutFallback) {
-                btnLogoutFallback.addEventListener('click', () => {
-                    localStorage.clear();
-                    window.location.replace('home.html');
+            const btnLogout = document.getElementById('btnLogout');
+            if (btnLogout) {
+                btnLogout.addEventListener('click', () => {
+                    localStorage.removeItem('sipelita_user');
+                    window.location.href = 'home.html';
                 });
             }
         }
