@@ -1235,13 +1235,15 @@ window.previewAnalisisPDF = () => {
         <p style="margin:3px 0;font-size:10px;color:#000;">c. Bentuk remedial: Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya</p>
       </div>
       
-            <!-- TANDA TANGAN DI KANAN, TEKS RATA KIRI -->
-      <div style="margin-top:20px;margin-left:auto;width:t:auto;width:280px;text-align:left;padding-right:120px;">
-        <p style="margin:0 0 10px 0;color:#000;">Bantaeng, ${tanggalSekarang}</p>
-        <p style="margin:0 0 5px 0;color:#000;">Guru Mata Pelajaran</p>
-        <div style="height:60px;"></div>
-        <p style="margin:0;font-weight:bold;color:#000;">${namaGuru}</p>
-        <p style="margin:3px 0 0 0;color:#000;">NIP. ${nipGuru}</p>
+                 <!-- TANDA TANGAN DI KANAN, TEKS RATA KIRI (Paling Mentok Kanan) -->
+      <div style="margin-top:30px; text-align: right; padding-right: 80px;">
+        <div style="display: inline-block; text-align: left; width: 220px;">
+          <p style="margin:0 0 10px 0;color:#000;">Bantaeng, ${tanggalSekarang}</p>
+          <p style="margin:0 0 5px 0;color:#000;">Guru Mata Pelajaran</p>
+          <div style="height:60px;"></div>
+          <p style="margin:0;font-weight:bold;color:#000;">${namaGuru}</p>
+          <p style="margin:3px 0 0 0;color:#000;">NIP. ${nipGuru}</p>
+        </div>
       </div>
     </div>
   `;
