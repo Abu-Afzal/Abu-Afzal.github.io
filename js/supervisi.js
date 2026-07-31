@@ -555,7 +555,7 @@ window.saveSupervision = async function() {
 };
 
 // ══════════════════════════════════════════════
-// DAFTAR SUPERVISI (1 TOMBOL DOWNLOAD PDF)
+// DAFTAR SUPERVISI (DENGAN TOMBOL HAPUS FIXED)
 // ══════════════════════════════════════════════
 async function loadSupervisionList(){ 
   const snap = await db.collection('supervisions').where('supervisorEmail', '==', currentUser.email).get(); 
@@ -576,7 +576,7 @@ async function loadSupervisionList(){
       <td>
         <button class="btn btn-primary btn-sm" onclick="viewDetail('${d.id}')">👁️ Lihat</button>
         <button class="btn btn-success btn-sm" onclick="printSupervision('${d.id}')">🖨️ Print</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteHistory('${item.id}')">🗑️ Hapus</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteHistory('${d.id}')">🗑️ Hapus</button>
       </td>
     </tr>`; 
   }).join(''); 
