@@ -1252,48 +1252,120 @@ window.previewAnalisisPDF = () => {
   window.openModal('modalPreviewPDF');
 };
 
-window.cetakAnalisisPDF = async () => {
-  const { jsPDF } = window.jspdf;
-  const btn = document.getElementById('btnCetakPDF');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Membuat PDF...';
-  
-  try {
-    const element = document.getElementById('pdfContent');
-    if (!element) throw new Error('Tidak ada data preview');
-    
-    // Gunakan html2canvas dengan scale yang lebih tinggi untuk kualitas lebih baik
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width: element.scrollWidth,
-      height: element.scrollHeight
-    });
-    
-    const imgData = canvas.toDataURL('image/png');
-    
-    // Buat PDF dengan orientasi landscape jika diperlukan
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // margin 10mm kiri-kanan
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    
-    // Tambahkan gambar ke PDF dengan margin
-    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
-    
-    // Simpan PDF
-    const setupAsesmen = allData.find(d => d.type === 'asesmen_setup' && d.class_name === currentNilaiClass);
-    const { mata_pelajaran, class_name, semester } = setupAsesmen;
-    pdf.save(`Analisis_Asesmen_${mata_pelajaran}_${class_name}_${semester}.pdf`);
-    
-    window.toast('✅ PDF berhasil dicetak!', 'success');
-    window.closeModal('modalPreviewPDF');
-  } catch (e) {
-    console.error('Error cetak PDF:', e);
-    window.toast('❌ Gagal membuat PDF: ' + e.message, 'err');
+window.cetakAnalisisPDF = () => {
+  const element = document.getElementById('pdfContent');
+  if (!element) {
+    window.toast('❌ Tidak ada data preview!', 'err');
+    return;
   }
   
-  btn.disabled = false;
-  btn.innerHTML = '🖨️ Cetak PDF';
+  // Buka window baru untuk print
+  const printWindow = window.open('', '_blank');
+  
+  if (!printWindow) {
+    window.toast('❌ Browser memblokir popup. Izinkan popup untuk fitur ini.', 'err');
+    return;
+  }
+  
+  // Tulis konten HTML ke window baru dengan style print
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Analisis Asesmen - ${currentNilaiClass}</title>
+      <style>
+        @page {
+          size: A4;
+          margin: 15mm;
+        }
+        body {
+          font-family: Arial, sans-serif;
+          font-size: 11px;
+          line-height: 1.3;
+          color: #000;
+          margin: 0;
+          padding: 0;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 15px;
+          font-size: 10px;
+        }
+        th, td {
+          border: 1px solid #000;
+          padding: 4px;
+          color: #000;
+        }
+        th {
+          background: #e0e0e0;
+          font-weight: bold;
+          text-align: center;
+        }
+        h2 {
+          text-align: center;
+          font-size: 16px;
+          margin: 0 0 5px 0;
+          color: #000;
+        }
+        h3 {
+          font-size: 12px;
+          margin: 0 0 8px 0;
+          color: #000;
+        }
+        p {
+          margin: 3px 0;
+          font-size: 10px;
+          color: #000;
+        }
+        .header-info {
+          text-align: center;
+          margin-bottom: 15px;
+        }
+        .tanda-tangan {
+          margin-top: 30px;
+          text-align: right;
+          padding-right: 20px;
+        }
+        .tanda-tangan-inner {
+          display: inline-block;
+          text-align: left;
+          width: 220px;
+        }
+        .tanda-tangan-inner p {
+          margin: 0 0 5px 0;
+        }
+        .tanda-tangan-inner .nama {
+          font-weight: bold;
+          margin-top: 60px;
+        }
+        @media print {
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          th {
+            background: #e0e0e0 !important;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      ${element.innerHTML}
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
+  
+  // Tunggu konten load, lalu trigger print
+  printWindow.onload = () => {
+    setTimeout(() => {
+      printWindow.print();
+      // Tutup window setelah print (opsional)
+      // printWindow.close();
+    }, 250);
+  };
+  
+  window.toast('✅ Dialog print terbuka. Pilih printer atau "Save as PDF".', 'success');
 };
