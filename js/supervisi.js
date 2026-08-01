@@ -1371,7 +1371,7 @@ if (data.supervisorEmail) {
           </div>
           <div class="signature-box">
   <div>Supervisor</div>
-  <div class="signature-line">${data.supervisorName}</div>
+  <div class="signature-line">${data.supervisorNamaLengkap}</div>
   ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
 </div>
         </div>
