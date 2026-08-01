@@ -963,7 +963,7 @@ window.downloadPDF = async function(docId) {
 
     const data = snap.data();
     
-    // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
+        // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
     let superviseeNIP = '-';
     if (data.superviseeEmail) {
       try {
@@ -973,6 +973,19 @@ window.downloadPDF = async function(docId) {
         }
       } catch (e) {
         console.error("Gagal mengambil NIP guru:", e);
+      }
+    }
+
+    // 🔍 AMBIL NIP SUPERVISOR DARI FIRESTORE SECARA OTOMATIS
+    let supervisorNIP = '-';
+    if (data.supervisorEmail) {
+      try {
+        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+        if (supSnap.exists) {
+          supervisorNIP = supSnap.data().nip || '-';
+        }
+      } catch (e) {
+        console.error("Gagal mengambil NIP supervisor:", e);
       }
     }
 
@@ -1184,10 +1197,10 @@ window.downloadPDF = async function(docId) {
       pdf.text(`NIP. ${superviseeNIP}`, margin + 10, y + 4);
     }
 
-    if (data.supervisorNIP) {
+      if (supervisorNIP && supervisorNIP !== '-') {
       pdf.setFont(undefined, 'normal');
       pdf.setFontSize(7);
-      pdf.text(`NIP. ${data.supervisorNIP}`, rightX + 10, y + 4);
+      pdf.text(`NIP. ${supervisorNIP}`, rightX + 10, y + 4);
     }
 
     const fileName = `Supervisi_${(data.superviseeName || 'guru').replace(/\s+/g, '_')}_${date.toISOString().split('T')[0]}.pdf`;
@@ -1209,7 +1222,7 @@ window.printSupervision = async function(docId) {
     
     const data = snap.data();
     
-    // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
+        // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
     let superviseeNIP = '-';
     if (data.superviseeEmail) {
       try {
@@ -1219,6 +1232,19 @@ window.printSupervision = async function(docId) {
         }
       } catch (e) {
         console.error("Gagal mengambil NIP guru:", e);
+      }
+    }
+
+    // 🔍 AMBIL NIP SUPERVISOR DARI FIRESTORE SECARA OTOMATIS (BARU)
+    let supervisorNIP = '-';
+    if (data.supervisorEmail) {
+      try {
+        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+        if (supSnap.exists) {
+          supervisorNIP = supSnap.data().nip || '-';
+        }
+      } catch (e) {
+        console.error("Gagal mengambil NIP supervisor:", e);
       }
     }
     
