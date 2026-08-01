@@ -975,7 +975,14 @@ window.downloadPDF = async function(docId) {
         console.error("Gagal mengambil NIP guru:", e);
       }
     }
-
+// ✅ TAMBAH INI — ambil NIP supervisor secara dinamis
+let supervisorNIP = data.supervisorNIP || '-';
+if (supervisorNIP === '-' && data.supervisorEmail) {
+  try {
+    const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+    if (supSnap.exists) supervisorNIP = supSnap.data().nip || '-';
+  } catch(e) { console.error("Gagal mengambil NIP supervisor:", e); }
+}
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
@@ -1324,7 +1331,7 @@ window.printSupervision = async function(docId) {
           <div class="signature-box">
             <div>Supervisor</div>
             <div class="signature-line">${data.supervisorName}</div>
-            ${data.supervisorNIP ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${data.supervisorNIP}</div>` : ''}
+           ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
           </div>
         </div>
       </body>
