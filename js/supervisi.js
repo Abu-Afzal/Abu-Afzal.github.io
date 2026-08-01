@@ -1348,10 +1348,10 @@ window.printSupervision = async function(docId) {
             ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
           </div>
           <div class="signature-box">
-            <div>Supervisor</div>
-            <div class="signature-line">${data.supervisorName}</div>
-            ${data.supervisorNIP ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${data.supervisorNIP}</div>` : ''}
-          </div>
+  <div>Supervisor</div>
+  <div class="signature-line">${data.supervisorName}</div>
+  ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
+</div>
         </div>
       </body>
       </html>
