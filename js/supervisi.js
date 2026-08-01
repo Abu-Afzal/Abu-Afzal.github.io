@@ -963,29 +963,32 @@ window.downloadPDF = async function(docId) {
 
     const data = snap.data();
     
-        let superviseeNIP = '-';
-let superviseeNamaLengkap = data.superviseeName || '-'; // fallback
-if (data.superviseeEmail) {
-  try {
-    const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
-    if (userSnap.exists) {
-      superviseeNIP = userSnap.data().nip || '-';
-      superviseeNamaLengkap = userSnap.data().nama || data.superviseeName || '-';
+        // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
+    let superviseeNIP = '-';
+    if (data.superviseeEmail) {
+      try {
+        const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
+        if (userSnap.exists) {
+          superviseeNIP = userSnap.data().nip || '-';
+        }
+      } catch (e) {
+        console.error("Gagal mengambil NIP guru:", e);
+      }
     }
-  } catch (e) { console.error("Gagal mengambil data guru:", e); }
-}
 
-let supervisorNIP = '-';
-let supervisorNamaLengkap = data.supervisorName || '-'; // fallback
-if (data.supervisorEmail) {
-  try {
-    const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
-    if (supSnap.exists) {
-      supervisorNIP = supSnap.data().nip || '-';
-      supervisorNamaLengkap = supSnap.data().nama || data.supervisorName || '-';
+    // 🔍 AMBIL NIP SUPERVISOR DARI FIRESTORE SECARA OTOMATIS
+    let supervisorNIP = '-';
+    if (data.supervisorEmail) {
+      try {
+        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+        if (supSnap.exists) {
+          supervisorNIP = supSnap.data().nip || '-';
+        }
+      } catch (e) {
+        console.error("Gagal mengambil NIP supervisor:", e);
+      }
     }
-  } catch (e) { console.error("Gagal mengambil data supervisor:", e); }
-}
+
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
@@ -1184,8 +1187,8 @@ if (data.supervisorEmail) {
     y += 4;
 
     pdf.setFont(undefined, 'bold');
-    pdf.text(superviseeNamaLengkap, margin + 10, y);
-    pdf.text(supervisorNamaLengkap, rightX + 10, y);
+    pdf.text(data.superviseeName || '-', margin + 10, y);
+    pdf.text(data.supervisorName || '-', rightX + 10, y);
 
     // ✅ TAMPILKAN NIP GURU DI BAWAH NAMA
     if (superviseeNIP && superviseeNIP !== '-') {
@@ -1338,31 +1341,18 @@ window.printSupervision = async function(docId) {
           <div class="notes-box"><h4 style="margin-top: 0; color: #1e40af;">Catatan Khusus:</h4><p>${data.notes || '-'}</p></div>
           <div class="notes-box"><h4 style="margin-top: 0; color: #1e40af;">Rencana Tindak Lanjut:</h4><p>${data.actionPlan || '-'}</p></div>
         </div>
-        // ❌ SEBELUM
-      <div class="signature">
-        <div class="signature-box">
-          <div>Guru yang Disupervisi</div>
-          <div class="signature-line">${data.superviseeName}</div>
-          ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
+        <div class="signature">
+          <div class="signature-box">
+            <div>Guru yang Disupervisi</div>
+            <div class="signature-line">${data.superviseeName}</div>
+            ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
+          </div>
+          <div class="signature-box">
+  <div>Supervisor</div>
+  <div class="signature-line">${data.supervisorName}</div>
+  ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
+</div>
         </div>
-        <div class="signature-box">
-          <div>Supervisor</div>
-          <div class="signature-line">${data.supervisorName}</div>
-          ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
-        </div>
-      </div>
-      <div class="signature">
-        <div class="signature-box">
-          <div>Guru yang Disupervisi</div>
-          <div class="signature-line">${superviseeNamaLengkap}</div>
-          ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
-        </div>
-        <div class="signature-box">
-          <div>Supervisor</div>
-          <div class="signature-line">${supervisorNamaLengkap}</div>
-          ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
-        </div>
-      </div>
       </body>
       </html>
     `;
