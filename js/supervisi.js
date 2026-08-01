@@ -963,32 +963,29 @@ window.downloadPDF = async function(docId) {
 
     const data = snap.data();
     
-        // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
-    let superviseeNIP = '-';
-    if (data.superviseeEmail) {
-      try {
-        const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
-        if (userSnap.exists) {
-          superviseeNIP = userSnap.data().nip || '-';
-        }
-      } catch (e) {
-        console.error("Gagal mengambil NIP guru:", e);
-      }
+        let superviseeNIP = '-';
+let superviseeNamaLengkap = data.superviseeName || '-'; // fallback
+if (data.superviseeEmail) {
+  try {
+    const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
+    if (userSnap.exists) {
+      superviseeNIP = userSnap.data().nip || '-';
+      superviseeNamaLengkap = userSnap.data().nama || data.superviseeName || '-';
     }
+  } catch (e) { console.error("Gagal mengambil data guru:", e); }
+}
 
-    // 🔍 AMBIL NIP SUPERVISOR DARI FIRESTORE SECARA OTOMATIS
-    let supervisorNIP = '-';
-    if (data.supervisorEmail) {
-      try {
-        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
-        if (supSnap.exists) {
-          supervisorNIP = supSnap.data().nip || '-';
-        }
-      } catch (e) {
-        console.error("Gagal mengambil NIP supervisor:", e);
-      }
+let supervisorNIP = '-';
+let supervisorNamaLengkap = data.supervisorName || '-'; // fallback
+if (data.supervisorEmail) {
+  try {
+    const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+    if (supSnap.exists) {
+      supervisorNIP = supSnap.data().nip || '-';
+      supervisorNamaLengkap = supSnap.data().nama || data.supervisorName || '-';
     }
-
+  } catch (e) { console.error("Gagal mengambil data supervisor:", e); }
+}
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
@@ -1187,8 +1184,8 @@ window.downloadPDF = async function(docId) {
     y += 4;
 
     pdf.setFont(undefined, 'bold');
-    pdf.text(data.superviseeName || '-', margin + 10, y);
-    pdf.text(data.supervisorName || '-', rightX + 10, y);
+    pdf.text(superviseeNamaLengkap, margin + 10, y);
+    pdf.text(supervisorNamaLengkap, rightX + 10, y);
 
     // ✅ TAMPILKAN NIP GURU DI BAWAH NAMA
     if (superviseeNIP && superviseeNIP !== '-') {
@@ -1344,12 +1341,12 @@ window.printSupervision = async function(docId) {
         <div class="signature">
           <div class="signature-box">
             <div>Guru yang Disupervisi</div>
-            <div class="signature-line">${data.superviseeName}</div>
+            <div class="signature-line">${superviseeNamaLengkap}</div>
             ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
           </div>
           <div class="signature-box">
   <div>Supervisor</div>
-  <div class="signature-line">${data.supervisorName}</div>
+  <div class="signature-line">${supervisorNamaLengkap}</div>
   ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
 </div>
         </div>
