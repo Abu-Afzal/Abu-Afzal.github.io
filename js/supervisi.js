@@ -1338,18 +1338,31 @@ window.printSupervision = async function(docId) {
           <div class="notes-box"><h4 style="margin-top: 0; color: #1e40af;">Catatan Khusus:</h4><p>${data.notes || '-'}</p></div>
           <div class="notes-box"><h4 style="margin-top: 0; color: #1e40af;">Rencana Tindak Lanjut:</h4><p>${data.actionPlan || '-'}</p></div>
         </div>
-        <div class="signature">
-          <div class="signature-box">
-            <div>Guru yang Disupervisi</div>
-            <div class="signature-line">${superviseeNamaLengkap}</div>
-            ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
-          </div>
-          <div class="signature-box">
-  <div>Supervisor</div>
-  <div class="signature-line">${supervisorNamaLengkap}</div>
-  ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 9pt; margin-top: 4px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
-</div>
+        // ❌ SEBELUM
+      <div class="signature">
+        <div class="signature-box">
+          <div>Guru yang Disupervisi</div>
+          <div class="signature-line">${data.superviseeName}</div>
+          ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
         </div>
+        <div class="signature-box">
+          <div>Supervisor</div>
+          <div class="signature-line">${data.supervisorName}</div>
+          ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
+        </div>
+      </div>
+      <div class="signature">
+        <div class="signature-box">
+          <div>Guru yang Disupervisi</div>
+          <div class="signature-line">${superviseeNamaLengkap}</div>
+          ${superviseeNIP && superviseeNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${superviseeNIP}</div>` : ''}
+        </div>
+        <div class="signature-box">
+          <div>Supervisor</div>
+          <div class="signature-line">${supervisorNamaLengkap}</div>
+          ${supervisorNIP && supervisorNIP !== '-' ? `<div style="font-size: 8pt; margin-top: 3px; color: #333;">NIP. ${supervisorNIP}</div>` : ''}
+        </div>
+      </div>
       </body>
       </html>
     `;
