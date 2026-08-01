@@ -953,33 +953,53 @@ function showDetailModal() {
 }
 
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // DOWNLOAD PDF — OPTIMIZED 1 HALAMAN A4 LANDSCAPE + NIP OTOMATIS
 // ══════════════════════════════════════════════
-let supervisorNIP = '-';
-let supervisorNamaLengkap = data.supervisorName || '-'; // fallback
-if (data.supervisorEmail) {
+window.downloadPDF = async function(docId) {
   try {
-    const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
-    if (supSnap.exists) {
-      const supData = supSnap.data();
-      supervisorNIP = supData.nip || '-';
+    const id = docId || currentSupervision?.id;
+    const snap = await db.collection('supervisions').doc(id).get();
+    if (!snap.exists) { alert('Data tidak ditemukan'); return; }
 
-      // 1. Jika di Firestore sudah ada field 'namaLengkap' (sudah termasuk gelar)
-      if (supData.namaLengkap) {
-        supervisorNamaLengkap = supData.namaLengkap;
-      } 
-      // 2. Jika gelar depan & belakang dipisah di Firestore (gelarDepan, nama, gelarBelakang)
-      else {
-        const gDepan = supData.gelarDepan ? `${supData.gelarDepan.trim()} ` : '';
-        const namaUtama = supData.nama || data.supervisorName || '-';
-        const gBelakang = supData.gelarBelakang ? `, ${supData.gelarBelakang.trim()}` : '';
+    const data = snap.data();
 
-        supervisorNamaLengkap = `${gDepan}${namaUtama}${gBelakang}`;
-      }
+    // 1. AMBIL DATA GURU (SUPERVISEE)
+    let superviseeNIP = '-';
+    let superviseeNamaLengkap = data.superviseeName || '-';
+    if (data.superviseeEmail) {
+      try {
+        const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
+        if (userSnap.exists) {
+          superviseeNIP = userSnap.data().nip || '-';
+          superviseeNamaLengkap = userSnap.data().nama || data.superviseeName || '-';
+        }
+      } catch (e) { console.error("Gagal mengambil data guru:", e); }
     }
-  } catch (e) { console.error("Gagal mengambil data supervisor:", e); }
-}
 
+    // 2. AMBIL DATA SUPERVISOR (NIP + NAMA BERGELAR)
+    let supervisorNIP = '-';
+    let supervisorNamaLengkap = data.supervisorName || '-';
+    if (data.supervisorEmail) {
+      try {
+        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+        if (supSnap.exists) {
+          const supData = supSnap.data();
+          supervisorNIP = supData.nip || '-';
+
+          // Format Gelar Supervisor
+          if (supData.namaLengkap) {
+            supervisorNamaLengkap = supData.namaLengkap;
+          } else {
+            const gDepan = supData.gelarDepan ? `${supData.gelarDepan.trim()} ` : '';
+            const namaUtama = supData.nama || data.supervisorName || '-';
+            const gBelakang = supData.gelarBelakang ? `, ${supData.gelarBelakang.trim()}` : '';
+
+            supervisorNamaLengkap = `${gDepan}${namaUtama}${gBelakang}`;
+          }
+        }
+      } catch (e) { console.error("Gagal mengambil data supervisor:", e); }
+    }
     let components = [];
     if (data.instrumentId) {
       const instSnap = await db.collection('supervision_instruments').doc(data.instrumentId).get();
