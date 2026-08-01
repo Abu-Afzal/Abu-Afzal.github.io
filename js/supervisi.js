@@ -1367,19 +1367,51 @@ window.previewDocOffice = async function(docId, fileExt) {
   } catch(e) { alert('❌ Gagal membuka preview: ' + e.message); } 
 };
 
-window.closeModal = function(id){ document.getElementById(id).classList.remove('active'); };
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function formatDate(dateStr) { if (!dateStr) return '-'; const date = new Date(dateStr); return date.toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'}); }
+window.closeModal = function(id){ 
+  document.getElementById(id).classList.remove('active'); 
+};
 
-window.addEventListener('load', async () => { showLoading(); await new Promise(resolve => setTimeout(resolve, 500)); const isValid = await checkSipelitaSession(); if (isValid) { showDashboard(); } });
-window.viewDetail = viewDetail; window.downloadPDF = downloadPDF;
+function openModal(id) { 
+  document.getElementById(id).classList.add('active'); 
+}
+
+function formatDate(dateStr) { 
+  if (!dateStr) return '-'; 
+  const date = new Date(dateStr); 
+  return date.toLocaleDateString('id-ID', {
+    weekday:'long', year:'numeric', month:'long', day:'numeric'
+  }); 
+}
+
+// ✅ FIX: deleteMyDoc pakai loadFolderContents bukan loadMyDocs
+window.deleteMyDoc = async function(docId){ 
+  if(!confirm('Hapus dokumen ini?')) return; 
+  try {
+    await db.collection('supervision_documents').doc(docId).delete();
+    loadFolderContents();
+  } catch(e) { 
+    alert('❌ Gagal menghapus dokumen: ' + e.message); 
+  }
+};
+
+// ✅ FIX UTAMA: collection yang benar adalah 'supervisions' bukan 'supervision_results'
 window.deleteHistory = async function(historyId) { 
   if (!confirm('Hapus data riwayat supervisi ini? Data hasil penilaian yang dihapus tidak dapat dikembalikan.')) return; 
   try { 
-    await db.collection('supervision_results').doc(historyId).delete(); 
+    await db.collection('supervisions').doc(historyId).delete(); // ✅ FIXED
     alert('✅ Riwayat berhasil dihapus');
-    if (typeof loadHistoryList === 'function') loadHistoryList(); 
+    loadSupervisionList(); // ✅ refresh tabel setelah hapus
   } catch(e) { 
     alert('❌ ' + e.message); 
   } 
 };
+
+window.viewDetail = viewDetail; 
+window.downloadPDF = downloadPDF;
+
+window.addEventListener('load', async () => { 
+  showLoading(); 
+  await new Promise(resolve => setTimeout(resolve, 500)); 
+  const isValid = await checkSipelitaSession(); 
+  if (isValid) { showDashboard(); } 
+});
