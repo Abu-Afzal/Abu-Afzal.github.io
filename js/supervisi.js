@@ -1246,31 +1246,29 @@ window.printSupervision = async function(docId) {
       }
     }
 
-    // 🔍 AMBIL NIP & NAMA BERGELAR SUPERVISOR DARI FIRESTORE
-    let supervisorNIP = '-';
-    let supervisorNamaLengkap = data.supervisorName || '-'; // fallback default
+    // 🔍 AMBIL DATA SUPERVISOR (NIP + NAMA BERGELAR) DARI FIRESTORE
+let supervisorNIP = '-';
+let supervisorNamaLengkap = data.supervisorName || '-'; // Fallback awal
 
-    if (data.supervisorEmail) {
-      try {
-        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
-        if (supSnap.exists) {
-          const supData = supSnap.data();
-          supervisorNIP = supData.nip || '-';
+if (data.supervisorEmail) {
+  try {
+    // Bersihkan email dari spasi & ubah ke huruf kecil agar cocok dengan ID Dokumen Firestore
+    const cleanEmail = data.supervisorEmail.trim().toLowerCase();
+    const supSnap = await db.collection('users').doc(cleanEmail).get();
 
-          // Format Nama + Gelar Supervisor
-          if (supData.namaLengkap) {
-            supervisorNamaLengkap = supData.namaLengkap;
-          } else {
-            const gDepan = supData.gelarDepan ? `${supData.gelarDepan.trim()} ` : '';
-            const namaUtama = supData.nama || data.supervisorName || '-';
-            const gBelakang = supData.gelarBelakang ? `, ${supData.gelarBelakang.trim()}` : '';
-            supervisorNamaLengkap = `${gDepan}${namaUtama}${gBelakang}`;
-          }
-        }
-      } catch (e) {
-        console.error("Gagal mengambil data supervisor:", e);
-      }
+    if (supSnap.exists) {
+      const supData = supSnap.data();
+      supervisorNIP = supData.nip || '-';
+      
+      // Mengambil langsung field 'nama' yang sudah berisi gelar dari Firestore
+      supervisorNamaLengkap = supData.nama || data.supervisorName || '-';
+    } else {
+      console.warn("Dokumen user supervisor tidak ditemukan untuk email:", cleanEmail);
     }
+  } catch (e) { 
+    console.error("Gagal mengambil data supervisor:", e); 
+  }
+}
     
     let components = [];
     if (data.instrumentId) {
@@ -1336,7 +1334,7 @@ window.printSupervision = async function(docId) {
           <div><strong>Yang Disupervisi:</strong> ${data.superviseeName}</div>
           <div><strong>Madrasah:</strong> ${data.schoolName || 'MAN Bantaeng'}</div>
           <div><strong>Kelas/Semester:</strong> ${data.classSemester || '-'}</div>
-          <div><strong>Supervisor:</strong> ${data.supervisorName}</div>
+          <div><strong>Supervisor:</strong> ${supervisorNamaLengkap}</div>
           <div><strong>Mata Pelajaran:</strong> ${data.subject || '-'}</div>
           <div><strong>Instrumen:</strong> ${data.instrumentName || '-'}</div>
           <div><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">${data.predicate || 'Selesai'}</span></div>
