@@ -955,39 +955,30 @@ function showDetailModal() {
 // ══════════════════════════════════════════════
 // DOWNLOAD PDF — OPTIMIZED 1 HALAMAN A4 LANDSCAPE + NIP OTOMATIS
 // ══════════════════════════════════════════════
-window.downloadPDF = async function(docId) {
+let supervisorNIP = '-';
+let supervisorNamaLengkap = data.supervisorName || '-'; // fallback
+if (data.supervisorEmail) {
   try {
-    const id = docId || currentSupervision?.id;
-    const snap = await db.collection('supervisions').doc(id).get();
-    if (!snap.exists) { alert('Data tidak ditemukan'); return; }
+    const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
+    if (supSnap.exists) {
+      const supData = supSnap.data();
+      supervisorNIP = supData.nip || '-';
 
-    const data = snap.data();
-    
-        // 🔍 AMBIL NIP GURU DARI FIRESTORE SECARA OTOMATIS
-    let superviseeNIP = '-';
-    if (data.superviseeEmail) {
-      try {
-        const userSnap = await db.collection('users').doc(data.superviseeEmail).get();
-        if (userSnap.exists) {
-          superviseeNIP = userSnap.data().nip || '-';
-        }
-      } catch (e) {
-        console.error("Gagal mengambil NIP guru:", e);
+      // 1. Jika di Firestore sudah ada field 'namaLengkap' (sudah termasuk gelar)
+      if (supData.namaLengkap) {
+        supervisorNamaLengkap = supData.namaLengkap;
+      } 
+      // 2. Jika gelar depan & belakang dipisah di Firestore (gelarDepan, nama, gelarBelakang)
+      else {
+        const gDepan = supData.gelarDepan ? `${supData.gelarDepan.trim()} ` : '';
+        const namaUtama = supData.nama || data.supervisorName || '-';
+        const gBelakang = supData.gelarBelakang ? `, ${supData.gelarBelakang.trim()}` : '';
+
+        supervisorNamaLengkap = `${gDepan}${namaUtama}${gBelakang}`;
       }
     }
-
-    // 🔍 AMBIL NIP SUPERVISOR DARI FIRESTORE SECARA OTOMATIS
-    let supervisorNIP = '-';
-    if (data.supervisorEmail) {
-      try {
-        const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
-        if (supSnap.exists) {
-          supervisorNIP = supSnap.data().nip || '-';
-        }
-      } catch (e) {
-        console.error("Gagal mengambil NIP supervisor:", e);
-      }
-    }
+  } catch (e) { console.error("Gagal mengambil data supervisor:", e); }
+}
 
     let components = [];
     if (data.instrumentId) {
@@ -1235,16 +1226,29 @@ window.printSupervision = async function(docId) {
       }
     }
 
-    // 🔍 AMBIL NIP SUPERVISOR DARI FIRESTORE SECARA OTOMATIS (BARU)
+    // 🔍 AMBIL NIP & NAMA BERGELAR SUPERVISOR DARI FIRESTORE
     let supervisorNIP = '-';
+    let supervisorNamaLengkap = data.supervisorName || '-'; // fallback default
+
     if (data.supervisorEmail) {
       try {
         const supSnap = await db.collection('users').doc(data.supervisorEmail).get();
         if (supSnap.exists) {
-          supervisorNIP = supSnap.data().nip || '-';
+          const supData = supSnap.data();
+          supervisorNIP = supData.nip || '-';
+
+          // Format Nama + Gelar Supervisor
+          if (supData.namaLengkap) {
+            supervisorNamaLengkap = supData.namaLengkap;
+          } else {
+            const gDepan = supData.gelarDepan ? `${supData.gelarDepan.trim()} ` : '';
+            const namaUtama = supData.nama || data.supervisorName || '-';
+            const gBelakang = supData.gelarBelakang ? `, ${supData.gelarBelakang.trim()}` : '';
+            supervisorNamaLengkap = `${gDepan}${namaUtama}${gBelakang}`;
+          }
         }
       } catch (e) {
-        console.error("Gagal mengambil NIP supervisor:", e);
+        console.error("Gagal mengambil data supervisor:", e);
       }
     }
     
