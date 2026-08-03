@@ -403,122 +403,185 @@ window.simpanNilai = async () => {
 
   try {
     if (currentNilaiTab === 'pengetahuan' || currentNilaiTab === 'keterampilan') {
-  const tipeData = currentNilaiTab === 'pengetahuan' ? 'nilai_pengetahuan' : 'nilai_keterampilan';
-  const inputClass = currentNilaiTab === 'pengetahuan' ? '.nilai-input' : '.nilai-ket-input';
-  const kolomAktif = currentNilaiTab === 'pengetahuan' ? window.nilaiKolom : window.nilaiKolomKet;
-  
-  // ✅ PROSES SEMUA SISWA, bukan hanya yang terisi
-  const inputs = document.querySelectorAll(inputClass);
-  const dataPerSiswa = {};
-  
-  inputs.forEach(inp => {
-    const sid = inp.dataset.sid;
-    const kid = inp.dataset.kid;
-    
-    if (!dataPerSiswa[sid]) dataPerSiswa[sid] = {};
-    
-    if (inp.value !== '') {
-      // Nilai terisi: simpan
-      dataPerSiswa[sid][kid] = parseFloat(inp.value);
-    }
-    // Nilai kosong: TIDAK dimasukkan ke objek (akan otomatis terhapus dari database)
-  });
-  
-  // Proses SETIAP siswa (termasuk yang semua nilainya kosong)
-  const semuaSiswa = allData.filter(d => d.type === 'student' && d.class_name === filter.class_name && d.user_name === filter.user_name);
-  
-  for (const siswa of semuaSiswa) {
-    const sid = siswa.__key;
-    const nilaiBaru = dataPerSiswa[sid] || {};
-    
-    // Ambil SEMUA record siswa ini
-    const semuaRecord = allData.filter(d => 
-      d.type === tipeData && 
-      d.student_key === sid && 
-      d.class_name === filter.class_name && 
-      d.user_name === filter.user_name && 
-      d.semester === filter.semester && 
-      d.kode_tp === filter.kode_tp
-    );
-    
-    // Ambil nilai lama (hanya kolom yang masih aktif)
-    let nilaiGabungan = {};
-    const kolomAktifIds = new Set(kolomAktif.map(k => k.id));
-    
-    semuaRecord.forEach(r => { 
-      try { 
-        const nilaiLama = r.nilai ? JSON.parse(r.nilai) : {};
-        // ✅ HANYA pertahankan nilai dari kolom yang masih aktif
-        for (const kid of Object.keys(nilaiLama)) {
-          if (kolomAktifIds.has(kid)) {
-            nilaiGabungan[kid] = nilaiLama[kid];
+      const tipeData = currentNilaiTab === 'pengetahuan' ? 'nilai_pengetahuan' : 'nilai_keterampilan';
+      const inputClass = currentNilaiTab === 'pengetahuan' ? '.nilai-input' : '.nilai-ket-input';
+      const kolomAktif = currentNilaiTab === 'pengetahuan' ? window.nilaiKolom : window.nilaiKolomKet;
+      
+      // ✅ PROSES SEMUA SISWA
+      const inputs = document.querySelectorAll(inputClass);
+      const dataPerSiswa = {};
+      
+      inputs.forEach(inp => {
+        const sid = inp.dataset.sid;
+        const kid = inp.dataset.kid;
+        if (!dataPerSiswa[sid]) dataPerSiswa[sid] = {};
+        if (inp.value !== '') {
+          dataPerSiswa[sid][kid] = parseFloat(inp.value);
+        }
+      });
+      
+      const semuaSiswa = allData.filter(d => 
+        d.type === 'student' && 
+        d.class_name === filter.class_name && 
+        d.user_name === filter.user_name
+      );
+      
+      for (const siswa of semuaSiswa) {
+        const sid = siswa.__key;
+        const nilaiBaru = dataPerSiswa[sid] || {};
+        
+        // Ambil SEMUA record siswa ini
+        const semuaRecord = allData.filter(d => 
+          d.type === tipeData && 
+          d.student_key === sid && 
+          d.class_name === filter.class_name && 
+          d.user_name === filter.user_name && 
+          d.semester === filter.semester && 
+          d.kode_tp === filter.kode_tp
+        );
+        
+        // Ambil nilai lama (hanya kolom yang masih aktif)
+        let nilaiGabungan = {};
+        const kolomAktifIds = new Set(kolomAktif.map(k => k.id));
+        
+        semuaRecord.forEach(r => { 
+          try { 
+            const nilaiLama = r.nilai ? JSON.parse(r.nilai) : {};
+            for (const kid of Object.keys(nilaiLama)) {
+              if (kolomAktifIds.has(kid)) {
+                nilaiGabungan[kid] = nilaiLama[kid];
+              }
+            }
+          } catch(e) {} 
+        });
+        
+        // Timpa dengan nilai baru
+        Object.assign(nilaiGabungan, nilaiBaru);
+        
+        // Bersihkan nilai yang dikosongkan user
+        for (const kid of kolomAktifIds) {
+          const inputEl = document.querySelector(`${inputClass}[data-sid="${sid}"][data-kid="${kid}"]`);
+          if (inputEl && inputEl.value === '') {
+            delete nilaiGabungan[kid];
           }
         }
-      } catch(e) {} 
-    });
-    
-    // Timpa dengan nilai baru dari input (yang terisi)
-    Object.assign(nilaiGabungan, nilaiBaru);
-    
-    // Bersihkan nilai dari kolom yang dihapus user (dikosongkan di input)
-    for (const kid of kolomAktifIds) {
-      const inputEl = document.querySelector(`${inputClass}[data-sid="${sid}"][data-kid="${kid}"]`);
-      if (inputEl && inputEl.value === '') {
-        delete nilaiGabungan[kid]; // Hapus nilai jika input kosong
-      }
-    }
-    
-    // Cari record utama
-    let recordUtama = null, maxIsi = -1;
-    semuaRecord.forEach(r => {
-      let isi = 0; try { isi = r.nilai ? Object.keys(JSON.parse(r.nilai)).length : 0; } catch(e) {}
-      if (isi > maxIsi) { maxIsi = isi; recordUtama = r; }
-    });
-    
-    const pl = {
-      type: tipeData, student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
-      semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
-      nilai: JSON.stringify(nilaiGabungan), updated_at: window.nowISO()
-    };
-    
-    // Jika tidak ada nilai sama sekali, hapus record (atau skip jika tidak ada record)
-    if (Object.keys(nilaiGabungan).length === 0) {
-      if (recordUtama) {
-        await ROOT.child(recordUtama.__key).remove();
-      }
-      // Hapus duplikat jika ada
-      for (const dup of semuaRecord) {
-        if (dup.__key !== recordUtama?._key) {
-          try { await ROOT.child(dup.__key).remove(); } catch(e) {}
+        
+        // ✅ LOGIKA PENYIMPANAN YANG DIPERBAIKI
+        
+        // KASUS 1: Tidak ada nilai sama sekali (semua dikosongkan)
+        if (Object.keys(nilaiGabungan).length === 0) {
+          // Hapus SEMUA record siswa ini (utama + duplikat) dengan aman
+          for (const record of semuaRecord) {
+            try { 
+              await ROOT.child(record.__key).remove(); 
+            } catch(e) {
+              console.warn('Gagal hapus record:', e);
+            }
+          }
+          continue; // Skip ke siswa berikutnya
+        }
+        
+        // KASUS 2: Ada nilai, cari record utama untuk di-update
+        let recordUtama = null, maxIsi = -1;
+        semuaRecord.forEach(r => {
+          let isi = 0; 
+          try { 
+            isi = r.nilai ? Object.keys(JSON.parse(r.nilai)).length : 0; 
+          } catch(e) {}
+          if (isi > maxIsi) { 
+            maxIsi = isi; 
+            recordUtama = r; 
+          }
+        });
+        
+        const pl = {
+          type: tipeData, 
+          student_key: sid, 
+          class_name: filter.class_name, 
+          user_name: filter.user_name,
+          semester: filter.semester, 
+          kode_tp: filter.kode_tp, 
+          mapel: mapel, 
+          deskripsi_tp: deskripsi,
+          nilai: JSON.stringify(nilaiGabungan), 
+          updated_at: window.nowISO()
+        };
+        
+        if (recordUtama) {
+          // Update record utama
+          await ROOT.child(recordUtama.__key).update(pl);
+          
+          // 🧹 Bersihkan duplikat (record lain selain utama)
+          for (const dup of semuaRecord) {
+            if (dup.__key !== recordUtama.__key) {
+              try { 
+                await ROOT.child(dup.__key).remove(); 
+              } catch(e) {}
+            }
+          }
+        } else {
+          // Buat record baru jika belum ada
+          await ROOT.push().set({ ...pl, created_at: window.nowISO() });
         }
       }
-    } else if (recordUtama) {
-      await ROOT.child(recordUtama.__key).update(pl);
-      for (const dup of semuaRecord) {
-        if (dup.__key !== recordUtama.__key) await ROOT.child(dup.__key).remove();
-      }
-    } else {
-      await ROOT.push().set({ ...pl, created_at: window.nowISO() });
-    }
-  }
-}
       
     } else if (currentNilaiTab === 'sikap') {
-      // Logika sikap tetap sama seperti sebelumnya
-      const selects = document.querySelectorAll('.sikap-select'); const catatan = document.querySelectorAll('.sikap-catatan');
+      // Logika sikap tetap sama
+      const selects = document.querySelectorAll('.sikap-select'); 
+      const catatan = document.querySelectorAll('.sikap-catatan');
       const perSiswa = {};
-      selects.forEach(sel => { const sid = sel.dataset.sid; const aspek = sel.dataset.aspek; if (!perSiswa[sid]) perSiswa[sid] = { sikap_detail: {}, catatan: '' }; if (sel.value) perSiswa[sid].sikap_detail[aspek] = sel.value; });
-      catatan.forEach(c => { if (perSiswa[c.dataset.sid]) perSiswa[c.dataset.sid].catatan = c.value; });
+      selects.forEach(sel => { 
+        const sid = sel.dataset.sid; 
+        const aspek = sel.dataset.aspek; 
+        if (!perSiswa[sid]) perSiswa[sid] = { sikap_detail: {}, catatan: '' }; 
+        if (sel.value) perSiswa[sid].sikap_detail[aspek] = sel.value; 
+      });
+      catatan.forEach(c => { 
+        if (perSiswa[c.dataset.sid]) perSiswa[c.dataset.sid].catatan = c.value; 
+      });
+      
       for (const [sid, data] of Object.entries(perSiswa)) {
-        const ex = allData.find(d => d.type === 'nilai_sikap' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-        const pl = { type: 'nilai_sikap', student_key: sid, class_name: filter.class_name, user_name: filter.user_name, semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi, sikap_detail: JSON.stringify(data.sikap_detail), catatan: data.catatan, updated_at: window.nowISO() };
-        if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
+        const ex = allData.find(d => 
+          d.type === 'nilai_sikap' && 
+          d.student_key === sid && 
+          d.class_name === filter.class_name && 
+          d.user_name === filter.user_name && 
+          d.semester === filter.semester && 
+          d.kode_tp === filter.kode_tp
+        );
+        
+        const pl = { 
+          type: 'nilai_sikap', 
+          student_key: sid, 
+          class_name: filter.class_name, 
+          user_name: filter.user_name, 
+          semester: filter.semester, 
+          kode_tp: filter.kode_tp, 
+          mapel: mapel, 
+          deskripsi_tp: deskripsi, 
+          sikap_detail: JSON.stringify(data.sikap_detail), 
+          catatan: data.catatan, 
+          updated_at: window.nowISO() 
+        };
+        
+        if (ex) {
+          await ROOT.child(ex.__key).update(pl); 
+        } else {
+          await ROOT.push().set({ ...pl, created_at: window.nowISO() }); 
+        }
       }
     }
-    window.toast('✅ Nilai berhasil disimpan!');
-  } catch (e) { window.toast('Gagal: ' + e.message, 'err'); }
-  btn.disabled = false; btn.textContent = '💾 Simpan Nilai';
+    
+    window.toast('✅ Nilai berhasil disimpan!', 'success');
+  } catch (e) { 
+    console.error('Error simpanNilai:', e);
+    window.toast('Gagal: ' + e.message, 'err'); 
+  }
+  
+  btn.disabled = false; 
+  btn.textContent = '💾 Simpan Nilai';
 };
+
 window.tambahKolom = async (jenisNilai = 'pengetahuan') => {
   const filter = window.getNilaiFilter();
   if (!filter.kode_tp) { window.toast('❌ Isi Kode TP/KD terlebih dahulu!', 'err'); return; }
