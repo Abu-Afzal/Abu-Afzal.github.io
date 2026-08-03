@@ -1285,7 +1285,6 @@ if (data.supervisorEmail) {
       <head>
         <title>Hasil Supervisi - ${data.superviseeName}</title>
         <style>
-          <style>
   @media print {
     @page { size: A4; margin: 15mm 20mm; } /* Margin kiri-kanan diperbesar agar konten lebih ke tengah */
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
