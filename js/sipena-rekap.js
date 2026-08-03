@@ -1,11 +1,13 @@
 // ══════════════════════════════════════════════
-// SIPENA: Rekap Kehadiran
-// ═════════════════════════════════════════════
+// SIPENA: Rekap Kehadiran (FIXED: Sorting A-Z + Data Aman)
+// ══════════════════════════════════════════════
 
 window.renderRekap = () => {
+  // ✅ KELAS TERURUT A-Z
   const kelas = allData
-  .filter(d => d.type === 'class' && d.user_name === currentUser)
-  .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { sensitivity: 'base', numeric: true }));
+    .filter(d => d.type === 'class' && d.user_name === currentUser)
+    .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { sensitivity: 'base', numeric: true }));
+
   if (!kelas.length) { 
     document.getElementById('rekapContent').innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; 
     return; 
@@ -60,15 +62,26 @@ window.generateRekap = () => {
   const siswa = allData
     .filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser)
     .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+
+  // ✅ LOGS TETAP DIAMBIL (JANGAN SAMPAI TERHAPUS)
+  const logs = allData.filter(d => 
+    d.type === 'attendance_log' && 
+    d.class_name === currentRekapClass && 
+    d.user_name === currentUser && 
+    window.filterLog(d)
+  );
   
-  const logs = allData.filter(d => d.type === 'attendance_log' && d.class_name === currentRekapClass && d.user_name === currentUser && window.filterLog(d));
   const cont = document.getElementById('rekapContent');
+
+  // 🔍 DEBUG: cek di Console browser (F12)
+  console.log(`📊 REKAP [${currentRekapClass}] Tab: ${currentRekapTab} | Siswa: ${siswa.length} | Log absensi ditemukan: ${logs.length}`);
 
   if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Tidak ada siswa di kelas ini.</p></div>'; return; }
 
   const stat = {};
   siswa.forEach(s => { stat[s.__key] = { nama: s.student_name, H: 0, I: 0, S: 0, A: 0, B: 0, detail: [] }; });
 
+  // ✅ PENGHITUNGAN ABSENSI (WAJIB ADA)
   logs.forEach(log => {
     if (!log.records) return;
     Object.keys(log.records).forEach(sid => {
@@ -96,7 +109,7 @@ window.generateRekap = () => {
   <div class="tbl-wrap"><table id="rekapTable">
     <thead><tr><th>No</th><th>Nama Siswa</th><th>H</th><th>I</th><th>S</th><th>A</th><th>B</th><th>Total</th><th>% Hadir</th><th>Rincian</th></tr></thead><tbody>`;
 
-  // ✅ RENDER MENGGUNAKAN ARRAY SISWA TERURUT
+  // ✅ RENDER BERDASARKAN URUTAN A-Z
   siswa.forEach((s, i) => {
     const data = stat[s.__key];
     if (!data) return;
@@ -112,12 +125,12 @@ window.generateRekap = () => {
       <td style="font-size:0.78rem;color:#64748b;">${data.detail.length ? data.detail.join(', ') : '–'}</td>
     </tr>`;
   });
-  
   html += `</tbody></table></div>`;
   cont.innerHTML = html;
 };
+
 // ═════════════════════════════════════════════
-// FITUR CETAK REKAP (PRINT CLEAN) - UPDATED
+// FITUR CETAK REKAP (PRINT CLEAN)
 // ══════════════════════════════════════════════
 window.cetakRekap = () => {
   const table = document.getElementById('rekapTable');
@@ -126,7 +139,6 @@ window.cetakRekap = () => {
     return; 
   }
 
-  // Ambil data filter saat ini untuk kop surat
   const kelasSelect = document.getElementById('rekapKelasSelect');
   const bulanSelect = document.getElementById('rekapBulanSelect');
   const tahunSelect = document.getElementById('rekapTahunSelect');
@@ -154,7 +166,6 @@ window.cetakRekap = () => {
     tahunText = new Date().getFullYear();
   }
 
-  // Buat elemen header print dengan informasi LENGKAP
   const printHeader = document.createElement('div');
   printHeader.className = 'print-header-rekap';
   printHeader.style.cssText = `
@@ -173,15 +184,11 @@ window.cetakRekap = () => {
     </div>
   `;
 
-  // Sisipkan sebelum tabel
   const tblWrap = table.parentElement;
   tblWrap.insertBefore(printHeader, table);
 
-  // Panggil window.print() dengan delay kecil agar browser merender header
   setTimeout(() => {
     window.print();
-    
-    // Hapus header print setelah dialog print tertutup
     setTimeout(() => {
       if (printHeader.parentNode) {
         printHeader.parentNode.removeChild(printHeader);
@@ -197,12 +204,9 @@ window.exportRekap = () => {
     return; 
   }
 
-  // Konversi tabel HTML ke Excel menggunakan SheetJS
   const ws = XLSX.utils.table_to_sheet(table);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Kehadiran');
-
-  // Simpan sebagai file Excel
   XLSX.writeFile(wb, `Rekap_${currentRekapClass}_${currentRekapTab}.xlsx`);
   window.toast('✅ File Excel diekspor!', 'success');
 };
