@@ -1285,43 +1285,61 @@ if (data.supervisorEmail) {
       <head>
         <title>Hasil Supervisi - ${data.superviseeName}</title>
         <style>
-          @media print {
-            @page { size: A4; margin: 10mm; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print { display: none; }
-          }
-          body { font-family: Arial, sans-serif; margin: 20px; font-size: 11pt; }
-          .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
-          .header h2 { margin: 5px 0; color: #1e40af; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 10pt; }
-          table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #4CAF50; color: white; font-weight: bold; }
-          tr:nth-child(even) { background-color: #f2f2f2; }
-          .summary { background-color: #dcfce7; font-weight: bold; }
-          .notes-section { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-          .notes-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; min-height: 80px; }
-          .signature { 
-            margin-top: 40px; 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 60px;
-            text-align: center;
-          }
-          .signature-box { 
-            padding-top: 10px;
-          }
-          .signature-line {
-            border-top: 1px solid #000;
-            padding-top: 5px;
-            margin-top: 60px;
-            display: inline-block;
-            min-width: 180px;
-            font-weight: bold;
-          }
-          .btn-print { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
-          .btn-print:hover { background: #2563eb; }
-        </style>
+          <style>
+  @media print {
+    @page { size: A4; margin: 15mm 20mm; } /* Margin kiri-kanan diperbesar agar konten lebih ke tengah */
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
+    .no-print { display: none; }
+  }
+  body { font-family: Arial, sans-serif; margin: 0 40px; padding: 20px 0; font-size: 11pt; }
+  .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+  .header h2 { margin: 5px 0; color: #1e40af; }
+  
+  /* ✅ PERBAIKAN LAYOUT IDENTITAS DI SINI ✅ */
+  .info-grid { 
+    display: grid; 
+    grid-template-columns: 1fr 1.3fr; /* Kolom kanan dibuat sedikit lebih lebar */
+    gap: 8px 60px; /* Jarak antar baris 8px, jarak antar kolom 60px (agar kolom kanan geser ke kanan) */
+    margin-bottom: 25px; 
+    font-size: 10pt; 
+  }
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+  }
+  .info-row strong {
+    min-width: 130px; /* Memastikan label "Tanggal:", "Madrasah:", dll punya lebar tetap agar rapi */
+    display: inline-block;
+  }
+  /* ========================================== */
+
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  th { background-color: #4CAF50; color: white; font-weight: bold; }
+  tr:nth-child(even) { background-color: #f2f2f2; }
+  .summary { background-color: #dcfce7; font-weight: bold; }
+  .notes-section { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .notes-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; min-height: 80px; }
+  .signature { 
+    margin-top: 40px; 
+    display: grid; 
+    grid-template-columns: 1fr 1fr; 
+    gap: 80px; /* Jarak tanda tangan diperlebar */
+    text-align: center;
+    margin-left: 40px; /* Geser blok tanda tangan ke kanan */
+  }
+  .signature-box { padding-top: 10px; }
+  .signature-line {
+    border-top: 1px solid #000;
+    padding-top: 5px;
+    margin-top: 60px;
+    display: inline-block;
+    min-width: 200px;
+    font-weight: bold;
+  }
+  .btn-print { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
+  .btn-print:hover { background: #2563eb; }
+</style>
       </head>
       <body>
         <button class="no-print btn-print" onclick="window.print(); window.close();">🖨️ Cetak Halaman Ini</button>
