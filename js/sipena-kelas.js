@@ -76,12 +76,14 @@ window.renderSiswaModal = async (className) => {
   tbody.innerHTML = '<tr><td colspan="3" class="text-center"><div class="spinner"></div> Memuat data...</td></tr>';
 
   try {
-    // 1. Ambil siswa yang SUDAH ADA di kelas ini dari SIPENA (RTDB)
-    const siswaDiKelas = allData.filter(d => 
-      d.type === 'student' && 
-      d.class_name === className && 
-      d.user_name === currentUser
-    );
+        // 1. Ambil siswa yang SUDAH ADA di kelas ini dari SIPENA (RTDB) + ✅ SORT A-Z
+    const siswaDiKelas = allData
+      .filter(d => 
+        d.type === 'student' && 
+        d.class_name === className && 
+        d.user_name === currentUser
+      )
+      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
 
     // Buat Set untuk tracking NIS dan nama yang sudah ada (case-insensitive)
     const nisSudahAda = new Set(siswaDiKelas.map(s => (s.nis || '').toLowerCase().trim()).filter(n => n));
@@ -104,7 +106,8 @@ window.renderSiswaModal = async (className) => {
         });
       }
     });
-
+    
+    sicanSiswa.sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id-ID', { sensitivity: 'base' }));
     // 3. Gabungkan dengan siswa manual yang sudah ada di kelas
     const combined = [
       ...sicanSiswa,
