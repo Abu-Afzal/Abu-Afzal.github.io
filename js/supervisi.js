@@ -1293,7 +1293,18 @@ if (data.supervisorEmail) {
           body { font-family: Arial, sans-serif; margin: 20px; font-size: 11pt; }
           .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
           .header h2 { margin: 5px 0; color: #1e40af; }
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 10pt; }
+          .info-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1.5fr; /* Kolom kanan dibuat lebih lebar, otomatis geser ke kanan */
+  gap: 15px; 
+  margin-bottom: 20px; 
+  font-size: 10pt; 
+}
+/* Tambahkan ini untuk memberi jarak dan garis pemisah di kolom kanan agar lebih rapi */
+.info-grid > div:nth-child(even) {
+  padding-left: 15px;
+  border-left: 2px solid #e5e7eb;
+}
           table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #4CAF50; color: white; font-weight: bold; }
