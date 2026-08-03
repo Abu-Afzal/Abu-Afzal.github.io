@@ -1462,4 +1462,4 @@ window.addEventListener('load', async () => {
   await new Promise(resolve => setTimeout(resolve, 500)); 
   const isValid = await checkSipelitaSession(); 
   if (isValid) { showDashboard(); } 
-}); lihat js saya
+});
