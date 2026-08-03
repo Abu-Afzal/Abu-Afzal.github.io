@@ -274,33 +274,27 @@ window.renderRekapNilai = (siswa) => {
     let countTP = 0;
 
     uniqueTPs.forEach(tp => {
-      const semuaTP = allNilaiData.filter(d => d.student_key === s.__key && d.kode_tp === tp);
-let vals = [];
-semuaTP.forEach(r => { try { vals = vals.concat(Object.values(JSON.parse(r.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v))); } catch(e) {} });
-if (vals.length > 0) { /* hitung avgTP dari vals seperti sebelumnya */ }
-      
-      if (dataTP && dataTP.nilai) {
-        try {
-          const nilaiObj = JSON.parse(dataTP.nilai);
-          const vals = Object.values(nilaiObj).map(v => parseFloat(v)).filter(v => !isNaN(v));
-          
-          if (vals.length > 0) {
-            const avgTP = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-            totalNilaiSemester += parseFloat(avgTP);
-            countTP++;
-            
-            const color = avgTP >= 75 ? '#10b981' : (avgTP >= 60 ? '#f59e0b' : '#ef4444');
-            html += `<td style="text-align:center;font-weight:700;color:${color};">${avgTP}</td>`;
-          } else {
-            html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
-          }
-        } catch (e) {
-          html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
-        }
-      } else {
-        html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
+  const semuaTP = allNilaiData.filter(d => d.student_key === s.__key && d.kode_tp === tp);
+  let vals = [];
+  semuaTP.forEach(r => { 
+    try { 
+      if (r.nilai) {
+        vals = vals.concat(Object.values(JSON.parse(r.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v)));
       }
-    });
+    } catch(e) {} 
+  });
+  
+  if (vals.length > 0) {
+    const avgTP = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+    totalNilaiSemester += parseFloat(avgTP);
+    countTP++;
+    
+    const color = avgTP >= 75 ? '#10b981' : (avgTP >= 60 ? '#f59e0b' : '#ef4444');
+    html += `<td style="text-align:center;font-weight:700;color:${color};">${avgTP}</td>`;
+  } else {
+    html += `<td style="text-align:center;color:#cbd5e1;">-</td>`;
+  }
+});
 
     const nilaiAkhir = countTP > 0 ? (totalNilaiSemester / countTP).toFixed(1) : '-';
     const colorAkhir = nilaiAkhir !== '-' ? (parseFloat(nilaiAkhir) >= 75 ? '#065f46' : (parseFloat(nilaiAkhir) >= 60 ? '#92400e' : '#991b1b')) : '#94a3b8';
@@ -511,20 +505,26 @@ window.eksporNilai = () => {
             const row = [i + 1, s.student_name];
             let totalSemester = 0, countTP = 0;
 
-            uniqueTPs.forEach(tp => {
-                const dataTP = allNilaiData.find(d => d.student_key === s.__key && d.kode_tp === tp);
-                if (dataTP && dataTP.nilai) {
-                    try {
-                        const vals = Object.values(JSON.parse(dataTP.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v));
-                        if (vals.length > 0) {
-                            const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-                            row.push(avg);
-                            totalSemester += parseFloat(avg);
-                            countTP++;
-                        } else { row.push(''); }
-                    } catch(e) { row.push(''); }
-                } else { row.push(''); }
-            });
+           uniqueTPs.forEach(tp => {
+    const semuaTP = allNilaiData.filter(d => d.student_key === s.__key && d.kode_tp === tp);
+    let vals = [];
+    semuaTP.forEach(r => { 
+        try { 
+            if (r.nilai) {
+                vals = vals.concat(Object.values(JSON.parse(r.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v)));
+            }
+        } catch(e) {} 
+    });
+    
+    if (vals.length > 0) {
+        const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+        row.push(avg);
+        totalSemester += parseFloat(avg);
+        countTP++;
+    } else { 
+        row.push(''); 
+    }
+});
 
             const akhir = countTP > 0 ? (totalSemester / countTP).toFixed(1) : '';
             row.push(akhir);
