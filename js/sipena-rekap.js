@@ -3,7 +3,9 @@
 // ═════════════════════════════════════════════
 
 window.renderRekap = () => {
-  const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+  const kelas = allData
+  .filter(d => d.type === 'class' && d.user_name === currentUser)
+  .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { sensitivity: 'base', numeric: true }));
   if (!kelas.length) { 
     document.getElementById('rekapContent').innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; 
     return; 
@@ -54,7 +56,10 @@ window.filterLog = (log) => {
 };
 
 window.generateRekap = () => {
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser);
+  // ✅ SORT A-Z siswa
+const siswa = allData
+  .filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser)
+  .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
   const logs = allData.filter(d => d.type === 'attendance_log' && d.class_name === currentRekapClass && d.user_name === currentUser && window.filterLog(d));
   const cont = document.getElementById('rekapContent');
 
@@ -90,8 +95,22 @@ window.generateRekap = () => {
   <div class="tbl-wrap"><table id="rekapTable">
     <thead><tr><th>No</th><th>Nama Siswa</th><th>H</th><th>I</th><th>S</th><th>A</th><th>B</th><th>Total</th><th>% Hadir</th><th>Rincian</th></tr></thead><tbody>`;
 
-  Object.values(stat).forEach((s, i) => {
-    const total = s.H + s.I + s.S + s.A + s.B;
+    // ✅ Render berdasarkan urutan siswa terurut (bukan Object.values)
+  siswa.forEach((s, i) => {
+    const data = stat[s.__key];
+    if (!data) return;
+    const total = data.H + data.I + data.S + data.A + data.B;
+    const pct = total > 0 ? ((data.H / total) * 100).toFixed(1) : '0.0';
+    const col = parseFloat(pct) >= 80 ? '#10b981' : (parseFloat(pct) >= 60 ? '#f59e0b' : '#ef4444');
+    html += `<tr>
+      <td>${i + 1}</td><td style="font-weight:600;">${data.nama}</td>
+      <td style="color:#10b981;font-weight:700;">${data.H}</td><td style="color:#3b82f6;font-weight:700;">${data.I}</td>
+      <td style="color:#f59e0b;font-weight:700;">${data.S}</td><td style="color:#ef4444;font-weight:700;">${data.A}</td>
+      <td style="color:#8b5cf6;font-weight:700;">${data.B}</td><td><strong>${total}</strong></td>
+      <td><strong style="color:${col};">${pct}%</strong></td>
+      <td style="font-size:0.78rem;color:#64748b;">${data.detail.length ? data.detail.join(', ') : '–'}</td>
+    </tr>`;
+  });
     const pct = total > 0 ? ((s.H / total) * 100).toFixed(1) : '0.0';
     const col = parseFloat(pct) >= 80 ? '#10b981' : (parseFloat(pct) >= 60 ? '#f59e0b' : '#ef4444');
     html += `<tr>
