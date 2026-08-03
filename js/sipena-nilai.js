@@ -100,8 +100,9 @@ window.renderNilaiPengetahuan = (siswa) => {
   html += `</tr></thead><tbody>`;
 
   siswa.forEach((s, idx) => {
-    const nd = allData.find(d => d.type === 'nilai_pengetahuan' && d.student_key === s.__key && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-    const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
+    const semuaNd = allData.filter(d => d.type === 'nilai_pengetahuan' && d.student_key === s.__key && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
+    let nilai = {};
+    semuaNd.forEach(r => { try { Object.assign(nilai, r.nilai ? JSON.parse(r.nilai) : {}); } catch(e) {} });
     
     html += `<tr><td style="color:#94a3b8;">${idx + 1}</td><td style="font-weight:600;">${s.student_name}</td>`;
     if (window.nilaiKolom.length) {
@@ -197,8 +198,9 @@ window.renderNilaiKeterampilan = (siswa) => {
   html += `</tr></thead><tbody>`;
   
   siswa.forEach((s, idx) => {
-    const nd = allData.find(d => d.type === 'nilai_keterampilan' && d.student_key === s.__key && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-    const nilai = nd?.nilai ? JSON.parse(nd.nilai) : {};
+    const semuaNd = allData.filter(d => d.type === 'nilai_keterampilan' && d.student_key === s.__key && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
+let nilai = {};
+semuaNd.forEach(r => { try { Object.assign(nilai, r.nilai ? JSON.parse(r.nilai) : {}); } catch(e) {} });
     html += `<tr><td style="color:#94a3b8;">${idx + 1}</td><td style="font-weight:600;">${s.student_name}</td>`;
     if (window.nilaiKolomKet.length) {
       const vals = window.nilaiKolomKet.map(k => parseFloat(nilai[k.id])).filter(v => !isNaN(v));
@@ -272,7 +274,10 @@ window.renderRekapNilai = (siswa) => {
     let countTP = 0;
 
     uniqueTPs.forEach(tp => {
-      const dataTP = allNilaiData.find(d => d.student_key === s.__key && d.kode_tp === tp);
+      const semuaTP = allNilaiData.filter(d => d.student_key === s.__key && d.kode_tp === tp);
+let vals = [];
+semuaTP.forEach(r => { try { vals = vals.concat(Object.values(JSON.parse(r.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v))); } catch(e) {} });
+if (vals.length > 0) { /* hitung avgTP dari vals seperti sebelumnya */ }
       
       if (dataTP && dataTP.nilai) {
         try {
@@ -327,47 +332,61 @@ window.simpanNilai = async () => {
   const deskripsi = document.getElementById('nilaiDeskripsiTP').value.trim();
 
   try {
-    if (currentNilaiTab === 'pengetahuan') {
-      const inputs = document.querySelectorAll('.nilai-input');
-      const dataPerSiswa = {};
-      inputs.forEach(inp => { if (!dataPerSiswa[inp.dataset.sid]) dataPerSiswa[inp.dataset.sid] = {}; if (inp.value !== '') dataPerSiswa[inp.dataset.sid][inp.dataset.kid] = parseFloat(inp.value); });
+    if (currentNilaiTab === 'pengetahuan' || currentNilaiTab === 'keterampilan') {
+      const tipeData = currentNilaiTab === 'pengetahuan' ? 'nilai_pengetahuan' : 'nilai_keterampilan';
+      const inputClass = currentNilaiTab === 'pengetahuan' ? '.nilai-input' : '.nilai-ket-input';
       
-      for (const [sid, nilai] of Object.entries(dataPerSiswa)) {
-        const ex = allData.find(d => d.type === 'nilai_pengetahuan' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-        const pl = { 
-          type: 'nilai_pengetahuan', student_key: sid, class_name: filter.class_name, user_name: filter.user_name, 
+      const inputs = document.querySelectorAll(inputClass);
+      const dataPerSiswa = {};
+      inputs.forEach(inp => {
+        if (inp.value !== '') { // ✅ Hanya siswa yang terisi
+          if (!dataPerSiswa[inp.dataset.sid]) dataPerSiswa[inp.dataset.sid] = {};
+          dataPerSiswa[inp.dataset.sid][inp.dataset.kid] = parseFloat(inp.value);
+        }
+      });
+      
+      for (const [sid, nilaiBaru] of Object.entries(dataPerSiswa)) {
+        // Ambil SEMUA record siswa ini (untuk menangani duplikat)
+        const semuaRecord = allData.filter(d => d.type === tipeData && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
+        
+        // Gabungkan nilai lama + baru
+        let nilaiGabungan = {};
+        semuaRecord.forEach(r => { try { Object.assign(nilaiGabungan, r.nilai ? JSON.parse(r.nilai) : {}); } catch(e) {} });
+        Object.assign(nilaiGabungan, nilaiBaru);
+        
+        // Record utama = yang isinya paling banyak
+        let recordUtama = null, maxIsi = -1;
+        semuaRecord.forEach(r => {
+          let isi = 0; try { isi = r.nilai ? Object.keys(JSON.parse(r.nilai)).length : 0; } catch(e) {}
+          if (isi > maxIsi) { maxIsi = isi; recordUtama = r; }
+        });
+        
+        const pl = {
+          type: tipeData, student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
           semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
-          nilai: JSON.stringify(nilai), updated_at: window.nowISO() 
+          nilai: JSON.stringify(nilaiGabungan), updated_at: window.nowISO()
         };
-        if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
+        
+        if (recordUtama) {
+          await ROOT.child(recordUtama.__key).update(pl);
+          // 🧹 Bersihkan duplikat
+          for (const dup of semuaRecord) {
+            if (dup.__key !== recordUtama.__key) await ROOT.child(dup.__key).remove();
+          }
+        } else {
+          await ROOT.push().set({ ...pl, created_at: window.nowISO() });
+        }
       }
+      
     } else if (currentNilaiTab === 'sikap') {
+      // Logika sikap tetap sama seperti sebelumnya
       const selects = document.querySelectorAll('.sikap-select'); const catatan = document.querySelectorAll('.sikap-catatan');
       const perSiswa = {};
       selects.forEach(sel => { const sid = sel.dataset.sid; const aspek = sel.dataset.aspek; if (!perSiswa[sid]) perSiswa[sid] = { sikap_detail: {}, catatan: '' }; if (sel.value) perSiswa[sid].sikap_detail[aspek] = sel.value; });
       catatan.forEach(c => { if (perSiswa[c.dataset.sid]) perSiswa[c.dataset.sid].catatan = c.value; });
-      
       for (const [sid, data] of Object.entries(perSiswa)) {
         const ex = allData.find(d => d.type === 'nilai_sikap' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-        const pl = { 
-          type: 'nilai_sikap', student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
-          semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
-          sikap_detail: JSON.stringify(data.sikap_detail), catatan: data.catatan, updated_at: window.nowISO() 
-        };
-        if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
-      }
-    } else if (currentNilaiTab === 'keterampilan') {
-      const inputs = document.querySelectorAll('.nilai-ket-input');
-      const dataPerSiswa = {};
-      inputs.forEach(inp => { if (!dataPerSiswa[inp.dataset.sid]) dataPerSiswa[inp.dataset.sid] = {}; if (inp.value !== '') dataPerSiswa[inp.dataset.sid][inp.dataset.kid] = parseFloat(inp.value); });
-      
-      for (const [sid, nilai] of Object.entries(dataPerSiswa)) {
-        const ex = allData.find(d => d.type === 'nilai_keterampilan' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-        const pl = { 
-          type: 'nilai_keterampilan', student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
-          semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
-          nilai: JSON.stringify(nilai), updated_at: window.nowISO() 
-        };
+        const pl = { type: 'nilai_sikap', student_key: sid, class_name: filter.class_name, user_name: filter.user_name, semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi, sikap_detail: JSON.stringify(data.sikap_detail), catatan: data.catatan, updated_at: window.nowISO() };
         if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
       }
     }
@@ -375,7 +394,6 @@ window.simpanNilai = async () => {
   } catch (e) { window.toast('Gagal: ' + e.message, 'err'); }
   btn.disabled = false; btn.textContent = '💾 Simpan Nilai';
 };
-
 window.tambahKolom = async (jenisNilai = 'pengetahuan') => {
   const filter = window.getNilaiFilter();
   if (!filter.kode_tp) { window.toast('❌ Isi Kode TP/KD terlebih dahulu!', 'err'); return; }
