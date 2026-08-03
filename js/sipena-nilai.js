@@ -32,7 +32,9 @@ window.renderPenilaian = () => {
   if (!currentNilaiClass || !kelas.find(k => k.class_name === currentNilaiClass)) currentNilaiClass = kelas[0].class_name;
   sel.innerHTML = kelas.map(k => `<option value="${k.class_name}" ${currentNilaiClass === k.class_name ? 'selected' : ''}>${k.class_name}</option>`).join('');
 
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+  const siswa = allData
+  .filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser)
+  .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
   info.textContent = `👥 ${siswa.length} siswa`;
 
   if (!siswa.length) {
@@ -635,7 +637,8 @@ window.eksporNilai = () => {
 
     if (currentNilaiTab === 'pengetahuan') {
         if (!window.nilaiKolom || !window.nilaiKolom.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
+        const siswa = allData
+  .filter(d => d.type === 'student' && d.class_name
         rows.push(['No', 'Nama Siswa', ...window.nilaiKolom.map(k => k.label), 'Rerata']);
 
         siswa.forEach((s, i) => {
@@ -651,7 +654,9 @@ window.eksporNilai = () => {
 
     } else if (currentNilaiTab === 'sikap') {
         const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
+        const siswa = allData
+  .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+  .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { se
         rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
 
         siswa.forEach((s, i) => {
@@ -669,7 +674,9 @@ window.eksporNilai = () => {
 
     } else if (currentNilaiTab === 'keterampilan') {
         if (!window.nilaiKolomKet || !window.nilaiKolomKet.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
+        const siswa = allData
+  .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+  .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sen
         rows.push(['No', 'Nama Siswa', ...window.nilaiKolomKet.map(k => k.label), 'Rerata']);
 
         siswa.forEach((s, i) => {
@@ -693,7 +700,9 @@ window.eksporNilai = () => {
         if (uniqueTPs.length === 0) { window.toast('Tidak ada data rekap untuk diekspor.', 'err'); return; }
 
         rows.push(['No', 'Nama Siswa', ...uniqueTPs.map(tp => `Rerata TP ${tp}`), 'Nilai Akhir Semester']);
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
+        const siswa = allData
+  .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+  .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { se
 
         siswa.forEach((s, i) => {
             const row = [i + 1, s.student_name];
