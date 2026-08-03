@@ -120,13 +120,53 @@ window.renderNilaiPengetahuan = (siswa) => {
   if (window.nilaiKolom.length) {
     cont.querySelectorAll('.nilai-input').forEach(inp => { inp.oninput = () => window.updateRerataRow(inp, siswa); });
     cont.querySelectorAll('[data-action="hapuskolom"]').forEach(btn => {
-      btn.onclick = async () => {
-        if (!confirm(`Hapus kolom "${window.nilaiKolom[btn.dataset.kidx]?.label}"?`)) return;
-        window.nilaiKolom.splice(parseInt(btn.dataset.kidx), 1);
-        await window.simpanKonfigKolom('nilai_kolom', window.nilaiKolom);
-        window.renderPenilaian();
-      };
-    });
+  btn.onclick = async () => {
+    const kidx = parseInt(btn.dataset.kidx);
+    const kolomLabel = window.nilaiKolom[kidx]?.label;
+    const kolomId = window.nilaiKolom[kidx]?.id;
+    
+    if (!confirm(`Hapus kolom "${kolomLabel}"?\n\n⚠️ Semua nilai siswa di kolom ini akan ikut terhapus!`)) return;
+    
+    // 1. Hapus kolom dari konfigurasi
+    window.nilaiKolom.splice(kidx, 1);
+    await window.simpanKonfigKolom('nilai_kolom', window.nilaiKolom);
+    
+    // 2. 🧹 HAPUS DATA NILAI dari kolom tersebut di semua record siswa
+    const filter = window.getNilaiFilter();
+    const semuaRecordNilai = allData.filter(d => 
+      d.type === 'nilai_pengetahuan' && 
+      d.class_name === filter.class_name && 
+      d.user_name === filter.user_name && 
+      d.semester === filter.semester && 
+      d.kode_tp === filter.kode_tp
+    );
+    
+    for (const record of semuaRecordNilai) {
+      try {
+        const nilaiObj = record.nilai ? JSON.parse(record.nilai) : {};
+        if (nilaiObj[kolomId] !== undefined) {
+          delete nilaiObj[kolomId]; // Hapus kolom dari objek nilai
+          
+          if (Object.keys(nilaiObj).length > 0) {
+            // Jika masih ada nilai lain, update record
+            await ROOT.child(record.__key).update({ 
+              nilai: JSON.stringify(nilaiObj), 
+              updated_at: window.nowISO() 
+            });
+          } else {
+            // Jika tidak ada nilai tersisa, hapus record
+            await ROOT.child(record.__key).remove();
+          }
+        }
+      } catch(e) {
+        console.error('Error cleanup nilai:', e);
+      }
+    }
+    
+    window.toast(`✅ Kolom "${kolomLabel}" dan semua nilainya berhasil dihapus!`, 'success');
+    window.renderPenilaian();
+  };
+});
   }
 };
 
@@ -225,13 +265,49 @@ semuaNd.forEach(r => { try { Object.assign(nilai, r.nilai ? JSON.parse(r.nilai) 
       };
     });
     cont.querySelectorAll('[data-action="hapuskolomket"]').forEach(btn => {
-      btn.onclick = async () => {
-        if (!confirm(`Hapus kolom "${window.nilaiKolomKet[btn.dataset.kidx]?.label}"?`)) return;
-        window.nilaiKolomKet.splice(parseInt(btn.dataset.kidx), 1);
-        await window.simpanKonfigKolom('nilai_kolom_ket', window.nilaiKolomKet);
-        window.renderPenilaian();
-      };
-    });
+  btn.onclick = async () => {
+    const kidx = parseInt(btn.dataset.kidx);
+    const kolomLabel = window.nilaiKolomKet[kidx]?.label;
+    const kolomId = window.nilaiKolomKet[kidx]?.id;
+    
+    if (!confirm(`Hapus kolom "${kolomLabel}"?\n\n⚠️ Semua nilai siswa di kolom ini akan ikut terhapus!`)) return;
+    
+    window.nilaiKolomKet.splice(kidx, 1);
+    await window.simpanKonfigKolom('nilai_kolom_ket', window.nilaiKolomKet);
+    
+    const filter = window.getNilaiFilter();
+    const semuaRecordNilai = allData.filter(d => 
+      d.type === 'nilai_keterampilan' && 
+      d.class_name === filter.class_name && 
+      d.user_name === filter.user_name && 
+      d.semester === filter.semester && 
+      d.kode_tp === filter.kode_tp
+    );
+    
+    for (const record of semuaRecordNilai) {
+      try {
+        const nilaiObj = record.nilai ? JSON.parse(record.nilai) : {};
+        if (nilaiObj[kolomId] !== undefined) {
+          delete nilaiObj[kolomId];
+          
+          if (Object.keys(nilaiObj).length > 0) {
+            await ROOT.child(record.__key).update({ 
+              nilai: JSON.stringify(nilaiObj), 
+              updated_at: window.nowISO() 
+            });
+          } else {
+            await ROOT.child(record.__key).remove();
+          }
+        }
+      } catch(e) {
+        console.error('Error cleanup nilai:', e);
+      }
+    }
+    
+    window.toast(`✅ Kolom "${kolomLabel}" dan semua nilainya berhasil dihapus!`, 'success');
+    window.renderPenilaian();
+  };
+});
   }
 };
 
@@ -327,50 +403,105 @@ window.simpanNilai = async () => {
 
   try {
     if (currentNilaiTab === 'pengetahuan' || currentNilaiTab === 'keterampilan') {
-      const tipeData = currentNilaiTab === 'pengetahuan' ? 'nilai_pengetahuan' : 'nilai_keterampilan';
-      const inputClass = currentNilaiTab === 'pengetahuan' ? '.nilai-input' : '.nilai-ket-input';
-      
-      const inputs = document.querySelectorAll(inputClass);
-      const dataPerSiswa = {};
-      inputs.forEach(inp => {
-        if (inp.value !== '') { // ✅ Hanya siswa yang terisi
-          if (!dataPerSiswa[inp.dataset.sid]) dataPerSiswa[inp.dataset.sid] = {};
-          dataPerSiswa[inp.dataset.sid][inp.dataset.kid] = parseFloat(inp.value);
-        }
-      });
-      
-      for (const [sid, nilaiBaru] of Object.entries(dataPerSiswa)) {
-        // Ambil SEMUA record siswa ini (untuk menangani duplikat)
-        const semuaRecord = allData.filter(d => d.type === tipeData && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
-        
-        // Gabungkan nilai lama + baru
-        let nilaiGabungan = {};
-        semuaRecord.forEach(r => { try { Object.assign(nilaiGabungan, r.nilai ? JSON.parse(r.nilai) : {}); } catch(e) {} });
-        Object.assign(nilaiGabungan, nilaiBaru);
-        
-        // Record utama = yang isinya paling banyak
-        let recordUtama = null, maxIsi = -1;
-        semuaRecord.forEach(r => {
-          let isi = 0; try { isi = r.nilai ? Object.keys(JSON.parse(r.nilai)).length : 0; } catch(e) {}
-          if (isi > maxIsi) { maxIsi = isi; recordUtama = r; }
-        });
-        
-        const pl = {
-          type: tipeData, student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
-          semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
-          nilai: JSON.stringify(nilaiGabungan), updated_at: window.nowISO()
-        };
-        
-        if (recordUtama) {
-          await ROOT.child(recordUtama.__key).update(pl);
-          // 🧹 Bersihkan duplikat
-          for (const dup of semuaRecord) {
-            if (dup.__key !== recordUtama.__key) await ROOT.child(dup.__key).remove();
+  const tipeData = currentNilaiTab === 'pengetahuan' ? 'nilai_pengetahuan' : 'nilai_keterampilan';
+  const inputClass = currentNilaiTab === 'pengetahuan' ? '.nilai-input' : '.nilai-ket-input';
+  const kolomAktif = currentNilaiTab === 'pengetahuan' ? window.nilaiKolom : window.nilaiKolomKet;
+  
+  // ✅ PROSES SEMUA SISWA, bukan hanya yang terisi
+  const inputs = document.querySelectorAll(inputClass);
+  const dataPerSiswa = {};
+  
+  inputs.forEach(inp => {
+    const sid = inp.dataset.sid;
+    const kid = inp.dataset.kid;
+    
+    if (!dataPerSiswa[sid]) dataPerSiswa[sid] = {};
+    
+    if (inp.value !== '') {
+      // Nilai terisi: simpan
+      dataPerSiswa[sid][kid] = parseFloat(inp.value);
+    }
+    // Nilai kosong: TIDAK dimasukkan ke objek (akan otomatis terhapus dari database)
+  });
+  
+  // Proses SETIAP siswa (termasuk yang semua nilainya kosong)
+  const semuaSiswa = allData.filter(d => d.type === 'student' && d.class_name === filter.class_name && d.user_name === filter.user_name);
+  
+  for (const siswa of semuaSiswa) {
+    const sid = siswa.__key;
+    const nilaiBaru = dataPerSiswa[sid] || {};
+    
+    // Ambil SEMUA record siswa ini
+    const semuaRecord = allData.filter(d => 
+      d.type === tipeData && 
+      d.student_key === sid && 
+      d.class_name === filter.class_name && 
+      d.user_name === filter.user_name && 
+      d.semester === filter.semester && 
+      d.kode_tp === filter.kode_tp
+    );
+    
+    // Ambil nilai lama (hanya kolom yang masih aktif)
+    let nilaiGabungan = {};
+    const kolomAktifIds = new Set(kolomAktif.map(k => k.id));
+    
+    semuaRecord.forEach(r => { 
+      try { 
+        const nilaiLama = r.nilai ? JSON.parse(r.nilai) : {};
+        // ✅ HANYA pertahankan nilai dari kolom yang masih aktif
+        for (const kid of Object.keys(nilaiLama)) {
+          if (kolomAktifIds.has(kid)) {
+            nilaiGabungan[kid] = nilaiLama[kid];
           }
-        } else {
-          await ROOT.push().set({ ...pl, created_at: window.nowISO() });
+        }
+      } catch(e) {} 
+    });
+    
+    // Timpa dengan nilai baru dari input (yang terisi)
+    Object.assign(nilaiGabungan, nilaiBaru);
+    
+    // Bersihkan nilai dari kolom yang dihapus user (dikosongkan di input)
+    for (const kid of kolomAktifIds) {
+      const inputEl = document.querySelector(`${inputClass}[data-sid="${sid}"][data-kid="${kid}"]`);
+      if (inputEl && inputEl.value === '') {
+        delete nilaiGabungan[kid]; // Hapus nilai jika input kosong
+      }
+    }
+    
+    // Cari record utama
+    let recordUtama = null, maxIsi = -1;
+    semuaRecord.forEach(r => {
+      let isi = 0; try { isi = r.nilai ? Object.keys(JSON.parse(r.nilai)).length : 0; } catch(e) {}
+      if (isi > maxIsi) { maxIsi = isi; recordUtama = r; }
+    });
+    
+    const pl = {
+      type: tipeData, student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
+      semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
+      nilai: JSON.stringify(nilaiGabungan), updated_at: window.nowISO()
+    };
+    
+    // Jika tidak ada nilai sama sekali, hapus record (atau skip jika tidak ada record)
+    if (Object.keys(nilaiGabungan).length === 0) {
+      if (recordUtama) {
+        await ROOT.child(recordUtama.__key).remove();
+      }
+      // Hapus duplikat jika ada
+      for (const dup of semuaRecord) {
+        if (dup.__key !== recordUtama?._key) {
+          try { await ROOT.child(dup.__key).remove(); } catch(e) {}
         }
       }
+    } else if (recordUtama) {
+      await ROOT.child(recordUtama.__key).update(pl);
+      for (const dup of semuaRecord) {
+        if (dup.__key !== recordUtama.__key) await ROOT.child(dup.__key).remove();
+      }
+    } else {
+      await ROOT.push().set({ ...pl, created_at: window.nowISO() });
+    }
+  }
+}
       
     } else if (currentNilaiTab === 'sikap') {
       // Logika sikap tetap sama seperti sebelumnya
