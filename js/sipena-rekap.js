@@ -1,6 +1,57 @@
 // ══════════════════════════════════════════════
-// SIPENA: Rekap Kehadiran (FIXED: Sorting A-Z + Data Aman)
+// SIPENA: Rekap Kehadiran (FIXED: Filter Bulan/Tahun + Sorting A-Z)
 // ══════════════════════════════════════════════
+
+// 🛡️ INISIALISASI VARIABLE DEFAULT (Mencegah Undefined)
+if (typeof window.selectedMonth === 'undefined') window.selectedMonth = new Date().getMonth() + 1;
+if (typeof window.selectedYear === 'undefined') window.selectedYear = new Date().getFullYear();
+if (typeof window.selectedSemester === 'undefined') window.selectedSemester = 'ganjil';
+if (typeof window.currentRekapTab === 'undefined') window.currentRekapTab = 'bulanan';
+
+// 🔍 FUNGSI PARSER TANGGAL PINTAR (Mendukung YYYY-MM-DD, DD-MM-YYYY, & Date Object)
+window.parseLogDate = (dateVal) => {
+  if (!dateVal) return { y: 0, m: 0, d: 0 };
+  
+  if (dateVal instanceof Date) {
+    return { y: dateVal.getFullYear(), m: dateVal.getMonth() + 1, d: dateVal.getDate() };
+  }
+
+  const str = String(dateVal).trim();
+
+  // Format YYYY-MM-DD atau DD-MM-YYYY
+  if (str.includes('-')) {
+    const parts = str.split('T')[0].split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        // YYYY-MM-DD
+        return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10), d: parseInt(parts[2], 10) };
+      } else if (parts[2].length === 4) {
+        // DD-MM-YYYY
+        return { y: parseInt(parts[2], 10), m: parseInt(parts[1], 10), d: parseInt(parts[0], 10) };
+      }
+    }
+  }
+
+  // Format YYYY/MM/DD atau DD/MM/YYYY
+  if (str.includes('/')) {
+    const parts = str.split('/');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10), d: parseInt(parts[2], 10) };
+      } else if (parts[2].length === 4) {
+        return { y: parseInt(parts[2], 10), m: parseInt(parts[1], 10), d: parseInt(parts[0], 10) };
+      }
+    }
+  }
+
+  // Fallback ke JS Date standar
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() };
+  }
+
+  return { y: 0, m: 0, d: 0 };
+};
 
 window.renderRekap = () => {
   // ✅ KELAS TERURUT A-Z
@@ -22,8 +73,8 @@ window.renderRekap = () => {
 
   if (currentRekapTab === 'bulanan') {
     const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
-    filterHtml += `<div class="fg" style="margin:0;min-width:130px;"><label>Bulan</label><select id="rekapBulanSelect">${monthNames.map((m, i) => `<option value="${i + 1}" ${selectedMonth === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
-    <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label><select id="rekapTahunSelect">${years.map(y => `<option value="${y}" ${selectedYear === y ? 'selected' : ''}>${y}</option>`).join('')}</select></div>`;
+    filterHtml += `<div class="fg" style="margin:0;min-width:130px;"><label>Bulan</label><select id="rekapBulanSelect">${monthNames.map((m, i) => `<option value="${i + 1}" ${Number(selectedMonth) === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+    <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label><select id="rekapTahunSelect">${years.map(y => `<option value="${y}" ${Number(selectedYear) === y ? 'selected' : ''}>${y}</option>`).join('')}</select></div>`;
   } else if (currentRekapTab === 'semester') {
     filterHtml += `<div class="fg" style="margin:0;min-width:160px;"><label>Semester</label><select id="rekapSemSelect"><option value="ganjil" ${selectedSemester === 'ganjil' ? 'selected' : ''}>Ganjil (Jul–Des)</option><option value="genap" ${selectedSemester === 'genap' ? 'selected' : ''}>Genap (Jan–Jun)</option></select></div>
     <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label><input type="number" id="rekapTahunSem" value="${selectedYear}" style="width:90px;"></div>`;
@@ -32,27 +83,37 @@ window.renderRekap = () => {
   document.getElementById('rekapFilters').innerHTML = filterHtml;
 
   document.getElementById('rekapKelasSelect').onchange = e => { currentRekapClass = e.target.value; };
+  
   document.getElementById('btnTampilRekap').onclick = () => {
     currentRekapClass = document.getElementById('rekapKelasSelect').value;
     if (currentRekapTab === 'bulanan') { 
-      selectedMonth = parseInt(document.getElementById('rekapBulanSelect').value); 
-      selectedYear = parseInt(document.getElementById('rekapTahunSelect').value); 
+      selectedMonth = parseInt(document.getElementById('rekapBulanSelect').value, 10); 
+      selectedYear = parseInt(document.getElementById('rekapTahunSelect').value, 10); 
     } else if (currentRekapTab === 'semester') { 
       selectedSemester = document.getElementById('rekapSemSelect').value; 
-      selectedYear = parseInt(document.getElementById('rekapTahunSem').value); 
+      selectedYear = parseInt(document.getElementById('rekapTahunSem').value, 10); 
     }
     window.generateRekap();
   };
+
   window.generateRekap();
 };
 
 window.filterLog = (log) => {
-  const d = new Date(log.date), m = d.getMonth() + 1, y = d.getFullYear();
+  if (!log || !log.date) return false;
+
+  const parsed = window.parseLogDate(log.date);
+  const m = parsed.m;
+  const y = parsed.y;
+
+  const selM = Number(selectedMonth);
+  const selY = Number(selectedYear);
+
   if (currentRekapTab === 'harian') return log.date === window.todayStr();
-  if (currentRekapTab === 'bulanan') return m === selectedMonth && y === selectedYear;
+  if (currentRekapTab === 'bulanan') return m === selM && y === selY;
   if (currentRekapTab === 'semester') {
-    if (selectedSemester === 'ganjil') return [7, 8, 9, 10, 11, 12].includes(m) && y === selectedYear;
-    else return [1, 2, 3, 4, 5, 6].includes(m) && y === selectedYear;
+    if (selectedSemester === 'ganjil') return [7, 8, 9, 10, 11, 12].includes(m) && y === selY;
+    else return [1, 2, 3, 4, 5, 6].includes(m) && y === selY;
   }
   return true;
 };
@@ -63,7 +124,7 @@ window.generateRekap = () => {
     .filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser)
     .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
 
-  // ✅ LOGS TETAP DIAMBIL (JANGAN SAMPAI TERHAPUS)
+  // ✅ LOGS DIAMBIL SESUAI FILTER PERIODE DENGAN TIPE DATA YANG PRESISI
   const logs = allData.filter(d => 
     d.type === 'attendance_log' && 
     d.class_name === currentRekapClass && 
@@ -73,15 +134,14 @@ window.generateRekap = () => {
   
   const cont = document.getElementById('rekapContent');
 
-  // 🔍 DEBUG: cek di Console browser (F12)
-  console.log(`📊 REKAP [${currentRekapClass}] Tab: ${currentRekapTab} | Siswa: ${siswa.length} | Log absensi ditemukan: ${logs.length}`);
+  console.log(`📊 REKAP [${currentRekapClass}] Tab: ${currentRekapTab} | Bulan: ${selectedMonth} | Tahun: ${selectedYear} | Siswa: ${siswa.length} | Log absensi ditemukan: ${logs.length}`);
 
   if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Tidak ada siswa di kelas ini.</p></div>'; return; }
 
   const stat = {};
   siswa.forEach(s => { stat[s.__key] = { nama: s.student_name, H: 0, I: 0, S: 0, A: 0, B: 0, detail: [] }; });
 
-  // ✅ PENGHITUNGAN ABSENSI (WAJIB ADA)
+  // ✅ PENGHITUNGAN ABSENSI
   logs.forEach(log => {
     if (!log.records) return;
     Object.keys(log.records).forEach(sid => {
@@ -129,7 +189,7 @@ window.generateRekap = () => {
   cont.innerHTML = html;
 };
 
-// ═════════════════════════════════════════════
+// ══════════════════════════════════════════════
 // FITUR CETAK REKAP (PRINT CLEAN)
 // ══════════════════════════════════════════════
 window.cetakRekap = () => {
@@ -152,7 +212,7 @@ window.cetakRekap = () => {
   
   if (currentRekapTab === 'bulanan') {
     const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    const bln = bulanSelect ? monthNames[parseInt(bulanSelect.value) - 1] : '';
+    const bln = bulanSelect ? monthNames[parseInt(bulanSelect.value, 10) - 1] : '';
     tahunText = tahunSelect ? tahunSelect.value : new Date().getFullYear();
     periodeText = `Bulan ${bln} Tahun ${tahunText}`;
     semesterText = '-';
@@ -179,8 +239,7 @@ window.cetakRekap = () => {
     <h3 style="font-size:14pt; margin:0 0 10px 0; font-weight:normal; color:#334155;">MAN BANTAENG</h3>
     <div style="display: flex; justify-content: center; gap: 40px; margin-top: 15px; font-size: 11pt;">
       <div><strong>Kelas:</strong> ${kelasName}</div>
-      <div><strong>Semester:</strong> ${currentRekapTab === 'semester' ? semesterText : (currentRekapTab === 'bulanan' ? '-' : 'Harian')}</div>
-      <div><strong>Tahun:</strong> ${tahunText}</div>
+      <div><strong>Periode:</strong> ${periodeText}</div>
     </div>
   `;
 
