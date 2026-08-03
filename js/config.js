@@ -28,10 +28,10 @@ const CONFIG = {
         { 
             id: 'emis', 
             icon: '💻', 
-            title: 'SIMPATIKA', 
+            title: 'EMIS GTK', 
             desc: '', 
             color: '#7e57c2', 
-            url: 'https://simpatika.kemenag.go.id/madrasah',
+            url: 'ttps://emisgtk.kemenag.go.id/',
             logo: 'assets/images/emis-app.png'
         },
         { 
