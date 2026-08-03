@@ -216,18 +216,44 @@ window.createSchedule = async function() {
 async function loadScheduleList() {
   const container = document.getElementById('scheduleList');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
+  
   try {
-    const snap = await db.collection('supervision_schedule').where('supervisorEmail', '==', currentUser.email).get();
-    if (snap.empty) { container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Belum ada jadwal supervisi</p></div>'; return; }
-    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+    console.log("🔍 Memuat jadwal untuk supervisor:", currentUser.email);
+    
+    // Query semua jadwal (tanpa filter supervisorEmail dulu untuk debugging)
+    const snap = await db.collection('supervision_schedule').get();
+    
+    console.log("📊 Total jadwal ditemukan:", snap.size);
+    
+    if (snap.empty) { 
+      container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Belum ada jadwal supervisi</p></div>'; 
+      return; 
+    }
+    
+    // Filter di client-side untuk jadwal milik supervisor ini
+    const schedules = snap.docs
+      .map(d => ({id: d.id, ...d.data()}))
+      .filter(s => s.supervisorEmail === currentUser.email)
+      .sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+    
+    console.log("📋 Jadwal untuk supervisor ini:", schedules.length);
+    
+    if (schedules.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Anda belum membuat jadwal supervisi</p></div>';
+      return;
+    }
+    
     container.innerHTML = schedules.map(s => {
       const statusBadge = {'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>', 'in-progress': '<span class="badge badge-progress">🔄 Berlangsung</span>', 'completed': '<span class="badge badge-done">✅ Selesai</span>'}[s.status] || s.status;
       const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '👨‍🏫';
       return `<div class="schedule-card"><div class="schedule-info"><div class="schedule-title">${roleIcon} ${s.teacherName}</div><div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}</div><div class="schedule-actions">${s.status !== 'completed' ? `<button class="btn btn-warning btn-sm" onclick="updateScheduleStatus('${s.id}','in-progress')">▶️ Mulai</button>` : ''}<button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">🗑️ Hapus</button></div></div>`;
     }).join('');
-  } catch(e) { container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>'; }
+    
+  } catch(e) { 
+    console.error("❌ Error loadScheduleList:", e);
+    container.innerHTML = `<div class="empty-state"><div class="icon"></div><p>Gagal memuat jadwal: ${e.message}</p><button class="btn btn-primary" onclick="loadScheduleList()">🔄 Coba Lagi</button></div>`; 
+  }
 }
-
 async function loadPendingSchedules() {
   const select = document.getElementById('supervisionSchedule');
   select.innerHTML = '<option value="">-- Memuat... --</option>';
