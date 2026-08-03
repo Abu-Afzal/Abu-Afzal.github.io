@@ -1293,18 +1293,7 @@ if (data.supervisorEmail) {
           body { font-family: Arial, sans-serif; margin: 20px; font-size: 11pt; }
           .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
           .header h2 { margin: 5px 0; color: #1e40af; }
-          .info-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1.5fr; /* Kolom kanan dibuat lebih lebar, otomatis geser ke kanan */
-  gap: 15px; 
-  margin-bottom: 20px; 
-  font-size: 10pt; 
-}
-/* Tambahkan ini untuk memberi jarak dan garis pemisah di kolom kanan agar lebih rapi */
-.info-grid > div:nth-child(even) {
-  padding-left: 15px;
-  border-left: 2px solid #e5e7eb;
-}
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 10pt; }
           table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #4CAF50; color: white; font-weight: bold; }
@@ -1341,15 +1330,19 @@ if (data.supervisorEmail) {
           <h3>KURIKULUM BERBASIS CINTA (KBC)</h3>
         </div>
         <div class="info-grid">
-          <div><strong>Tanggal:</strong> ${date.toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</div>
-          <div><strong>Yang Disupervisi:</strong> ${data.superviseeName}</div>
-          <div><strong>Madrasah:</strong> ${data.schoolName || 'MAN Bantaeng'}</div>
-          <div><strong>Kelas/Semester:</strong> ${data.classSemester || '-'}</div>
-          <div><strong>Supervisor:</strong> ${supervisorNamaLengkap}</div>
-          <div><strong>Mata Pelajaran:</strong> ${data.subject || '-'}</div>
-          <div><strong>Instrumen:</strong> ${data.instrumentName || '-'}</div>
-          <div><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">${data.predicate || 'Selesai'}</span></div>
-        </div>
+  <div class="info-column">
+    <div class="info-row"><strong>Tanggal:</strong> ${date.toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</div>
+    <div class="info-row"><strong>Madrasah:</strong> ${data.schoolName || 'MAN Bantaeng'}</div>
+    <div class="info-row"><strong>Supervisor:</strong> ${supervisorNamaLengkap}</div>
+    <div class="info-row"><strong>Instrumen:</strong> ${data.instrumentName || '-'}</div>
+  </div>
+  <div class="info-column">
+    <div class="info-row"><strong>Yang Disupervisi:</strong> ${data.superviseeName}</div>
+    <div class="info-row"><strong>Kelas/Semester:</strong> ${data.classSemester || '-'}</div>
+    <div class="info-row"><strong>Mata Pelajaran:</strong> ${data.subject || '-'}</div>
+    <div class="info-row"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">${data.predicate || 'Selesai'}</span></div>
+  </div>
+</div>
         <table>
           <thead><tr><th width="5%">No</th><th width="55%">Komponen</th><th width="10%">Skor</th></tr></thead>
           <tbody>
