@@ -216,44 +216,18 @@ window.createSchedule = async function() {
 async function loadScheduleList() {
   const container = document.getElementById('scheduleList');
   container.innerHTML = '<div style="text-align:center;padding:20px;"><span class="spinner"></span> Memuat...</div>';
-  
   try {
-    console.log("🔍 Memuat jadwal untuk supervisor:", currentUser.email);
-    
-    // Query semua jadwal (tanpa filter supervisorEmail dulu untuk debugging)
-    const snap = await db.collection('supervision_schedule').get();
-    
-    console.log("📊 Total jadwal ditemukan:", snap.size);
-    
-    if (snap.empty) { 
-      container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Belum ada jadwal supervisi</p></div>'; 
-      return; 
-    }
-    
-    // Filter di client-side untuk jadwal milik supervisor ini
-    const schedules = snap.docs
-      .map(d => ({id: d.id, ...d.data()}))
-      .filter(s => s.supervisorEmail === currentUser.email)
-      .sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
-    
-    console.log("📋 Jadwal untuk supervisor ini:", schedules.length);
-    
-    if (schedules.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Anda belum membuat jadwal supervisi</p></div>';
-      return;
-    }
-    
+    const snap = await db.collection('supervision_schedule').where('supervisorEmail', '==', currentUser.email).get();
+    if (snap.empty) { container.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>Belum ada jadwal supervisi</p></div>'; return; }
+    const schedules = snap.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
     container.innerHTML = schedules.map(s => {
       const statusBadge = {'scheduled': '<span class="badge badge-scheduled">📅 Dijadwalkan</span>', 'in-progress': '<span class="badge badge-progress">🔄 Berlangsung</span>', 'completed': '<span class="badge badge-done">✅ Selesai</span>'}[s.status] || s.status;
       const roleIcon = s.teacherRole === 'wakil' ? '⭐' : '👨‍🏫';
       return `<div class="schedule-card"><div class="schedule-info"><div class="schedule-title">${roleIcon} ${s.teacherName}</div><div class="schedule-detail">📅 ${formatDate(s.scheduledDate)} | 👤 Supervisor: ${s.supervisorName} | ${statusBadge}</div>${s.notes ? `<div class="schedule-detail">📝 ${s.notes}</div>` : ''}</div><div class="schedule-actions">${s.status !== 'completed' ? `<button class="btn btn-warning btn-sm" onclick="updateScheduleStatus('${s.id}','in-progress')">▶️ Mulai</button>` : ''}<button class="btn btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">🗑️ Hapus</button></div></div>`;
     }).join('');
-    
-  } catch(e) { 
-    console.error("❌ Error loadScheduleList:", e);
-    container.innerHTML = `<div class="empty-state"><div class="icon"></div><p>Gagal memuat jadwal: ${e.message}</p><button class="btn btn-primary" onclick="loadScheduleList()">🔄 Coba Lagi</button></div>`; 
-  }
+  } catch(e) { container.innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>Gagal memuat jadwal</p></div>'; }
 }
+
 async function loadPendingSchedules() {
   const select = document.getElementById('supervisionSchedule');
   select.innerHTML = '<option value="">-- Memuat... --</option>';
@@ -1311,60 +1285,43 @@ if (data.supervisorEmail) {
       <head>
         <title>Hasil Supervisi - ${data.superviseeName}</title>
         <style>
-  @media print {
-    @page { size: A4; margin: 15mm 20mm; } /* Margin kiri-kanan diperbesar agar konten lebih ke tengah */
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0; }
-    .no-print { display: none; }
-  }
-  body { font-family: Arial, sans-serif; margin: 0 40px; padding: 20px 0; font-size: 11pt; }
-  .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
-  .header h2 { margin: 5px 0; color: #1e40af; }
-  
-  /* ✅ PERBAIKAN LAYOUT IDENTITAS DI SINI ✅ */
-  .info-grid { 
-    display: grid; 
-    grid-template-columns: 1fr 1.3fr; /* Kolom kanan dibuat sedikit lebih lebar */
-    gap: 8px 60px; /* Jarak antar baris 8px, jarak antar kolom 60px (agar kolom kanan geser ke kanan) */
-    margin-bottom: 25px; 
-    font-size: 10pt; 
-  }
-  .info-row {
-    display: flex;
-    align-items: flex-start;
-  }
-  .info-row strong {
-    min-width: 130px; /* Memastikan label "Tanggal:", "Madrasah:", dll punya lebar tetap agar rapi */
-    display: inline-block;
-  }
-  /* ========================================== */
-
-  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
-  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-  th { background-color: #4CAF50; color: white; font-weight: bold; }
-  tr:nth-child(even) { background-color: #f2f2f2; }
-  .summary { background-color: #dcfce7; font-weight: bold; }
-  .notes-section { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .notes-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; min-height: 80px; }
-  .signature { 
-    margin-top: 40px; 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: 80px; /* Jarak tanda tangan diperlebar */
-    text-align: center;
-    margin-left: 40px; /* Geser blok tanda tangan ke kanan */
-  }
-  .signature-box { padding-top: 10px; }
-  .signature-line {
-    border-top: 1px solid #000;
-    padding-top: 5px;
-    margin-top: 60px;
-    display: inline-block;
-    min-width: 200px;
-    font-weight: bold;
-  }
-  .btn-print { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
-  .btn-print:hover { background: #2563eb; }
-</style>
+          @media print {
+            @page { size: A4; margin: 10mm; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none; }
+          }
+          body { font-family: Arial, sans-serif; margin: 20px; font-size: 11pt; }
+          .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; }
+          .header h2 { margin: 5px 0; color: #1e40af; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; font-size: 10pt; }
+          table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 9pt; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #4CAF50; color: white; font-weight: bold; }
+          tr:nth-child(even) { background-color: #f2f2f2; }
+          .summary { background-color: #dcfce7; font-weight: bold; }
+          .notes-section { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+          .notes-box { border: 1px solid #ddd; padding: 10px; border-radius: 5px; min-height: 80px; }
+          .signature { 
+            margin-top: 40px; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 60px;
+            text-align: center;
+          }
+          .signature-box { 
+            padding-top: 10px;
+          }
+          .signature-line {
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            margin-top: 60px;
+            display: inline-block;
+            min-width: 180px;
+            font-weight: bold;
+          }
+          .btn-print { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin-bottom: 20px; }
+          .btn-print:hover { background: #2563eb; }
+        </style>
       </head>
       <body>
         <button class="no-print btn-print" onclick="window.print(); window.close();">🖨️ Cetak Halaman Ini</button>
@@ -1373,19 +1330,15 @@ if (data.supervisorEmail) {
           <h3>KURIKULUM BERBASIS CINTA (KBC)</h3>
         </div>
         <div class="info-grid">
-  <div class="info-column">
-    <div class="info-row"><strong>Tanggal:</strong> ${date.toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</div>
-    <div class="info-row"><strong>Madrasah:</strong> ${data.schoolName || 'MAN Bantaeng'}</div>
-    <div class="info-row"><strong>Supervisor:</strong> ${supervisorNamaLengkap}</div>
-    <div class="info-row"><strong>Instrumen:</strong> ${data.instrumentName || '-'}</div>
-  </div>
-  <div class="info-column">
-    <div class="info-row"><strong>Yang Disupervisi:</strong> ${data.superviseeName}</div>
-    <div class="info-row"><strong>Kelas/Semester:</strong> ${data.classSemester || '-'}</div>
-    <div class="info-row"><strong>Mata Pelajaran:</strong> ${data.subject || '-'}</div>
-    <div class="info-row"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">${data.predicate || 'Selesai'}</span></div>
-  </div>
-</div>
+          <div><strong>Tanggal:</strong> ${date.toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</div>
+          <div><strong>Yang Disupervisi:</strong> ${data.superviseeName}</div>
+          <div><strong>Madrasah:</strong> ${data.schoolName || 'MAN Bantaeng'}</div>
+          <div><strong>Kelas/Semester:</strong> ${data.classSemester || '-'}</div>
+          <div><strong>Supervisor:</strong> ${supervisorNamaLengkap}</div>
+          <div><strong>Mata Pelajaran:</strong> ${data.subject || '-'}</div>
+          <div><strong>Instrumen:</strong> ${data.instrumentName || '-'}</div>
+          <div><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">${data.predicate || 'Selesai'}</span></div>
+        </div>
         <table>
           <thead><tr><th width="5%">No</th><th width="55%">Komponen</th><th width="10%">Skor</th></tr></thead>
           <tbody>
@@ -1509,4 +1462,4 @@ window.addEventListener('load', async () => {
   await new Promise(resolve => setTimeout(resolve, 500)); 
   const isValid = await checkSipelitaSession(); 
   if (isValid) { showDashboard(); } 
-});
+}); lihat js saya
