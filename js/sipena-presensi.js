@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA: Presensi (Versi Final & Stabil)
+// SIPENA: Presensi (Versi Final & Stabil + Urutan A-Z)
 // ══════════════════════════════════════════════
 
 window.attendanceData = window.attendanceData || {};
@@ -9,7 +9,11 @@ window.renderPresensi = () => {
   // PENGAMAN: Jika data belum siap, hentikan sementara agar tidak error
   if (typeof allData === 'undefined' || !allData) return;
 
-  const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+  // ✅ DITAMBAHKAN: Pengurutan Tab Kelas A-Z
+  const kelas = allData
+    .filter(d => d.type === 'class' && d.user_name === currentUser)
+    .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { numeric: true, sensitivity: 'base' }));
+
   const tabs = document.getElementById('classTabs');
   const dateInput = document.getElementById('inputTanggalPresensi');
 
@@ -70,18 +74,23 @@ window.loadPresensiDataForDate = (targetDate) => {
 window.renderDaftarSiswa = () => {
   if (typeof allData === 'undefined' || !allData) return;
 
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
+  // ✅ UTAMA: Urutkan Siswa Berdasarkan Nama A-Z
+  const siswa = allData
+    .filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser)
+    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+
   const cont = document.getElementById('studentListContainer');
 
   if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
 
-  cont.innerHTML = siswa.map(s => {
+  // ✅ DITAMBAHKAN: Penomoran otomatis (idx + 1) di depan nama siswa
+  cont.innerHTML = siswa.map((s, idx) => {
     const st = window.attendanceData[s.__key] || '';
     const foto = s.student_photo ? `<img src="${s.student_photo}" onerror="this.outerHTML='👤'">` : '👤';
     return `<div class="student-card">
       <div class="student-photo">${foto}</div>
       <div style="flex:1;">
-        <div class="student-name">${s.student_name}</div>
+        <div class="student-name">${idx + 1}. ${s.student_name}</div>
         <div class="status-buttons">
           ${['HADIR', 'IZIN', 'SAKIT', 'ALPA', 'BOLOS'].map(x => `<button class="status-btn ${x.toLowerCase()} ${st === x ? 'active' : ''}" data-sid="${s.__key}" data-st="${x}">${x.charAt(0)}</button>`).join('')}
         </div>
