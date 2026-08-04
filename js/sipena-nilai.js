@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA: Penilaian (Dengan Urutan Siswa A-Z)
+// SIPENA: Penilaian (Dengan Urutan Siswa A-Z & Kop Surat PDF)
 // ══════════════════════════════════════════════
 
 window.renderPenilaian = () => {
@@ -15,12 +15,16 @@ window.renderPenilaian = () => {
   document.getElementById('btnSimpanNilai').style.display = (isRekap || isAnalisisSoal) ? 'none' : 'inline-flex';
   document.getElementById('btnAddKolom').style.display = currentNilaiTab === 'pengetahuan' ? 'inline-flex' : 'none';
   document.getElementById('btnAddKolomKet').style.display = currentNilaiTab === 'keterampilan' ? 'inline-flex' : 'none';
-  document.getElementById('btnExportNilai').style.display = (isRekap || isAnalisisSoal) ? 'none' : 'inline-flex';
+  document.getElementById('btnExportNilai').style.display = isAnalisisSoal ? 'none' : 'inline-flex';
   
   // Tampilkan tombol khusus Analisis Soal
   const btnExportAnalisisSoal = document.getElementById('btnExportAnalisisSoal');
   if (btnExportAnalisisSoal) {
     btnExportAnalisisSoal.style.display = isAnalisisSoal ? 'inline-flex' : 'none';
+  }
+  const btnPreviewPDF = document.getElementById('btnPreviewPDF');
+  if (btnPreviewPDF) {
+    btnPreviewPDF.style.display = isAnalisisSoal ? 'inline-flex' : 'none';
   }
 
   if (!kelas.length) {
@@ -63,13 +67,15 @@ window.renderPenilaian = () => {
   else if (currentNilaiTab === 'analisis-soal') window.renderAnalisisAsesmen(siswa);
 };
 
-// Helper untuk mendapatkan filter dasar
+// Helper untuk mendapatkan filter dasar identitas TP/KD
 window.getNilaiFilter = () => {
   return {
     class_name: currentNilaiClass,
     user_name: currentUser,
     semester: document.getElementById('nilaiSemesterSelect')?.value || 'ganjil',
-    kode_tp: document.getElementById('nilaiKodeTP')?.value.trim() || ''
+    kode_tp: document.getElementById('nilaiKodeTP')?.value.trim() || '',
+    mapel: document.getElementById('nilaiMapel')?.value.trim() || '',
+    deskripsi_tp: document.getElementById('nilaiDeskripsiTP')?.value.trim() || ''
   };
 };
 
@@ -146,7 +152,7 @@ window.renderNilaiPengetahuan = (siswa) => {
 
 window.updateRerataRow = (changedInput, siswa) => {
   const row = changedInput.closest('tr');
-  const inputs = row.querySelectorAll('.nilai-input');
+  const inputs = row.querySelectorAll('.nilai-input, .nilai-ket-input');
   const vals = [...inputs].map(i => parseFloat(i.value)).filter(v => !isNaN(v));
   const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '–';
   const lastTd = row.querySelector('td:last-child');
@@ -228,15 +234,7 @@ window.renderNilaiKeterampilan = (siswa) => {
   cont.innerHTML = html;
   
   if (window.nilaiKolomKet.length) {
-    cont.querySelectorAll('.nilai-ket-input').forEach(inp => {
-      inp.oninput = () => {
-        const row = inp.closest('tr'); const inputs = row.querySelectorAll('.nilai-ket-input');
-        const vals = [...inputs].map(i => parseFloat(i.value)).filter(v => !isNaN(v));
-        const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '–';
-        const lastTd = row.querySelector('td:last-child');
-        if (lastTd) { const col = vals.length ? (parseFloat(avg) >= 75 ? '#10b981' : (parseFloat(avg) >= 60 ? '#f59e0b' : '#ef4444')) : '#94a3b8'; lastTd.textContent = avg; lastTd.style.color = col; }
-      };
-    });
+    cont.querySelectorAll('.nilai-ket-input').forEach(inp => { inp.oninput = () => window.updateRerataRow(inp, siswa); });
     cont.querySelectorAll('[data-action="hapuskolomket"]').forEach(btn => {
       btn.onclick = async () => {
         if (!confirm(`Hapus kolom "${window.nilaiKolomKet[btn.dataset.kidx]?.label}"?`)) return;
@@ -317,7 +315,7 @@ window.renderRekapNilai = (siswa) => {
 
   html += `</tbody></table></div>`;
   
-  const mapel = document.getElementById('nilaiMapel')?.value || 'Umum';
+  const mapel = filter.mapel || 'Umum';
   html = `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px;margin-bottom:16px;font-size:0.9rem;color:#0369a1;">
     📌 <strong>Rekapitulasi Nilai Semester ${filter.semester === 'ganjil' ? 'Ganjil' : 'Genap'}</strong> | Mapel: ${mapel} | Total TP Terdata: ${uniqueTPs.length}
   </div>` + html;
@@ -334,9 +332,6 @@ window.simpanNilai = async () => {
 
   const btn = document.getElementById('btnSimpanNilai');
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
-  
-  const mapel = document.getElementById('nilaiMapel').value.trim();
-  const deskripsi = document.getElementById('nilaiDeskripsiTP').value.trim();
 
   try {
     if (currentNilaiTab === 'pengetahuan') {
@@ -348,7 +343,7 @@ window.simpanNilai = async () => {
         const ex = allData.find(d => d.type === 'nilai_pengetahuan' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
         const pl = { 
           type: 'nilai_pengetahuan', student_key: sid, class_name: filter.class_name, user_name: filter.user_name, 
-          semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
+          semester: filter.semester, kode_tp: filter.kode_tp, mapel: filter.mapel, deskripsi_tp: filter.deskripsi_tp,
           nilai: JSON.stringify(nilai), updated_at: window.nowISO() 
         };
         if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
@@ -363,7 +358,7 @@ window.simpanNilai = async () => {
         const ex = allData.find(d => d.type === 'nilai_sikap' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
         const pl = { 
           type: 'nilai_sikap', student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
-          semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
+          semester: filter.semester, kode_tp: filter.kode_tp, mapel: filter.mapel, deskripsi_tp: filter.deskripsi_tp,
           sikap_detail: JSON.stringify(data.sikap_detail), catatan: data.catatan, updated_at: window.nowISO() 
         };
         if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
@@ -377,7 +372,7 @@ window.simpanNilai = async () => {
         const ex = allData.find(d => d.type === 'nilai_keterampilan' && d.student_key === sid && d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester && d.kode_tp === filter.kode_tp);
         const pl = { 
           type: 'nilai_keterampilan', student_key: sid, class_name: filter.class_name, user_name: filter.user_name,
-          semester: filter.semester, kode_tp: filter.kode_tp, mapel: mapel, deskripsi_tp: deskripsi,
+          semester: filter.semester, kode_tp: filter.kode_tp, mapel: filter.mapel, deskripsi_tp: filter.deskripsi_tp,
           nilai: JSON.stringify(nilai), updated_at: window.nowISO() 
         };
         if (ex) await ROOT.child(ex.__key).update(pl); else await ROOT.push().set({ ...pl, created_at: window.nowISO() });
@@ -422,8 +417,6 @@ window.eksporNilai = () => {
     const filter = window.getNilaiFilter();
     const kelas = currentNilaiClass || 'Tanpa_Kelas';
     const tahunAjaran = document.getElementById('nilaiTahunAjaran')?.value || '2024/2025';
-    const mapel = document.getElementById('nilaiMapel')?.value || '-';
-    const deskripsi = document.getElementById('nilaiDeskripsiTP')?.value || '-';
     const semesterText = filter.semester === 'ganjil' ? 'Ganjil' : 'Genap';
     
     // Ambil data siswa & urutkan A-Z
@@ -435,12 +428,12 @@ window.eksporNilai = () => {
     let filename = '';
     let sheetName = 'Data';
 
-    rows.push([`LAPORAN NILAI`]);
+    rows.push([`LAPORAN CAPAIAN NIKAI SIPENA`]);
     rows.push([`Kelas: ${kelas}`, `Semester: ${semesterText}`, `Tahun Ajaran: ${tahunAjaran}`]);
     
     if (currentNilaiTab !== 'rekap') {
-        rows.push([`Kode TP/KD: ${filter.kode_tp || '-'}`, `Mata Pelajaran: ${mapel}`]);
-        rows.push([`Deskripsi: ${deskripsi}`]);
+        rows.push([`Kode TP/KD: ${filter.kode_tp || '-'}`, `Mata Pelajaran: ${filter.mapel || '-'}`]);
+        rows.push([`Deskripsi: ${filter.deskripsi_tp || '-'}`]);
     }
     rows.push([]);
 
@@ -597,7 +590,7 @@ window.renderAnalisisAsesmen = (siswa) => {
         <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;">
           <div class="form-group">
             <label>Mata Pelajaran *</label>
-            <input type="text" id="asesmenMapel" placeholder="Contoh: Sosiologi" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;">
+            <input type="text" id="asesmenMapel" value="${filter.mapel || ''}" placeholder="Contoh: Sosiologi" style="width:100%;padding:10px;border:1.5px solid #e2e8f0;border-radius:8px;">
           </div>
           <div class="form-group">
             <label>Jumlah Soal *</label>
@@ -727,7 +720,7 @@ window.tampilkanInputAsesmen = (setupAsesmen, siswa) => {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
         <div>
           <h3 style="margin:0 0 5px;color:#0369a1;">📝 Asesmen: ${mata_pelajaran}</h3>
-          <p style="margin:0;color:#64748b;font-size:0.9rem;">Kelas: ${setupAsesmen.class_name} | Semester: ${setupAsesmen.semester} | KKM: ${kkm} | Total Skor: ${total_skor_max}</p>
+          <p style="margin:0;color:#64748b;font-size:0.9rem;">Kelas: ${setupAsesmen.class_name} | Semester: ${setupAsesmen.semester} | KKM: ${kkm} | Total Skor Max: ${total_skor_max}</p>
         </div>
         <button onclick="window.resetSetupAsesmen('${setupAsesmen.__key}')" style="padding:8px 16px;background:#ef4444;color:white;border:none;border-radius:6px;font-size:0.85rem;cursor:pointer;">
           🔄 Reset Setup
@@ -772,9 +765,9 @@ window.tampilkanInputAsesmen = (setupAsesmen, siswa) => {
     html += `
       <tr>
         <td style="text-align:center;color:#94a3b8;">${idx + 1}</td>
-        <td style="text-align:center;color:#94a3b8;">-</td>
+        <td style="text-align:center;color:#94a3b8;">${s.nis || s.nisn || '-'}</td>
         <td style="font-weight:600;">${s.student_name}</td>
-        <td style="text-align:center;">-</td>
+        <td style="text-align:center;">${s.gender || s.jk || '-'}</td>
         ${skorPerSoal.map((skor, i) => `
           <td style="text-align:center;">
             <input type="number" class="skor-asesmen-input" 
@@ -818,11 +811,11 @@ window.tampilkanInputAsesmen = (setupAsesmen, siswa) => {
       const persen = ((total / total_skor_max) * 100).toFixed(1);
       const tuntas = parseFloat(persen) >= kkm;
       
-      row.cells[row.cells.length - 4].textContent = total;
-      row.cells[row.cells.length - 3].textContent = persen + '%';
-      row.cells[row.cells.length - 3].style.color = tuntas ? '#10b981' : '#ef4444';
-      row.cells[row.cells.length - 2].textContent = tuntas ? 'Ya' : 'Tidak';
-      row.cells[row.cells.length - 2].style.color = tuntas ? '#10b981' : '#ef4444';
+      row.cells[row.cells.length - 6].textContent = total;
+      row.cells[row.cells.length - 5].textContent = persen + '%';
+      row.cells[row.cells.length - 5].style.color = tuntas ? '#10b981' : '#ef4444';
+      row.cells[row.cells.length - 4].textContent = tuntas ? 'Ya' : 'Tidak';
+      row.cells[row.cells.length - 4].style.color = tuntas ? '#10b981' : '#ef4444';
       row.cells[row.cells.length - 1].textContent = persen;
     });
   });
@@ -930,14 +923,15 @@ window.exportAnalisisAsesmenExcel = () => {
   const jmlSiswa = siswa.length || 1;
   
   // HEADER
-  rows.push(['Analisis Hasil Asesmen']);
+  rows.push(['ANALISIS HASIL ASESMEN / BUTIR SOAL']);
   rows.push([]);
   rows.push(['Mata Pelajaran', ':', mata_pelajaran]);
   rows.push(['Kelas', ':', class_name]);
   rows.push(['Semester', ':', semester === 'ganjil' ? 'Ganjil' : 'Genap']);
+  rows.push(['KKM', ':', kkm]);
   rows.push([]);
   
-  // TABEL HEADER (3 Baris)
+  // TABEL HEADER (2 Baris)
   const headerRow1 = ['Nomor', 'Induk', 'Nama Peserta', 'L/P'];
   for (let i = 1; i <= jumlah_soal; i++) {
     headerRow1.push(i);
@@ -972,7 +966,7 @@ window.exportAnalisisAsesmenExcel = () => {
     
     skorPerSoal.forEach((skor, i) => { totalSkorPerSoal[i] += skor; });
     
-    const row = [idx + 1, '', s.student_name, ''];
+    const row = [idx + 1, s.nis || s.nisn || '', s.student_name, s.gender || s.jk || ''];
     skorPerSoal.forEach(skor => row.push(skor));
     row.push(jumlahSkor, persenKetercapaian + '%', tuntas ? 'Ya' : 'Tidak', '', '', persenKetercapaian);
     rows.push(row);
@@ -1061,15 +1055,17 @@ window.exportAnalisisAsesmenExcel = () => {
   
   rows.push([]);
   rows.push([]);
-  rows.push([]);
   
   // TANDA TANGAN
+  const userData = JSON.parse(localStorage.getItem('sipelita_user') || '{}');
+  const namaGuru = userData.nama || currentUser || 'ELIS HARIANTO, S.Pd';
+  const nipGuru = userData.nip || '19900211 202012 1 007';
+
   rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'Guru Mata Pelajaran']);
   rows.push([]);
   rows.push([]);
-  rows.push([]);
-  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'ELIS HARIANTO, S.Pd']);
-  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'NIP. 19900211 202012 1 007']);
+  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', namaGuru]);
+  rows.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '', 'NIP. ' + nipGuru]);
   
   // EXPORT KE EXCEL
   const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -1077,7 +1073,7 @@ window.exportAnalisisAsesmenExcel = () => {
   // SET COLUMN WIDTHS
   const colWidths = [
     { wch: 5 },   // No
-    { wch: 10 },  // Induk
+    { wch: 12 },  // Induk
     { wch: 30 },  // Nama
     { wch: 5 },   // L/P
     ...Array(jumlah_soal).fill({ wch: 6 }), // Skor per soal
@@ -1092,9 +1088,8 @@ window.exportAnalisisAsesmenExcel = () => {
   
   // MERGE CELLS FOR HEADER
   ws['!merges'] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: jumlah_soal + 7 } }, // Title
-    { s: { r: 8, c: 0 }, e: { r: 8, c: jumlah_soal + 7 } }, // Hasil Analisis header
-    { s: { r: 18, c: 0 }, e: { r: 18, c: jumlah_soal + 7 } } // Kesimpulan header
+    { s: { r: 0, c: 0 }, e: { r: 0, c: jumlah_soal + 7 } },
+    { s: { r: 9 + jmlSiswa + 3, c: 0 }, e: { r: 9 + jmlSiswa + 3, c: jumlah_soal + 7 } }
   ];
   
   const wb = XLSX.utils.book_new();
@@ -1105,8 +1100,8 @@ window.exportAnalisisAsesmenExcel = () => {
 };
 
 // ══════════════════════════════════════════════
-// PREVIEW & CETAK PDF ANALISIS SOAL ASESMEN
-// ═════════════════════════════════════════════
+// PREVIEW & CETAK PDF ANALISIS SOAL ASESMEN (DENGAN KOP SURAT RESMI)
+// ══════════════════════════════════════════════
 
 window.previewAnalisisPDF = () => {
   const setupAsesmen = allData.find(d => d.type === 'asesmen_setup' && d.class_name === currentNilaiClass);
@@ -1122,8 +1117,13 @@ window.previewAnalisisPDF = () => {
     .filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser)
     .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
   
-  // Ambil data user untuk tanda tangan
+  // Ambil data user & sekolah untuk Kop Surat dan Tanda Tangan
   const userData = JSON.parse(localStorage.getItem('sipelita_user') || '{}');
+  const namaSekolah = userData.nama_sekolah || 'SMA NEGERI / SMP NEGERI SIPENA';
+  const dinasPendidikan = userData.dinas || 'DINAS PENDIDIKAN DAN KEBUDAYAAN';
+  const alamatSekolah = userData.alamat_sekolah || 'Jl. Pendidikan No. 1, Kab. Bantaeng, Sulawesi Selatan';
+  const namaKepala = userData.nama_kepala || 'Drs. H. KEPALA SEKOLAH, M.Pd';
+  const nipKepala = userData.nip_kepala || '19680101 199303 1 008';
   const namaGuru = userData.nama || currentUser || 'ELIS HARIANTO, S.Pd';
   const nipGuru = userData.nip || '19900211 202012 1 007';
   
@@ -1149,7 +1149,9 @@ window.previewAnalisisPDF = () => {
     
     dataSiswa.push({
       no: idx + 1,
+      induk: s.nis || s.nisn || '-',
       nama: s.student_name,
+      jk: s.gender || s.jk || '-',
       skor: skorPerSoal,
       total: jumlahSkor,
       persen: persenKetercapaian,
@@ -1161,126 +1163,125 @@ window.previewAnalisisPDF = () => {
   const tanggalSekarang = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   
   let html = `
-    <div id="pdfContent" style="font-family:Arial,sans-serif;font-size:11px;line-height:1.3;padding:15px;">
+    <div id="pdfContent" style="font-family:'Times New Roman', Times, serif;font-size:11px;line-height:1.2;padding:10px;color:#000;">
+      
+      <!-- KOP SURAT RESMI -->
+      <div style="text-align:center; position:relative; border-bottom:3px solid #000; padding-bottom:6px; margin-bottom:2px;">
+        <div style="font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">PEMERINTAH PROVINSI / KABUPATEN</div>
+        <div style="font-size:14px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">${dinasPendidikan}</div>
+        <div style="font-size:16px; font-weight:bold; text-transform:uppercase; margin:2px 0;">${namaSekolah}</div>
+        <div style="font-size:10px; font-style:italic;">${alamatSekolah}</div>
+      </div>
+      <div style="border-bottom:1px solid #000; margin-bottom:15px;"></div>
+
+      <!-- JUDUL LAPORAN -->
       <div style="text-align:center;margin-bottom:15px;">
-        <h2 style="margin:0 0 5px 0;font-size:16px;color:#000;">Analisis Hasil Asesmen</h2>
-        <p style="margin:0;font-size:11px;color:#000;">Mata Pelajaran: <strong>${mata_pelajaran}</strong> | Kelas: <strong>${class_name}</strong> | Semester: <strong>${semester === 'ganjil' ? 'Ganjil' : 'Genap'}</strong></p>
+        <h2 style="margin:0 0 4px 0;font-size:14px;font-weight:bold;text-transform:uppercase;text-decoration:underline;">LAPORAN ANALISIS HASIL ASESMEN</h2>
+        <p style="margin:0;font-size:11px;">Mata Pelajaran: <strong>${mata_pelajaran}</strong> | Kelas: <strong>${class_name}</strong> | Semester: <strong>${semester === 'ganjil' ? 'Ganjil' : 'Genap'}</strong> | KKM: <strong>${kkm}</strong></p>
       </div>
       
-      <table style="width:100%;border-collapse:collapse;margin-bottom:15px;font-size:10px;">
+      <!-- TABEL DATA SKOR SISWA -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:12px;font-size:10px;">
         <thead>
           <tr>
-            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;">No</th>
-            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;">Nama Peserta</th>
-            <th colspan="${jumlah_soal}" style="border:1px solid #000;padding:4px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;">Nomor Soal</th>
-            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;">Jml<br>Skor</th>
-            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;">%<br>Ketercapaian</th>
-            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;">Tuntas</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">No</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">No Induk</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:left;background:#f2f2f2;">Nama Peserta</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">L/P</th>
+            <th colspan="${jumlah_soal}" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">Nomor Soal (Skor Max)</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">Jml Skor</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">% Capai</th>
+            <th rowspan="2" style="border:1px solid #000;padding:4px;text-align:center;background:#f2f2f2;">Tuntas</th>
           </tr>
           <tr>
-            ${Array.from({length: jumlah_soal}, (_, i) => `<th style="border:1px solid #000;padding:3px;text-align:center;background:#e0e0e0;color:#000;font-weight:bold;font-size:9px;">${i+1}<br><small>(${skor_max_per_soal[i]})</small></th>`).join('')}
+            ${Array.from({length: jumlah_soal}, (_, i) => `<th style="border:1px solid #000;padding:2px;text-align:center;background:#f2f2f2;font-size:9px;">${i+1}<br>(${skor_max_per_soal[i]})</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           ${dataSiswa.map(s => `
             <tr>
-              <td style="border:1px solid #000;padding:4px;text-align:center;color:#000;">${s.no}</td>
-              <td style="border:1px solid #000;padding:4px;color:#000;">${s.nama}</td>
-              ${s.skor.map(skor => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;">${skor}</td>`).join('')}
-              <td style="border:1px solid #000;padding:4px;text-align:center;font-weight:bold;color:#000;">${s.total}</td>
-              <td style="border:1px solid #000;padding:4px;text-align:center;color:#000;">${s.persen}%</td>
-              <td style="border:1px solid #000;padding:4px;text-align:center;color:${s.tuntas === 'Ya' ? 'green' : 'red'};">${s.tuntas}</td>
+              <td style="border:1px solid #000;padding:3px;text-align:center;">${s.no}</td>
+              <td style="border:1px solid #000;padding:3px;text-align:center;">${s.induk}</td>
+              <td style="border:1px solid #000;padding:3px;">${s.nama}</td>
+              <td style="border:1px solid #000;padding:3px;text-align:center;">${s.jk}</td>
+              ${s.skor.map(skor => `<td style="border:1px solid #000;padding:3px;text-align:center;">${skor}</td>`).join('')}
+              <td style="border:1px solid #000;padding:3px;text-align:center;font-weight:bold;">${s.total}</td>
+              <td style="border:1px solid #000;padding:3px;text-align:center;">${s.persen}%</td>
+              <td style="border:1px solid #000;padding:3px;text-align:center;font-weight:bold;color:${s.tuntas === 'Ya' ? 'green' : 'red'};">${s.tuntas}</td>
             </tr>
           `).join('')}
-          <tr style="background:#f9f9f9;">
-            <td colspan="2" style="border:1px solid #000;padding:4px;font-weight:bold;color:#000;">Jumlah Total</td>
-            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;">${skor}</td>`).join('')}
-            <td style="border:1px solid #000;padding:4px;text-align:center;font-weight:bold;color:#000;">${totalSkorPerSoal.reduce((a,b) => a+b, 0)}</td>
+          <tr style="background:#fafafa;font-weight:bold;">
+            <td colspan="4" style="border:1px solid #000;padding:4px;text-align:right;">Jumlah Total</td>
+            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:4px;text-align:center;">${skor}</td>`).join('')}
+            <td style="border:1px solid #000;padding:4px;text-align:center;">${totalSkorPerSoal.reduce((a,b) => a+b, 0)}</td>
             <td colspan="2" style="border:1px solid #000;padding:4px;"></td>
           </tr>
-          <tr style="background:#f9f9f9;">
-            <td colspan="2" style="border:1px solid #000;padding:4px;font-weight:bold;color:#000;">Rata-rata/Daya Serap</td>
-            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;">${(skor/jmlSiswa).toFixed(1)}</td>`).join('')}
-            <td style="border:1px solid #000;padding:4px;text-align:center;font-weight:bold;color:#000;">${(totalSkorPerSoal.reduce((a,b) => a+b, 0)/jmlSiswa).toFixed(1)}</td>
+          <tr style="background:#fafafa;font-weight:bold;">
+            <td colspan="4" style="border:1px solid #000;padding:4px;text-align:right;">Rata-Rata Daya Serap</td>
+            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:4px;text-align:center;">${(skor/jmlSiswa).toFixed(1)}</td>`).join('')}
+            <td style="border:1px solid #000;padding:4px;text-align:center;">${(totalSkorPerSoal.reduce((a,b) => a+b, 0)/jmlSiswa).toFixed(1)}</td>
             <td colspan="2" style="border:1px solid #000;padding:4px;"></td>
           </tr>
         </tbody>
       </table>
       
-      <div style="margin-bottom:15px;">
-        <h3 style="margin:0 0 8px 0;font-size:12px;color:#000;">Hasil Analisis:</h3>
+      <!-- RINCIAN STATISTIK ANALISIS BUTIR SOAL -->
+      <div style="margin-bottom:12px;">
+        <div style="font-weight:bold;font-size:11px;margin-bottom:4px;">A. Perhitungan Ketercapaian Butir Soal:</div>
         <table style="width:100%;border-collapse:collapse;font-size:10px;">
           <tr>
-            <td style="border:1px solid #000;padding:4px;width:25px;color:#000;">1</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">Jumlah skor yang diperoleh</td>
-            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;width:30px;">${skor}</td>`).join('')}
+            <td style="border:1px solid #000;padding:3px;width:20px;text-align:center;">1</td>
+            <td style="border:1px solid #000;padding:3px;">Jumlah skor yang diperoleh</td>
+            ${totalSkorPerSoal.map(skor => `<td style="border:1px solid #000;padding:3px;text-align:center;width:28px;">${skor}</td>`).join('')}
           </tr>
           <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">2</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">Jumlah skor Ideal (seharusnya)</td>
-            ${skor_max_per_soal.map(skorMax => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;width:30px;">${skorMax * jmlSiswa}</td>`).join('')}
+            <td style="border:1px solid #000;padding:3px;text-align:center;">2</td>
+            <td style="border:1px solid #000;padding:3px;">Jumlah skor Ideal (seharusnya)</td>
+            ${skor_max_per_soal.map(skorMax => `<td style="border:1px solid #000;padding:3px;text-align:center;width:28px;">${skorMax * jmlSiswa}</td>`).join('')}
           </tr>
           <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">3</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">% Ketercapaian</td>
+            <td style="border:1px solid #000;padding:3px;text-align:center;">3</td>
+            <td style="border:1px solid #000;padding:3px;">% Ketercapaian Butir Soal</td>
             ${totalSkorPerSoal.map((skor, i) => {
               const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
-              const ketercapaian = skorIdeal > 0 ? ((skor / skorIdeal) * 100).toFixed(2) : 0;
-              return `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;width:30px;">${ketercapaian}</td>`;
+              const ketercapaian = skorIdeal > 0 ? ((skor / skorIdeal) * 100).toFixed(1) : 0;
+              return `<td style="border:1px solid #000;padding:3px;text-align:center;width:28px;">${ketercapaian}%</td>`;
             }).join('')}
-          </tr>
-          <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">4</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">% Kegagalan</td>
-            ${totalSkorPerSoal.map((skor, i) => {
-              const skorIdeal = skor_max_per_soal[i] * jmlSiswa;
-              const kegagalan = skorIdeal > 0 ? (((skorIdeal - skor) / skorIdeal) * 100).toFixed(2) : 0;
-              return `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;width:30px;">${kegagalan}</td>`;
-            }).join('')}
-          </tr>
-          <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">5</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">Skor maksimal tiap nomor</td>
-            ${skor_max_per_soal.map(skorMax => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;width:30px;">${skorMax}</td>`).join('')}
-          </tr>
-          <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">6</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">Jumlah peserta ujian</td>
-            ${Array(jumlah_soal).fill(jmlSiswa).map(n => `<td style="border:1px solid #000;padding:4px;text-align:center;color:#000;width:30px;">${n}</td>`).join('')}
-          </tr>
-          <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">7</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">Jumlah peserta yang tidak tuntas</td>
-            <td colspan="${jumlah_soal}" style="border:1px solid #000;padding:4px;color:#000;">${jumlahTidakTuntas} Orang</td>
-          </tr>
-          <tr>
-            <td style="border:1px solid #000;padding:4px;color:#000;">8</td>
-            <td style="border:1px solid #000;padding:4px;color:#000;">Jumlah peserta yang tuntas</td>
-            <td colspan="${jumlah_soal}" style="border:1px solid #000;padding:4px;color:#000;">${jumlahTuntas} Orang</td>
           </tr>
         </table>
       </div>
       
-      <div style="margin-bottom:15px;">
-        <h3 style="margin:0 0 8px 0;font-size:12px;color:#000;">Kesimpulan:</h3>
-        <p style="margin:3px 0;font-size:10px;color:#000;">a. Ketuntasan klasikal: <strong>${persentaseKlasikal}%</strong></p>
-        <p style="margin:3px 0;font-size:10px;color:#000;">b. Ketuntasan individual: <strong>${jumlahTuntas}</strong> siswa tuntas, <strong>${jumlahTidakTuntas}</strong> siswa perlu remedial</p>
-        <p style="margin:3px 0;font-size:10px;color:#000;">c. Bentuk remedial: Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya</p>
-      </div>
-      
-      <div style="margin-top:30px; text-align: right; padding-right: 5px;">
-        <div style="display: inline-block; text-align: left; width: 220px;">
-          <p style="margin:0 0 10px 0;color:#000;">Bantaeng, ${tanggalSekarang}</p>
-          <p style="margin:0 0 5px 0;color:#000;">Guru Mata Pelajaran</p>
-          <div style="height:60px;"></div>
-          <p style="margin:0;font-weight:bold;color:#000;">${namaGuru}</p>
-          <p style="margin:3px 0 0 0;color:#000;">NIP. ${nipGuru}</p>
+      <!-- KESIMPULAN -->
+      <div style="margin-bottom:20px;font-size:10.5px;">
+        <div style="font-weight:bold;margin-bottom:3px;">B. Kesimpulan & Tindak Lanjut:</div>
+        <div style="margin-left:10px;">
+          <div>1. Ketuntasan Klasikal: <strong>${persentaseKlasikal}%</strong></div>
+          <div>2. Ketuntasan Individual: <strong>${jumlahTuntas}</strong> siswa tuntas, <strong>${jumlahTidakTuntas}</strong> siswa belum tuntas (remedial).</div>
+          <div>3. Program Remedial/Pengayaan: Diberikan bimbingan perorangan dan penugasan ulang pada butir soal yang belum dicapai.</div>
         </div>
       </div>
+      
+      <!-- AREA TANDA TANGAN FORMAL -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-top:25px; page-break-inside:avoid;">
+        <div style="text-align:left; width:40%;">
+          <p style="margin:0 0 5px 0;">Mengetahui,</p>
+          <p style="margin:0 0 55px 0; font-weight:bold;">Kepala Sekolah</p>
+          <p style="margin:0; font-weight:bold; text-decoration:underline;">${namaKepala}</p>
+          <p style="margin:2px 0 0 0;">NIP. ${nipKepala}</p>
+        </div>
+        <div style="text-align:left; width:40%;">
+          <p style="margin:0 0 5px 0;">Bantaeng, ${tanggalSekarang}</p>
+          <p style="margin:0 0 55px 0; font-weight:bold;">Guru Mata Pelajaran</p>
+          <p style="margin:0; font-weight:bold; text-decoration:underline;">${namaGuru}</p>
+          <p style="margin:2px 0 0 0;">NIP. ${nipGuru}</p>
+        </div>
+      </div>
+
     </div>
   `;
   
-  document.getElementById('pdfPreviewContent').innerHTML = html;
+  const previewContainer = document.getElementById('pdfPreviewContent');
+  if (previewContainer) previewContainer.innerHTML = html;
   window.openModal('modalPreviewPDF');
 };
 
@@ -1304,17 +1305,16 @@ window.cetakAnalisisPDF = () => {
     <head>
       <title>Analisis Asesmen - ${currentNilaiClass}</title>
       <style>
-        @page { size: A4; margin: 15mm; }
-        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; color: #000; margin: 0; padding: 0; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
-        th, td { border: 1px solid #000; padding: 4px; color: #000; }
-        th { background: #e0e0e0; font-weight: bold; text-align: center; }
-        h2 { text-align: center; font-size: 16px; margin: 0 0 5px 0; color: #000; }
-        h3 { font-size: 12px; margin: 0 0 8px 0; color: #000; }
-        p { margin: 3px 0; font-size: 10px; color: #000; }
+        @page { size: A4 landscape; margin: 12mm; }
+        body { font-family: 'Times New Roman', Times, serif; font-size: 11px; line-height: 1.2; color: #000; margin: 0; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 10px; }
+        th, td { border: 1px solid #000; padding: 3px; color: #000; }
+        th { background: #f2f2f2 !important; font-weight: bold; }
+        h2 { font-size: 14px; margin: 0 0 4px 0; }
+        p { margin: 2px 0; }
         @media print {
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          th { background: #e0e0e0 !important; }
+          th { background: #f2f2f2 !important; }
         }
       </style>
     </head>
@@ -1329,8 +1329,8 @@ window.cetakAnalisisPDF = () => {
   printWindow.onload = () => {
     setTimeout(() => {
       printWindow.print();
-    }, 250);
+    }, 300);
   };
   
-  window.toast('✅ Dialog print terbuka. Pilih printer atau "Save as PDF".', 'success');
+  window.toast('✅ Dialog cetak dibuka. Pilih "Save as PDF" atau printer Anda.', 'success');
 };
