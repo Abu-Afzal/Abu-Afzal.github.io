@@ -19,8 +19,8 @@ const ROOT = rtdb.ref("sipena2");
 
 // Global State
 let currentUser = '';
-let currentUserEmail = ''; // ✅ BARU: simpan email untuk rules ownership
-let currentUserRole = 'guru'; // ✅ BARU: simpan role untuk logika admin/kepala
+let currentUserEmail = ''; // ✅ SIMPAN EMAIL UNTUK RULES OWNERSHIP
+let currentUserRole = 'guru'; // ✅ SIMPAN ROLE UNTUK LOGIKA ADMIN/KEPALA
 let allData = [];
 let currentClass = '';
 let currentRekapClass = '';
@@ -44,7 +44,8 @@ window.todayStr = () => new Date().toISOString().split('T')[0];
 window.toast = (msg, type = 'ok') => {
   const t = document.createElement('div');
   t.style.cssText = `position:fixed;top:20px;right:20px;z-index:9999;padding:13px 20px;border-radius:10px;font-weight:700;font-size:0.88rem;background:${type === 'ok' ? '#10b981' : '#ef4444'};color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.2);`;
-  t.textContent = msg; document.body.appendChild(t);
+  t.textContent = msg; 
+  document.body.appendChild(t);
   setTimeout(() => t.style.opacity = '0', 2500);
   setTimeout(() => t.remove(), 2900);
 };
@@ -69,24 +70,28 @@ window.renderActive = () => {
   const a = document.querySelector('.content-area.active');
   if (!a) return;
   switch (a.id) {
-    case 'kelola-kelas': window.renderKelolaKelas(); break;
-    case 'presensi': window.renderPresensi(); break;
-    case 'rekap': window.renderRekap(); break;
-    case 'penilaian': window.renderPenilaian(); break;
-    case 'bank-soal': window.renderBankSoal(); break;
+    case 'kelola-kelas': if (typeof window.renderKelolaKelas === 'function') window.renderKelolaKelas(); break;
+    case 'presensi': if (typeof window.renderPresensi === 'function') window.renderPresensi(); break;
+    case 'rekap': if (typeof window.renderRekap === 'function') window.renderRekap(); break;
+    case 'penilaian': if (typeof window.renderPenilaian === 'function') window.renderPenilaian(); break;
+    case 'bank-soal': if (typeof window.renderBankSoal === 'function') window.renderBankSoal(); break;
   }
 };
 
-// ✅ BARU: Tampilkan loading screen saat menunggu auth
+// Tampilkan loading screen saat menunggu auth
 function showAuthLoading(msg) {
-  const loading = document.createElement('div');
-  loading.id = 'authLoadingScreen';
-  loading.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: #f8fafc; z-index: 99999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-family: system-ui, -apple-system, sans-serif;
-  `;
+  let loading = document.getElementById('authLoadingScreen');
+  if (!loading) {
+    loading = document.createElement('div');
+    loading.id = 'authLoadingScreen';
+    loading.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #f8fafc; z-index: 99999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    `;
+    document.body.appendChild(loading);
+  }
   loading.innerHTML = `
     <div style="text-align: center;">
       <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
@@ -96,7 +101,6 @@ function showAuthLoading(msg) {
       <div style="color: #64748b; font-size: 0.9rem;">${msg}</div>
     </div>
   `;
-  document.body.appendChild(loading);
 }
 
 function hideAuthLoading() {
@@ -104,13 +108,13 @@ function hideAuthLoading() {
   if (el) el.remove();
 }
 
-// ✅ DIPERBAIKI: Init App yang menunggu Firebase Auth
+// Init App yang menunggu Firebase Auth
 window.initApp = () => {
   showAuthLoading('Mohon tunggu sebentar...');
 
-  // Gunakan onAuthStateChanged sebagai GERBANG UTAMA
+  // Gerbang utama autentikasi
   firebase.auth().onAuthStateChanged(user => {
-    // KASUS 1: User tidak login via Firebase Auth → redirect ke login
+    // KASUS 1: User tidak login via Firebase Auth -> Redirect ke Login
     if (!user) {
       console.warn('⚠️ Tidak terautentikasi via Firebase Auth. Mengalihkan ke login...');
       hideAuthLoading();
@@ -121,18 +125,17 @@ window.initApp = () => {
       return;
     }
 
-    // KASUS 2: User terautentikasi → lanjut
+    // KASUS 2: User terautentikasi -> Lanjut
     console.log('✅ Auth siap:', user.email);
     currentUserEmail = user.email;
 
-    // Ambil data tambahan dari localStorage (nama, role) sebagai fallback
+    // Ambil data tambahan dari localStorage (nama, role)
     let userData = null;
     try {
       const s = localStorage.getItem('sipelita_user');
       if (s) userData = JSON.parse(s);
     } catch (e) {}
 
-    // Set currentUser: prioritas nama dari localStorage, fallback ke email
     if (userData && userData.nama) {
       currentUser = userData.nama;
       currentUserRole = userData.role || 'guru';
@@ -156,7 +159,7 @@ window.initApp = () => {
       });
     }
 
-          // ✅ LISTENER DENGAN RETRY OTOMATIS (anti race condition)
+    // Listener RTDB dengan retry otomatis
     let sudahRetry = false;
 
     const pasangListener = () => {
@@ -164,13 +167,16 @@ window.initApp = () => {
         allData = window.toArr(snap.val());
         hideAuthLoading();
         window.renderActive();
-        if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
-          window.renderSiswaModal(currentManajeKelas);
+        
+        const modalSiswa = document.getElementById('modalKelolaSwiswa');
+        if (modalSiswa && modalSiswa.classList.contains('active') && currentManajeKelas) {
+          if (typeof window.renderSiswaModal === 'function') {
+            window.renderSiswaModal(currentManajeKelas);
+          }
         }
       }, async err => {
         console.error('❌ Error listener RTDB:', err);
 
-        // ✅ Jika ditolak karena token belum siap → paksa refresh & pasang ulang (SEKALI saja)
         if (err.code === 'PERMISSION_DENIED' && !sudahRetry) {
           sudahRetry = true;
           console.warn('🔁 Token belum siap. Memaksa refresh token & memasang ulang listener...');
@@ -195,20 +201,14 @@ window.initApp = () => {
       });
     };
 
-    // ✅ PAKSA refresh token SEBELUM listener dipasang
+    // Refresh token sebelum listener dipasang
     (async () => {
-      try { await user.getIdToken(true); } catch (e) {}
+      try { 
+        await user.getIdToken(true); 
+      } catch (e) {}
       pasangListener();
     })();
-      hideAuthLoading();
-      if (err.code === 'PERMISSION_DENIED') {
-        window.toast('❌ Akses ditolak. Sesi tidak valid. Login ulang.', 'err');
-        setTimeout(() => window.location.href = '../index.html', 2000);
-      } else {
-        window.toast('Gagal terhubung ke database: ' + err.message, 'err');
-      }
-    });
-    // ✅ DEBUG: expose info auth untuk console
+
     console.log('🔐 Auth Info:', {
       email: currentUserEmail,
       displayName: currentUser,
@@ -216,7 +216,7 @@ window.initApp = () => {
       uid: user.uid
     });
 
-    window.bindEvents();
+    if (typeof window.bindEvents === 'function') window.bindEvents();
     window.showContent('kelola-kelas');
   });
 };
