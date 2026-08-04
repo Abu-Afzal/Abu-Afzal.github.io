@@ -25,15 +25,26 @@ window.renderPenilaian = () => {
 
   if (!kelas.length) {
     cont.innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>';
-    sel.innerHTML = '<option>-- Belum ada kelas --</option>';
+    if (sel) sel.innerHTML = '<option>-- Belum ada kelas --</option>';
     return;
   }
 
-  if (!currentNilaiClass || !kelas.find(k => k.class_name === currentNilaiClass)) currentNilaiClass = kelas[0].class_name;
-  sel.innerHTML = kelas.map(k => `<option value="${k.class_name}" ${currentNilaiClass === k.class_name ? 'selected' : ''}>${k.class_name}</option>`).join('');
+  if (!currentNilaiClass || !kelas.find(k => k.class_name === currentNilaiClass)) {
+    currentNilaiClass = kelas[0].class_name;
+  }
+
+  if (sel) {
+    sel.innerHTML = kelas.map(k => `<option value="${k.class_name}" ${currentNilaiClass === k.class_name ? 'selected' : ''}>${k.class_name}</option>`).join('');
+    
+    // Binding event onchange pada select kelas
+    sel.onchange = (e) => {
+      currentNilaiClass = e.target.value;
+      window.renderPenilaian();
+    };
+  }
 
   const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
-  info.textContent = `👥 ${siswa.length} siswa`;
+  if (info) info.textContent = `👥 ${siswa.length} siswa`;
 
   if (!siswa.length) {
     cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>';
@@ -536,9 +547,16 @@ window.eksporNilai = () => {
 
 // Event Listeners untuk perubahan filter
 document.addEventListener('DOMContentLoaded', () => {
+  const elKelas = document.getElementById('nilaiKelasSelect');
   const elSemester = document.getElementById('nilaiSemesterSelect');
   const elKodeTP = document.getElementById('nilaiKodeTP');
   
+  if (elKelas) {
+    elKelas.addEventListener('change', (e) => {
+      currentNilaiClass = e.target.value;
+      window.renderPenilaian();
+    });
+  }
   if (elSemester) elSemester.addEventListener('change', () => window.renderPenilaian());
   if (elKodeTP) elKodeTP.addEventListener('change', () => window.renderPenilaian());
 });
@@ -559,7 +577,7 @@ window.renderAnalisisAsesmen = (siswa) => {
   const btnExportAnalisisSoal = document.getElementById('btnExportAnalisisSoal');
   if (btnExportAnalisisSoal) btnExportAnalisisSoal.style.display = 'inline-flex';
   const btnPreviewPDF = document.getElementById('btnPreviewPDF');
-if (btnPreviewPDF) btnPreviewPDF.style.display = 'inline-flex';
+  if (btnPreviewPDF) btnPreviewPDF.style.display = 'inline-flex';
   
   const setupAsesmen = allData.find(d => 
     d.type === 'asesmen_setup' && 
@@ -695,7 +713,7 @@ window.simpanSetupAsesmen = async () => {
 
 window.tampilkanInputAsesmen = (setupAsesmen, siswa) => {
   const btnPreviewPDF = document.getElementById('btnPreviewPDF');
-if (btnPreviewPDF) btnPreviewPDF.style.display = 'inline-flex';
+  if (btnPreviewPDF) btnPreviewPDF.style.display = 'inline-flex';
   const cont = document.getElementById('penilaianContent');
   const { mata_pelajaran, jumlah_soal, skor_max_per_soal, total_skor_max, kkm } = setupAsesmen;
   
@@ -1126,7 +1144,6 @@ window.previewAnalisisPDF = () => {
   const persentaseKlasikal = ((jumlahTuntas / jmlSiswa) * 100).toFixed(1);
   const tanggalSekarang = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   
-  // Generate HTML untuk preview - PERBAIKAN HEADER & POSISI TANDA TANGAN
   let html = `
     <div id="pdfContent" style="font-family:Arial,sans-serif;font-size:11px;line-height:1.3;padding:15px;">
       <div style="text-align:center;margin-bottom:15px;">
@@ -1235,7 +1252,6 @@ window.previewAnalisisPDF = () => {
         <p style="margin:3px 0;font-size:10px;color:#000;">c. Bentuk remedial: Pemberian tugas individu untuk menjawab soal-soal dan melaporkan hasilnya</p>
       </div>
       
-        <!-- TANDA TANGAN DI KANAN, TEKS RATA KIRI (Paling Mentok Kanan) -->
       <div style="margin-top:30px; text-align: right; padding-right: 5px;">
         <div style="display: inline-block; text-align: left; width: 220px;">
           <p style="margin:0 0 10px 0;color:#000;">Bantaeng, ${tanggalSekarang}</p>
@@ -1259,7 +1275,6 @@ window.cetakAnalisisPDF = () => {
     return;
   }
   
-  // Buka window baru untuk print
   const printWindow = window.open('', '_blank');
   
   if (!printWindow) {
@@ -1267,86 +1282,23 @@ window.cetakAnalisisPDF = () => {
     return;
   }
   
-  // Tulis konten HTML ke window baru dengan style print
   printWindow.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
       <title>Analisis Asesmen - ${currentNilaiClass}</title>
       <style>
-        @page {
-          size: A4;
-          margin: 15mm;
-        }
-        body {
-          font-family: Arial, sans-serif;
-          font-size: 11px;
-          line-height: 1.3;
-          color: #000;
-          margin: 0;
-          padding: 0;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 15px;
-          font-size: 10px;
-        }
-        th, td {
-          border: 1px solid #000;
-          padding: 4px;
-          color: #000;
-        }
-        th {
-          background: #e0e0e0;
-          font-weight: bold;
-          text-align: center;
-        }
-        h2 {
-          text-align: center;
-          font-size: 16px;
-          margin: 0 0 5px 0;
-          color: #000;
-        }
-        h3 {
-          font-size: 12px;
-          margin: 0 0 8px 0;
-          color: #000;
-        }
-        p {
-          margin: 3px 0;
-          font-size: 10px;
-          color: #000;
-        }
-        .header-info {
-          text-align: center;
-          margin-bottom: 15px;
-        }
-        .tanda-tangan {
-          margin-top: 30px;
-          text-align: right;
-          padding-right: 20px;
-        }
-        .tanda-tangan-inner {
-          display: inline-block;
-          text-align: left;
-          width: 220px;
-        }
-        .tanda-tangan-inner p {
-          margin: 0 0 5px 0;
-        }
-        .tanda-tangan-inner .nama {
-          font-weight: bold;
-          margin-top: 60px;
-        }
+        @page { size: A4; margin: 15mm; }
+        body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.3; color: #000; margin: 0; padding: 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px; }
+        th, td { border: 1px solid #000; padding: 4px; color: #000; }
+        th { background: #e0e0e0; font-weight: bold; text-align: center; }
+        h2 { text-align: center; font-size: 16px; margin: 0 0 5px 0; color: #000; }
+        h3 { font-size: 12px; margin: 0 0 8px 0; color: #000; }
+        p { margin: 3px 0; font-size: 10px; color: #000; }
         @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          th {
-            background: #e0e0e0 !important;
-          }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          th { background: #e0e0e0 !important; }
         }
       </style>
     </head>
@@ -1358,12 +1310,9 @@ window.cetakAnalisisPDF = () => {
   
   printWindow.document.close();
   
-  // Tunggu konten load, lalu trigger print
   printWindow.onload = () => {
     setTimeout(() => {
       printWindow.print();
-      // Tutup window setelah print (opsional)
-      // printWindow.close();
     }, 250);
   };
   
