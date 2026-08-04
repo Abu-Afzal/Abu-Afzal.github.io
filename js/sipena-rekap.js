@@ -100,22 +100,20 @@ window.renderRekap = () => {
 };
 
 window.filterLog = (log) => {
-  if (!log || !log.date) return false;
+    if (!log.date) return false;
 
-  const parsed = window.parseLogDate(log.date);
-  const m = parsed.m;
-  const y = parsed.y;
+    // Parse langsung dari string 'YYYY-MM-DD' — hindari timezone shift
+    const parts = log.date.split('-');
+    const y = parseInt(parts[0]);
+    const m = parseInt(parts[1]);
 
-  const selM = Number(selectedMonth);
-  const selY = Number(selectedYear);
-
-  if (currentRekapTab === 'harian') return log.date === window.todayStr();
-  if (currentRekapTab === 'bulanan') return m === selM && y === selY;
-  if (currentRekapTab === 'semester') {
-    if (selectedSemester === 'ganjil') return [7, 8, 9, 10, 11, 12].includes(m) && y === selY;
-    else return [1, 2, 3, 4, 5, 6].includes(m) && y === selY;
-  }
-  return true;
+    if (currentRekapTab === 'harian')   return log.date === window.todayStr();
+    if (currentRekapTab === 'bulanan')  return m === selectedMonth && y === selectedYear;
+    if (currentRekapTab === 'semester') {
+        if (selectedSemester === 'ganjil') return [7,8,9,10,11,12].includes(m) && y === selectedYear;
+        else                               return [1,2,3,4,5,6].includes(m) && y === selectedYear;
+    }
+    return true;
 };
 
 window.generateRekap = () => {
