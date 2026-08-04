@@ -964,27 +964,17 @@ function playAlarmBeep(){
   });
 }
 
-<script>
-// ==========================================
-// 🔊 ENGINE VOICE & TEXT-TO-SPEECH (TTS)
-// ==========================================
-
 function speakAlarmMessage(kelasNama, mapel) {
   if (!('speechSynthesis' in window)) return;
   
   const kelasDibaca = konversiKelas(kelasNama);
   const mapelText = mapel ? `, mata pelajaran ${mapel},` : '';
-  const kalimat = `Perhatian! Sekarang saatnya Anda mengajar di kelas ${kelasDibaca}${mapelText}. Selamat mengajar...`;
+  const kalimat = `Perhatian! Sekarang saatnya Anda mengajar di kelas ${kelasDibaca}${mapelText}. Selamat, mengajar...`;
   
   console.log(`🔊 Teks: "${kalimat}"`);
   
   try {
-    // Reset & Paksa Resume Engine Suara (Menghindari Hang di Chrome/Android)
     window.speechSynthesis.cancel();
-    if (window.speechSynthesis.paused) {
-      window.speechSynthesis.resume();
-    }
-
     setTimeout(() => {
       const utter = new SpeechSynthesisUtterance(kalimat);
       utter.lang = 'id-ID';
@@ -992,15 +982,14 @@ function speakAlarmMessage(kelasNama, mapel) {
       utter.pitch = 1.0;
       utter.volume = 1.0;
       
-      // Deteksi Suara Bahasa Indonesia
-      if (typeof cachedIndonesianVoice !== 'undefined' && cachedIndonesianVoice) {
+      if(cachedIndonesianVoice){
         utter.voice = cachedIndonesianVoice;
       } else {
         const voices = window.speechSynthesis.getVoices();
         const idVoice = voices.find(v => v.lang === 'id-ID') 
                      || voices.find(v => v.lang === 'id')
                      || voices.find(v => v.lang.startsWith('id'));
-        if (idVoice) utter.voice = idVoice;
+        if(idVoice) utter.voice = idVoice;
       }
       
       utter.onstart = () => console.log('🔊 Speech dimulai');
@@ -1009,9 +998,8 @@ function speakAlarmMessage(kelasNama, mapel) {
       
       window.speechSynthesis.speak(utter);
       
-      // Workaround otomatis jika browser membekukan pengucapan di pertengahan
       setTimeout(() => {
-        if (window.speechSynthesis.speaking) {
+        if(window.speechSynthesis.speaking){
           window.speechSynthesis.pause();
           window.speechSynthesis.resume();
         }
@@ -1022,65 +1010,31 @@ function speakAlarmMessage(kelasNama, mapel) {
   }
 }
 
-function playAlarmSound(kelasNama, mapel) {
+function playAlarmSound(kelasNama, mapel){
   console.log(`🔔 Memutar alarm: ${kelasNama} - ${mapel}`);
-  
-  // 1. Bunyikan Beep terlebih dahulu
-  if (typeof playAlarmBeep === 'function') {
-    playAlarmBeep();
-  }
-  
-  // 2. Cek apakah Tab sedang aktif di layar HP
-  if (!document.hidden) {
-    speakAlarmMessage(kelasNama || 'Anda', mapel || '');
-  } else {
-    // Simpan antrean suara jika tab di-minimize/background
-    window._pendingVoiceData = { kelas: kelasNama, mapel: mapel };
-    console.log("📱 Tab berada di background. Suara voice disimpan dalam antrean.");
-  }
+  playAlarmBeep();
+  speakAlarmMessage(kelasNama || 'Anda', mapel || '');
 }
 
-// ==========================================
-// 🚨 ALARM TRIGGER & NOTIFIKASI SYSTEM
-// ==========================================
-
-function fireScheduleAlarm(jadwalItem) {
+function fireScheduleAlarm(jadwalItem){
   const kelasDibaca = konversiKelas(jadwalItem.kelas);
-  
-  // Eksekusi Sound & Logic Background
   playAlarmSound(jadwalItem.kelas, jadwalItem.mapel);
+  toast(`🔔 WAKTUNYA MENGAJAR! Kelas ${kelasDibaca} - ${jadwalItem.mapel||''} (${jadwalItem.mulai})`,'err');
+  updateAlarmMonitor(` ALARM FIRED: Kelas ${kelasDibaca} - ${jadwalItem.mapel||'-'} (${jadwalItem.mulai})`);
   
-  // Notifikasi Toast & Monitor Text
-  toast(`🔔 WAKTUNYA MENGAJAR! Kelas ${kelasDibaca} - ${jadwalItem.mapel||''} (${jadwalItem.mulai})`, 'err');
-  updateAlarmMonitor(`🚨 ALARM FIRED: Kelas ${kelasDibaca} - ${jadwalItem.mapel||'-'} (${jadwalItem.mulai})`);
-  
-  // Push Notification Sistem Android
-  if ('Notification' in window && Notification.permission === 'granted') {
-    try { 
-      const notif = new Notification('⏰ Waktunya Mengajar!', { 
-        body: `Kelas ${kelasDibaca} · ${jadwalItem.mapel||''} · Jam ${jadwalItem.mulai}${jadwalItem.ruang ? ' · ' + jadwalItem.ruang : ''}`, 
-        tag: 'sipelita-jadwal-alarm',
-        icon: '../assets/images/manbtg-app.png',
-        requireInteraction: true // Notifikasi tidak hilang otomatis di Android
+  if('Notification' in window && Notification.permission==='granted'){
+    try{ 
+      new Notification('⏰ Waktunya Mengajar!',{ 
+        body:`Kelas ${kelasDibaca} · ${jadwalItem.mapel||''} · ${jadwalItem.mulai}${jadwalItem.ruang?' · '+jadwalItem.ruang:''}`, 
+        tag:'sipelita-jadwal-alarm',
+        requireInteraction: true
       }); 
-
-      // KLIK NOTIFIKASI: Buka Tab HP + Putar Suara Voice Otomatis!
-      notif.onclick = function() {
-        window.focus();
-        speakAlarmMessage(jadwalItem.kelas, jadwalItem.mapel);
-        window._pendingVoiceData = null; // Clear antrean
-        this.close();
-      };
-    } catch(e) { console.error('Gagal menampilkan notifikasi:', e); }
+    } catch(e){ console.error('Gagal menampilkan notifikasi:', e); }
   }
 }
 
-// ==========================================
-// ⏱️ CHECKER JADWAL & MONITORING
-// ==========================================
-
-function checkScheduleAlarms() {
-  if (typeof alarmEnabled !== 'undefined' && !alarmEnabled) return;
+function checkScheduleAlarms(){
+  if(!alarmEnabled) return;
   
   const now = new Date();
   const hariMap = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
@@ -1089,14 +1043,12 @@ function checkScheduleAlarms() {
   const todayStr = now.toISOString().slice(0,10);
   const jamSekarang = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
   
-  if (typeof daftarJadwal === 'undefined' || !Array.isArray(daftarJadwal)) return;
-
-  daftarJadwal.forEach(j => {
-    if (j.hari !== hariIni || !isJadwalActive(j)) return;
-    if (j.mulai !== jamSekarang) return;
+  daftarJadwal.forEach(j=>{
+    if(j.hari !== hariIni || !isJadwalActive(j)) return;
+    if(j.mulai !== jamSekarang) return;
     
     const trackingKey = todayStr + '_' + j.mulai;
-    if (alarmFiredToday.has(trackingKey)) return;
+    if(alarmFiredToday.has(trackingKey)) return;
     
     alarmFiredToday.add(trackingKey);
     fireScheduleAlarm(j);
@@ -1104,8 +1056,8 @@ function checkScheduleAlarms() {
   });
 }
 
-function checkUpcomingSchedules() {
-  if (typeof alarmEnabled !== 'undefined' && !alarmEnabled) return;
+function checkUpcomingSchedules(){
+  if(!alarmEnabled) return;
   
   const now = new Date();
   const hariMap = {0:'Minggu',1:'Senin',2:'Selasa',3:'Rabu',4:'Kamis',5:'Jumat',6:'Sabtu'};
@@ -1113,61 +1065,51 @@ function checkUpcomingSchedules() {
   const menitSekarang = now.getHours() * 60 + now.getMinutes();
   const todayStr = now.toISOString().slice(0,10);
   
-  if (typeof daftarJadwal === 'undefined' || !Array.isArray(daftarJadwal)) return;
-
-  daftarJadwal.forEach(j => {
-    if (j.hari !== hariIni || !isJadwalActive(j)) return;
+  daftarJadwal.forEach(j=>{
+    if(j.hari !== hariIni || !isJadwalActive(j)) return;
     
     const [jam, menit] = (j.mulai || '00:00').split(':').map(Number);
     const menitJadwal = jam * 60 + (menit || 0);
     const selisih = menitJadwal - menitSekarang;
     
     const notifKey = todayStr + '_' + j.mulai + '_upcoming';
-    if (alarmFiredToday.has(notifKey)) return;
+    if(alarmFiredToday.has(notifKey)) return;
     
-    if (selisih === 10) {
+    if(selisih === 10){
       alarmFiredToday.add(notifKey);
       const kelasDibaca = konversiKelas(j.kelas);
       toast(`⏰ 10 menit lagi mengajar: Kelas ${kelasDibaca} (${j.mulai})`, 'warn');
-      updateAlarmMonitor(`⏳ UPCOMING: Kelas ${kelasDibaca} dalam 10 menit (${j.mulai})`);
+      updateAlarmMonitor(` UPCOMING: Kelas ${kelasDibaca} dalam 10 menit (${j.mulai})`);
       
-      if ('Notification' in window && Notification.permission === 'granted') {
+      if('Notification' in window && Notification.permission === 'granted'){
         try {
-          const notif = new Notification('⏰ Siap-siap Mengajar!', {
+          new Notification('⏰ Siap-siap Mengajar!', {
             body: `Kelas ${kelasDibaca} dalam 10 menit · ${j.mapel||''}`,
             tag: 'sipelita-upcoming'
           });
-          notif.onclick = function() {
-            window.focus();
-            this.close();
-          };
         } catch(e) {}
       }
     }
   });
 }
 
-// ==========================================
-// 🖥️ UI & JAM HELPER
-// ==========================================
-
-function updateAlarmMonitor(text) {
+function updateAlarmMonitor(text){
   const el = document.getElementById('alarmMonitorText');
-  if (el) el.textContent = text;
+  if(el) el.textContent = text;
 }
 
-function updateLiveClock() {
+function updateLiveClock(){
   const now = new Date();
   const timeStr = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
   
   const clockHeader = document.getElementById('liveClockHeader');
-  if (clockHeader) clockHeader.textContent = `🕐 ${timeStr}`;
+  if(clockHeader) clockHeader.textContent = `🕐 ${timeStr}`;
   
   const clockMonitor = document.getElementById('liveClock');
-  if (clockMonitor) clockMonitor.textContent = timeStr;
+  if(clockMonitor) clockMonitor.textContent = timeStr;
 }
 
-function scheduleDailyReset() {
+function scheduleDailyReset(){
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1183,13 +1125,13 @@ function scheduleDailyReset() {
   }, delay);
 }
 
-function initAlarmEngine() {
-  if (typeof renderNotifPermStatus === 'function') renderNotifPermStatus();
+function initAlarmEngine(){
+  renderNotifPermStatus();
   
   setInterval(checkScheduleAlarms, 1000);
   setInterval(checkUpcomingSchedules, 30000);
   setInterval(updateLiveClock, 1000);
-  if (typeof renderJadwalTable === 'function') setInterval(renderJadwalTable, 60000);
+  setInterval(renderJadwalTable, 60000);
   
   updateLiveClock();
   checkScheduleAlarms();
@@ -1200,31 +1142,15 @@ function initAlarmEngine() {
   console.log('🔔 Alarm engine initialized - checking every 1 SECOND');
 }
 
-// ==========================================
-// 🌐 EVENT LISTENERS & BACKGROUND HANDLER
-// ==========================================
+window.addEventListener('load', initApp);
 
-window.addEventListener('load', () => {
-  if (typeof initApp === 'function') initApp();
-});
-
-// Reset status harian saat window difokuskan
 window.addEventListener('focus', () => {
   const todayStr = new Date().toISOString().slice(0,10);
   const lastResetDate = localStorage.getItem('sipelita_alarm_last_reset');
-  if (lastResetDate !== todayStr) {
+  if(lastResetDate !== todayStr){
     alarmFiredToday.clear();
     localStorage.setItem('sipelita_alarm_last_reset', todayStr);
     console.log('✅ Alarm fired list direset saat halaman difokuskan');
-  }
-});
-
-// 📱 PEMICU SUARA TERPENDAM SAAT TAB / LAYAR HP DIBUKA KEMBALI
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && window._pendingVoiceData) {
-    console.log("📱 Tab kembali aktif, memutar suara voice yang tertunda...");
-    speakAlarmMessage(window._pendingVoiceData.kelas, window._pendingVoiceData.mapel);
-    window._pendingVoiceData = null; // Clear antrean
   }
 });
 </script>
