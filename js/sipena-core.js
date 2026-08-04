@@ -156,16 +156,50 @@ window.initApp = () => {
       });
     }
 
-        // ✅ BARU: Listener RTDB dipasang HANYA SETELAH auth siap
-    ROOT.on('value', snap => {
-      allData = window.toArr(snap.val());
-      hideAuthLoading();
-      window.renderActive();
-      if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
-        window.renderSiswaModal(currentManajeKelas);
-      }
-    }, err => {
-      console.error('❌ Error listener RTDB:', err);
+          // ✅ LISTENER DENGAN RETRY OTOMATIS (anti race condition)
+    let sudahRetry = false;
+
+    const pasangListener = () => {
+      ROOT.on('value', snap => {
+        allData = window.toArr(snap.val());
+        hideAuthLoading();
+        window.renderActive();
+        if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
+          window.renderSiswaModal(currentManajeKelas);
+        }
+      }, async err => {
+        console.error('❌ Error listener RTDB:', err);
+
+        // ✅ Jika ditolak karena token belum siap → paksa refresh & pasang ulang (SEKALI saja)
+        if (err.code === 'PERMISSION_DENIED' && !sudahRetry) {
+          sudahRetry = true;
+          console.warn('🔁 Token belum siap. Memaksa refresh token & memasang ulang listener...');
+          try {
+            const u = firebase.auth().currentUser;
+            if (u) await u.getIdToken(true);
+            ROOT.off('value');
+            setTimeout(pasangListener, 500);
+            return;
+          } catch (e) {
+            console.error('Gagal refresh token:', e);
+          }
+        }
+
+        hideAuthLoading();
+        if (err.code === 'PERMISSION_DENIED') {
+          window.toast('❌ Akses ditolak. Sesi tidak valid. Login ulang.', 'err');
+          setTimeout(() => window.location.href = '../index.html', 2000);
+        } else {
+          window.toast('Gagal terhubung ke database: ' + err.message, 'err');
+        }
+      });
+    };
+
+    // ✅ PAKSA refresh token SEBELUM listener dipasang
+    (async () => {
+      try { await user.getIdToken(true); } catch (e) {}
+      pasangListener();
+    })();
       hideAuthLoading();
       if (err.code === 'PERMISSION_DENIED') {
         window.toast('❌ Akses ditolak. Sesi tidak valid. Login ulang.', 'err');
