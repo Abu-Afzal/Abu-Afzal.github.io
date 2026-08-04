@@ -1,14 +1,14 @@
 // ══════════════════════════════════════════════
-// SIPENA: Rekap Kehadiran (FIXED: Filter Bulan/Tahun + Sorting A-Z)
+// SIPENA: Rekap Kehadiran (FIXED: Support Multi-Format Tanggal Juli & Historis)
 // ══════════════════════════════════════════════
 
-// 🛡️ INISIALISASI VARIABLE DEFAULT (Mencegah Undefined)
+// 🛡️ INISIALISASI VARIABLE DEFAULT
 if (typeof window.selectedMonth === 'undefined') window.selectedMonth = new Date().getMonth() + 1;
 if (typeof window.selectedYear === 'undefined') window.selectedYear = new Date().getFullYear();
 if (typeof window.selectedSemester === 'undefined') window.selectedSemester = 'ganjil';
 if (typeof window.currentRekapTab === 'undefined') window.currentRekapTab = 'bulanan';
 
-// 🔍 FUNGSI PARSER TANGGAL PINTAR (Mendukung YYYY-MM-DD, DD-MM-YYYY, & Date Object)
+// 🔍 FUNGSI PARSER TANGGAL PINTAR (Mendukung YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY, & Date Object)
 window.parseLogDate = (dateVal) => {
   if (!dateVal) return { y: 0, m: 0, d: 0 };
   
@@ -37,8 +37,10 @@ window.parseLogDate = (dateVal) => {
     const parts = str.split('/');
     if (parts.length === 3) {
       if (parts[0].length === 4) {
+        // YYYY/MM/DD
         return { y: parseInt(parts[0], 10), m: parseInt(parts[1], 10), d: parseInt(parts[2], 10) };
       } else if (parts[2].length === 4) {
+        // DD/MM/YYYY
         return { y: parseInt(parts[2], 10), m: parseInt(parts[1], 10), d: parseInt(parts[0], 10) };
       }
     }
@@ -51,6 +53,35 @@ window.parseLogDate = (dateVal) => {
   }
 
   return { y: 0, m: 0, d: 0 };
+};
+
+// 🎯 FILTER LOG DENGAN PARSER TANGGAL PINTAR
+window.filterLog = (log) => {
+  const dateVal = log.date || log.tanggal;
+  if (!dateVal) return false;
+
+  const { y, m, d } = window.parseLogDate(dateVal);
+  if (!y || !m || !d) return false;
+
+  if (currentRekapTab === 'harian') {
+    const todayStr = typeof window.todayStr === 'function' ? window.todayStr() : new Date();
+    const t = window.parseLogDate(todayStr);
+    return y === t.y && m === t.m && d === t.d;
+  }
+  
+  if (currentRekapTab === 'bulanan') {
+    return m === Number(window.selectedMonth) && y === Number(window.selectedYear);
+  }
+  
+  if (currentRekapTab === 'semester') {
+    if (window.selectedSemester === 'ganjil') {
+      return [7, 8, 9, 10, 11, 12].includes(m) && y === Number(window.selectedYear);
+    } else {
+      return [1, 2, 3, 4, 5, 6].includes(m) && y === Number(window.selectedYear);
+    }
+  }
+  
+  return true;
 };
 
 window.renderRekap = () => {
@@ -79,7 +110,8 @@ window.renderRekap = () => {
     filterHtml += `<div class="fg" style="margin:0;min-width:160px;"><label>Semester</label><select id="rekapSemSelect"><option value="ganjil" ${selectedSemester === 'ganjil' ? 'selected' : ''}>Ganjil (Jul–Des)</option><option value="genap" ${selectedSemester === 'genap' ? 'selected' : ''}>Genap (Jan–Jun)</option></select></div>
     <div class="fg" style="margin:0;min-width:100px;"><label>Tahun</label><input type="number" id="rekapTahunSem" value="${selectedYear}" style="width:90px;"></div>`;
   }
-  filterHtml += `<div class="fg" style="margin:0;align-self:flex-end;"><button class="btn btn-primary" id="btnTampilRekap"> Tampilkan</button></div></div>`;
+  filterHtml += `<div class="fg" style="margin:0;align-self:flex-end;"><button class="btn btn-primary" id="btnTampilRekap">Tampilkan</button></div></div>`;
+  
   document.getElementById('rekapFilters').innerHTML = filterHtml;
 
   document.getElementById('rekapKelasSelect').onchange = e => { currentRekapClass = e.target.value; };
@@ -99,33 +131,16 @@ window.renderRekap = () => {
   window.generateRekap();
 };
 
-window.filterLog = (log) => {
-    if (!log.date) return false;
-
-    // Parse langsung dari string 'YYYY-MM-DD' — hindari timezone shift
-    const parts = log.date.split('-');
-    const y = parseInt(parts[0]);
-    const m = parseInt(parts[1]);
-
-    if (currentRekapTab === 'harian')   return log.date === window.todayStr();
-    if (currentRekapTab === 'bulanan')  return m === selectedMonth && y === selectedYear;
-    if (currentRekapTab === 'semester') {
-        if (selectedSemester === 'ganjil') return [7,8,9,10,11,12].includes(m) && y === selectedYear;
-        else                               return [1,2,3,4,5,6].includes(m) && y === selectedYear;
-    }
-    return true;
-};
-
 window.generateRekap = () => {
   // ✅ SISWA TERURUT A-Z
   const siswa = allData
     .filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser)
     .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
 
-  // ✅ LOGS DIAMBIL SESUAI FILTER PERIODE DENGAN TIPE DATA YANG PRESISI
+  // ✅ LOGS DIAMBIL SESUAI FILTER PERIODE
   const logs = allData.filter(d => 
-    d.type === 'attendance_log' && 
-    d.class_name === currentRekapClass && 
+    (d.type === 'attendance_log' || d.type === 'attendance' || d.records) && 
+    (d.class_name === currentRekapClass || d.className === currentRekapClass) && 
     d.user_name === currentUser && 
     window.filterLog(d)
   );
@@ -134,7 +149,10 @@ window.generateRekap = () => {
 
   console.log(`📊 REKAP [${currentRekapClass}] Tab: ${currentRekapTab} | Bulan: ${selectedMonth} | Tahun: ${selectedYear} | Siswa: ${siswa.length} | Log absensi ditemukan: ${logs.length}`);
 
-  if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Tidak ada siswa di kelas ini.</p></div>'; return; }
+  if (!siswa.length) { 
+    cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Tidak ada siswa di kelas ini.</p></div>'; 
+    return; 
+  }
 
   const stat = {};
   siswa.forEach(s => { stat[s.__key] = { nama: s.student_name, H: 0, I: 0, S: 0, A: 0, B: 0, detail: [] }; });
@@ -142,12 +160,17 @@ window.generateRekap = () => {
   // ✅ PENGHITUNGAN ABSENSI
   logs.forEach(log => {
     if (!log.records) return;
+
+    const dateVal = log.date || log.tanggal;
+    const { y, m, d } = window.parseLogDate(dateVal);
+    const dateFormatted = `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`;
+
     Object.keys(log.records).forEach(sid => {
       if (!stat[sid]) return;
       const st = log.records[sid].status || 'ALPA';
       const map = { HADIR: 'H', IZIN: 'I', SAKIT: 'S', ALPA: 'A', BOLOS: 'B' };
       if (map[st]) stat[sid][map[st]]++;
-      if (st !== 'HADIR') stat[sid].detail.push(log.date.split('-').reverse().join('/') + `(${st})`);
+      if (st !== 'HADIR') stat[sid].detail.push(`${dateFormatted}(${st})`);
     });
   });
 
@@ -179,7 +202,7 @@ window.generateRekap = () => {
       <td style="color:#10b981;font-weight:700;">${data.H}</td><td style="color:#3b82f6;font-weight:700;">${data.I}</td>
       <td style="color:#f59e0b;font-weight:700;">${data.S}</td><td style="color:#ef4444;font-weight:700;">${data.A}</td>
       <td style="color:#8b5cf6;font-weight:700;">${data.B}</td><td><strong>${total}</strong></td>
-      <td><strong style="color:${col};">${pct}%</strong></td>
+      <td style="color:${col};font-weight:700;">${pct}%</td>
       <td style="font-size:0.78rem;color:#64748b;">${data.detail.length ? data.detail.join(', ') : '–'}</td>
     </tr>`;
   });
@@ -193,7 +216,8 @@ window.generateRekap = () => {
 window.cetakRekap = () => {
   const table = document.getElementById('rekapTable');
   if (!table) { 
-    window.toast('Tampilkan rekap terlebih dahulu.', 'err'); 
+    if (typeof window.toast === 'function') window.toast('Tampilkan rekap terlebih dahulu.', 'err'); 
+    else alert('Tampilkan rekap terlebih dahulu.');
     return; 
   }
 
@@ -205,23 +229,18 @@ window.cetakRekap = () => {
 
   const kelasName = kelasSelect ? kelasSelect.value : currentRekapClass;
   let periodeText = '';
-  let semesterText = '';
-  let tahunText = '';
   
   if (currentRekapTab === 'bulanan') {
     const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
     const bln = bulanSelect ? monthNames[parseInt(bulanSelect.value, 10) - 1] : '';
-    tahunText = tahunSelect ? tahunSelect.value : new Date().getFullYear();
-    periodeText = `Bulan ${bln} Tahun ${tahunText}`;
-    semesterText = '-';
+    const thn = tahunSelect ? tahunSelect.value : new Date().getFullYear();
+    periodeText = `Bulan ${bln} Tahun ${thn}`;
   } else if (currentRekapTab === 'semester') {
-    semesterText = semSelect ? (semSelect.value === 'ganjil' ? 'Ganjil (Jul-Des)' : 'Genap (Jan-Jun)') : '';
-    tahunText = tahunSemInput ? tahunSemInput.value : new Date().getFullYear();
-    periodeText = `Semester ${semesterText} Tahun ${tahunText}`;
+    const sem = semSelect ? (semSelect.value === 'ganjil' ? 'Ganjil (Jul-Des)' : 'Genap (Jan-Jun)') : '';
+    const thn = tahunSemInput ? tahunSemInput.value : new Date().getFullYear();
+    periodeText = `Semester ${sem} Tahun ${thn}`;
   } else {
-    periodeText = `Harian (Tanggal ${window.todayStr()})`;
-    semesterText = '-';
-    tahunText = new Date().getFullYear();
+    periodeText = `Harian (Tanggal ${typeof window.todayStr === 'function' ? window.todayStr() : new Date().toLocaleDateString('id-ID')})`;
   }
 
   const printHeader = document.createElement('div');
@@ -257,7 +276,8 @@ window.cetakRekap = () => {
 window.exportRekap = () => {
   const table = document.getElementById('rekapTable');
   if (!table) { 
-    window.toast('Tampilkan rekap terlebih dahulu.', 'err'); 
+    if (typeof window.toast === 'function') window.toast('Tampilkan rekap terlebih dahulu.', 'err'); 
+    else alert('Tampilkan rekap terlebih dahulu.');
     return; 
   }
 
@@ -265,5 +285,5 @@ window.exportRekap = () => {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Rekap Kehadiran');
   XLSX.writeFile(wb, `Rekap_${currentRekapClass}_${currentRekapTab}.xlsx`);
-  window.toast('✅ File Excel diekspor!', 'success');
+  if (typeof window.toast === 'function') window.toast('✅ File Excel diekspor!', 'success');
 };
