@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA CORE: Firebase Init, State & Helpers (SECURE VERSION)
+// SIPENA CORE: Firebase Init, State & Helpers (SECURE & FOLDER STRUCTURE VERSION)
 // ══════════════════════════════════════════════
 
 const firebaseConfig = {
@@ -164,7 +164,37 @@ window.initApp = () => {
 
     const pasangListener = () => {
       ROOT.on('value', snap => {
-        allData = window.toArr(snap.val());
+        const rawData = snap.val() || {};
+        allData = [];
+
+        // 1. Ambil Data Kelas dari folder 'classes'
+        if (rawData.classes) {
+          Object.keys(rawData.classes).forEach(key => {
+            allData.push({ __key: key, type: 'class', ...rawData.classes[key] });
+          });
+        }
+
+        // 2. Ambil Data Siswa dari folder 'students'
+        if (rawData.students) {
+          Object.keys(rawData.students).forEach(key => {
+            allData.push({ __key: key, type: 'student', ...rawData.students[key] });
+          });
+        }
+
+        // 3. Ambil Data Absensi dari folder 'attendance_logs'
+        if (rawData.attendance_logs) {
+          Object.keys(rawData.attendance_logs).forEach(key => {
+            allData.push({ __key: key, type: 'attendance_log', ...rawData.attendance_logs[key] });
+          });
+        }
+
+        // 4. Backward Compatibility: Tetap baca data lama jika ada yang belum masuk folder
+        Object.keys(rawData).forEach(key => {
+          if (!['classes', 'students', 'attendance_logs'].includes(key) && typeof rawData[key] === 'object' && rawData[key] !== null) {
+            allData.push({ __key: key, ...rawData[key] });
+          }
+        });
+
         hideAuthLoading();
         window.renderActive();
         
