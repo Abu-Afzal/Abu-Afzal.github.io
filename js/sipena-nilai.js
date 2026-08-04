@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA: Penilaian (Dengan TP, Semester, Rekap & Analisis Soal Asesmen)
+// SIPENA: Penilaian (Dengan Urutan Siswa A-Z)
 // ══════════════════════════════════════════════
 
 window.renderPenilaian = () => {
@@ -43,7 +43,11 @@ window.renderPenilaian = () => {
     };
   }
 
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+  // Filter & Urutkan Nama Siswa A-Z
+  const siswa = allData
+    .filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser)
+    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
+
   if (info) info.textContent = `👥 ${siswa.length} siswa`;
 
   if (!siswa.length) {
@@ -69,7 +73,7 @@ window.getNilaiFilter = () => {
   };
 };
 
-// Helper: Hitung KKM default berdasarkan kelas (Digunakan oleh Analisis Asesmen)
+// Helper: Hitung KKM default berdasarkan kelas
 window.getKKMDefault = (className) => {
   if (!className) return 75;
   const kelas = className.toString().toUpperCase();
@@ -244,9 +248,6 @@ window.renderNilaiKeterampilan = (siswa) => {
   }
 };
 
-// ══════════════════════════════════════════════
-// FITUR: REKAP NILAI (SEMUA TP/KD)
-// ══════════════════════════════════════════════
 window.renderRekapNilai = (siswa) => {
   const filter = window.getNilaiFilter();
   const cont = document.getElementById('penilaianContent');
@@ -425,6 +426,11 @@ window.eksporNilai = () => {
     const deskripsi = document.getElementById('nilaiDeskripsiTP')?.value || '-';
     const semesterText = filter.semester === 'ganjil' ? 'Ganjil' : 'Genap';
     
+    // Ambil data siswa & urutkan A-Z
+    const siswa = allData
+      .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
+
     let rows = [];
     let filename = '';
     let sheetName = 'Data';
@@ -440,7 +446,6 @@ window.eksporNilai = () => {
 
     if (currentNilaiTab === 'pengetahuan') {
         if (!window.nilaiKolom || !window.nilaiKolom.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
         rows.push(['No', 'Nama Siswa', ...window.nilaiKolom.map(k => k.label), 'Rerata']);
 
         siswa.forEach((s, i) => {
@@ -456,7 +461,6 @@ window.eksporNilai = () => {
 
     } else if (currentNilaiTab === 'sikap') {
         const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
         rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
 
         siswa.forEach((s, i) => {
@@ -474,7 +478,6 @@ window.eksporNilai = () => {
 
     } else if (currentNilaiTab === 'keterampilan') {
         if (!window.nilaiKolomKet || !window.nilaiKolomKet.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
         rows.push(['No', 'Nama Siswa', ...window.nilaiKolomKet.map(k => k.label), 'Rerata']);
 
         siswa.forEach((s, i) => {
@@ -498,7 +501,6 @@ window.eksporNilai = () => {
         if (uniqueTPs.length === 0) { window.toast('Tidak ada data rekap untuk diekspor.', 'err'); return; }
 
         rows.push(['No', 'Nama Siswa', ...uniqueTPs.map(tp => `Rerata TP ${tp}`), 'Nilai Akhir Semester']);
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
 
         siswa.forEach((s, i) => {
             const row = [i + 1, s.student_name];
@@ -700,7 +702,10 @@ window.simpanSetupAsesmen = async () => {
     await ROOT.push().set(payload);
     window.toast('✅ Setup asesmen berhasil disimpan!', 'success');
     
-    const siswa = allData.filter(d => d.type === 'student' && d.class_name === filter.class_name && d.user_name === filter.user_name);
+    const siswa = allData
+      .filter(d => d.type === 'student' && d.class_name === filter.class_name && d.user_name === filter.user_name)
+      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
+
     window.renderAnalisisAsesmen(siswa);
     
   } catch (error) {
@@ -889,7 +894,10 @@ window.resetSetupAsesmen = async (setupKey) => {
   try {
     await ROOT.child(setupKey).remove();
     window.toast('✅ Setup asesmen berhasil direset!', 'success');
-    const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+    const siswa = allData
+      .filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser)
+      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
+
     window.renderAnalisisAsesmen(siswa);
   } catch (error) {
     window.toast('❌ Gagal mereset: ' + error.message, 'err');
@@ -912,7 +920,11 @@ window.exportAnalisisAsesmenExcel = () => {
   }
   
   const { mata_pelajaran, jumlah_soal, skor_max_per_soal, total_skor_max, kkm, class_name, semester } = setupAsesmen;
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser);
+  
+  // Ambil data siswa & urutkan A-Z
+  const siswa = allData
+    .filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser)
+    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
   
   const rows = [];
   const jmlSiswa = siswa.length || 1;
@@ -1104,7 +1116,11 @@ window.previewAnalisisPDF = () => {
   }
   
   const { mata_pelajaran, jumlah_soal, skor_max_per_soal, total_skor_max, kkm, class_name, semester } = setupAsesmen;
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser);
+  
+  // Ambil data siswa & urutkan A-Z
+  const siswa = allData
+    .filter(d => d.type === 'student' && d.class_name === class_name && d.user_name === currentUser)
+    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || ''));
   
   // Ambil data user untuk tanda tangan
   const userData = JSON.parse(localStorage.getItem('sipelita_user') || '{}');
