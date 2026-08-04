@@ -593,161 +593,151 @@ window.simpanKonfigKolom = async (tipe, kolom) => {
 };
 
 window.eksporNilai = () => {
-  if (typeof XLSX === 'undefined') {
-    window.toast('⚠️ Library Excel belum siap.', 'err');
-    return;
-  }
-
-  const filter = window.getNilaiFilter();
-  const kelas = currentNilaiClass || 'Tanpa_Kelas';
-  const tahunAjaran = document.getElementById('nilaiTahunAjaran')?.value || '2024/2025';
-  const mapel = document.getElementById('nilaiMapel')?.value || '-';
-  const deskripsi = document.getElementById('nilaiDeskripsiTP')?.value || '-';
-  const semesterText = filter.semester === 'ganjil' ? 'Ganjil' : 'Genap';
-  
-  let rows = [];
-  let filename = '';
-  let sheetName = 'Data';
-
-  rows.push([`LAPORAN NILAI`]);
-  rows.push([`Kelas: ${kelas}`, `Semester: ${semesterText}`, `Tahun Ajaran: ${tahunAjaran}`]);
-  
-  if (currentNilaiTab !== 'rekap') {
-    rows.push([`Kode TP/KD: ${filter.kode_tp || '-'}`, `Mata Pelajaran: ${mapel}`]);
-    rows.push([`Deskripsi: ${deskripsi}`]);
-  }
-  rows.push([]);
-
-  if (currentNilaiTab === 'pengetahuan') {
-    if (!window.nilaiKolom || !window.nilaiKolom.length) { 
-      window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); 
-      return; 
+    if (typeof XLSX === 'undefined') {
+        window.toast('⚠️ Library Excel belum siap.', 'err');
+        return;
     }
-    const siswa = allData
-      .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
-      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
 
-    rows.push(['No', 'Nama Siswa', ...window.nilaiKolom.map(k => k.label), 'Rerata']);
+    const filter = window.getNilaiFilter();
+    const kelas = currentNilaiClass || 'Tanpa_Kelas';
+    const tahunAjaran = document.getElementById('nilaiTahunAjaran')?.value || '2024/2025';
+    const mapel = document.getElementById('nilaiMapel')?.value || '-';
+    const deskripsi = document.getElementById('nilaiDeskripsiTP')?.value || '-';
+    const semesterText = filter.semester === 'ganjil' ? 'Ganjil' : 'Genap';
+    
+    let rows = [];
+    let filename = '';
+    let sheetName = 'Data';
 
-    siswa.forEach((s, i) => {
-      const inputs = document.querySelectorAll(`.nilai-input[data-sid="${s.__key}"]`);
-      const vals = [];
-      inputs.forEach(inp => vals.push(inp.value !== '' ? inp.value : ''));
-      const numericVals = vals.map(v => parseFloat(v)).filter(v => !isNaN(v));
-      const avg = numericVals.length ? (numericVals.reduce((a, b) => a + b, 0) / numericVals.length).toFixed(1) : '';
-      rows.push([i + 1, s.student_name, ...vals, avg]);
-    });
-    filename = `SIPENA_Pengetahuan_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
-    sheetName = 'Pengetahuan';
-
-  } else if (currentNilaiTab === 'sikap') {
-    const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
-    const siswa = allData
-      .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
-      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
-
-    rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
-
-    siswa.forEach((s, i) => {
-      const selects = document.querySelectorAll(`.sikap-select[data-sid="${s.__key}"]`);
-      const catatanInput = document.querySelector(`.sikap-catatan[data-sid="${s.__key}"]`);
-      const sikapVals = [];
-      aspek.forEach(a => {
-        const sel = Array.from(selects).find(x => x.dataset.aspek === a);
-        sikapVals.push(sel ? sel.value : '');
-      });
-      rows.push([i + 1, s.student_name, ...sikapVals, catatanInput ? catatanInput.value : '']);
-    });
-    filename = `SIPENA_Sikap_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
-    sheetName = 'Sikap';
-
-  } else if (currentNilaiTab === 'keterampilan') {
-    if (!window.nilaiKolomKet || !window.nilaiKolomKet.length) { 
-      window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); 
-      return; 
+    rows.push([`LAPORAN NILAI`]);
+    rows.push([`Kelas: ${kelas}`, `Semester: ${semesterText}`, `Tahun Ajaran: ${tahunAjaran}`]);
+    
+    if (currentNilaiTab !== 'rekap') {
+        rows.push([`Kode TP/KD: ${filter.kode_tp || '-'}`, `Mata Pelajaran: ${mapel}`]);
+        rows.push([`Deskripsi: ${deskripsi}`]);
     }
-    const siswa = allData
-      .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
-      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+    rows.push([]);
 
-    rows.push(['No', 'Nama Siswa', ...window.nilaiKolomKet.map(k => k.label), 'Rerata']);
+    if (currentNilaiTab === 'pengetahuan') {
+        if (!window.nilaiKolom || !window.nilaiKolom.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
+        const siswa = allData
+            .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+            .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+        rows.push(['No', 'Nama Siswa', ...window.nilaiKolom.map(k => k.label), 'Rerata']);
 
-    siswa.forEach((s, i) => {
-      const inputs = document.querySelectorAll(`.nilai-ket-input[data-sid="${s.__key}"]`);
-      const vals = [];
-      inputs.forEach(inp => vals.push(inp.value !== '' ? inp.value : ''));
-      const numericVals = vals.map(v => parseFloat(v)).filter(v => !isNaN(v));
-      const avg = numericVals.length ? (numericVals.reduce((a, b) => a + b, 0) / numericVals.length).toFixed(1) : '';
-      rows.push([i + 1, s.student_name, ...vals, avg]);
-    });
-    filename = `SIPENA_Keterampilan_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
-    sheetName = 'Keterampilan';
-      
-  } else if (currentNilaiTab === 'rekap') {
-    const allNilaiData = allData.filter(d => 
-      (d.type === 'nilai_pengetahuan' || d.type === 'nilai_keterampilan') && 
-      d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester
-    );
-    const uniqueTPs = [...new Set(allNilaiData.map(d => d.kode_tp))].sort();
-
-    if (uniqueTPs.length === 0) { window.toast('Tidak ada data rekap untuk diekspor.', 'err'); return; }
-
-    rows.push(['No', 'Nama Siswa', ...uniqueTPs.map(tp => `Rerata TP ${tp}`), 'Nilai Akhir Semester']);
-    const siswa = allData
-      .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
-      .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
-
-    siswa.forEach((s, i) => {
-      const row = [i + 1, s.student_name];
-      let totalSemester = 0, countTP = 0;
-
-      uniqueTPs.forEach(tp => {
-        const semuaTP = allNilaiData.filter(d => d.student_key === s.__key && d.kode_tp === tp);
-        let vals = [];
-        semuaTP.forEach(r => { 
-          try { 
-            if (r.nilai) {
-              vals = vals.concat(Object.values(JSON.parse(r.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v)));
-            }
-          } catch(e) {} 
+        siswa.forEach((s, i) => {
+            const inputs = document.querySelectorAll(`.nilai-input[data-sid="${s.__key}"]`);
+            const vals = [];
+            inputs.forEach(inp => vals.push(inp.value !== '' ? inp.value : ''));
+            const numericVals = vals.map(v => parseFloat(v)).filter(v => !isNaN(v));
+            const avg = numericVals.length ? (numericVals.reduce((a, b) => a + b, 0) / numericVals.length).toFixed(1) : '';
+            rows.push([i + 1, s.student_name, ...vals, avg]);
         });
+        filename = `SIPENA_Pengetahuan_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
+        sheetName = 'Pengetahuan';
+
+    } else if (currentNilaiTab === 'sikap') {
+        const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
+        const siswa = allData
+            .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+            .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+        rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
+
+        siswa.forEach((s, i) => {
+            const selects = document.querySelectorAll(`.sikap-select[data-sid="${s.__key}"]`);
+            const catatanInput = document.querySelector(`.sikap-catatan[data-sid="${s.__key}"]`);
+            const sikapVals = [];
+            aspek.forEach(a => {
+                const sel = Array.from(selects).find(x => x.dataset.aspek === a);
+                sikapVals.push(sel ? sel.value : '');
+            });
+            rows.push([i + 1, s.student_name, ...sikapVals, catatanInput ? catatanInput.value : '']);
+        });
+        filename = `SIPENA_Sikap_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
+        sheetName = 'Sikap';
+
+    } else if (currentNilaiTab === 'keterampilan') {
+        if (!window.nilaiKolomKet || !window.nilaiKolomKet.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
+        const siswa = allData
+            .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+            .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+        rows.push(['No', 'Nama Siswa', ...window.nilaiKolomKet.map(k => k.label), 'Rerata']);
+
+        siswa.forEach((s, i) => {
+            const inputs = document.querySelectorAll(`.nilai-ket-input[data-sid="${s.__key}"]`);
+            const vals = [];
+            inputs.forEach(inp => vals.push(inp.value !== '' ? inp.value : ''));
+            const numericVals = vals.map(v => parseFloat(v)).filter(v => !isNaN(v));
+            const avg = numericVals.length ? (numericVals.reduce((a, b) => a + b, 0) / numericVals.length).toFixed(1) : '';
+            rows.push([i + 1, s.student_name, ...vals, avg]);
+        });
+        filename = `SIPENA_Keterampilan_${kelas}_${filter.semester}_${filter.kode_tp}.xlsx`;
+        sheetName = 'Keterampilan';
         
-        if (vals.length > 0) {
-          const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-          row.push(avg);
-          totalSemester += parseFloat(avg);
-          countTP++;
-        } else { 
-          row.push(''); 
-        }
-      });
+    } else if (currentNilaiTab === 'rekap') {
+        const allNilaiData = allData.filter(d => 
+            (d.type === 'nilai_pengetahuan' || d.type === 'nilai_keterampilan') && 
+            d.class_name === filter.class_name && d.user_name === filter.user_name && d.semester === filter.semester
+        );
+        const uniqueTPs = [...new Set(allNilaiData.map(d => d.kode_tp))].sort();
 
-      const akhir = countTP > 0 ? (totalSemester / countTP).toFixed(1) : '';
-      row.push(akhir);
-      rows.push(row);
-    });
-    filename = `SIPENA_Rekap_Nilai_${kelas}_${filter.semester}.xlsx`;
-    sheetName = 'Rekap Nilai';
-  }
+        if (uniqueTPs.length === 0) { window.toast('Tidak ada data rekap untuk diekspor.', 'err'); return; }
 
-  if (rows.length <= 5) { window.toast('Tidak ada data untuk diekspor.', 'err'); return; }
+        rows.push(['No', 'Nama Siswa', ...uniqueTPs.map(tp => `Rerata TP ${tp}`), 'Nilai Akhir Semester']);
+        const siswa = allData
+            .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+            .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  const lastColIndex = rows[rows.length > 5 ? 4 : (rows.length - 1)].length - 1; 
-  
-  ws['!merges'] = [ { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIndex } } ];
+        siswa.forEach((s, i) => {
+            const row = [i + 1, s.student_name];
+            let totalSemester = 0, countTP = 0;
 
-  const colWidths = [{ wch: 5 }, { wch: 30 }];
-  for (let i = 2; i <= lastColIndex; i++) colWidths.push({ wch: 15 });
-  ws['!cols'] = colWidths;
+            uniqueTPs.forEach(tp => {
+                const semuaTP = allNilaiData.filter(d => d.student_key === s.__key && d.kode_tp === tp);
+                let vals = [];
+                semuaTP.forEach(r => { 
+                    try { 
+                        if (r.nilai) {
+                            vals = vals.concat(Object.values(JSON.parse(r.nilai)).map(v => parseFloat(v)).filter(v => !isNaN(v)));
+                        }
+                    } catch(e) {} 
+                });
+                
+                if (vals.length > 0) {
+                    const avg = (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+                    row.push(avg);
+                    totalSemester += parseFloat(avg);
+                    countTP++;
+                } else { 
+                    row.push(''); 
+                }
+            });
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  XLSX.writeFile(wb, filename);
+            const akhir = countTP > 0 ? (totalSemester / countTP).toFixed(1) : '';
+            row.push(akhir);
+            rows.push(row);
+        });
+        filename = `SIPENA_Rekap_Nilai_${kelas}_${filter.semester}.xlsx`;
+        sheetName = 'Rekap Nilai';
+    }
 
-  window.toast(`✅ File ${filename} berhasil diunduh!`, 'success');
+    if (rows.length <= 5) { window.toast('Tidak ada data untuk diekspor.', 'err'); return; }
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const lastColIndex = rows[rows.length > 5 ? 4 : (rows.length - 1)].length - 1; 
+    
+    ws['!merges'] = [ { s: { r: 0, c: 0 }, e: { r: 0, c: lastColIndex } } ];
+
+    const colWidths = [{ wch: 5 }, { wch: 30 }];
+    for (let i = 2; i <= lastColIndex; i++) colWidths.push({ wch: 15 });
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+
+    window.toast(`✅ File ${filename} berhasil diunduh!`, 'success');
 };
-
 // Event Listeners untuk perubahan filter
 document.addEventListener('DOMContentLoaded', () => {
   const elSemester = document.getElementById('nilaiSemesterSelect');
