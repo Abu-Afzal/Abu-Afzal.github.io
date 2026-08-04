@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════
-// SIPENA CORE: Firebase Init, State & Helpers
+// SIPENA CORE: Firebase Init, State & Helpers (SECURE VERSION)
 // ══════════════════════════════════════════════
 
 const firebaseConfig = {
@@ -13,12 +13,14 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const rtdb = firebase.database(); // Untuk data SIPENA
-const firestore = firebase.firestore(); // Untuk integrasi SICAN
+const rtdb = firebase.database();
+const firestore = firebase.firestore();
 const ROOT = rtdb.ref("sipena2");
 
 // Global State
 let currentUser = '';
+let currentUserEmail = ''; // ✅ BARU: simpan email untuk rules ownership
+let currentUserRole = 'guru'; // ✅ BARU: simpan role untuk logika admin/kepala
 let allData = [];
 let currentClass = '';
 let currentRekapClass = '';
@@ -75,40 +77,115 @@ window.renderActive = () => {
   }
 };
 
-// Init App
+// ✅ BARU: Tampilkan loading screen saat menunggu auth
+function showAuthLoading(msg) {
+  const loading = document.createElement('div');
+  loading.id = 'authLoadingScreen';
+  loading.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #f8fafc; z-index: 99999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: system-ui, -apple-system, sans-serif;
+  `;
+  loading.innerHTML = `
+    <div style="text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 15px;">🔐</div>
+      <div style="font-weight: 700; color: #1e293b; font-size: 1.1rem; margin-bottom: 8px;">
+        Memverifikasi Login...
+      </div>
+      <div style="color: #64748b; font-size: 0.9rem;">${msg}</div>
+    </div>
+  `;
+  document.body.appendChild(loading);
+}
+
+function hideAuthLoading() {
+  const el = document.getElementById('authLoadingScreen');
+  if (el) el.remove();
+}
+
+// ✅ DIPERBAIKI: Init App yang menunggu Firebase Auth
 window.initApp = () => {
-  let userData = null;
-  try {
-    const s = localStorage.getItem('sipelita_user');
-    if (s) {
-      userData = JSON.parse(s);
-      currentUser = userData.nama || userData.email || 'guru';
+  showAuthLoading('Mohon tunggu sebentar...');
+
+  // Gunakan onAuthStateChanged sebagai GERBANG UTAMA
+  firebase.auth().onAuthStateChanged(user => {
+    // KASUS 1: User tidak login via Firebase Auth → redirect ke login
+    if (!user) {
+      console.warn('⚠️ Tidak terautentikasi via Firebase Auth. Mengalihkan ke login...');
+      hideAuthLoading();
+      window.toast('⚠️ Sesi berakhir. Silakan login ulang.', 'err');
+      setTimeout(() => {
+        window.location.href = '../index.html';
+      }, 1500);
+      return;
+    }
+
+    // KASUS 2: User terautentikasi → lanjut
+    console.log('✅ Auth siap:', user.email);
+    currentUserEmail = user.email;
+
+    // Ambil data tambahan dari localStorage (nama, role) sebagai fallback
+    let userData = null;
+    try {
+      const s = localStorage.getItem('sipelita_user');
+      if (s) userData = JSON.parse(s);
+    } catch (e) {}
+
+    // Set currentUser: prioritas nama dari localStorage, fallback ke email
+    if (userData && userData.nama) {
+      currentUser = userData.nama;
+      currentUserRole = userData.role || 'guru';
     } else {
-      currentUser = 'guru';
+      currentUser = user.email;
+      currentUserRole = 'guru';
     }
-  } catch (e) { currentUser = 'guru'; }
 
-  const userDisplay = document.getElementById('userDisplay');
-  if (userDisplay) {
-    const roleIcon = { 'admin': '👑', 'kepala': '👑', 'wakil': '⭐', 'guru': '👨‍🏫' }[userData?.role] || '👨‍🏫';
-    userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
-  }
-
-  document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-  ROOT.on('value', snap => {
-    allData = window.toArr(snap.val());
-    window.renderActive();
-    if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
-      window.renderSiswaModal(currentManajeKelas);
+    // Tampilkan nama user di header
+    const userDisplay = document.getElementById('userDisplay');
+    if (userDisplay) {
+      const roleIcon = { 'admin': '👑', 'kepala': '👑', 'wakil': '⭐', 'guru': '👨‍🏫' }[currentUserRole] || '👨‍🏫';
+      userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
     }
-  }, err => {
-    console.error(err);
-    window.toast('Gagal terhubung ke database', 'err');
+
+    // Set tanggal hari ini
+    const currentDateEl = document.getElementById('currentDate');
+    if (currentDateEl) {
+      currentDateEl.textContent = '📅 ' + new Date().toLocaleDateString('id-ID', { 
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+      });
+    }
+
+    // ✅ BARU: Listener RTDB dipasang HANYA SETELAH auth siap
+    ROOT.on('value', snap => {
+      allData = window.toArr(snap.val());
+      hideAuthLoading(); // Hapus loading setelah data pertama diterima
+      window.renderActive();
+      if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
+        window.renderSiswaModal(currentManajeKelas);
+      }
+    }, err => {
+      console.error('❌ Error listener RTDB:', err);
+      hideAuthLoading();
+      if (err.code === 'PERMISSION_DENIED') {
+        window.toast('❌ Akses ditolak. Sesi tidak valid. Login ulang.', 'err');
+        setTimeout(() => window.location.href = '../index.html', 2000);
+      } else {
+        window.toast('Gagal terhubung ke database: ' + err.message, 'err');
+      }
+    });
+
+    // ✅ DEBUG: expose info auth untuk console
+    console.log('🔐 Auth Info:', {
+      email: currentUserEmail,
+      displayName: currentUser,
+      role: currentUserRole,
+      uid: user.uid
+    });
+
+    window.bindEvents();
+    window.showContent('kelola-kelas');
   });
-
-  window.bindEvents();
-  window.showContent('kelola-kelas');
 };
 
 window.addEventListener('load', window.initApp);
