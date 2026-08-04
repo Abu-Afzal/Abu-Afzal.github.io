@@ -1,19 +1,12 @@
 // ══════════════════════════════════════════════
-// SIPENA: Presensi (FIXED: ID Unik Deterministik + Anti Duplikat)
+// SIPENA: Presensi (Versi Final & Stabil)
 // ══════════════════════════════════════════════
 
 window.attendanceData = window.attendanceData || {};
 window.presensiDate = window.presensiDate || new Date().toISOString().split('T')[0];
 
-// 🔍 FUNGSI MEMBUAT ID UNIK DOKUMEN (Mencegah ID Acak .push())
-window.getAttendanceDocId = (userName, className, dateStr) => {
-  const cleanUser = String(userName || 'user').replace(/[^a-zA-Z0-9]/g, '_');
-  const cleanClass = String(className || 'class').replace(/[^a-zA-Z0-9]/g, '_');
-  const cleanDate = String(dateStr || '').trim();
-  return `log_${cleanUser}_${cleanClass}_${cleanDate}`;
-};
-
 window.renderPresensi = () => {
+  // PENGAMAN: Jika data belum siap, hentikan sementara agar tidak error
   if (typeof allData === 'undefined' || !allData) return;
 
   const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
@@ -31,14 +24,16 @@ window.renderPresensi = () => {
   tabs.innerHTML = kelas.map(k => `<button class="tab ${currentClass === k.class_name ? 'active' : ''}" data-kelas="${k.class_name}">${k.class_name}</button>`).join('');
   tabs.querySelectorAll('.tab').forEach(t => { t.onclick = () => { currentClass = t.dataset.kelas; window.renderPresensi(); }; });
 
+  // Setup Date Picker secara internal (AMAN)
   if (dateInput) {
     if (!dateInput.value) {
-      dateInput.value = window.presensiDate;
-      dateInput.max = new Date().toISOString().split('T')[0];
+        dateInput.value = window.presensiDate;
+        dateInput.max = new Date().toISOString().split('T')[0];
     }
+    // Saat tanggal diubah, muat ulang data untuk tanggal tersebut
     dateInput.onchange = (e) => {
-      window.presensiDate = e.target.value;
-      window.loadPresensiDataForDate(window.presensiDate);
+        window.presensiDate = e.target.value;
+        window.loadPresensiDataForDate(window.presensiDate);
     };
   }
 
@@ -49,13 +44,14 @@ window.loadPresensiDataForDate = (targetDate) => {
   try {
     if (typeof allData === 'undefined' || !allData) return;
     
-    window.attendanceData = {};
+    window.attendanceData = {}; // Reset sementara
     
-    // Pencarian fleksibel: cocokkan ID Unik atau kriteria log
-    const docId = window.getAttendanceDocId(currentUser, currentClass, targetDate);
+    // Cari data absensi yang sudah ada di tanggal & kelas tersebut
     const existingLog = allData.find(d => 
-      d.__key === docId || 
-      (d.type === 'attendance_log' && d.class_name === currentClass && d.date === targetDate && d.user_name === currentUser)
+      d.type === 'attendance_log' && 
+      d.class_name === currentClass && 
+      d.date === targetDate && 
+      d.user_name === currentUser
     );
 
     if (existingLog && existingLog.records) {
@@ -67,18 +63,14 @@ window.loadPresensiDataForDate = (targetDate) => {
     window.renderDaftarSiswa();
   } catch (err) {
     console.error("Error loadPresensiDataForDate:", err);
-    window.renderDaftarSiswa();
+    window.renderDaftarSiswa(); // Fallback: tetap render meski ada error kecil
   }
 };
 
 window.renderDaftarSiswa = () => {
   if (typeof allData === 'undefined' || !allData) return;
 
-  // ✅ SORTING A-Z
-  const siswa = allData
-    .filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser)
-    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
-  
+  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
   const cont = document.getElementById('studentListContainer');
 
   if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
@@ -100,6 +92,7 @@ window.renderDaftarSiswa = () => {
   cont.querySelectorAll('.status-btn').forEach(btn => {
     btn.onclick = () => { 
       window.attendanceData[btn.dataset.sid] = btn.dataset.st; 
+      // Update UI saja tanpa render ulang semua agar lebih cepat
       btn.parentElement.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     };
@@ -108,15 +101,9 @@ window.renderDaftarSiswa = () => {
 
 window.hadirSemua = () => {
   if (typeof allData === 'undefined' || !allData) return;
-  
-  // ✅ SORTING A-Z
-  allData
-    .filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser)
-    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }))
-    .forEach(s => { 
-      window.attendanceData[s.__key] = 'HADIR'; 
-    });
-  
+  allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser).forEach(s => { 
+    window.attendanceData[s.__key] = 'HADIR'; 
+  });
   window.renderDaftarSiswa();
   window.toast('Semua siswa ditandai Hadir.');
 };
@@ -126,11 +113,7 @@ window.simpanAbsensi = async () => {
 
   const targetDate = window.presensiDate || new Date().toISOString().split('T')[0];
 
-  // ✅ SORTING A-Z
-  const siswa = allData
-    .filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser)
-    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
-  
+  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
   if (!siswa.length) { window.toast('Tidak ada siswa!', 'err'); return; }
 
   const belum = siswa.filter(s => !window.attendanceData[s.__key]);
@@ -142,21 +125,19 @@ window.simpanAbsensi = async () => {
   const records = {};
   siswa.forEach(s => { records[s.__key] = { student_name: s.student_name, status: window.attendanceData[s.__key] || 'ALPA' }; });
 
-  // 🎯 GUNAKAN ID UNIK DETERMINISTIK (Anti Duplikat di Firebase)
-  const docId = window.getAttendanceDocId(currentUser, currentClass, targetDate);
-
+  const existing = allData.find(d => d.type === 'attendance_log' && d.class_name === currentClass && d.date === targetDate && d.user_name === currentUser);
   try {
     const payload = {
-      type: 'attendance_log',
-      class_name: currentClass,
-      date: targetDate,
-      user_name: currentUser,
-      records,
-      updated_at: new Date().toISOString()
+        type: 'attendance_log',
+        class_name: currentClass,
+        date: targetDate,
+        user_name: currentUser,
+        records,
+        updated_at: new Date().toISOString()
     };
 
-    // Panggil langsung ke lokasi ID unik
-    await ROOT.child(docId).update(payload);
+    if (existing) await ROOT.child(existing.__key).update(payload);
+    else await ROOT.push().set({ ...payload, created_at: new Date().toISOString() });
     
     window.attendanceData = {};
     window.toast('Absensi berhasil disimpan!');
