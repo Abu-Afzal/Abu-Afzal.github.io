@@ -47,8 +47,14 @@ window.renderRekap = () => {
 };
 
 window.filterLog = (log) => {
-  const d = new Date(log.date), m = d.getMonth() + 1, y = d.getFullYear();
-  if (currentRekapTab === 'harian') return log.date === window.todayStr();
+  if (!log.date) return false;
+  
+  // Ambil Tahun, Bulan, Tanggal langsung dari string "YYYY-MM-DD"
+  const parts = log.date.split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+
+  if (currentRekapTab === 'harian') return log.date === window.getLocalDate(); // Gunakan fungsi tanggal lokal
   if (currentRekapTab === 'bulanan') return m === selectedMonth && y === selectedYear;
   if (currentRekapTab === 'semester') {
     if (selectedSemester === 'ganjil') return [7, 8, 9, 10, 11, 12].includes(m) && y === selectedYear;
