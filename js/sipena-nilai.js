@@ -3,7 +3,11 @@
 // ══════════════════════════════════════════════
 
 window.renderPenilaian = () => {
-  const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+  // ✅ PENGURUTAN KELAS A-Z
+  const kelas = allData
+    .filter(d => d.type === 'class' && d.user_name === currentUser)
+    .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { numeric: true, sensitivity: 'base' }));
+
   const sel = document.getElementById('nilaiKelasSelect');
   const cont = document.getElementById('penilaianContent');
   const info = document.getElementById('infoSiswaKelas');
@@ -32,7 +36,11 @@ window.renderPenilaian = () => {
   if (!currentNilaiClass || !kelas.find(k => k.class_name === currentNilaiClass)) currentNilaiClass = kelas[0].class_name;
   sel.innerHTML = kelas.map(k => `<option value="${k.class_name}" ${currentNilaiClass === k.class_name ? 'selected' : ''}>${k.class_name}</option>`).join('');
 
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser);
+  // ✅ PENGURUTAN SISWA A-Z (Otomatis diturunkan ke semua sub-tab)
+  const siswa = allData
+    .filter(d => d.type === 'student' && d.class_name === currentNilaiClass && d.user_name === currentUser)
+    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+
   info.textContent = `👥 ${siswa.length} siswa`;
 
   if (!siswa.length) {
@@ -40,6 +48,13 @@ window.renderPenilaian = () => {
     return;
   }
 
+  // ROUTING: Arahkan ke fungsi yang sesuai
+  if (currentNilaiTab === 'pengetahuan') window.renderNilaiPengetahuan(siswa);
+  else if (currentNilaiTab === 'sikap') window.renderNilaiSikap(siswa);
+  else if (currentNilaiTab === 'keterampilan') window.renderNilaiKeterampilan(siswa);
+  else if (currentNilaiTab === 'rekap') window.renderRekapNilai(siswa);
+  else if (currentNilaiTab === 'analisis-soal') window.renderAnalisisAsesmen(siswa);
+};
   // ROUTING: Arahkan ke fungsi yang sesuai
   if (currentNilaiTab === 'pengetahuan') window.renderNilaiPengetahuan(siswa);
   else if (currentNilaiTab === 'sikap') window.renderNilaiSikap(siswa);
@@ -414,6 +429,11 @@ window.eksporNilai = () => {
     const deskripsi = document.getElementById('nilaiDeskripsiTP')?.value || '-';
     const semesterText = filter.semester === 'ganjil' ? 'Ganjil' : 'Genap';
     
+    // ✅ AMBIL DATA SISWA DENGAN PENGURUTAN A-Z
+    const siswa = allData
+        .filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser)
+        .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+
     let rows = [];
     let filename = '';
     let sheetName = 'Data';
@@ -429,7 +449,6 @@ window.eksporNilai = () => {
 
     if (currentNilaiTab === 'pengetahuan') {
         if (!window.nilaiKolom || !window.nilaiKolom.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
         rows.push(['No', 'Nama Siswa', ...window.nilaiKolom.map(k => k.label), 'Rerata']);
 
         siswa.forEach((s, i) => {
@@ -445,7 +464,6 @@ window.eksporNilai = () => {
 
     } else if (currentNilaiTab === 'sikap') {
         const aspek = ['Beriman & Bertakwa', 'Gotong Royong', 'Mandiri', 'Bernalar Kritis', 'Kreatif'];
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
         rows.push(['No', 'Nama Siswa', ...aspek, 'Catatan']);
 
         siswa.forEach((s, i) => {
@@ -463,7 +481,6 @@ window.eksporNilai = () => {
 
     } else if (currentNilaiTab === 'keterampilan') {
         if (!window.nilaiKolomKet || !window.nilaiKolomKet.length) { window.toast('Tambahkan kolom penilaian terlebih dahulu.', 'err'); return; }
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
         rows.push(['No', 'Nama Siswa', ...window.nilaiKolomKet.map(k => k.label), 'Rerata']);
 
         siswa.forEach((s, i) => {
@@ -487,7 +504,6 @@ window.eksporNilai = () => {
         if (uniqueTPs.length === 0) { window.toast('Tidak ada data rekap untuk diekspor.', 'err'); return; }
 
         rows.push(['No', 'Nama Siswa', ...uniqueTPs.map(tp => `Rerata TP ${tp}`), 'Nilai Akhir Semester']);
-        const siswa = allData.filter(d => d.type === 'student' && d.class_name === kelas && d.user_name === currentUser);
 
         siswa.forEach((s, i) => {
             const row = [i + 1, s.student_name];
@@ -533,7 +549,6 @@ window.eksporNilai = () => {
 
     window.toast(`✅ File ${filename} berhasil diunduh!`, 'success');
 };
-
 // Event Listeners untuk perubahan filter
 document.addEventListener('DOMContentLoaded', () => {
   const elSemester = document.getElementById('nilaiSemesterSelect');
