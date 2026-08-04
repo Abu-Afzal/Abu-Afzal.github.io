@@ -433,18 +433,20 @@ function getPeriodeStatus(jadwal){
 }
 
 function initApp(){
-  try{
+  // 1. Ambil data profil user dari LocalStorage untuk UI
+  try {
     const s = localStorage.getItem('sipelita_user');
     const userData = s ? JSON.parse(s) : null;
     currentUser = userData ? (userData.nama || userData.email || 'guru') : 'guru';
     window.currentUserEmail = userData ? userData.email : '';
     window.currentUserRole = userData ? userData.role : 'guru';
-  } catch(e){ 
+  } catch(e) { 
     currentUser = 'guru'; 
     window.currentUserEmail = '';
     window.currentUserRole = 'guru';
   }
 
+  // 2. Render Widget Profil User & Role Icon
   const userDisplay = document.getElementById('userDisplay');
   if (userDisplay) {
     const roleIcon = {
@@ -452,7 +454,42 @@ function initApp(){
     }[window.currentUserRole] || '👨‍🏫';
     userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
   }
-  
+
+  // 3. Update Bar Tanggal/Waktu
+  if (typeof updateDateBar === 'function') {
+    updateDateBar();
+  }
+
+  // 4. Verifikasi Autentikasi Firebase & Load Data Realtime
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      console.log("✅ Firebase Auth Terhubung:", user.email);
+      
+      // Sinkronkan email jika di LocalStorage belum ada
+      if (!window.currentUserEmail && user.email) {
+        window.currentUserEmail = user.email;
+      }
+
+      // Inisialisasi Seluruh Listener Database & Fitur
+      if (typeof loadAlarmPref === 'function') loadAlarmPref();
+      if (typeof initFirebaseListeners === 'function') initFirebaseListeners();
+      if (typeof bindEvents === 'function') bindEvents();
+      if (typeof initAlarmEngine === 'function') initAlarmEngine();
+      if (typeof loadJadwalGambar === 'function') loadJadwalGambar();
+      if (typeof initDragDrop === 'function') initDragDrop();
+      if (typeof initVoiceSystem === 'function') initVoiceSystem();
+
+    } else {
+      console.warn("⚠️ User belum terautentikasi di Firebase Auth. Menjalankan fallback listener...");
+      
+      // Tetap jalankan listener utama agar UI tidak freeze
+      if (typeof initFirebaseListeners === 'function') initFirebaseListeners();
+      if (typeof loadJadwalGambar === 'function') loadJadwalGambar();
+      if (typeof bindEvents === 'function') bindEvents();
+      if (typeof initAlarmEngine === 'function') initAlarmEngine();
+    }
+  });
+}  
   updateDateBar();
   loadAlarmPref();
   initFirebaseListeners();
