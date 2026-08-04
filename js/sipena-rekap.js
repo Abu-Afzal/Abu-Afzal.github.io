@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════
 
 window.renderRekap = () => {
-  // ✅ DITAMBAHKAN: Pengurutan Kelas A-Z
+  // ✅ Pengurutan Kelas A-Z
   const kelas = allData
     .filter(d => d.type === 'class' && d.user_name === currentUser)
     .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { numeric: true, sensitivity: 'base' }));
@@ -49,12 +49,12 @@ window.renderRekap = () => {
 window.filterLog = (log) => {
   if (!log.date) return false;
   
-  // Ambil Tahun, Bulan, Tanggal langsung dari string "YYYY-MM-DD"
+  // Ambil Tahun, Bulan, Tanggal langsung dari string "YYYY-MM-DD" (Aman Timezone)
   const parts = log.date.split('-');
   const y = parseInt(parts[0], 10);
   const m = parseInt(parts[1], 10);
 
-  if (currentRekapTab === 'harian') return log.date === window.getLocalDate(); // Gunakan fungsi tanggal lokal
+  if (currentRekapTab === 'harian') return log.date === window.getLocalDate();
   if (currentRekapTab === 'bulanan') return m === selectedMonth && y === selectedYear;
   if (currentRekapTab === 'semester') {
     if (selectedSemester === 'ganjil') return [7, 8, 9, 10, 11, 12].includes(m) && y === selectedYear;
@@ -64,7 +64,7 @@ window.filterLog = (log) => {
 };
 
 window.generateRekap = () => {
-  // ✅ UTAMA: Filter & Urutkan Siswa Berdasarkan Nama A-Z
+  // ✅ Filter & Urutkan Siswa Berdasarkan Nama A-Z
   const siswa = allData
     .filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser)
     .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
@@ -104,7 +104,7 @@ window.generateRekap = () => {
   <div class="tbl-wrap"><table id="rekapTable">
     <thead><tr><th>No</th><th>Nama Siswa</th><th>H</th><th>I</th><th>S</th><th>A</th><th>B</th><th>Total</th><th>% Hadir</th><th>Rincian</th></tr></thead><tbody>`;
 
-  // ✅ KUNCI PENGURUTAN TABEL: Mengurutkan ulang baris data berdasarkan nama siswa A-Z
+  // ✅ Mengurutkan ulang baris data berdasarkan nama siswa A-Z
   Object.values(stat)
     .sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id-ID', { sensitivity: 'base' }))
     .forEach((s, i) => {
@@ -157,12 +157,13 @@ window.cetakRekap = () => {
     tahunText = tahunSemInput ? tahunSemInput.value : new Date().getFullYear();
     periodeText = `Semester ${semesterText} Tahun ${tahunText}`;
   } else {
-    periodeText = `Harian (Tanggal ${window.todayStr()})`;
+    // 📌 DISESUAIKAN: Menggunakan window.getLocalDate()
+    periodeText = `Harian (Tanggal ${window.getLocalDate()})`;
     semesterText = '-';
     tahunText = new Date().getFullYear();
   }
 
-  // Buat elemen header print dengan informasi LENGKAP
+  // Buat elemen header print
   const printHeader = document.createElement('div');
   printHeader.className = 'print-header-rekap';
   printHeader.style.cssText = `
@@ -185,11 +186,9 @@ window.cetakRekap = () => {
   const tblWrap = table.parentElement;
   tblWrap.insertBefore(printHeader, table);
 
-  // Panggil window.print() dengan delay kecil agar browser merender header
+  // Panggil window.print()
   setTimeout(() => {
     window.print();
-    
-    // Hapus header print setelah dialog print tertutup
     setTimeout(() => {
       if (printHeader.parentNode) {
         printHeader.parentNode.removeChild(printHeader);
