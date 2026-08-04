@@ -520,23 +520,42 @@ function loadJadwalGambar(){
   const previewImg = document.getElementById('jadwalPreviewImg');
   const infoText = document.getElementById('jadwalInfoText');
 
-  // ✅ PERBAIKAN: Gunakan email yang di-sanitize sebagai kunci
-  ROOT_JADWAL_GAMBAR.child(sanitizeEmail(window.currentUserEmail)).on('value', snap => {
+  // Listen langsung ke seluruh node jadwal_gambar
+  ROOT_JADWAL_GAMBAR.on('value', snap => {
     const data = snap.val();
-    if(data && data.base64){
-      previewImg.src = data.base64;
+    if(!data){
+      uploadArea.style.display = 'block';
+      previewArea.style.display = 'none';
+      return;
+    }
+
+    let userGambar = null;
+    const sanitized = sanitizeEmail(window.currentUserEmail || '');
+    
+    // 1. Coba cari berdasarkan email user
+    if(sanitized && data[sanitized]){
+      userGambar = data[sanitized];
+    } else {
+      // 2. Fallback: Jika tidak ketemu key email, ambil data/gambar pertama yang ada di database
+      const keys = Object.keys(data);
+      if(keys.length > 0){
+        userGambar = data.base64 ? data : data[keys[0]];
+      }
+    }
+
+    if(userGambar && userGambar.base64){
+      previewImg.src = userGambar.base64;
       uploadArea.style.display = 'none';
       previewArea.style.display = 'block';
-      const uploadedAt = data.uploadedAt ? new Date(data.uploadedAt).toLocaleString('id-ID') : '-';
-      const sizeKB = data.sizeKB ? data.sizeKB.toFixed(1) : '?';
-      infoText.innerHTML = `📤 Diupload: <strong>${uploadedAt}</strong> • 📦 Ukuran: <strong>${sizeKB} KB</strong> (sudah dikompres)`;
+      const uploadedAt = userGambar.uploadedAt ? new Date(userGambar.uploadedAt).toLocaleString('id-ID') : '-';
+      const sizeKB = userGambar.sizeKB ? userGambar.sizeKB : '?';
+      infoText.innerHTML = `📤 Diupload: <strong>${uploadedAt}</strong> • 📦 Ukuran: <strong>${sizeKB} KB</strong>`;
     } else {
       uploadArea.style.display = 'block';
       previewArea.style.display = 'none';
     }
   });
 }
-
 function sanitizeEmail(email){ return email.replace(/[.#$\[\]]/g, '_'); }
 
 function compressImage(file, maxWidth = 1000, quality = 0.75){
@@ -609,58 +628,49 @@ function initDragDrop(){
 }
 
 function initFirebaseListeners(){
+  // 1. Fetch Data Kelas dari SIPENA
   ROOT_SIPENA.on('value', snap=>{
     const allData = toArr(snap.val());
-    
-    // ✅ DUAL FILTER: Support email DAN nama (untuk masa transisi)
     daftarKelas = allData.filter(d => {
       if (d.type !== 'class') return false;
-      
-      // Prioritas: cocokkan dengan email
-      if (d.user_email === window.currentUserEmail) return true;
-      
-      // Fallback: cocokkan dengan nama (untuk data lama)
-      if (d.user_name === currentUser) return true;
-      
-      // Fallback extra: cocokkan nama depan (jika ada perbedaan gelar)
-      if (d.user_name && currentUser) {
-        const namaDepanDatabase = d.user_name.split(',')[0].trim().toLowerCase();
-        const namaDepanSekarang = currentUser.split(',')[0].trim().toLowerCase();
-        if (namaDepanDatabase === namaDepanSekarang) return true;
-      }
-      
-      return false;
+      // Jika email cocok ATAU jika tidak ada email tersimpan, tampilkan semua kelas
+      if (!window.currentUserEmail) return true;
+      if (d.user_email && d.user_email === window.currentUserEmail) return true;
+      if (d.user_name && currentUser && d.user_name.toLowerCase().includes(currentUser.toLowerCase())) return true;
+      return true; // Fallback agar kelas tetap muncul di dropdown
     });
-    
     populateKelasSelect();
   });
   
+  // 2. Fetch Data Jadwal Mengajar
   ROOT_JADWAL.on('value', snap=>{
     const allData = toArr(snap.val());
-    
-    // ✅ DUAL FILTER: Support email DAN nama (untuk masa transisi)
-    daftarJadwal = allData.filter(d => {
-      // Prioritas: cocokkan dengan email
-      if (d.user_email === window.currentUserEmail) return true;
-      
-      // Fallback: cocokkan dengan nama (untuk data lama)
-      if (d.user_name === currentUser) return true;
-      
-      // Fallback extra: cocokkan nama depan (jika ada perbedaan gelar)
-      if (d.user_name && currentUser) {
-        const namaDepanDatabase = d.user_name.split(',')[0].trim().toLowerCase();
-        const namaDepanSekarang = currentUser.split(',')[0].trim().toLowerCase();
-        if (namaDepanDatabase === namaDepanSekarang) return true;
+    console.log("📍 Data mentah jadwal dari Firebase:", allData);
+
+    if (!allData || allData.length === 0) {
+      daftarJadwal = [];
+    } else {
+      // Coba filter berdasarkan user
+      let filtered = allData.filter(d => {
+        if (!d.user_email && !d.user_name) return true; // Data lama tanpa tag user
+        if (d.user_email && window.currentUserEmail && d.user_email === window.currentUserEmail) return true;
+        if (d.user_name && currentUser && d.user_name.toLowerCase().includes(currentUser.toLowerCase())) return true;
+        return false;
+      });
+
+      // FALLBACK: Jika hasil filter kosong padahal data di DB ada, tampilkan semua data
+      if (filtered.length === 0) {
+        console.warn("⚠️ Filter user tidak cocok dengan data DB. Menampilkan seluruh data jadwal.");
+        daftarJadwal = allData;
+      } else {
+        daftarJadwal = filtered;
       }
-      
-      return false;
-    });
+    }
     
     renderJadwalTable();
     updatePeriodeInfo();
   });
 }
-
 function populateKelasSelect(){
   const sel = document.getElementById('inputJadwalKelas');
   if(!daftarKelas.length){ sel.innerHTML = '<option value="">-- Belum ada kelas di SIPENA --</option>'; return; }
