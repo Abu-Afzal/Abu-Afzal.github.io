@@ -11,8 +11,10 @@
 
 <!-- Firebase CDN (compat version) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <!-- Library Chart.js untuk Grafik -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <!-- Library jsPDF untuk Export PDF -->
@@ -89,7 +91,7 @@
     </div>
   </div>
 
-    <div id="presensi" class="content-area">
+  <div id="presensi" class="content-area">
     <div class="content-card">
       <div class="section-title">✅ Presensi Siswa</div>
       
@@ -104,7 +106,7 @@
       </div>
 
       <div class="action-bar">
-          <button class="btn btn-success" id="btnHadirSemua">✅ Hadir Semua</button>
+        <button class="btn btn-success" id="btnHadirSemua">✅ Hadir Semua</button>
         <button class="btn btn-primary" id="btnKirimAbsen">💾 Simpan Absensi</button>
       </div>
       <div class="tabs" id="classTabs"></div>
@@ -130,7 +132,7 @@
     </div>
   </div>
 
-    <div id="penilaian" class="content-area">
+  <div id="penilaian" class="content-area">
     <div class="content-card">
       <div class="section-title">📝 Penilaian</div>
       
@@ -173,7 +175,7 @@
         </div>
       </div>
 
-                  <div class="tabs" id="nilaiTabs">
+      <div class="tabs" id="nilaiTabs">
         <button class="tab active" data-ntab="pengetahuan">📘 Pengetahuan</button>
         <button class="tab" data-ntab="sikap">💚 Sikap</button>
         <button class="tab" data-ntab="keterampilan">🛠️ Keterampilan</button>
@@ -187,7 +189,7 @@
         <button class="btn btn-primary" id="btnAddKolomKet" style="display:none;">+ Tambah Kolom</button>
         <button class="btn btn-warning" id="btnExportNilai">📥 Export Excel</button>
         <button class="btn btn-success" id="btnExportAnalisisSoal" style="display:none;">📥 Export Analisis Soal</button>
-        <button class="btn btn-info" id="btnPreviewPDF" style="display:none;">👁️ Preview PDF<
+        <button class="btn btn-info" id="btnPreviewPDF" style="display:none;">👁️ Preview PDF</button>
       </div>
       <div id="penilaianContent"></div>
     </div>
@@ -227,10 +229,10 @@
   </div>
 </div>
 
-    <!-- Modal Edit Siswa -->
+<!-- Modal Edit Siswa -->
 <div class="modal" id="modalEditSiswa">
   <div class="modal-box">
-    <div class="modal-title">️ Edit Data Siswa</div>
+    <div class="modal-title">✏️ Edit Data Siswa</div>
     <input type="hidden" id="editSiswaKey">
     <div class="fg">
       <label>Nama Siswa *</label>
@@ -311,7 +313,7 @@
     </div>
 </div>
 
-            <!-- Modal Preview PDF -->
+<!-- Modal Preview PDF -->
 <div class="modal" id="modalPreviewPDF">
   <div class="modal-box" style="max-width:900px;width:95%;">
     <div class="modal-title">👁️ Preview Analisis Soal Asesmen</div>
@@ -322,6 +324,7 @@
     </div>
   </div>
 </div>
+
 <!-- SCRIPT MODULAR -->
 <script src="../js/sipena-core.js"></script>
 <script src="../js/sipena-kelas.js"></script>
@@ -358,10 +361,10 @@ function bindEvents(){
       }; 
   });
 
-document.getElementById('btnExportAnalisisSoal').onclick = window.exportAnalisisAsesmenExcel;
-document.getElementById('btnPreviewPDF').onclick = window.previewAnalisisPDF;
-document.getElementById('btnTutupPreview').onclick = () => window.closeModal('modalPreviewPDF');
-document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
+  document.getElementById('btnExportAnalisisSoal').onclick = window.exportAnalisisAsesmenExcel;
+  document.getElementById('btnPreviewPDF').onclick = window.previewAnalisisPDF;
+  document.getElementById('btnTutupPreview').onclick = () => window.closeModal('modalPreviewPDF');
+  document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
     
   // Event untuk tombol Hapus Rekap
   document.getElementById('btnHapusRekap').onclick = () => {
@@ -383,11 +386,6 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
     const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
     const kelasDipilih = document.getElementById('selectKelasHapus').value;
     
-    console.log(' DEBUG INFO:');
-    console.log('- Kelas dipilih:', kelasDipilih);
-    console.log('- Current user:', currentUser);
-    console.log('- Total data di allData:', allData ? allData.length : 0);
-    
     if (konfirmasi !== 'HAPUS') {
         window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
         return;
@@ -406,19 +404,7 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
     try {
         let deletedCount = 0;
         
-        // Debug: Lihat sample data untuk memahami strukturnya
-        console.log(' Sample 3 data pertama dari allData:');
-        allData.slice(0, 3).forEach((d, i) => {
-            console.log(`  Data ${i + 1}:`, d);
-            console.log(`  Keys:`, Object.keys(d));
-        });
-        
-        // Deteksi data absensi berdasarkan karakteristik:
-        // - Memiliki field yang berhubungan dengan kehadiran (hadir, izin, sakit, alpa, bolos)
-        // - ATAU memiliki field date/tanggal DAN students/class
-        // - TAPI BUKAN data siswa (tidak memiliki student_name sebagai field utama)
         const semuaAbsensi = allData.filter(d => {
-            // Cek apakah ini data absensi berdasarkan field-field khas
             const hasAttendanceFields = d.hadir !== undefined || 
                                        d.izin !== undefined || 
                                        d.sakit !== undefined || 
@@ -429,29 +415,12 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
                                    (d.class_name || d.className || d.kelas);
             
             const hasStudentsArray = Array.isArray(d.students) && d.students.length > 0;
-            
-            // Pastikan bukan data siswa individual
             const isNotStudentData = !d.student_name && d.type !== 'student';
             
             return (hasAttendanceFields || hasDateAndClass || hasStudentsArray) && isNotStudentData;
         });
         
-        console.log('📊 Total data absensi terdeteksi:', semuaAbsensi.length);
-        
-        if (semuaAbsensi.length > 0) {
-            console.log('📝 Sample data absensi:', semuaAbsensi[0]);
-            console.log('🔑 Keys:', Object.keys(semuaAbsensi[0]));
-            
-            // Cek kelas yang ada
-            const kelasTersedia = [...new Set(semuaAbsensi.map(d => 
-                d.class_name || d.className || d.kelas || 'unknown'
-            ))];
-            console.log('📚 Kelas yang tersedia:', kelasTersedia);
-        }
-        
-        // Filter berdasarkan kelas
         let absensiData = [];
-        
         if (kelasDipilih === 'all') {
             absensiData = semuaAbsensi;
         } else {
@@ -461,17 +430,13 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
             });
         }
         
-        console.log('✅ Data yang akan dihapus:', absensiData.length);
-        
         if (absensiData.length === 0) {
-            console.error('❌ Tidak ada data yang cocok dengan filter!');
-            window.toast('⚠️ Tidak ada data rekap untuk kelas "' + kelasDipilih + '". Lihat console.', 'warn');
+            window.toast('⚠️ Tidak ada data rekap untuk kelas "' + kelasDipilih + '".', 'warn');
             btn.disabled = false;
             btn.innerHTML = originalText;
             return;
         }
         
-        // Konfirmasi
         const confirmMsg = `Yakin ingin menghapus ${absensiData.length} data rekap absensi?\n\nData siswa TIDAK akan terhapus.`;
         if (!confirm(confirmMsg)) {
             btn.disabled = false;
@@ -479,17 +444,15 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
             return;
         }
         
-        // Hapus data
         for (const item of absensiData) {
             if (item.__key) {
                 await ROOT.child(item.__key).remove();
                 deletedCount++;
-                console.log('✅ Berhasil hapus:', item.__key);
             }
         }
         
         window.closeModal('modalHapusRekap');
-        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi! Data siswa tetap aman.`, 'success');
+        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi!`, 'success');
         
         setTimeout(() => {
             if (typeof window.renderRekap === 'function') {
@@ -504,8 +467,9 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
     
     btn.disabled = false;
     btn.innerHTML = originalText;
-};
-    document.getElementById('btnCetakRekap').onclick = () => {
+  };
+
+  document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
           window.cetakRekap();
       } else {
@@ -529,7 +493,7 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
       window.renderPenilaian(); 
   };
   
-    document.getElementById('btnSimpanNilai').onclick = window.simpanNilai;
+  document.getElementById('btnSimpanNilai').onclick = window.simpanNilai;
   document.getElementById('btnExportNilai').onclick = window.eksporNilai;
   document.getElementById('btnExportAnalisisSoal').onclick = window.exportAnalisisAsesmenExcel;
     
@@ -582,7 +546,9 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
   });
 }
 
-// Jalankan bindEvents saat DOM siap
+// Ekspor bindEvents ke window agar bisa dipanggil oleh sipena-core.js
+window.bindEvents = bindEvents;
+
 document.addEventListener('DOMContentLoaded', bindEvents);
 </script>
 </body>
