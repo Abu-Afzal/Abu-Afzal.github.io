@@ -1,9 +1,17 @@
 // ══════════════════════════════════════════════
-// SIPENA: Presensi (Versi Final & Stabil)
+// SIPENA: Presensi (FIXED: ID Unik Deterministik + Anti Duplikat)
 // ══════════════════════════════════════════════
 
 window.attendanceData = window.attendanceData || {};
 window.presensiDate = window.presensiDate || new Date().toISOString().split('T')[0];
+
+// 🔍 FUNGSI MEMBUAT ID UNIK DOKUMEN (Mencegah ID Acak .push())
+window.getAttendanceDocId = (userName, className, dateStr) => {
+  const cleanUser = String(userName || 'user').replace(/[^a-zA-Z0-9]/g, '_');
+  const cleanClass = String(className || 'class').replace(/[^a-zA-Z0-9]/g, '_');
+  const cleanDate = String(dateStr || '').trim();
+  return `log_${cleanUser}_${cleanClass}_${cleanDate}`;
+};
 
 window.renderPresensi = () => {
   if (typeof allData === 'undefined' || !allData) return;
@@ -43,11 +51,11 @@ window.loadPresensiDataForDate = (targetDate) => {
     
     window.attendanceData = {};
     
+    // Pencarian fleksibel: cocokkan ID Unik atau kriteria log
+    const docId = window.getAttendanceDocId(currentUser, currentClass, targetDate);
     const existingLog = allData.find(d => 
-      d.type === 'attendance_log' && 
-      d.class_name === currentClass && 
-      d.date === targetDate && 
-      d.user_name === currentUser
+      d.__key === docId || 
+      (d.type === 'attendance_log' && d.class_name === currentClass && d.date === targetDate && d.user_name === currentUser)
     );
 
     if (existingLog && existingLog.records) {
@@ -134,7 +142,9 @@ window.simpanAbsensi = async () => {
   const records = {};
   siswa.forEach(s => { records[s.__key] = { student_name: s.student_name, status: window.attendanceData[s.__key] || 'ALPA' }; });
 
-  const existing = allData.find(d => d.type === 'attendance_log' && d.class_name === currentClass && d.date === targetDate && d.user_name === currentUser);
+  // 🎯 GUNAKAN ID UNIK DETERMINISTIK (Anti Duplikat di Firebase)
+  const docId = window.getAttendanceDocId(currentUser, currentClass, targetDate);
+
   try {
     const payload = {
       type: 'attendance_log',
@@ -145,8 +155,8 @@ window.simpanAbsensi = async () => {
       updated_at: new Date().toISOString()
     };
 
-    if (existing) await ROOT.child(existing.__key).update(payload);
-    else await ROOT.push().set({ ...payload, created_at: new Date().toISOString() });
+    // Panggil langsung ke lokasi ID unik
+    await ROOT.child(docId).update(payload);
     
     window.attendanceData = {};
     window.toast('Absensi berhasil disimpan!');
