@@ -2,8 +2,19 @@
 // SIPENA: Presensi (Versi Final & Stabil + Urutan A-Z)
 // ══════════════════════════════════════════════
 
+// 📌 1. TAMBAHKAN FUNGSI PEMBANTU DI PALING ATAS
+window.getLocalDate = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 window.attendanceData = window.attendanceData || {};
-window.presensiDate = window.presensiDate || new Date().toISOString().split('T')[0];
+
+// 📌 2. GANTI DI SINI
+window.presensiDate = window.presensiDate || window.getLocalDate();
 
 window.renderPresensi = () => {
   // PENGAMAN: Jika data belum siap, hentikan sementara agar tidak error
@@ -32,7 +43,8 @@ window.renderPresensi = () => {
   if (dateInput) {
     if (!dateInput.value) {
         dateInput.value = window.presensiDate;
-        dateInput.max = new Date().toISOString().split('T')[0];
+        // 📌 3. GANTI DI SINI
+        dateInput.max = window.getLocalDate();
     }
     // Saat tanggal diubah, muat ulang data untuk tanggal tersebut
     dateInput.onchange = (e) => {
@@ -120,7 +132,8 @@ window.hadirSemua = () => {
 window.simpanAbsensi = async () => {
   if (typeof allData === 'undefined' || !allData) return;
 
-  const targetDate = window.presensiDate || new Date().toISOString().split('T')[0];
+  // 📌 4. GANTI DI SINI
+  const targetDate = window.presensiDate || window.getLocalDate();
 
   const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
   if (!siswa.length) { window.toast('Tidak ada siswa!', 'err'); return; }
