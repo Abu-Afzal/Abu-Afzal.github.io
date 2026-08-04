@@ -1,9 +1,13 @@
 // ══════════════════════════════════════════════
-// SIPENA: Rekap Kehadiran
-// ═════════════════════════════════════════════
+// SIPENA: Rekap Kehadiran (Versi Final & Urut A-Z)
+// ══════════════════════════════════════════════
 
 window.renderRekap = () => {
-  const kelas = allData.filter(d => d.type === 'class' && d.user_name === currentUser);
+  // ✅ DITAMBAHKAN: Pengurutan Kelas A-Z
+  const kelas = allData
+    .filter(d => d.type === 'class' && d.user_name === currentUser)
+    .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { numeric: true, sensitivity: 'base' }));
+
   if (!kelas.length) { 
     document.getElementById('rekapContent').innerHTML = '<div class="empty"><div class="ei">🏫</div><p>Belum ada kelas.</p></div>'; 
     return; 
@@ -54,7 +58,11 @@ window.filterLog = (log) => {
 };
 
 window.generateRekap = () => {
-  const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser);
+  // ✅ UTAMA: Filter & Urutkan Siswa Berdasarkan Nama A-Z
+  const siswa = allData
+    .filter(d => d.type === 'student' && d.class_name === currentRekapClass && d.user_name === currentUser)
+    .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
+
   const logs = allData.filter(d => d.type === 'attendance_log' && d.class_name === currentRekapClass && d.user_name === currentUser && window.filterLog(d));
   const cont = document.getElementById('rekapContent');
 
@@ -90,25 +98,28 @@ window.generateRekap = () => {
   <div class="tbl-wrap"><table id="rekapTable">
     <thead><tr><th>No</th><th>Nama Siswa</th><th>H</th><th>I</th><th>S</th><th>A</th><th>B</th><th>Total</th><th>% Hadir</th><th>Rincian</th></tr></thead><tbody>`;
 
-  Object.values(stat).forEach((s, i) => {
-    const total = s.H + s.I + s.S + s.A + s.B;
-    const pct = total > 0 ? ((s.H / total) * 100).toFixed(1) : '0.0';
-    const col = parseFloat(pct) >= 80 ? '#10b981' : (parseFloat(pct) >= 60 ? '#f59e0b' : '#ef4444');
-    html += `<tr>
-      <td>${i + 1}</td><td style="font-weight:600;">${s.nama}</td>
-      <td style="color:#10b981;font-weight:700;">${s.H}</td><td style="color:#3b82f6;font-weight:700;">${s.I}</td>
-      <td style="color:#f59e0b;font-weight:700;">${s.S}</td><td style="color:#ef4444;font-weight:700;">${s.A}</td>
-      <td style="color:#8b5cf6;font-weight:700;">${s.B}</td><td><strong>${total}</strong></td>
-      <td><strong style="color:${col};">${pct}%</strong></td>
-      <td style="font-size:0.78rem;color:#64748b;">${s.detail.length ? s.detail.join(', ') : '–'}</td>
-    </tr>`;
-  });
+  // ✅ KUNCI PENGURUTAN TABEL: Mengurutkan ulang baris data berdasarkan nama siswa A-Z
+  Object.values(stat)
+    .sort((a, b) => (a.nama || '').localeCompare(b.nama || '', 'id-ID', { sensitivity: 'base' }))
+    .forEach((s, i) => {
+      const total = s.H + s.I + s.S + s.A + s.B;
+      const pct = total > 0 ? ((s.H / total) * 100).toFixed(1) : '0.0';
+      const col = parseFloat(pct) >= 80 ? '#10b981' : (parseFloat(pct) >= 60 ? '#f59e0b' : '#ef4444');
+      html += `<tr>
+        <td>${i + 1}</td><td style="font-weight:600;">${s.nama}</td>
+        <td style="color:#10b981;font-weight:700;">${s.H}</td><td style="color:#3b82f6;font-weight:700;">${s.I}</td>
+        <td style="color:#f59e0b;font-weight:700;">${s.S}</td><td style="color:#ef4444;font-weight:700;">${s.A}</td>
+        <td style="color:#8b5cf6;font-weight:700;">${s.B}</td><td><strong>${total}</strong></td>
+        <td style="color:${col};"><strong>${pct}%</strong></td>
+        <td style="font-size:0.78rem;color:#64748b;">${s.detail.length ? s.detail.join(', ') : '–'}</td>
+      </tr>`;
+    });
   html += `</tbody></table></div>`;
   cont.innerHTML = html;
 };
 
-// ═════════════════════════════════════════════
-// FITUR CETAK REKAP (PRINT CLEAN) - UPDATED
+// ══════════════════════════════════════════════
+// FITUR CETAK REKAP (PRINT CLEAN)
 // ══════════════════════════════════════════════
 window.cetakRekap = () => {
   const table = document.getElementById('rekapTable');
