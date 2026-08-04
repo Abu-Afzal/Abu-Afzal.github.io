@@ -156,10 +156,10 @@ window.initApp = () => {
       });
     }
 
-    // ✅ BARU: Listener RTDB dipasang HANYA SETELAH auth siap
+        // ✅ BARU: Listener RTDB dipasang HANYA SETELAH auth siap
     ROOT.on('value', snap => {
       allData = window.toArr(snap.val());
-      hideAuthLoading(); // Hapus loading setelah data pertama diterima
+      hideAuthLoading();
       window.renderActive();
       if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
         window.renderSiswaModal(currentManajeKelas);
@@ -174,7 +174,6 @@ window.initApp = () => {
         window.toast('Gagal terhubung ke database: ' + err.message, 'err');
       }
     });
-
     // ✅ DEBUG: expose info auth untuk console
     console.log('🔐 Auth Info:', {
       email: currentUserEmail,
