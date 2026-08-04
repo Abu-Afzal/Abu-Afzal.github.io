@@ -1,8 +1,8 @@
 // ══════════════════════════════════════════════
-// SIPENA: Presensi (Versi Final & Stabil + Urutan A-Z)
+// SIPENA: Presensi (Versi Final & Stabil + Folder attendance_logs)
 // ══════════════════════════════════════════════
 
-// 📌 1. TAMBAHKAN FUNGSI PEMBANTU DI PALING ATAS
+// 📌 1. FUNGSI PEMBANTU TANGGAL LOKAL
 window.getLocalDate = () => {
   const d = new Date();
   const year = d.getFullYear();
@@ -12,15 +12,14 @@ window.getLocalDate = () => {
 };
 
 window.attendanceData = window.attendanceData || {};
-
-// 📌 2. GANTI DI SINI
 window.presensiDate = window.presensiDate || window.getLocalDate();
 
+// 📌 2. RENDER TAB KELAS & PILIHAN TANGGAL
 window.renderPresensi = () => {
   // PENGAMAN: Jika data belum siap, hentikan sementara agar tidak error
   if (typeof allData === 'undefined' || !allData) return;
 
-  // ✅ DITAMBAHKAN: Pengurutan Tab Kelas A-Z
+  // Pengurutan Tab Kelas A-Z
   const kelas = allData
     .filter(d => d.type === 'class' && d.user_name === currentUser)
     .sort((a, b) => (a.class_name || '').localeCompare(b.class_name || '', 'id-ID', { numeric: true, sensitivity: 'base' }));
@@ -29,33 +28,35 @@ window.renderPresensi = () => {
   const dateInput = document.getElementById('inputTanggalPresensi');
 
   if (!kelas.length) {
-    tabs.innerHTML = '<div style="color:#ef4444;padding:10px;">⚠️ Buat kelas dulu di Kelola Kelas.</div>';
-    document.getElementById('studentListContainer').innerHTML = '';
+    if (tabs) tabs.innerHTML = '<div style="color:#ef4444;padding:10px;">⚠️ Buat kelas dulu di Kelola Kelas.</div>';
+    const cont = document.getElementById('studentListContainer');
+    if (cont) cont.innerHTML = '';
     return;
   }
   
   if (!currentClass || !kelas.find(k => k.class_name === currentClass)) currentClass = kelas[0].class_name;
 
-  tabs.innerHTML = kelas.map(k => `<button class="tab ${currentClass === k.class_name ? 'active' : ''}" data-kelas="${k.class_name}">${k.class_name}</button>`).join('');
-  tabs.querySelectorAll('.tab').forEach(t => { t.onclick = () => { currentClass = t.dataset.kelas; window.renderPresensi(); }; });
+  if (tabs) {
+    tabs.innerHTML = kelas.map(k => `<button class="tab ${currentClass === k.class_name ? 'active' : ''}" data-kelas="${k.class_name}">${k.class_name}</button>`).join('');
+    tabs.querySelectorAll('.tab').forEach(t => { t.onclick = () => { currentClass = t.dataset.kelas; window.renderPresensi(); }; });
+  }
 
-  // Setup Date Picker secara internal (AMAN)
+  // Setup Date Picker
   if (dateInput) {
     if (!dateInput.value) {
-        dateInput.value = window.presensiDate;
-        // 📌 3. GANTI DI SINI
-        dateInput.max = window.getLocalDate();
+      dateInput.value = window.presensiDate;
+      dateInput.max = window.getLocalDate();
     }
-    // Saat tanggal diubah, muat ulang data untuk tanggal tersebut
     dateInput.onchange = (e) => {
-        window.presensiDate = e.target.value;
-        window.loadPresensiDataForDate(window.presensiDate);
+      window.presensiDate = e.target.value;
+      window.loadPresensiDataForDate(window.presensiDate);
     };
   }
 
   window.loadPresensiDataForDate(window.presensiDate);
 };
 
+// 📌 3. MUAT DATA ABSENSI SESUAI TANGGAL
 window.loadPresensiDataForDate = (targetDate) => {
   try {
     if (typeof allData === 'undefined' || !allData) return;
@@ -79,23 +80,28 @@ window.loadPresensiDataForDate = (targetDate) => {
     window.renderDaftarSiswa();
   } catch (err) {
     console.error("Error loadPresensiDataForDate:", err);
-    window.renderDaftarSiswa(); // Fallback: tetap render meski ada error kecil
+    window.renderDaftarSiswa(); // Fallback
   }
 };
 
+// 📌 4. RENDER DAFTAR SISWA (A-Z)
 window.renderDaftarSiswa = () => {
   if (typeof allData === 'undefined' || !allData) return;
 
-  // ✅ UTAMA: Urutkan Siswa Berdasarkan Nama A-Z
+  // Urutkan Siswa Berdasarkan Nama A-Z
   const siswa = allData
     .filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser)
     .sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'id-ID', { sensitivity: 'base' }));
 
   const cont = document.getElementById('studentListContainer');
+  if (!cont) return;
 
-  if (!siswa.length) { cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; return; }
+  if (!siswa.length) { 
+    cont.innerHTML = '<div class="empty"><div class="ei">👥</div><p>Belum ada siswa di kelas ini.</p></div>'; 
+    return; 
+  }
 
-  // ✅ DITAMBAHKAN: Penomoran otomatis (idx + 1) di depan nama siswa
+  // Penomoran otomatis (idx + 1)
   cont.innerHTML = siswa.map((s, idx) => {
     const st = window.attendanceData[s.__key] || '';
     const foto = s.student_photo ? `<img src="${s.student_photo}" onerror="this.outerHTML='👤'">` : '👤';
@@ -113,13 +119,13 @@ window.renderDaftarSiswa = () => {
   cont.querySelectorAll('.status-btn').forEach(btn => {
     btn.onclick = () => { 
       window.attendanceData[btn.dataset.sid] = btn.dataset.st; 
-      // Update UI saja tanpa render ulang semua agar lebih cepat
       btn.parentElement.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     };
   });
 };
 
+// 📌 5. TANDAI HADIR SEMUA
 window.hadirSemua = () => {
   if (typeof allData === 'undefined' || !allData) return;
   allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser).forEach(s => { 
@@ -129,10 +135,10 @@ window.hadirSemua = () => {
   window.toast('Semua siswa ditandai Hadir.');
 };
 
+// 📌 6. SIMPAN ABSENSI KE FOLDER 'attendance_logs'
 window.simpanAbsensi = async () => {
   if (typeof allData === 'undefined' || !allData) return;
 
-  // 📌 4. GANTI DI SINI
   const targetDate = window.presensiDate || window.getLocalDate();
 
   const siswa = allData.filter(d => d.type === 'student' && d.class_name === currentClass && d.user_name === currentUser);
@@ -142,27 +148,53 @@ window.simpanAbsensi = async () => {
   if (belum.length && !confirm(`${belum.length} siswa belum diisi status → akan dianggap ALPA. Lanjutkan?`)) return;
 
   const btn = document.getElementById('btnKirimAbsen');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  if (btn) {
+    btn.disabled = true; 
+    btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+  }
 
   const records = {};
-  siswa.forEach(s => { records[s.__key] = { student_name: s.student_name, status: window.attendanceData[s.__key] || 'ALPA' }; });
+  siswa.forEach(s => { 
+    records[s.__key] = { 
+      student_name: s.student_name, 
+      status: window.attendanceData[s.__key] || 'ALPA' 
+    }; 
+  });
 
-  const existing = allData.find(d => d.type === 'attendance_log' && d.class_name === currentClass && d.date === targetDate && d.user_name === currentUser);
+  const existing = allData.find(d => 
+    d.type === 'attendance_log' && 
+    d.class_name === currentClass && 
+    d.date === targetDate && 
+    d.user_name === currentUser
+  );
+
   try {
     const payload = {
-        type: 'attendance_log',
-        class_name: currentClass,
-        date: targetDate,
-        user_name: currentUser,
-        records,
-        updated_at: new Date().toISOString()
+      type: 'attendance_log',
+      class_name: currentClass,
+      date: targetDate,
+      user_name: currentUser,
+      records,
+      updated_at: new Date().toISOString()
     };
 
-    if (existing) await ROOT.child(existing.__key).update(payload);
-    else await ROOT.push().set({ ...payload, created_at: new Date().toISOString() });
+    // 🎯 PERUBAHAN UTAMA: Targetkan penyimpanan ke folder 'attendance_logs'
+    const LOG_ROOT = ROOT.child('attendance_logs');
+
+    if (existing) {
+      await LOG_ROOT.child(existing.__key).update(payload);
+    } else {
+      await LOG_ROOT.push().set({ ...payload, created_at: new Date().toISOString() });
+    }
     
     window.attendanceData = {};
     window.toast('Absensi berhasil disimpan!');
-  } catch (e) { window.toast('Gagal: ' + e.message, 'err'); }
-  btn.disabled = false; btn.textContent = '💾 Simpan Absensi';
+  } catch (e) { 
+    window.toast('Gagal: ' + e.message, 'err'); 
+  }
+
+  if (btn) {
+    btn.disabled = false; 
+    btn.textContent = '💾 Simpan Absensi';
+  }
 };
