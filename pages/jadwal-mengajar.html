@@ -489,17 +489,7 @@ function initApp(){
       if (typeof initAlarmEngine === 'function') initAlarmEngine();
     }
   });
-}  
-  updateDateBar();
-  loadAlarmPref();
-  initFirebaseListeners();
-  bindEvents();
-  initAlarmEngine();
-  loadJadwalGambar();
-  initDragDrop();
-  initVoiceSystem();
 }
-
 function updateDateBar(){
   const dateEl = document.getElementById('currentDate');
   if(!dateEl) return;
