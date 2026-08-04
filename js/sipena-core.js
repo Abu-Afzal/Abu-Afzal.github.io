@@ -58,7 +58,8 @@ window.setMenuActive = (target) => {
 
 window.showContent = (id) => {
   document.querySelectorAll('.content-area').forEach(a => a.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  const targetArea = document.getElementById(id);
+  if (targetArea) targetArea.classList.add('active');
   setMenuActive(id);
   window.renderActive();
 };
@@ -77,38 +78,54 @@ window.renderActive = () => {
 
 // Init App
 window.initApp = () => {
-  let userData = null;
-  try {
-    const s = localStorage.getItem('sipelita_user');
-    if (s) {
-      userData = JSON.parse(s);
-      currentUser = userData.nama || userData.email || 'guru';
-    } else {
-      currentUser = 'guru';
-    }
-  } catch (e) { currentUser = 'guru'; }
-
-  const userDisplay = document.getElementById('userDisplay');
-  if (userDisplay) {
-    const roleIcon = { 'admin': '👑', 'kepala': '👑', 'wakil': '⭐', 'guru': '👨‍🏫' }[userData?.role] || '👨‍🏫';
-    userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
+  // 1. Tampilkan Tanggal Hari Ini
+  const currentDateEl = document.getElementById('currentDate');
+  if (currentDateEl) {
+    currentDateEl.textContent = '📅 ' + new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   }
 
-  document.getElementById('currentDate').textContent = '📅 ' + new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  // 2. TUNGGU FIREBASE AUTH SIAP TERLEBIH DAHULU
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      // User Terautentikasi!
+      let userData = null;
+      try {
+        const s = localStorage.getItem('sipelita_user');
+        if (s) userData = JSON.parse(s);
+      } catch (e) { console.error(e); }
 
-  ROOT.on('value', snap => {
-    allData = window.toArr(snap.val());
-    window.renderActive();
-    if (document.getElementById('modalKelolaSwiswa').classList.contains('active') && currentManajeKelas) {
-      window.renderSiswaModal(currentManajeKelas);
+      currentUser = user.displayName || userData?.nama || user.email || 'guru';
+
+      const userDisplay = document.getElementById('userDisplay');
+      if (userDisplay) {
+        const roleIcon = { 'admin': '👑', 'kepala': '👑', 'wakil': '⭐', 'guru': '👨‍🏫' }[userData?.role] || '👨‍🏫';
+        userDisplay.innerHTML = `<div style="font-weight:700;color:#334155;font-size:0.95rem;">${roleIcon} Hi, ${currentUser}</div>`;
+      }
+
+      // 3. BARU BISA MENGAMBIL DATA DARI RTDB
+      ROOT.on('value', snap => {
+        allData = window.toArr(snap.val());
+        window.renderActive();
+        if (document.getElementById('modalKelolaSwiswa')?.classList.contains('active') && currentManajeKelas) {
+          window.renderSiswaModal(currentManajeKelas);
+        }
+      }, err => {
+        console.error("Database Error:", err);
+        window.toast('Gagal terhubung ke database', 'err');
+      });
+
+      window.bindEvents();
+      window.showContent('kelola-kelas');
+
+    } else {
+      // User Belum/Gagal Login di Firebase Auth
+      console.warn("User belum terautentikasi di Firebase Auth");
+      window.toast('Sesi login berakhir, silakan login ulang', 'err');
+      
+      // Opsional: Redirect ke halaman login jika sesi habis
+      // window.location.href = '../index.html'; 
     }
-  }, err => {
-    console.error(err);
-    window.toast('Gagal terhubung ke database', 'err');
   });
-
-  window.bindEvents();
-  window.showContent('kelola-kelas');
 };
 
 window.addEventListener('load', window.initApp);
