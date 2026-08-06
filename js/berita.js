@@ -1,5 +1,5 @@
 import { db } from './firebase-config.js'; // Memanggil konfigurasi Firebase Anda
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const beritaContainer = document.getElementById('beritaContainer');
 
@@ -10,7 +10,9 @@ async function muatBeritaBeranda() {
   beritaContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #666; padding: 30px 0;">⏳ Memuat informasi berita terbaru...</div>';
 
   try {
-    const querySnapshot = await getDocs(collection(db, "berita"));
+    // OPTIMASI: Langsung ambil 3 berita terbaru dari Firestore (lebih efisien)
+    const q = query(collection(db, "berita"), orderBy("createdAt", "desc"), limit(3));
+    const querySnapshot = await getDocs(q);
     
     if (querySnapshot.empty) {
       beritaContainer.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #666; padding: 30px 0;">📭 Belum ada berita atau pengumuman terbaru.</div>';
@@ -22,15 +24,9 @@ async function muatBeritaBeranda() {
       listBerita.push({ id: doc.id, ...doc.data() });
     });
 
-    // 1. Urutkan berdasarkan tanggal rilis terbaru (paling baru berada di atas/depan)
-    listBerita.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    // 2. Batasi jumlah berita yang muncul di halaman beranda login (Misal: Maksimal 3 atau 4 berita saja)
-    const beritaTerbatas = listBerita.slice(0, 3);
-
     beritaContainer.innerHTML = ''; // Bersihkan loading teks
 
-    beritaTerbatas.forEach(b => {
+    listBerita.forEach(b => {
       const tglFormat = new Date(b.createdAt).toLocaleDateString('id-ID', {
         day: 'numeric', month: 'long', year: 'numeric'
       });
@@ -41,9 +37,9 @@ async function muatBeritaBeranda() {
         : `<div class="no-image-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); color: #2e7d32; font-size: 3rem;">📰</div>`;
 
       // Potong ringkasan teks berita agar seragam (maksimal 120 karakter)
-      const ringkasanIsi = b.isi.length > 120 ? b.isi.substring(0, 120) + '...' : b.isi;
+      const ringkasanIsi = b.isi ? (b.isi.length > 120 ? b.isi.substring(0, 120) + '...' : b.isi) : 'Klik untuk membaca selengkapnya...';
 
-      // Susun elemen kartu berita (news-card) sesuai arsitektur style glassmorphism gambar target Anda
+      // Susun elemen kartu berita (news-card)
       beritaContainer.innerHTML += `
         <div class="news-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.3s ease, box-shadow 0.3s ease;">
           
@@ -69,18 +65,11 @@ async function muatBeritaBeranda() {
 
         </div>
       `;
-    }); // <--- Batas akhir perulangan kartu berita yang lama
+    });
 
-    // =========================================================================
-    // BERIKUT PERUBAHANNYA (Menggunakan ID agar langsung tepat sasaran):
-    // =========================================================================
-    const btnLihatSemua = document.getElementById('btnLihatSemuaBerita');
-    if (btnLihatSemua && listBerita.length > 0) {
-      // Mengubah link tombol besar di bawah agar langsung mengambil ID berita terbaru
-      btnLihatSemua.href = `pages/baca-berita.html?id=${listBerita[0].id}`;
-    }
-    // =========================================================================
-
+    // ✅ PERBAIKAN: Biarkan tombol "Lihat Semua Berita" di home.html mengarah ke daftar-berita.html
+    // Kita HAPUS kode yang mengubah href tombol tersebut secara paksa ke berita terakhir.
+    
     // Menambahkan efek hover transisi gambar card menggunakan penanganan CSS dinamis
     tambahkanStyleEfekHover();
 
