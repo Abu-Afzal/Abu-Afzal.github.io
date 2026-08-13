@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SICAN - Multi Kegiatan & Rekap Absensi</title>
+<link rel="icon" type="image/png" href="../assets/images/sipelita-app.png">
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+*{ box-sizing:border-box; }
+body{ font-family:'Segoe UI',sans-serif; background:#eef2f7; margin:0; color:#334155; }
+
+/* ══════════ HEADER NAVY (3 ZONA) ══════════ */
+.header{ background:linear-gradient(135deg,#0f172a,#1e3a8a); color:#fff; padding:14px 20px; }
+.header-inner{ max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.header h1{ margin:0; flex:1; text-align:center; font-size:1.3rem; }
+.hdr-btn{ background:rgba(255,255,255,.12); color:#fff; padding:10px 18px; border-radius:24px; text-decoration:none; font-weight:600; border:1px solid rgba(255,255,255,.3); font-size:.9rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:background .2s; }
+.hdr-btn:hover{ background:rgba(255,255,255,.25); }
+
+.container{ max-width:1000px; margin:auto; padding:20px; }
+.card{ background:#fff; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+
+/* Form scan (label di atas, select full) */
+.card label{ display:block; font-weight:600; margin-bottom:8px; font-size:.9rem; color:#334155; }
+.card select{ width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:8px; outline:none; background:#fff; }
+#reader{ width:100%; }
+#reader:empty{ min-height:34px; border:2px dashed #cbd5e1; border-radius:10px; }
+
+/* ══════════ STYLE REKAP (di-scope agar tidak bentrok) ══════════ */
+#viewRekap .container{ max-width:1300px; margin:25px auto; padding:0 15px; }
+#viewRekap .card{ border-radius:14px; box-shadow:0 4px 15px rgba(0,0,0,.06); }
+#viewRekap .filter-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; }
+#viewRekap .form-group{ display:flex; flex-direction:column; gap:5px; }
+#viewRekap label{ font-size:.85rem; font-weight:600; margin:0; }
+#viewRekap select,#viewRekap input{ padding:10px; border:1px solid #cbd5e1; border-radius:8px; outline:none; width:100%; }
+#viewRekap select:focus{ border-color:#2563eb; }
+#viewRekap .btn-group{ margin-top:18px; display:flex; gap:10px; justify-content:flex-end; }
+#viewRekap .btn{ border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600; color:#fff; }
+#viewRekap .btn-primary{ background:#2563eb; }
+#viewRekap .btn-success{ background:#16a34a; }
+#viewRekap .table-wrap{ overflow-x:auto; }
+#viewRekap table{ width:100%; border-collapse:collapse; min-width:900px; }
+#viewRekap th,#viewRekap td{ padding:12px; border-bottom:1px solid #e2e8f0; text-align:left; }
+#viewRekap th{ background:#f8fafc; color:#1e3a8a; }
+#viewRekap tr:hover{ background:#fafafa; }
+#viewRekap .badge{ display:inline-block; padding:4px 10px; border-radius:6px; font-size:.78rem; font-weight:700; }
+#viewRekap .badge-hadir{ background:#dcfce7; color:#166534; }
+#viewRekap .badge-persen{ background:#dbeafe; color:#1d4ed8; }
+#viewRekap .badge-jam{ background:#fef3c7; color:#92400e; }
+#viewRekap .text-center{ text-align:center; }
+#viewRekap .info{ margin:10px 0 15px; color:#64748b; font-size:.9rem; }
+
+@media print{
+  #viewRekap .filter-card, #viewRekap .btn-group, .hdr-btn, #viewScan{ display:none !important; }
+  body{ background:#fff; }
+  #viewRekap .card{ box-shadow:none; }
+}
+
+/* ══════════ SUCCESS OVERLAY ══════════ */
+.success-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:99999; animation:fadeIn .3s ease; }
+.success-modal{ background:#1e1e2e; border-radius:24px; padding:50px 60px; text-align:center; box-shadow:0 25px 80px rgba(0,0,0,.6); animation:slideUp .4s ease; min-width:350px; max-width:90%; }
+.success-icon{ width:90px; height:90px; margin:0 auto 25px; background:rgba(16,185,129,.15); border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.success-icon svg{ width:60px; height:60px; animation:scaleIn .5s ease; }
+.success-title{ color:#fff; font-size:32px; font-weight:700; margin:0 0 20px 0; }
+.success-name{ color:#fff; font-size:24px; font-weight:600; margin:0 0 15px 0; text-transform:uppercase; letter-spacing:1px; line-height:1.3; }
+.success-status{ color:#94a3b8; font-size:16px; font-weight:500; margin:0; }
+@keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+@keyframes slideUp{ from{transform:translateY(50px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes scaleIn{ from{transform:scale(0);opacity:0} 50%{transform:scale(1.1)} to{transform:scale(1);opacity:1} }
+@media (max-width:768px){
+  .header h1{ font-size:1rem; }
+  .hdr-btn{ padding:8px 12px; font-size:.8rem; }
+  .success-modal{ padding:40px 30px; min-width:280px; }
+  .success-title{ font-size:26px; } .success-name{ font-size:20px; }
+  .success-icon{ width:70px; height:70px; } .success-icon svg{ width:45px; height:45px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<div class="header">
+  <div class="header-inner">
+    <a href="../index.html" class="hdr-btn">🏠 Dashboard</a>
+    <h1>📷 SICAN MULTI KEGIATAN</h1>
+    <button id="btnToggleRekap" class="hdr-btn">📊 Rekap Absensi</button>
+  </div>
+</div>
+
+<!-- ══════════ VIEW: SCAN ══════════ -->
+<div id="viewScan">
+  <div style="text-align:center; margin:10px 0;">
+    <button id="btnSwitchCamera" class="hdr-btn" style="background:#1a73e8; border:none; box-shadow:0 4px 12px rgba(26,115,232,.2);">🔄 Ganti Kamera</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <label>Pilih Kegiatan</label>
+      <select id="kegiatanSelect"><option>Memuat daftar kegiatan...</option></select>
+    </div>
+    <div class="card"><div id="reader"></div></div>
+  </div>
+</div>
+
+<!-- ══════════ VIEW: REKAP ══════════ -->
+<div id="viewRekap" style="display:none;">
+  <div class="container">
+    <div class="card filter-card">
+      <div class="filter-grid">
+        <div class="form-group">
+          <label>Jenis Rekap</label>
+          <select id="jenisData">
+            <option value="absensi">Absensi Kehadiran</option>
+            <option value="kegiatan">Kegiatan Pembiasaan</option>
+          </select>
+        </div>
+        <div class="form-group" id="kegiatanGroup" style="display:none;">
+          <label>Kegiatan</label>
+          <select id="filterKegiatan"><option value="SEMUA">Semua Kegiatan</option></select>
+        </div>
+        <div class="form-group">
+          <label>Periode</label>
+          <select id="periodeFilter">
+            <option value="bulanan">Bulanan</option>
+            <option value="pekanan">7 Hari Terakhir</option>
+            <option value="semester_ganjil">Semester Ganjil</option>
+            <option value="semester_genap">Semester Genap</option>
+            <option value="tahunan">Tahunan</option>
+          </select>
+        </div>
+        <div class="form-group" id="bulanGroup">
+          <label>Bulan</label>
+          <select id="bulanFilter">
+            <option value="01">Januari</option><option value="02">Februari</option><option value="03">Maret</option>
+            <option value="04">April</option><option value="05">Mei</option><option value="06">Juni</option>
+            <option value="07">Juli</option><option value="08">Agustus</option><option value="09">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tahun</label>
+          <select id="tahunFilter"><option>2026</option><option>2027</option></select>
+        </div>
+        <div class="form-group">
+          <label>Filter Kelas</label>
+          <select id="kelasFilter">
+            <option value="SEMUA">Semua Kelas</option>
+            <option value="X">Kelas X</option><option value="XI">Kelas XI</option><option value="XII">Kelas XII</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-primary" id="btnProses">🔍 Tampilkan Rekap</button>
+        <button class="btn btn-success" id="btnCetak">🖨️ Cetak</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="judulRekap">📋 Rekap Kehadiran</h2>
+      <div class="info" id="infoTambahan">Menunggu data...</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>No</th><th>NIS</th><th>Nama</th><th>Kelas</th><th>Kegiatan</th>
+            <th>Rentang Waktu</th><th>Total Hadir</th><th>Persentase</th>
+          </tr></thead>
+          <tbody id="rekapBody"><tr><td colspan="8" class="text-center">Klik "Tampilkan Rekap"</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SUCCESS OVERLAY ══════════ -->
+<div id="successOverlay" class="success-overlay">
+  <div class="success-modal">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="#10b981" stroke-width="2.5"/>
+        <path d="M8 12L11 15L16 9" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2 class="success-title">Berhasil!</h2>
+    <p class="success-name" id="successStudentName">NAMA SISWA</p>
+    <p class="success-status" id="successStatusText">Absen MASUK Berhasil!</p>
+  </div>
+</div>
+
+<script type="module" src="../js/sican-core.js"></script>
+
+<script>
+function showSuccessNotification(studentName, status = 'MASUK') {
+    const overlay = document.getElementById('successOverlay');
+    document.getElementById('successStudentName').textContent = studentName.toUpperCase();
+    document.getElementById('successStatusText').textContent = `Absen ${status} Berhasil!`;
+    overlay.style.display = 'flex';
+    setTimeout(() => { overlay.style.display = 'none'; }, 2500);
+}
+window.showSuccessNotification = showSuccessNotification;
+</script>
+
+<!-- ══════════ MODUL REKAP (dipindah dari rekap-sican.html) ══════════ -->
+<script type="module">
+import { auth, db } from "../js/firebase-config.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+let authUser = null;
+onAuthStateChanged(auth, (u) => { authUser = u; });
+
+// Toggle Scan ⇄ Rekap (proteksi login hanya saat buka rekap)
+const btnToggle = document.getElementById('btnToggleRekap');
+btnToggle.addEventListener('click', () => {
+  const rekap = document.getElementById('viewRekap');
+  const scan  = document.getElementById('viewScan');
+  const akanBukaRekap = rekap.style.display === 'none';
+  if (akanBukaRekap && !authUser) { window.location.href = '../login.html'; return; }
+  if (akanBukaRekap) { rekap.style.display='block'; scan.style.display='none'; btnToggle.innerHTML='📷 Kembali ke Scan'; }
+  else { rekap.style.display='none'; scan.style.display='block'; btnToggle.innerHTML='📊 Rekap Absensi'; }
+});
+
+const jenisData = document.getElementById('jenisData');
+const kegiatanGroup = document.getElementById('kegiatanGroup');
+const filterKegiatan = document.getElementById('filterKegiatan');
+const periodeFilter = document.getElementById('periodeFilter');
+const bulanGroup = document.getElementById('bulanGroup');
+
+jenisData.addEventListener('change', () => {
+  kegiatanGroup.style.display = jenisData.value === 'kegiatan' ? 'block' : 'none';
+  document.getElementById('judulRekap').innerHTML = jenisData.value === 'absensi' ? '📋 Rekap Kehadiran Utama' : '📋 Rekap Kegiatan Pembiasaan';
+});
+periodeFilter.addEventListener('change', () => {
+  bulanGroup.style.display = periodeFilter.value === 'bulanan' ? 'block' : 'none';
+});
+
+async function loadDaftarKegiatan() {
+  try {
+    const snap = await getDocs(collection(db, 'Kegiatan Absensi'));
+    filterKegiatan.innerHTML = '<option value="SEMUA">Semua Kegiatan</option>';
+    snap.forEach(doc => {
+      const data = doc.data();
+      if (data.nama && data.aktif === true) {
+        const opt = document.createElement('option');
+        opt.value = data.nama.trim();
+        opt.textContent = data.nama.trim().charAt(0).toUpperCase() + data.nama.trim().slice(1);
+        filterKegiatan.appendChild(opt);
+      }
+    });
+  } catch (err) { console.error("Gagal memuat daftar kegiatan:", err); }
+}
+loadDaftarKegiatan();
+
+document.getElementById('btnCetak').addEventListener('click', () => window.print());
+document.getElementById('btnProses').addEventListener('click', muatRekap);
+
+async function muatRekap() {
+  const tbody = document.getElementById('rekapBody');
+  tbody.innerHTML = `<tr><td colspan="8" class="text-center">Memuat data log presensi...</td></tr>`;
+  try {
+    const jenis = jenisData.value;
+    const snapshot = await getDocs(collection(db, 'presensi_sican'));
+    if (snapshot.empty) { tbody.innerHTML = `<tr><td colspan="8" class="text-center">Belum ada riwayat presensi di database</td></tr>`; return; }
+
+    const kelasFilter = document.getElementById('kelasFilter').value;
+    const periode = periodeFilter.value;
+    const bulan = document.getElementById('bulanFilter').value;
+    const tahun = document.getElementById('tahunFilter').value;
+    const kegiatanDipilih = filterKegiatan.value;
+
+    const hariEfektif = new Set();
+    const mapSiswa = {};
+    const hariIni = new Date();
+
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const tanggal = data.tanggal || '';
+      const kelas = data.siswa_kelas || '';
+      let kegiatanLog = data.kegiatan ? data.kegiatan.trim() : 'kehadiran';
+      if (!tanggal) return;
+      if (kelasFilter !== 'SEMUA' && !kelas.startsWith(kelasFilter)) return;
+      if (jenis === 'absensi') { if (kegiatanLog.toLowerCase() !== 'kehadiran') return; }
+      else if (jenis === 'kegiatan') {
+        if (kegiatanLog.toLowerCase() === 'kehadiran') return;
+        if (kegiatanDipilih !== 'SEMUA' && kegiatanLog !== kegiatanDipilih) return;
+      }
+      const pecah = tanggal.split('-');
+      const thn = pecah[0], bln = pecah[1];
+      let lolos = false;
+      if (periode === 'bulanan') lolos = (thn === tahun && bln === bulan);
+      else if (periode === 'tahunan') lolos = (thn === tahun);
+      else if (periode === 'semester_ganjil') lolos = (thn === tahun && parseInt(bln,10) >= 7 && parseInt(bln,10) <= 12);
+      else if (periode === 'semester_genap') lolos = (thn === tahun && parseInt(bln,10) >= 1 && parseInt(bln,10) <= 6);
+      else if (periode === 'pekanan') { const s = (hariIni - new Date(tanggal)) / 86400000; lolos = (s <= 7 && s >= 0); }
+      if (!lolos) return;
+
+      hariEfektif.add(tanggal);
+      const nis = data.siswa_nis || 'TANPA-NIS';
+      const key = `${nis}_${kegiatanLog}`;
+      if (!mapSiswa[key]) mapSiswa[key] = { nis, nama: data.siswa_nama || 'Siswa Terdaftar', kelas: kelas || '-', kegiatan: kegiatanLog.charAt(0).toUpperCase() + kegiatanLog.slice(1), hadir: 0, jam: [] };
+      mapSiswa[key].hadir++;
+      if (data.jam) mapSiswa[key].jam.push(data.jam);
+    });
+
+    const daftar = Object.values(mapSiswa);
+    tbody.innerHTML = '';
+    if (!daftar.length) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center">Data rekap tidak ditemukan untuk kriteria filter ini</td></tr>`;
+      document.getElementById('infoTambahan').textContent = 'Hari efektif terdeteksi: 0 hari';
+      return;
+    }
+    daftar.sort((a,b) => a.nama.localeCompare(b.nama));
+    const totalEfektif = hariEfektif.size || 1;
+    document.getElementById('infoTambahan').textContent = `Hari efektif operasional terdeteksi: ${totalEfektif} hari`;
+
+    let no = 1;
+    daftar.forEach(s => {
+      s.jam.sort();
+      const awal = s.jam[0] || '-', akhir = s.jam[s.jam.length-1] || '-';
+      const rentang = awal === akhir ? awal : `${awal} s.d ${akhir}`;
+      let persen = (s.hadir / totalEfektif) * 100; if (persen > 100) persen = 100;
+      tbody.innerHTML += `<tr>
+        <td>${no++}</td><td>${s.nis}</td><td><b>${s.nama}</b></td><td>${s.kelas}</td><td>${s.kegiatan}</td>
+        <td><span class="badge badge-jam">${rentang}</span></td>
+        <td class="text-center"><span class="badge badge-hadir">${s.hadir} Hari</span></td>
+        <td class="text-center"><span class="badge badge-persen">${persen.toFixed(1)}%</span></td>
+      </tr>`;
+    });
+  } catch (err) {
+    console.error("Gagal menyusun rekap:", err);
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:red;font-weight:600;">Terjadi masalah: ${err.message}</td></tr>`;
+  }
+}
+</script>
+</body>
+</html>

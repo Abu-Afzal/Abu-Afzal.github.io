@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SICAN - Rekap Absensi & Pembiasaan</title>
+
+<link rel="icon" type="image/png" href="../assets/images/sipelita-app.png">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:#f1f5f9;
+    color:#334155;
+}
+
+.header{
+    background:linear-gradient(135deg,#0f172a,#1e3a8a);
+    color:white;
+    padding:24px;
+    text-align:center;
+}
+
+.header h1{
+    margin-bottom:6px;
+}
+
+.container{
+    max-width:1300px;
+    margin:25px auto;
+    padding:0 15px;
+}
+
+.card{
+    background:white;
+    border-radius:14px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 4px 15px rgba(0,0,0,.06);
+}
+
+.filter-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:14px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+label{
+    font-size:.85rem;
+    font-weight:600;
+}
+
+select,input{
+    padding:10px;
+    border:1px solid #cbd5e1;
+    border-radius:8px;
+    outline:none;
+}
+
+select:focus,input:focus{
+    border-color:#2563eb;
+}
+
+.btn-group{
+    margin-top:18px;
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+}
+
+.btn{
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    color:white;
+}
+
+.btn-primary{
+    background:#2563eb;
+}
+
+.btn-success{
+    background:#16a34a;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:900px;
+}
+
+th,td{
+    padding:12px;
+    border-bottom:1px solid #e2e8f0;
+    text-align:left;
+}
+
+th{
+    background:#f8fafc;
+    color:#1e3a8a;
+}
+
+tr:hover{
+    background:#fafafa;
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 10px;
+    border-radius:6px;
+    font-size:.78rem;
+    font-weight:700;
+}
+
+.badge-hadir{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.badge-persen{
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.badge-jam{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+.text-center{
+    text-align:center;
+}
+
+.info{
+    margin:10px 0 15px;
+    color:#64748b;
+    font-size:.9rem;
+}
+
+@media print{
+    .filter-card,
+    .btn-group,
+    .header a{
+        display:none !important;
+    }
+
+    body{
+        background:white;
+    }
+
+    .card{
+        box-shadow:none;
+    }
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📊 Rekap Absensi & Pembiasaan</h1>
+    <p>Sistem Informasi Kehadiran Siswa Digital</p>
+
+    <div style="margin-top:15px;">
+        <a href="../index.html"
+           style="color:white;text-decoration:none;border:1px solid rgba(255,255,255,.4);padding:8px 15px;border-radius:8px;">
+           🏠 Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- FILTER -->
+    <div class="card filter-card">
+
+        <div class="filter-grid">
+
+            <div class="form-group">
+                <label>Jenis Rekap</label>
+                <select id="jenisData">
+                    <option value="absensi">Absensi Kehadiran</option>
+                    <option value="kegiatan">Kegiatan Pembiasaan</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="kegiatanGroup" style="display:none;">
+                <label>Kegiatan</label>
+                <select id="filterKegiatan">
+                    <option value="SEMUA">Semua Kegiatan</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Periode</label>
+                <select id="periodeFilter">
+                    <option value="bulanan">Bulanan</option>
+                    <option value="pekanan">7 Hari Terakhir</option>
+                    <option value="semester_ganjil">Semester Ganjil</option>
+                    <option value="semester_genap">Semester Genap</option>
+                    <option value="tahunan">Tahunan</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="bulanGroup">
+                <label>Bulan</label>
+                <select id="bulanFilter">
+                    <option value="01">Januari</option>
+                    <option value="02">Februari</option>
+                    <option value="03">Maret</option>
+                    <option value="04">April</option>
+                    <option value="05">Mei</option>
+                    <option value="06">Juni</option>
+                    <option value="07">Juli</option>
+                    <option value="08">Agustus</option>
+                    <option value="09">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Tahun</label>
+                <select id="tahunFilter">
+                    <option>2026</option>
+                    <option>2027</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Filter Kelas</label>
+                <select id="kelasFilter">
+                    <option value="SEMUA">Semua Kelas</option>
+                    <option value="X">Kelas X</option>
+                    <option value="XI">Kelas XI</option>
+                    <option value="XII">Kelas XII</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" id="btnProses">
+                🔍 Tampilkan Rekap
+            </button>
+
+            <button class="btn btn-success" id="btnCetak">
+                🖨️ Cetak
+            </button>
+        </div>
+
+    </div>
+
+    <!-- HASIL -->
+    <div class="card">
+
+        <h2 id="judulRekap">
+            📋 Rekap Kehadiran
+        </h2>
+
+        <div class="info" id="infoTambahan">
+            Menunggu data...
+        </div>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>NIS</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Kegiatan</th>
+                        <th>Rentang Waktu</th>
+                        <th>Total Hadir</th>
+                        <th>Persentase</th>
+                    </tr>
+                </thead>
+
+                <tbody id="rekapBody">
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            Klik "Tampilkan Rekap"
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module">
+
+import { auth, db } from "../js/firebase-config.js";
+import {
+    collection,
+    getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+    onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ========================================
+// PROTEKSI LOGIN
+// ========================================
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = '../login.html';
+    }
+});
+
+// ========================================
+// ELEMENT
+// ========================================
+const jenisData       = document.getElementById('jenisData');
+const kegiatanGroup   = document.getElementById('kegiatanGroup');
+const filterKegiatan  = document.getElementById('filterKegiatan');
+const periodeFilter   = document.getElementById('periodeFilter');
+const bulanGroup      = document.getElementById('bulanGroup');
+
+// ========================================
+// TOGGLE FILTER VISIBILITY
+// ========================================
+jenisData.addEventListener('change', () => {
+    kegiatanGroup.style.display = jenisData.value === 'kegiatan' ? 'block' : 'none';
+    
+    // Reset teks judul tabel agar dinamis
+    const judul = document.getElementById('judulRekap');
+    judul.innerHTML = jenisData.value === 'absensi' ? '📋 Rekap Kehadiran Utama' : '📋 Rekap Kegiatan Pembiasaan';
+});
+
+periodeFilter.addEventListener('change', () => {
+    bulanGroup.style.display = periodeFilter.value === 'bulanan' ? 'block' : 'none';
+});
+
+// ========================================
+// LOAD DAFTAR OPTION KEGIATAN DARI DATABASE
+// ========================================
+async function loadDaftarKegiatan() {
+    try {
+        // SINKRONISASI: Diubah ke 'Kegiatan Absensi' sesuai master data yang aktif
+        const snap = await getDocs(collection(db, 'Kegiatan Absensi'));
+        
+        // Bersihkan opsi lama kecuali "Semua Kegiatan"
+        filterKegiatan.innerHTML = '<option value="SEMUA">Semua Kegiatan</option>';
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            // Hanya masukkan kegiatan yang berstatus aktif ke opsi filter rekap
+            if (data.nama && data.aktif === true) {
+                const opt = document.createElement('option');
+                opt.value = data.nama.trim();
+                opt.textContent = data.nama.trim().charAt(0).toUpperCase() + data.nama.trim().slice(1);
+                filterKegiatan.appendChild(opt);
+            }
+        });
+    } catch (err) {
+        console.error("Gagal memuat daftar kegiatan untuk filter:", err);
+    }
+}
+
+loadDaftarKegiatan();
+
+// ========================================
+// ACTION HANDLER CETAK
+// ========================================
+document.getElementById('btnCetak').addEventListener('click', () => {
+    window.print();
+});
+
+// ========================================
+// PROSES DAN HITUNG REKAP ABSENSI
+// ========================================
+document.getElementById('btnProses').addEventListener('click', muatRekap);
+
+async function muatRekap() {
+    const tbody = document.getElementById('rekapBody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="8" class="text-center">
+                Memuat data log presensi...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const jenis = jenisData.value;
+        
+        // SINKRONISASI: Semua riwayat scan masuk terpusat di koleksi 'presensi_sican'
+        const snapshot = await getDocs(collection(db, 'presensi_sican'));
+
+        if (snapshot.empty) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center">Belum ada riwayat presensi di database</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const kelasFilter = document.getElementById('kelasFilter').value;
+        const periode = document.getElementById('periodeFilter').value;
+        const bulan = document.getElementById('bulanFilter').value;
+        const tahun = document.getElementById('tahunFilter').value;
+        const kegiatanDipilih = filterKegiatan.value;
+
+        const hariEfektif = new Set();
+        const mapSiswa = {};
+        const hariIni = new Date();
+
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            const tanggal = data.tanggal || '';
+            const kelas = data.siswa_kelas || '';
+            
+            // Defaulting nilai jika tidak tercatat di log lama
+            let kegiatanLog = data.kegiatan ? data.kegiatan.trim() : 'kehadiran';
+
+            if (!tanggal) return;
+
+            // 1. EVALUASI FILTER KELAS (Mendukung pencarian prefix tingkat kelas X, XI, XII)
+            if (kelasFilter !== 'SEMUA' && !kelas.startsWith(kelasFilter)) {
+                return;
+            }
+
+            // 2. EVALUASI FILTER JENIS REKAP & NAMA KEGIATAN
+            if (jenis === 'absensi') {
+                // Jika user memilih rekap Absensi Kehadiran Utama, pilah yang log-nya bertuliskan "kehadiran"
+                if (kegiatanLog.toLowerCase() !== 'kehadiran') return;
+            } else if (jenis === 'kegiatan') {
+                // Jika memilih rekap kegiatan pembiasaan, singkirkan absensi kehadiran reguler
+                if (kegiatanLog.toLowerCase() === 'kehadiran') return;
+                
+                // Jika menyaring kegiatan tertentu (bukan SEMUA)
+                if (kegiatanDipilih !== 'SEMUA' && kegiatanLog !== kegiatanDipilih) {
+                    return;
+                }
+            }
+
+            // 3. EVALUASI FILTER RENTANG WAKTU (PERIODE)
+            const pecah = tanggal.split('-');
+            const thn = pecah[0];
+            const bln = pecah[1];
+            let lolosPeriodik = false;
+
+            if (periode === 'bulanan') {
+                lolosPeriodik = (thn === tahun && bln === bulan);
+            } else if (periode === 'tahunan') {
+                lolosPeriodik = (thn === tahun);
+            } else if (periode === 'semester_ganjil') {
+                const bInt = parseInt(bln, 10);
+                lolosPeriodik = (thn === tahun && bInt >= 7 && bInt <= 12);
+            } else if (periode === 'semester_genap') {
+                const bInt = parseInt(bln, 10);
+                lolosPeriodik = (thn === tahun && bInt >= 1 && bInt <= 6);
+            } else if (periode === 'pekanan') {
+                const d = new Date(tanggal);
+                const selisihHari = (hariIni - d) / (1000 * 60 * 60 * 24);
+                lolosPeriodik = (selisihHari <= 7 && selisihHari >= 0);
+            }
+
+            if (!lolosPeriodik) return;
+
+            // Catat tanggal unik untuk kalkulasi hari efektif pencarian
+            hariEfektif.add(tanggal);
+
+            const nis = data.siswa_nis || 'TANPA-NIS';
+            // Gabungkan key berdasarkan NIS + Jenis Kegiatan agar siswa yang ikut ragam kegiatan tidak tercampur datanya
+            const uniqueKey = `${nis}_${kegiatanLog}`;
+
+            if (!mapSiswa[uniqueKey]) {
+                mapSiswa[uniqueKey] = {
+                    nis: nis,
+                    nama: data.siswa_nama || 'Siswa Terdaftar',
+                    kelas: kelas || '-',
+                    kegiatan: kegiatanLog.charAt(0).toUpperCase() + kegiatanLog.slice(1),
+                    hadir: 0,
+                    jam: []
+                };
+            }
+
+            mapSiswa[uniqueKey].hadir++;
+            if (data.jam) {
+                mapSiswa[uniqueKey].jam.push(data.jam);
+            }
+        });
+
+        const daftar = Object.values(mapSiswa);
+        tbody.innerHTML = '';
+
+        if (daftar.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center">Data rekap tidak ditemukan untuk kriteria filter ini</td>
+                </tr>
+            `;
+            document.getElementById('infoTambahan').textContent = 'Hari efektif terdeteksi: 0 hari';
+            return;
+        }
+
+        // Urutkan daftar siswa alfabetis berdasarkan nama
+        daftar.sort((a, b) => a.nama.localeCompare(b.nama));
+
+        const totalEfektif = hariEfektif.size || 1;
+        document.getElementById('infoTambahan').textContent = `Hari efektif operasional terdeteksi: ${totalEfektif} hari`;
+
+        let no = 1;
+        daftar.forEach(siswa => {
+            siswa.jam.sort();
+            const awal = siswa.jam[0] || '-';
+            const akhir = siswa.jam[siswa.jam.length - 1] || '-';
+            const rentang = awal === akhir ? awal : `${awal} s.d ${akhir}`;
+
+            let persen = (siswa.hadir / totalEfektif) * 100;
+            if (persen > 100) persen = 100;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${no++}</td>
+                    <td>${siswa.nis}</td>
+                    <td><b>${siswa.nama}</b></td>
+                    <td>${siswa.kelas}</td>
+                    <td>${siswa.kegiatan}</td>
+                    <td><span class="badge badge-jam">${rentang}</span></td>
+                    <td class="text-center">
+                        <span class="badge badge-hadir">${siswa.hadir} Hari</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-persen">${persen.toFixed(1)}%</span>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        console.error("Gagal menyusun rekap absensi:", err);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center" style="color:red; font-weight:600;">
+                    Terjadi masalah pemrosesan: ${err.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+</script>
+
+</body>
+</html>
