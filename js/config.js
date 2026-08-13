@@ -64,6 +64,15 @@ const CONFIG = {
             url: 'pages/kelola-berita.html' 
         },
         { 
+            id: 'Edu', 
+            icon: '', 
+            title: 'EduLogs', 
+            desc: 'Pencatatan & Monitoring Pembelajaran', 
+            color: '#7e57c2', 
+            url: 'https://edulogs.manbantaeng.web.id/',
+            logo: 'assets/images/manbtg-app.png'
+        },
+        { 
             icon: '🌐', 
             title: 'Website', 
             desc: '', 
@@ -83,10 +92,11 @@ const CONFIG = {
         },
         { icon: '🎓', title: 'SIBEL', desc: 'Sistem Belajar Digital', color: '#d32f2f', page: 'pages/elearning.html' },
         { icon: '📁', title: 'Bank Dokumen', desc: '', color: '#1e88e5', page: 'pages/edokumen.html' },
-        { icon: '🏥', title: 'SEHAT', desc: 'Sistem Informasi Kesehatan', color: '#e91e63', page: 'pages/chat.html' },
+        { icon: '🏥', title: 'SEHAT', desc: 'Sistem Informasi Kesehatan', color: '#e91e63', page: 'pages/sehat.html' },
         { icon: '📚', title: 'Jurnal Mengajar', desc: '', color: '#6d4c41', page: 'pages/jurnal-online.html' },
         { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
+        { icon: '🏆', title: 'EKSKUL', desc: '', color: '#6d4c41', page: 'pages/ekskul.html' },
         { icon: '👨‍💼', title: 'PKKM', desc: 'Penilaian Kinerja Kepala Madrasah', color: '#1b5e20', page: 'pkkm.html' },
         { icon: '🛠️', title: 'Master PKKM', desc: 'Kelola Instrumen PKKM', color: '#0dd940', page: '/pages/master-pkkm.html' },
         { 
@@ -97,13 +107,6 @@ const CONFIG = {
             url: 'https://manbantaeng.rdmnet.my.id/',
             logo: 'assets/images/rapor-app.png'  // ← Path ke logo
         },
-        { icon: '📈', title: 'LCKH', desc: 'Laporan Capaian Kinerja Harian', color: '#c62828', page: 'pages/jurnal.html' },
-        { 
-            icon: '📊', 
-            title: 'Rekap Absensi', 
-            desc: 'Lihat & Download Rekapitulasi Absen', 
-            color: '#d79119', 
-            url: 'sican/rekap-sican.html' 
-        }
+        { icon: '📈', title: 'LCKH', desc: 'Laporan Capaian Kinerja Harian', color: '#c62828', page: 'pages/jurnal.html' }
     ]
 };
