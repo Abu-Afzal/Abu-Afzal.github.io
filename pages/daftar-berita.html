@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#10b981">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="apple-touch-icon" href="../assets/images/sipelita-app.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semua Berita - SIPELITA</title>
+  <link rel="icon" type="image/png" href="../assets/images/icon-app.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <style>
+    .news-list-container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+    .page-title { text-align: center; color: #1b5e20; margin-bottom: 30px; font-size: 2rem; }
+    .btn-back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 25px; color: #2e7d32; text-decoration: none; font-weight: bold; font-size: 1rem; transition: 0.3s; }
+    .btn-back:hover { color: #1b5e20; transform: translateX(-5px); }
+    
+    .news-card-list {
+      display: grid;
+      gap: 20px;
+    }
+    
+    .news-item-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border-left: 5px solid #10b981;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    
+    .news-item-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    .news-item-kategori {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+    
+    .news-item-judul {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 10px 0;
+      line-height: 1.4;
+    }
+    
+    .news-item-excerpt {
+      font-size: 0.95rem;
+      color: #64748b;
+      line-height: 1.6;
+      margin: 0 0 15px 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    
+    .news-item-meta {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    #loading-list { text-align: center; padding: 40px; color: #64748b; font-size: 1.1rem; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #64748b; }
+    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #cbd5e1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="news-list-container">
+      <a href="../home.html" class="btn-back"><i class="fas fa-arrow-left"></i> Kembali ke Beranda</a>
+      
+      <h1 class="page-title">📰 Arsip Berita & Pengumuman</h1>
+      
+      <div id="loading-list">⏳ Memuat daftar berita...</div>
+      <div id="newsList" class="news-card-list" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from '../js/firebase-config.js';
+    import { collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    async function muatSemuaBerita() {
+      const loadingEl = document.getElementById('loading-list');
+      const listEl = document.getElementById('newsList');
+
+      try {
+        // Mengambil semua berita, diurutkan dari yang terbaru (createdAt descending)
+        const q = query(collection(db, "berita"), orderBy("createdAt", "desc"));
+        const querySnapshot = await getDocs(q);
+
+        loadingEl.style.display = 'none';
+        listEl.style.display = 'grid';
+
+        if (querySnapshot.empty) {
+          listEl.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-newspaper"></i>
+              <h3>Belum Ada Berita</h3>
+              <p>Belum ada berita atau pengumuman yang dipublikasikan.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let htmlContent = '';
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const beritaId = doc.id;
+          
+          const tglObj = data.createdAt ? new Date(data.createdAt) : new Date();
+          const tglFormat = tglObj.toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+          });
+
+          // Potong isi berita untuk preview (excerpt)
+          const excerpt = data.isi ? data.isi.substring(0, 120) + '...' : 'Tidak ada deskripsi.';
+
+          htmlContent += `
+            <a href="baca-berita.html?id=${beritaId}" class="news-item-card">
+              <span class="news-item-kategori">${data.kategori || 'Umum'}</span>
+              <h2 class="news-item-judul">${data.judul}</h2>
+              <p class="news-item-excerpt">${excerpt}</p>
+              <div class="news-item-meta">
+                <span><i class="far fa-calendar-alt"></i> ${tglFormat}</span>
+                <span><i class="fas fa-arrow-right"></i> Baca selengkapnya</span>
+              </div>
+            </a>
+          `;
+        });
+
+        listEl.innerHTML = htmlContent;
+
+      } catch (err) {
+        loadingEl.style.display = 'none';
+        listEl.style.display = 'block';
+        listEl.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Gagal Memuat</h3><p>${err.message}</p></div>`;
+        console.error("Firestore Error:", err);
+      }
+    }
+
+    muatSemuaBerita();
+  </script>
+</body>
+</html>
