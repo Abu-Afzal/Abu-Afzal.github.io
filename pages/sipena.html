@@ -408,18 +408,21 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
       // - TIDAK punya field: student_name (itu data siswa individual)
       // - TIDAK punya field: type === 'class' atau type === 'student'
       const semuaAbsensi = allData.filter(d => {
-          // Harus punya tanggal + kelas + students array
-          const hasDate = d.date || d.tanggal;
-          const hasClass = d.class_name || d.className || d.kelas;
-          const hasStudents = Array.isArray(d.students) && d.students.length > 0;
-          
-          // BUKAN data kelas atau siswa individual
-          const isNotClass = d.type !== 'class';
-          const isNotStudent = d.type !== 'student' && !d.student_name;
-          
-          // Harus memenuhi SEMUA syarat
-          return hasDate && hasClass && hasStudents && isNotClass && isNotStudent;
-      });
+    const hasDate  = !!(d.date || d.tanggal);
+    const hasClass = !!(d.class_name || d.className || d.kelas);
+    const bukanDefinisi = d.type !== 'class' && d.type !== 'student';
+
+    // Ciri catatan absensi: punya status kehadiran ATAU data students
+    const adaStatus = d.status   !== undefined ||
+                      d.hadir    !== undefined ||
+                      d.izin     !== undefined ||
+                      d.sakit    !== undefined ||
+                      d.alpa     !== undefined ||
+                      d.bolos    !== undefined ||
+                      d.students !== undefined;
+
+    return hasDate && hasClass && adaStatus && bukanDefinisi;
+});
       
       console.log('📊 Total data absensi valid:', semuaAbsensi.length);
       
