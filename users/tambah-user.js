@@ -1,19 +1,7 @@
 import { auth, db } from '../js/firebase-config.js';
-
-import {
-    createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-import {
-    doc,
-    setDoc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-import {
-    renderCheckboxFitur,
-    getSelectedFitur,
-    SEMUA_FITUR
-} from './fitur.js';
+import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { renderCheckboxFitur, getSelectedFitur, SEMUA_FITUR } from './fitur.js';
 
 // Render fitur awal saat halaman dimuat
 renderCheckboxFitur('checkboxFitur');
@@ -30,7 +18,6 @@ function tampilkanAlert(pesan, tipe = 'success') {
     alertTambah.style.color = tipe === 'success' ? '#14532d' : '#991b1b';
     alertTambah.innerText = pesan;
     
-    // Sembunyikan otomatis setelah 4 detik
     setTimeout(() => {
         alertTambah.style.display = 'none';
     }, 4000);
@@ -39,42 +26,42 @@ function tampilkanAlert(pesan, tipe = 'success') {
 formTambah?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // 1. Ambil nilai dari form (termasuk NIP dan Mapel yang baru)
     const email    = document.getElementById('email').value.trim();
     const nama     = document.getElementById('nama').value.trim();
     const password = document.getElementById('password').value;
     const role     = document.getElementById('role').value;
     const fitur    = getSelectedFitur('checkboxFitur');
+    
+    // ✅ TAMBAHAN: Ambil NIP dan Mapel (gunakan optional chaining & fallback string kosong)
+    const nip      = document.getElementById('nip')?.value.trim() || '';
+    const mapel    = document.getElementById('mapel')?.value.trim() || '';
 
     try {
         btnTambah.disabled = true;
         btnTambah.innerHTML = '⌛ Menyimpan...';
 
-        // 1. Daftarkan akun di Firebase Authentication
-        const cred = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password
-        );
+        // 2. Daftarkan akun di Firebase Authentication
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-        // 2. Simpan data profil detail di Firestore Database (Termasuk Password Plain Text)
-        await setDoc(
-            doc(db, 'users', email),
-            {
-                uid: cred.user.uid,
-                email,
-                nama,
-                password,
-                role,
-                fitur,
-                createdAt: new Date().toISOString()
-            }
-        );
+        // 3. Simpan data profil detail di Firestore Database
+        await setDoc(doc(db, 'users', email), {
+            uid: cred.user.uid,
+            email,
+            nama,
+            password, // ⚠️ Catatan: Menyimpan password plain text di Firestore tidak disarankan untuk produksi, tapi ini sesuai struktur Anda saat ini.
+            role,
+            fitur,
+            nip,      // ✅ TAMBAHAN: Simpan NIP
+            mapel,    // ✅ TAMBAHAN: Simpan Mata Pelajaran
+            createdAt: new Date().toISOString()
+        });
 
         tampilkanAlert('✅ User baru berhasil disimpan!');
-        formTambah.reset();
+        formTambah.reset(); // Ini akan otomatis mengosongkan input nip dan mapel juga
         renderCheckboxFitur('checkboxFitur');
 
-        // 3. Muat ulang tabel jika fungsi loadUsers tersedia global
+        // 4. Muat ulang tabel jika fungsi loadUsers tersedia global
         if (typeof window.loadUsers === 'function') {
             window.loadUsers();
         }
@@ -82,7 +69,6 @@ formTambah?.addEventListener('submit', async (e) => {
     } catch (err) {
         console.error("Error Simpan User:", err);
         
-        // Translasi error Firebase auth yang umum ke bahasa Indonesia
         let pesanError = err.message;
         if (err.code === 'auth/email-already-in-use') {
             pesanError = '❌ Email ini sudah terdaftar di sistem!';
@@ -113,17 +99,15 @@ document.getElementById('role')?.addEventListener('change', e => {
  * =================================================================
  */
 document.getElementById('btnExportExcel')?.addEventListener('click', () => {
-    // Ambil element tabel HTML
     const tabel = document.querySelector('#tableUsers table');
     if (!tabel || tabel.offsetParent === null) {
         alert('❌ Tabel data tidak ditemukan atau data masih kosong!');
         return;
     }
 
-    // Buat salinan element tabel agar tidak merusak tampilan live di halaman web
     const cloneTabel = tabel.cloneNode(true);
 
-    // Hapus kolom terakhir (Kolom Aksi berisi tombol Edit & Hapus) agar file Excel bersih
+    // Hapus kolom terakhir (Kolom Aksi) agar file Excel bersih
     const rows = cloneTabel.querySelectorAll('tr');
     rows.forEach(row => {
         if (row.lastElementChild) {
@@ -132,15 +116,11 @@ document.getElementById('btnExportExcel')?.addEventListener('click', () => {
     });
 
     try {
-        // Konversi kloningan tabel HTML menjadi format workbook SheetJS
         // @ts-ignore
         const workbook = XLSX.utils.table_to_book(cloneTabel, { sheet: "Daftar Akun SIPELITA" });
-        
-        // Atur penamaan file berdasarkan tanggal ekspor hari ini
         const tanggal = new Date().toISOString().split('T')[0];
         const namaFile = `Daftar_Akun_SIPELITA_${tanggal}.xlsx`;
 
-        // Unduh file secara otomatis ke perangkat komputer/HP
         // @ts-ignore
         XLSX.writeFile(workbook, namaFile);
     } catch (error) {
