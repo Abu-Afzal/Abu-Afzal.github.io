@@ -438,7 +438,7 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
       }
       
       console.log('✅ Data yang akan dihapus:', absensiData.length);
-      
+      console.log('🔍 Sample record yg dihapus:', JSON.stringify(absensiData[0] || {}).slice(0, 300));
       if (absensiData.length === 0) {
           window.toast('⚠️ Tidak ada data rekap untuk kelas "' + kelasDipilih + '".', 'warn');
           btn.disabled = false;
