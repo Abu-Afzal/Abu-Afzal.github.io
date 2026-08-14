@@ -480,12 +480,24 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
             return;
         }
         
-        // Hapus data
+                // ✅ Ambil snapshot penuh SEKALI, lalu cari path asli tiap record
+        const snap = await ROOT.once('value');
+        const findByKey = (node, key) => {
+            if (node.key === key) return node;
+            let found = null;
+            node.forEach(c => { if (!found) found = findByKey(c, key); });
+            return found;
+        };
+
         for (const item of absensiData) {
-            if (item.__key) {
-                await ROOT.child(item.__key).remove();
+            const node = findByKey(snap, item.__key);
+            if (node) {
+                console.log('📍 Path asli:', node.ref.toString());
+                await node.ref.remove();
                 deletedCount++;
-                console.log('✅ Berhasil hapus:', item.__key);
+                console.log('✅ BENAR-BENAR terhapus:', item.__key);
+            } else {
+                console.warn('⚠️ Node tidak ditemukan:', item.__key);
             }
         }
         
