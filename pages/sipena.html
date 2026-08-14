@@ -381,130 +381,121 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
   document.getElementById('btnBatalHapusRekap').onclick = () => window.closeModal('modalHapusRekap');
 
   document.getElementById('btnKonfirmasiHapusRekap').onclick = async () => {
-    const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
-    const kelasDipilih = document.getElementById('selectKelasHapus').value;
-    
-    console.log(' DEBUG INFO:');
-    console.log('- Kelas dipilih:', kelasDipilih);
-    console.log('- Current user:', currentUser);
-    console.log('- Total data di allData:', allData ? allData.length : 0);
-    
-    if (konfirmasi !== 'HAPUS') {
-        window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
-        return;
-    }
-    
-    if (typeof ROOT === 'undefined' || typeof allData === 'undefined' || !allData) {
-        window.toast('❌ Error: Data belum siap. Refresh halaman.', 'err');
-        return;
-    }
-    
-    const btn = document.getElementById('btnKonfirmasiHapusRekap');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Menghapus...';
-    
-    try {
-        let deletedCount = 0;
-        
-        // Debug: Lihat sample data untuk memahami strukturnya
-        console.log(' Sample 3 data pertama dari allData:');
-        allData.slice(0, 3).forEach((d, i) => {
-            console.log(`  Data ${i + 1}:`, d);
-            console.log(`  Keys:`, Object.keys(d));
-        });
-        
-        // Deteksi data absensi berdasarkan karakteristik:
-        // - Memiliki field yang berhubungan dengan kehadiran (hadir, izin, sakit, alpa, bolos)
-        // - ATAU memiliki field date/tanggal DAN students/class
-        // - TAPI BUKAN data siswa (tidak memiliki student_name sebagai field utama)
-        const semuaAbsensi = allData.filter(d => {
-            // Cek apakah ini data absensi berdasarkan field-field khas
-            const hasAttendanceFields = d.hadir !== undefined || 
-                                       d.izin !== undefined || 
-                                       d.sakit !== undefined || 
-                                       d.alpa !== undefined || 
-                                       d.bolos !== undefined;
-            
-            const hasDateAndClass = (d.date || d.tanggal) && 
-                                   (d.class_name || d.className || d.kelas);
-            
-            const hasStudentsArray = Array.isArray(d.students) && d.students.length > 0;
-            
-            // Pastikan bukan data siswa individual
-            const isNotStudentData = !d.student_name && d.type !== 'student';
-            
-            return (hasAttendanceFields || hasDateAndClass || hasStudentsArray) && isNotStudentData;
-        });
-        
-        console.log('📊 Total data absensi terdeteksi:', semuaAbsensi.length);
-        
-        if (semuaAbsensi.length > 0) {
-            console.log('📝 Sample data absensi:', semuaAbsensi[0]);
-            console.log('🔑 Keys:', Object.keys(semuaAbsensi[0]));
-            
-            // Cek kelas yang ada
-            const kelasTersedia = [...new Set(semuaAbsensi.map(d => 
-                d.class_name || d.className || d.kelas || 'unknown'
-            ))];
-            console.log('📚 Kelas yang tersedia:', kelasTersedia);
-        }
-        
-        // Filter berdasarkan kelas
-        let absensiData = [];
-        
-        if (kelasDipilih === 'all') {
-            absensiData = semuaAbsensi;
-        } else {
-            absensiData = semuaAbsensi.filter(d => {
-                const dataClass = d.class_name || d.className || d.kelas;
-                return dataClass === kelasDipilih;
-            });
-        }
-        
-        console.log('✅ Data yang akan dihapus:', absensiData.length);
-        
-        if (absensiData.length === 0) {
-            console.error('❌ Tidak ada data yang cocok dengan filter!');
-            window.toast('⚠️ Tidak ada data rekap untuk kelas "' + kelasDipilih + '". Lihat console.', 'warn');
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            return;
-        }
-        
-        // Konfirmasi
-        const confirmMsg = `Yakin ingin menghapus ${absensiData.length} data rekap absensi?\n\nData siswa TIDAK akan terhapus.`;
-        if (!confirm(confirmMsg)) {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            return;
-        }
-        
-        // Hapus data
-        for (const item of absensiData) {
-            if (item.__key) {
-                await ROOT.child(item.__key).remove();
-                deletedCount++;
-                console.log('✅ Berhasil hapus:', item.__key);
-            }
-        }
-        
-        window.closeModal('modalHapusRekap');
-        window.toast(`✅ Berhasil menghapus ${deletedCount} data rekap absensi! Data siswa tetap aman.`, 'success');
-        
-        setTimeout(() => {
-            if (typeof window.renderRekap === 'function') {
-                window.renderRekap();
-            }
-        }, 500);
-        
-    } catch (error) {
-        console.error('❌ Error di hapus rekap:', error);
-        window.toast('❌ Gagal menghapus: ' + error.message, 'err');
-    }
-    
-    btn.disabled = false;
-    btn.innerHTML = originalText;
+  const konfirmasi = document.getElementById('inputKonfirmasiHapusRekap').value.trim();
+  const kelasDipilih = document.getElementById('selectKelasHapus').value;
+  
+  if (konfirmasi !== 'HAPUS') {
+      window.toast('❌ Konfirmasi tidak sesuai. Ketik HAPUS.', 'err');
+      return;
+  }
+  
+  if (typeof ROOT === 'undefined' || typeof allData === 'undefined' || !allData) {
+      window.toast('❌ Error: Data belum siap. Refresh halaman.', 'err');
+      return;
+  }
+  
+  const btn = document.getElementById('btnKonfirmasiHapusRekap');
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menghapus...';
+  
+  try {
+      let deletedCount = 0;
+      
+      // ✅ FILTER YANG LEBIH AKURAT: hanya data absensi murni
+      // Ciri khas data absensi di Realtime Database SIPELITA:
+      // - Punya field: date/tanggal, class_name, DAN students (array)
+      // - TIDAK punya field: student_name (itu data siswa individual)
+      // - TIDAK punya field: type === 'class' atau type === 'student'
+      const semuaAbsensi = allData.filter(d => {
+          // Harus punya tanggal + kelas + students array
+          const hasDate = d.date || d.tanggal;
+          const hasClass = d.class_name || d.className || d.kelas;
+          const hasStudents = Array.isArray(d.students) && d.students.length > 0;
+          
+          // BUKAN data kelas atau siswa individual
+          const isNotClass = d.type !== 'class';
+          const isNotStudent = d.type !== 'student' && !d.student_name;
+          
+          // Harus memenuhi SEMUA syarat
+          return hasDate && hasClass && hasStudents && isNotClass && isNotStudent;
+      });
+      
+      console.log('📊 Total data absensi valid:', semuaAbsensi.length);
+      
+      // Filter berdasarkan kelas
+      let absensiData = [];
+      if (kelasDipilih === 'all') {
+          absensiData = semuaAbsensi;
+      } else {
+          absensiData = semuaAbsensi.filter(d => {
+              const dataClass = d.class_name || d.className || d.kelas;
+              return dataClass === kelasDipilih;
+          });
+      }
+      
+      console.log('✅ Data yang akan dihapus:', absensiData.length);
+      
+      if (absensiData.length === 0) {
+          window.toast('⚠️ Tidak ada data rekap untuk kelas "' + kelasDipilih + '".', 'warn');
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+      }
+      
+      // Cek apakah semua data punya __key
+      const withKey = absensiData.filter(d => d.__key);
+      const withoutKey = absensiData.filter(d => !d.__key);
+      
+      console.log('📝 Dengan __key:', withKey.length);
+      console.log('📝 Tanpa __key:', withoutKey.length);
+      
+      if (withoutKey.length > 0) {
+          console.warn('⚠️ Beberapa data tidak punya __key:', withoutKey.slice(0, 3));
+      }
+      
+      // Konfirmasi
+      const confirmMsg = `Yakin ingin menghapus ${withKey.length} data rekap absensi?\n\n` +
+                         (withoutKey.length > 0 ? `⚠️ ${withoutKey.length} data tidak bisa dihapus (tidak punya __key).\n` : '') +
+                         `Data siswa TIDAK akan terhapus.`;
+      
+      if (!confirm(confirmMsg)) {
+          btn.disabled = false;
+          btn.innerHTML = originalText;
+          return;
+      }
+      
+      // Hapus data yang punya __key
+      for (const item of withKey) {
+          try {
+              await ROOT.child(item.__key).remove();
+              deletedCount++;
+              console.log('✅ Berhasil hapus:', item.__key);
+          } catch (err) {
+              console.error('❌ Gagal hapus:', item.__key, err);
+          }
+      }
+      
+      window.closeModal('modalHapusRekap');
+      
+      const msg = deletedCount > 0 
+          ? `✅ Berhasil menghapus ${deletedCount} data rekap absensi!`
+          : '⚠️ Tidak ada data yang berhasil dihapus.';
+      
+      window.toast(msg, deletedCount > 0 ? 'success' : 'warn');
+      
+      // ✅ PENTING: Reload halaman agar data fresh dari database
+      setTimeout(() => {
+          location.reload();
+      }, 1500);
+      
+  } catch (error) {
+      console.error('❌ Error di hapus rekap:', error);
+      window.toast('❌ Gagal menghapus: ' + error.message, 'err');
+  }
+  
+  btn.disabled = false;
+  btn.innerHTML = originalText;
 };
     document.getElementById('btnCetakRekap').onclick = () => {
       if (typeof window.cetakRekap === 'function') {
