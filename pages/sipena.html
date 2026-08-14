@@ -407,23 +407,8 @@ document.getElementById('btnCetakPDF').onclick = window.cetakAnalisisPDF;
       // - Punya field: date/tanggal, class_name, DAN students (array)
       // - TIDAK punya field: student_name (itu data siswa individual)
       // - TIDAK punya field: type === 'class' atau type === 'student'
-      const semuaAbsensi = allData.filter(d => {
-    const hasDate  = !!(d.date || d.tanggal);
-    const hasClass = !!(d.class_name || d.className || d.kelas);
-    const bukanDefinisi = d.type !== 'class' && d.type !== 'student';
-
-    // Ciri catatan absensi: punya status kehadiran ATAU data students
-    const adaStatus = d.status   !== undefined ||
-                      d.hadir    !== undefined ||
-                      d.izin     !== undefined ||
-                      d.sakit    !== undefined ||
-                      d.alpa     !== undefined ||
-                      d.bolos    !== undefined ||
-                      d.students !== undefined;
-
-    return hasDate && hasClass && adaStatus && bukanDefinisi;
-});
-      
+      // ✅ FILTER FINAL: sama persis dengan yang dipakai sipena-rekap.js
+const semuaAbsensi = allData.filter(d => d.type === 'attendance_log');      
       console.log('📊 Total data absensi valid:', semuaAbsensi.length);
       
       // Filter berdasarkan kelas
