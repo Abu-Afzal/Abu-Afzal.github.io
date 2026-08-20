@@ -137,6 +137,4 @@
     document.getElementById('sigModal').classList.add('active');
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
-  else injectUI();
 })();
