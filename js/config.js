@@ -97,7 +97,6 @@ const CONFIG = {
         { icon: '👥', title: 'Master Siswa', desc: 'Kelola Data Siswa', color: '#009688', page: 'sican/siswa-sican.html',role: 'admin' },
         { icon: '📝', title: 'Supervisi', desc: '', color: '#78909c', page: 'pages/supervisi.html' },
         { icon: '🏆', title: 'EKSKUL', desc: '', color: '#6d4c41', page: 'pages/ekskul.html' },
-        { icon: '👨‍💼', title: 'Admin Users', desc: '', color: '#dc3309', page: '/admin-users.
         { icon: '👨‍💼', title: 'PKKM', desc: 'Penilaian Kinerja Kepala Madrasah', color: '#1b5e20', page: 'pkkm.html' },
         { icon: '🛠️', title: 'Master PKKM', desc: 'Kelola Instrumen PKKM', color: '#0dd940', page: '/pages/master-pkkm.html' },
         { 
