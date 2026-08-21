@@ -102,7 +102,7 @@ const CONFIG = {
             title: 'Kalkulator RPE & Prosem', 
             desc: 'Hitung Hari Efektif & Buat Program Semester Otomatis', 
             color: '#0891b2', 
-            page: 'kalkulator-prosem.html' 
+            page: 'pages/kalkulator-prosem.html' 
         },
         { icon: '👨‍💼', title: 'Admin Users', desc: '', color: '#dc3309', page: '/admin-users.
         { icon: '👨‍💼', title: 'PKKM', desc: 'Penilaian Kinerja Kepala Madrasah', color: '#1b5e20', page: 'pkkm.html' },
