@@ -64,6 +64,13 @@ const CONFIG = {
             url: 'pages/kelola-berita.html' 
         },
         { 
+            icon: '🧮', 
+            title: 'RPE & PROSEM', 
+            desc: 'Hitung Hari Efektif & Generate Prosem', 
+            color: '#0891b2', 
+            url: 'pages/kalkulator-prosem.html' 
+        },
+        { 
             id: 'Edu', 
             icon: '', 
             title: 'EduLogs', 
