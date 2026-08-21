@@ -108,13 +108,6 @@ const CONFIG = {
             url: 'https://manbantaeng.rdmnet.my.id/',
             logo: 'assets/images/rapor-app.png'  // ← Path ke logo
         },
-        { 
-            icon: '🧮', 
-            title: 'Kalkulator RPE & Prosem', 
-            desc: 'Hitung Hari Efektif & Buat Program Semester Otomatis', 
-            color: '#0891b2', 
-            page: 'pages/kalkulator-prosem.html' 
-        },
         { icon: '📈', title: 'LCKH', desc: 'Laporan Capaian Kinerja Harian', color: '#c62828', page: 'pages/jurnal.html' }
     ]
 };
