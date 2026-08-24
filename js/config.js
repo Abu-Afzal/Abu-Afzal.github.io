@@ -64,6 +64,13 @@ const CONFIG = {
             url: 'pages/kelola-berita.html' 
         },
         { 
+            icon: '🧮', 
+            title: 'RPE & PROSEM', 
+            desc: 'Hitung Hari Efektif & Generate Prosem', 
+            color: '#0891b2', 
+            url: 'pages/kalkulator-prosem.html' 
+        },
+        { 
             id: 'Edu', 
             icon: '', 
             title: 'EduLogs', 
@@ -71,13 +78,6 @@ const CONFIG = {
             color: '#7e57c2', 
             url: 'https://edulogs.manbantaeng.web.id/',
             logo: 'assets/images/manbtg-app.png'
-        },
-        { 
-            icon: '🧮', 
-            title: 'sipena V2', 
-            desc: 'Penilaian dan Absensi, 
-            color: '#0891b2', 
-            url: 'pages/sipena-modern.html' 
         },
         { 
             icon: '🌐', 
