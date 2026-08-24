@@ -13,33 +13,18 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  // Tambahkan di bagian atas home.html (sebelum script lain)
-<script>
-// Skip splash jika ada parameter nosplash
-if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
-  // Langsung tampilkan konten tanpa delay
-  document.addEventListener('DOMContentLoaded', () => {
-    const splash = document.getElementById('splashScreen');
-    if (splash) {
-      splash.style.display = 'none';
-    }
-    // Langsung tampilkan konten utama
-    const mainContent = document.getElementById('mainContent');
-    if (mainContent) {
-      mainContent.style.display = 'block';
-    }
-  });
-}
-</script>
+  
   <!-- Custom CSS -->
   <link rel="stylesheet" href="../css/sipenav2.css">
 </head>
 <body>
+
   <!-- Tombol Kembali ke Dashboard - Pojok Kanan Atas -->
-<a href="../home.html?nosplash=true" class="btn-back-dashboard">
-  <i class="fas fa-arrow-left"></i>
-  <span>Dashboard SIPELITA</span>
-</a>
+  <a href="../home.html?nosplash=true" class="btn-back-dashboard" title="Kembali ke Dashboard SIPELITA">
+    <i class="fas fa-arrow-left"></i>
+    <span>Dashboard SIPELITA</span>
+  </a>
+
   <div class="app-container">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -88,40 +73,29 @@ if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
         <p class="page-subtitle" id="userGreeting">Memuat profil pengguna...</p>
       </div>
 
-      <!-- Stats -->
-<div class="stats-grid">
-  <div class="stat-card green">
-    <div class="stat-icon green">
-      <i class="fas fa-chalkboard"></i>
-    </div>
-    <div class="stat-value" id="statKelas">0</div>
-    <div class="stat-label">Kelas Diajar</div>
-  </div>
-  
-  <div class="stat-card blue">
-    <div class="stat-icon blue">
-      <i class="fas fa-users"></i>
-    </div>
-    <div class="stat-value" id="statSiswa">0</div>
-    <div class="stat-label">Total Siswa</div>
-  </div>
-  
-  <div class="stat-card purple">
-    <div class="stat-icon purple">
-      <i class="fas fa-check-double"></i>
-    </div>
-    <div class="stat-value" id="statPresensi">0%</div>
-    <div class="stat-label">Kehadiran Hari Ini</div>
-  </div>
-  
-  <div class="stat-card orange">
-    <div class="stat-icon orange">
-      <i class="fas fa-file-alt"></i>
-    </div>
-    <div class="stat-value" id="statSoal">0</div>
-    <div class="stat-label">Soal di Bank</div>
-  </div>
-</div>
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-icon green"><i class="fas fa-chalkboard"></i></div>
+          <div class="stat-value" id="statKelas">0</div>
+          <div class="stat-label">Kelas Diajar</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+          <div class="stat-value" id="statSiswa">0</div>
+          <div class="stat-label">Total Siswa</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple"><i class="fas fa-check-double"></i></div>
+          <div class="stat-value" id="statPresensi">0%</div>
+          <div class="stat-label">Kehadiran Hari Ini</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon orange"><i class="fas fa-file-alt"></i></div>
+          <div class="stat-value" id="statSoal">0</div>
+          <div class="stat-label">Soal di Bank</div>
+        </div>
+      </div>
 
       <!-- Content Area -->
       <div id="pageContent">
@@ -178,26 +152,32 @@ if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
       </div>
 
       <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-  <h4 style="margin-bottom: 1rem;">➕ Tambah Siswa Manual</h4>
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-    <input type="text" id="inputNamaSiswaManual" placeholder="Nama Siswa">
-    
-    <!-- ✅ PERUBAHAN: Upload file dari perangkat -->
-    <div>
-      <input type="file" id="inputFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleFotoUpload(event)">
-      <button class="btn btn-secondary" onclick="document.getElementById('inputFotoSiswaFile').click()" style="width: 100%;">
-        <i class="fas fa-camera"></i> Pilih Foto
-      </button>
-      <div id="fotoPreviewContainer" style="margin-top: 0.5rem; display: none;">
-        <img id="fotoPreview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
-        <button class="btn btn-danger btn-sm" onclick="hapusFotoPreview()" style="margin-left: 0.5rem;">Hapus</button>
+        <h4 style="margin-bottom: 1rem;">➕ Tambah Siswa Manual</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <input type="text" id="inputNamaSiswaManual" placeholder="Nama Siswa">
+          
+          <!-- Upload file dari perangkat -->
+          <div>
+            <input type="file" id="inputFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleFotoUpload(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('inputFotoSiswaFile').click()" style="width: 100%;">
+              <i class="fas fa-camera"></i> Pilih Foto
+            </button>
+            <div id="fotoPreviewContainer" style="margin-top: 0.5rem; display: none;">
+              <img id="fotoPreview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+              <button class="btn btn-danger btn-sm" onclick="hapusFotoPreview()" style="margin-left: 0.5rem;">Hapus</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="tambahSiswaManual()">
+          + Tambah Siswa
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal('modalKelolaSiswa')">Tutup</button>
       </div>
     </div>
   </div>
-  <button class="btn btn-primary" style="margin-top: 1rem;" onclick="tambahSiswaManual()">
-    + Tambah Siswa
-  </button>
-</div>
 
   <!-- Custom JavaScript -->
   <script src="../js/sipenav2.js"></script>
