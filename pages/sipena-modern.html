@@ -62,6 +62,12 @@
     <!-- Main Content -->
     <main class="main-content">
       <div class="page-header">
+        <!-- Tambahkan setelah <div class="page-header"> -->
+<div style="margin-bottom: 1rem;">
+  <a href="../home.html" class="btn btn-secondary btn-sm">
+    <i class="fas fa-arrow-left"></i> Kembali ke Dashboard SIPELITA
+  </a>
+</div>
         <h1 class="page-title">Dashboard</h1>
         <p class="page-subtitle" id="userGreeting">Memuat profil pengguna...</p>
       </div>
@@ -156,19 +162,26 @@
       </div>
 
       <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-        <h4 style="margin-bottom: 1rem;">➕ Tambah Siswa Manual</h4>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <input type="text" id="inputNamaSiswaManual" placeholder="Nama Siswa">
-          <input type="text" id="inputFotoSiswaManual" placeholder="URL Foto (opsional)">
-        </div>
-        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="tambahSiswaManual()">+ Tambah Siswa</button>
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
-        <button class="btn btn-secondary" onclick="closeModal('modalKelolaSiswa')">Tutup</button>
+  <h4 style="margin-bottom: 1rem;">➕ Tambah Siswa Manual</h4>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+    <input type="text" id="inputNamaSiswaManual" placeholder="Nama Siswa">
+    
+    <!-- ✅ PERUBAHAN: Upload file dari perangkat -->
+    <div>
+      <input type="file" id="inputFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleFotoUpload(event)">
+      <button class="btn btn-secondary" onclick="document.getElementById('inputFotoSiswaFile').click()" style="width: 100%;">
+        <i class="fas fa-camera"></i> Pilih Foto
+      </button>
+      <div id="fotoPreviewContainer" style="margin-top: 0.5rem; display: none;">
+        <img id="fotoPreview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+        <button class="btn btn-danger btn-sm" onclick="hapusFotoPreview()" style="margin-left: 0.5rem;">Hapus</button>
       </div>
     </div>
   </div>
+  <button class="btn btn-primary" style="margin-top: 1rem;" onclick="tambahSiswaManual()">
+    + Tambah Siswa
+  </button>
+</div>
 
   <!-- Custom JavaScript -->
   <script src="../js/sipenav2.js"></script>
