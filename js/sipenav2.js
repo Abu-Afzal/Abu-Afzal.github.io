@@ -108,7 +108,7 @@ function redirectToLogin() {
   setTimeout(() => { window.location.href = '../home.html'; }, 1500);
 }
 
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 // UI HELPERS
 // ══════════════════════════════════════════════
 function showToast(message, type = 'success') {
@@ -134,13 +134,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
 
 // ══════════════════════════════════════════════
 // PAGE RENDERING
-// ══════════════════════════════════════════════
+// ═════════════════════════════════════════════
 function loadPage(page) {
   const content = document.getElementById('pageContent');
   switch(page) {
     case 'dashboard': content.innerHTML = renderDashboard(); loadStats(); break;
     case 'kelas': content.innerHTML = renderKelas(); loadKelasList(); break;
-    case 'presensi': content.innerHTML = renderPresensi(); break;
+    case 'presensi': content.innerHTML = renderPresensi(); initPresensiPage(); break;
     case 'penilaian': content.innerHTML = renderPenilaian(); break;
     case 'bank-soal': content.innerHTML = renderBankSoal(); break;
     case 'rekap': content.innerHTML = renderRekap(); break;
@@ -195,7 +195,7 @@ function renderPresensi() {
       <div id="presensiActionArea" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
           <div style="font-weight: 600; color: #166534;">
-            📅 Presensi untuk: <span id="presensiInfoKelas" style="font-weight: 800;"></span>
+             Presensi untuk: <span id="presensiInfoKelas" style="font-weight: 800;"></span>
           </div>
           <div style="display: flex; gap: 0.5rem;">
             <button class="btn btn-secondary btn-sm" onclick="hadirSemua()"><i class="fas fa-check-double"></i> Hadir Semua</button>
@@ -222,17 +222,18 @@ function renderPresensi() {
     </div>
   `;
 }
+
 function renderPenilaian() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>⭐ Penilaian</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
 function renderBankSoal() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>📚 Bank Soal</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
 function renderRekap() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>📊 Rekap & Laporan</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
 
 // ══════════════════════════════════════════════
-// DATA OPERATIONS (DIPERBAIKI AGAR ANGKA UPDATE)
+// DATA OPERATIONS
 // ══════════════════════════════════════════════
 async function loadStats() {
   if (!currentUser) return;
   try {
-    // ✅ Query kelas yang diajar guru ini
+    // Query kelas yang diajar guru ini
     const kelasSnap = await db.collection('kelas')
       .where('pengajar_uids', 'array-contains', currentUser.uid)
       .where('archived', '==', false)
@@ -243,6 +244,7 @@ async function loadStats() {
     const kelasIds = kelasSnap.docs.map(doc => doc.id);
     let totalSiswa = 0;
     
+    // Ambil semua siswa dan filter di client
     const semuaSiswaSnap = await db.collection('siswa').get();
     semuaSiswaSnap.forEach(doc => {
       if (kelasIds.includes(doc.data().kelas_id)) {
@@ -255,6 +257,9 @@ async function loadStats() {
     document.getElementById('statSoal').textContent = '0';
   } catch (error) {
     console.error('Error loading stats:', error);
+    // Fallback: tampilkan 0 jika error
+    document.getElementById('statKelas').textContent = '0';
+    document.getElementById('statSiswa').textContent = '0';
   }
 }
 
@@ -284,7 +289,6 @@ async function loadKelasList() {
         if (doc.data().kelas_id === kelas.id) siswaCount++;
       });
       
-      // Ambil mapel guru ini di kelas ini
       const mapelGuru = kelas.pengajar?.[currentUser.uid]?.mapel || '-';
       
       const tr = document.createElement('tr');
@@ -296,7 +300,7 @@ async function loadKelasList() {
           <small style="color: var(--text-secondary);">📚 ${mapelGuru}</small>
         </td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="bukaKelolaSiswa('${kelas.id}', '${kelas.nama}')"> Kelola Siswa</button>
+          <button class="btn btn-primary btn-sm" onclick="bukaKelolaSiswa('${kelas.id}', '${kelas.nama}')">👥 Kelola Siswa</button>
           <button class="btn btn-danger btn-sm" onclick="hapusKelas('${kelas.id}', '${kelas.nama}')" style="margin-left: 0.5rem;">🗑 Hapus</button>
         </td>`;
       tbody.appendChild(tr);
@@ -311,7 +315,7 @@ async function tambahKelas() {
   const nama = document.getElementById('inputNamaKelas').value.trim();
   const tahun = document.getElementById('inputTahunAjaran').value.trim();
   const semester = document.getElementById('inputSemester').value;
-  const mapel = document.getElementById('inputMapel').value.trim(); // ✅ Ambil dari input
+  const mapel = document.getElementById('inputMapel').value.trim();
 
   if (!nama || !tahun || !mapel) {
     showToast('Nama kelas, tahun ajaran, dan mapel wajib diisi!', 'error');
@@ -476,13 +480,13 @@ async function tambahkanSemuaSiswa() {
       await batch.commit();
       showToast(`✅ Berhasil menambahkan ${count} siswa ke kelas ${currentKelasNama}!`, 'success');
       await loadDaftarSiswa();
-      await loadStats();       // ✅ UPDATE ANGKA DI DASHBOARD
-      await loadKelasList();   // ✅ UPDATE ANGKA DI TABEL KELAS
+      await loadStats();
+      await loadKelasList();
     } else {
       showToast('⚠️ Tidak ada siswa baru untuk ditambahkan.', 'warning');
     }
   } catch (error) {
-    showToast('❌ Gagal: ' + error.message, 'error');
+    showToast(' Gagal: ' + error.message, 'error');
   }
 
   btn.disabled = false;
@@ -545,15 +549,26 @@ async function hapusSiswa(siswaId, nama) {
   }
 }
 
+// ══════════════════════════════════════════════
+// LOGIKA PRESENSI DIGITAL
+// ══════════════════════════════════════════════
+let currentPresensiData = {};
+let currentSiswaList = [];
+
+// Fungsi untuk mengisi dropdown kelas di halaman presensi
 async function initPresensiPage() {
   if (!currentUser) return;
   
   const select = document.getElementById('presensiKelasSelect');
   const tanggalInput = document.getElementById('presensiTanggal');
+  
+  if (!select || !tanggalInput) return;
+  
+  // Set tanggal hari ini
   tanggalInput.valueAsDate = new Date();
   
   try {
-    // ✅ Query kelas yang diajar guru ini
+    // Query kelas yang diajar guru ini (TANPA orderBy untuk hindari index)
     const kelasSnap = await db.collection('kelas')
       .where('pengajar_uids', 'array-contains', currentUser.uid)
       .where('archived', '==', false)
@@ -561,67 +576,36 @@ async function initPresensiPage() {
     
     select.innerHTML = '<option value="">-- Pilih Kelas --</option>';
     
+    if (kelasSnap.empty) {
+      console.log('Tidak ada kelas untuk user ini');
+      return;
+    }
+    
+    // Ambil data dan sort di client-side
     const kelasList = [];
-    kelasSnap.forEach(doc => kelasList.push({ id: doc.id, ...doc.data() }));
+    kelasSnap.forEach(doc => {
+      kelasList.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // Sort berdasarkan nama
     kelasList.sort((a, b) => a.nama.localeCompare(b.nama));
     
+    // Isi dropdown
     kelasList.forEach(kelas => {
       const mapel = kelas.pengajar?.[currentUser.uid]?.mapel || '';
       const option = document.createElement('option');
       option.value = kelas.id;
-      option.textContent = `${kelas.nama} (${mapel})`; // Tampilkan mapel
+      option.textContent = `${kelas.nama} (${mapel})`;
       option.dataset.nama = kelas.nama;
       option.dataset.mapel = mapel;
       select.appendChild(option);
     });
     
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error initPresensiPage:', error);
   }
 
-  select.addEventListener('change', loadPresensiSiswa);
-  tanggalInput.addEventListener('change', loadPresensiSiswa);
-}
-
-function extractTingkat(nama) {
-  const upper = nama.toUpperCase();
-  if (upper.includes('XII') || upper.includes('12')) return 'XII';
-  if (upper.includes('XI') || upper.includes('11')) return 'XI';
-  if (upper.includes('X') || upper.includes('10')) return 'X';
-  return 'Lainnya';
-}
-
-// ══════════════════════════════════════════════
-// LOGIKA PRESENSI DIGITAL
-// ══════════════════════════════════════════════
-let currentPresensiData = {}; // Menyimpan status sementara: { siswaId: 'H' }
-let currentSiswaList = [];    // ✅ BARU: Daftar siswa yang sedang aktif
-
-// Saat halaman presensi dimuat, isi dropdown kelas
-async function initPresensiPage() {
-  if (!currentUser) return;
-  const select = document.getElementById('presensiKelasSelect');
-  const tanggalInput = document.getElementById('presensiTanggal');
-  
-  // Set tanggal hari ini
-  tanggalInput.valueAsDate = new Date();
-  
-  // Ambil kelas user
-  const kelasSnap = await db.collection('kelas')
-    .where('wali_kelas_uid', '==', currentUser.uid)
-    .where('archived', '==', false)
-    .orderBy('nama')
-    .get();
-    
-  kelasSnap.forEach(doc => {
-    const option = document.createElement('option');
-    option.value = doc.id;
-    option.textContent = doc.data().nama;
-    option.dataset.nama = doc.data().nama;
-    select.appendChild(option);
-  });
-
-  // Event listener saat kelas atau tanggal berubah
+  // Event listener
   select.addEventListener('change', loadPresensiSiswa);
   tanggalInput.addEventListener('change', loadPresensiSiswa);
 }
@@ -707,26 +691,24 @@ async function loadPresensiSiswa() {
 // Ubah status siswa
 function setPresensiStatus(siswaId, status) {
   if (currentPresensiData[siswaId] === status) {
-    delete currentPresensiData[siswaId]; // Toggle off
+    delete currentPresensiData[siswaId];
   } else {
     currentPresensiData[siswaId] = status;
   }
-  loadPresensiSiswa(); // Re-render untuk update UI tombol
+  loadPresensiSiswa();
 }
 
-// Hadir Semua - DIPERBAIKI
+// Hadir Semua
 function hadirSemua() {
   if (currentSiswaList.length === 0) {
     showToast('Tidak ada siswa untuk ditandai!', 'warning');
     return;
   }
   
-  // Tandai semua siswa sebagai 'H'
   currentSiswaList.forEach(siswa => {
     currentPresensiData[siswa.id] = 'H';
   });
   
-  // Re-render tabel untuk update UI tombol
   loadPresensiSiswa();
   showToast('✅ Semua siswa ditandai Hadir', 'success');
 }
@@ -757,19 +739,16 @@ async function simpanPresensi() {
       updated_at: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    // Cek apakah sudah ada
     const existingSnap = await db.collection('presensi')
       .where('kelas_id', '==', kelasId)
       .where('tanggal', '==', tanggal)
       .get();
 
     if (!existingSnap.empty) {
-      // Update
       const docId = existingSnap.docs[0].id;
       await db.collection('presensi').doc(docId).update(presensiData);
       showToast('✅ Data presensi berhasil diperbarui!', 'success');
     } else {
-      // Create baru
       presensiData.created_at = firebase.firestore.FieldValue.serverTimestamp();
       await db.collection('presensi').add(presensiData);
       showToast('✅ Data presensi berhasil disimpan!', 'success');
@@ -783,14 +762,13 @@ async function simpanPresensi() {
   btn.innerHTML = '<i class="fas fa-save"></i> Simpan Presensi';
 }
 
-// Hook ke loadPage agar initPresensiPage berjalan saat tab dibuka
-const originalLoadPage = loadPage;
-loadPage = function(page) {
-  originalLoadPage(page);
-  if (page === 'presensi') {
-    setTimeout(initPresensiPage, 100); // Delay sedikit agar DOM siap
-  }
-};
+function extractTingkat(nama) {
+  const upper = nama.toUpperCase();
+  if (upper.includes('XII') || upper.includes('12')) return 'XII';
+  if (upper.includes('XI') || upper.includes('11')) return 'XI';
+  if (upper.includes('X') || upper.includes('10')) return 'X';
+  return 'Lainnya';
+}
 
 // Init
 window.addEventListener('load', initSession);
