@@ -470,10 +470,11 @@
 
     <!-- Main Content -->
     <main class="main-content">
-      <div class="page-header">
-        <h1 class="page-title">Dashboard</h1>
-        <p class="page-subtitle">Selamat datang kembali, Pak/Bu Guru</p>
-      </div>
+<!-- GANTI BAGIAN INI -->
+<div class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+  <p class="page-subtitle" id="userGreeting">Memuat profil pengguna...</p>
+</div>
 
       <!-- Stats -->
       <div class="stats-grid">
@@ -1139,15 +1140,81 @@
     }
 
     // Auth Listener
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        currentUser = user;
-        console.log('✅ Logged in:', user.email);
-        loadPage('dashboard');
+    // ══════════════════════════════════════════════
+    //  SEAMLESS LOGIN & SAPAAN PERSONAL (Shared Session)
+    // ══════════════════════════════════════════════
+    
+    let currentUser = null;
+    let currentUserData = null;
+
+    function initSession() {
+      // 1. CEK LOCALSTORAGE (Sumber data cepat dari home.html)
+      const storedUser = localStorage.getItem('sipelita_user');
+      
+      if (storedUser) {
+        try {
+          currentUserData = JSON.parse(storedUser);
+          currentUser = {
+            uid: currentUserData.uid || currentUserData.email,
+            email: currentUserData.email,
+            displayName: currentUserData.nama || currentUserData.name
+          };
+          
+          updateGreeting();
+          loadPage('dashboard');
+        } catch (e) {
+          console.error("Error parsing user data", e);
+          redirectToLogin();
+        }
       } else {
-        window.location.href = 'index.html';
+        // 2. FALLBACK: Cek Firebase Auth langsung (jika localStorage terhapus tapi sesi browser masih ada)
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            currentUser = user;
+            currentUserData = {
+              nama: user.displayName || user.email.split('@')[0],
+              email: user.email,
+              role: 'guru'
+            };
+            // Simpan ulang ke localStorage agar konsisten dengan home.html
+            localStorage.setItem('sipelita_user', JSON.stringify(currentUserData));
+            
+            updateGreeting();
+            loadPage('dashboard');
+          } else {
+            redirectToLogin();
+          }
+        });
       }
-    });
+    }
+
+    // Fungsi untuk memperbarui sapaan di header
+    function updateGreeting() {
+      const greetingEl = document.getElementById('userGreeting');
+      if (greetingEl && currentUserData) {
+        const nama = currentUserData.nama || currentUserData.name || 'Bapak/Ibu Guru';
+        
+        // Sapaan dinamis berdasarkan waktu
+        const jam = new Date().getHours();
+        let sapaanWaktu = 'Selamat Pagi';
+        if (jam >= 11 && jam < 15) sapaanWaktu = 'Selamat Siang';
+        else if (jam >= 15 && jam < 18) sapaanWaktu = 'Selamat Sore';
+        else if (jam >= 18) sapaanWaktu = 'Selamat Malam';
+        
+        greetingEl.textContent = `${sapaanWaktu}, ${nama} 👋`;
+      }
+    }
+
+    // Fungsi redirect jika sesi benar-benar habis
+    function redirectToLogin() {
+      showToast('⚠️ Sesi Anda berakhir. Silakan login ulang.', 'warning');
+      setTimeout(() => {
+        window.location.href = 'home.html'; // Kembali ke home.html untuk login
+      }, 1500);
+    }
+
+    // Jalankan inisialisasi saat halaman dimuat
+    window.addEventListener('load', initSession);
 
     // Init
     window.addEventListener('load', () => {
