@@ -406,3 +406,62 @@
       }
       .sidebar.open { left: 0; }
     }
+    /* ══════════════════════════════════════════════ */
+/* TOMBOL KEMBALI KE DASHBOARD - POJOK KANAN ATAS */
+/* ══════════════════════════════════════════════ */
+.btn-back-dashboard {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 50px;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-back-dashboard:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.btn-back-dashboard:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-back-dashboard i {
+  font-size: 0.9rem;
+  transition: transform 0.3s ease;
+}
+
+.btn-back-dashboard:hover i {
+  transform: translateX(-3px);
+}
+
+/* Responsive: Di mobile, tombol lebih compact */
+@media (max-width: 768px) {
+  .btn-back-dashboard {
+    top: 10px;
+    right: 10px;
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .btn-back-dashboard span {
+    display: none; /* Sembunyikan teks di mobile, hanya icon */
+  }
+  
+  .btn-back-dashboard i {
+    font-size: 1rem;
+  }
+}
