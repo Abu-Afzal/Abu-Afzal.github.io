@@ -9,6 +9,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
+    <script>
+    // Cek URL parameter secara INSTAN (sebelum render)
+    if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
+      // Tambahkan class ke html tag untuk hide splash
+      document.documentElement.classList.add('nosplash');
+      
+      // Atau langsung hide dengan inline style
+      document.write('<style>.splash, #splashScreen, .loading-screen, .splash-screen { display: none !important; opacity: 0 !important; visibility: hidden !important; }</style>');
+    }
+  </script>
+  
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
