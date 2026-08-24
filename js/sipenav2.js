@@ -414,7 +414,11 @@ async function tambahkanSemuaSiswa() {
   btn.innerHTML = '<span class="spinner"></span> Memproses...';
 
   try {
-    const siswaQuery = await db.collection('siswa').where('kelas_id', '==', currentKelasId).get();
+    // 1. Ambil siswa yang sudah ada di kelas ini
+    const siswaQuery = await db.collection('siswa')
+      .where('kelas_id', '==', currentKelasId)
+      .get();
+    
     const nisSudahAda = new Set();
     const namaSudahAda = new Set();
 
@@ -424,15 +428,21 @@ async function tambahkanSemuaSiswa() {
       if (s.student_name) namaSudahAda.add(s.student_name.toLowerCase().trim());
     });
 
-    const sicanQuery = await db.collection('sican_siswa').get();
+    // 2. ✅ PERBAIKAN: Ambil dari SICAN HANYA yang kelasnya sesuai
+    const sicanQuery = await db.collection('sican_siswa')
+      .where('kelas', '==', currentKelasNama)  // Filter berdasarkan kelas
+      .get();
+    
     const batch = db.batch();
     let count = 0;
+    let skippedCount = 0;
 
     sicanQuery.forEach(doc => {
       const s = doc.data();
       const nisLower = (s.nis || '').toLowerCase().trim();
       const namaLower = (s.nama || '').toLowerCase().trim();
       
+      // Hanya tambahkan yang belum ada
       if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
         const newRef = db.collection('siswa').doc();
         batch.set(newRef, {
@@ -444,18 +454,22 @@ async function tambahkanSemuaSiswa() {
           created_at: firebase.firestore.FieldValue.serverTimestamp()
         });
         count++;
+      } else {
+        skippedCount++;
       }
     });
 
     if (count > 0) {
       await batch.commit();
-      showToast(`✅ Berhasil menambahkan ${count} siswa!`, 'success');
+      showToast(`✅ Berhasil menambahkan ${count} siswa ke kelas ${currentKelasNama}!`, 'success');
       await loadDaftarSiswa();
     } else {
-      showToast('Tidak ada siswa baru untuk ditambahkan.', 'warning');
+      showToast(`⚠️ Tidak ada siswa baru untuk ditambahkan. ${skippedCount > 0 ? `(${skippedCount} siswa sudah ada)` : ''}`, 'warning');
     }
+
   } catch (error) {
-    showToast('Gagal: ' + error.message, 'error');
+    showToast('❌ Gagal: ' + error.message, 'error');
+    console.error(error);
   }
 
   btn.disabled = false;
