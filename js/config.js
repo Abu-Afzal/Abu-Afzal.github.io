@@ -65,10 +65,10 @@ const CONFIG = {
         },
         { 
             icon: '🧮', 
-            title: 'RPE & PROSEM', 
-            desc: 'Hitung Hari Efektif & Generate Prosem', 
+            title: 'sipenaV2', 
+            desc: 'Penilaian dan Absensi, 
             color: '#0891b2', 
-            url: 'pages/kalkulator-prosem.html' 
+            url: 'pages/sipena-modern.html' 
         },
         { 
             id: 'Edu', 
