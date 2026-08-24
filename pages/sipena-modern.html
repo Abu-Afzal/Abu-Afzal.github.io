@@ -13,13 +13,30 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  
+  // Tambahkan di bagian atas home.html (sebelum script lain)
+<script>
+// Skip splash jika ada parameter nosplash
+if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
+  // Langsung tampilkan konten tanpa delay
+  document.addEventListener('DOMContentLoaded', () => {
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.style.display = 'none';
+    }
+    // Langsung tampilkan konten utama
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) {
+      mainContent.style.display = 'block';
+    }
+  });
+}
+</script>
   <!-- Custom CSS -->
   <link rel="stylesheet" href="../css/sipenav2.css">
 </head>
 <body>
   <!-- Tombol Kembali ke Dashboard - Pojok Kanan Atas -->
-<a href="../home.html" class="btn-back-dashboard" title="Dashboard SIPELITA">
+<a href="../home.html?nosplash=true" class="btn-back-dashboard">
   <i class="fas fa-arrow-left"></i>
   <span>Dashboard SIPELITA</span>
 </a>

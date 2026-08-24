@@ -582,8 +582,3 @@ function extractTingkat(nama) {
   if (upper.includes('X') || upper.includes('10')) return 'X';
   return 'Lainnya';
 }
-
-// ══════════════════════════════════════════════
-// INITIALIZATION
-// ══════════════════════════════════════════════
-window.addEventListener('load', initSession);
