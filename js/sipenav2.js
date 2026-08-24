@@ -179,7 +179,49 @@ function renderKelas() {
   </div>`;
 }
 
-function renderPresensi() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>✅ Presensi Digital</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
+function renderPresensi() {
+  return `
+    <div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h3 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 700;">✅ Presensi Digital</h3>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <select id="presensiKelasSelect" class="form-control" style="padding: 0.5rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem;">
+            <option value="">-- Pilih Kelas --</option>
+          </select>
+          <input type="date" id="presensiTanggal" class="form-control" style="padding: 0.5rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem;">
+        </div>
+      </div>
+
+      <div id="presensiActionArea" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div style="font-weight: 600; color: #166534;">
+            📅 Presensi untuk: <span id="presensiInfoKelas" style="font-weight: 800;"></span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="hadirSemua()"><i class="fas fa-check-double"></i> Hadir Semua</button>
+            <button class="btn btn-primary btn-sm" onclick="simpanPresensi()" id="btnSimpanPresensi"><i class="fas fa-save"></i> Simpan Presensi</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="tabelPresensi" style="width: 100%;">
+          <thead>
+            <tr>
+              <th width="50">No</th>
+              <th width="60">Foto</th>
+              <th>Nama Siswa</th>
+              <th width="300">Status Kehadiran</th>
+            </tr>
+          </thead>
+          <tbody id="bodyPresensi">
+            <tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Silakan pilih kelas dan tanggal terlebih dahulu.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
 function renderPenilaian() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>⭐ Penilaian</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
 function renderBankSoal() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>📚 Bank Soal</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
 function renderRekap() { return `<div class="card" style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius); box-shadow: var(--shadow);"><h3>📊 Rekap & Laporan</h3><p style="color: var(--text-secondary);">Sedang dalam pengembangan.</p></div>`; }
@@ -486,6 +528,206 @@ function extractTingkat(nama) {
   if (upper.includes('X') || upper.includes('10')) return 'X';
   return 'Lainnya';
 }
+
+// ══════════════════════════════════════════════
+// LOGIKA PRESENSI DIGITAL
+// ══════════════════════════════════════════════
+let currentPresensiData = {}; // Menyimpan status sementara: { siswaId: 'H' }
+
+// Saat halaman presensi dimuat, isi dropdown kelas
+async function initPresensiPage() {
+  if (!currentUser) return;
+  const select = document.getElementById('presensiKelasSelect');
+  const tanggalInput = document.getElementById('presensiTanggal');
+  
+  // Set tanggal hari ini
+  tanggalInput.valueAsDate = new Date();
+  
+  // Ambil kelas user
+  const kelasSnap = await db.collection('kelas')
+    .where('wali_kelas_uid', '==', currentUser.uid)
+    .where('archived', '==', false)
+    .orderBy('nama')
+    .get();
+    
+  kelasSnap.forEach(doc => {
+    const option = document.createElement('option');
+    option.value = doc.id;
+    option.textContent = doc.data().nama;
+    option.dataset.nama = doc.data().nama;
+    select.appendChild(option);
+  });
+
+  // Event listener saat kelas atau tanggal berubah
+  select.addEventListener('change', loadPresensiSiswa);
+  tanggalInput.addEventListener('change', loadPresensiSiswa);
+}
+
+// Muat data siswa dan presensi yang sudah ada
+async function loadPresensiSiswa() {
+  const kelasId = document.getElementById('presensiKelasSelect').value;
+  const tanggal = document.getElementById('presensiTanggal').value;
+  const actionArea = document.getElementById('presensiActionArea');
+  const tbody = document.getElementById('bodyPresensi');
+
+  if (!kelasId || !tanggal) {
+    actionArea.style.display = 'none';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">Silakan pilih kelas dan tanggal terlebih dahulu.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem;"><div class="spinner"></div> Memuat data...</td></tr>';
+  actionArea.style.display = 'block';
+  
+  const kelasNama = document.getElementById('presensiKelasSelect').options[document.getElementById('presensiKelasSelect').selectedIndex].dataset.nama;
+  document.getElementById('presensiInfoKelas').textContent = `${kelasNama} (${tanggal})`;
+
+  try {
+    // 1. Ambil daftar siswa di kelas ini
+    const siswaSnap = await db.collection('siswa').where('kelas_id', '==', kelasId).get();
+    const siswaList = [];
+    siswaSnap.forEach(doc => siswaList.push({ id: doc.id, ...doc.data() }));
+    
+    // Urutkan berdasarkan nama
+    siswaList.sort((a, b) => a.student_name.localeCompare(b.student_name));
+
+    // 2. Cek apakah sudah ada data presensi untuk tanggal ini
+    const presensiSnap = await db.collection('presensi')
+      .where('kelas_id', '==', kelasId)
+      .where('tanggal', '==', tanggal)
+      .get();
+    
+    currentPresensiData = {};
+    if (!presensiSnap.empty) {
+      currentPresensiData = presensiSnap.docs[0].data().records || {};
+    }
+
+    // 3. Render tabel
+    if (siswaList.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 2rem;">Tidak ada siswa di kelas ini.</td></tr>';
+      return;
+    }
+
+    let html = '';
+    siswaList.forEach((s, index) => {
+      const status = currentPresensiData[s.id] || '';
+      const foto = s.student_photo 
+        ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+        : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+      
+      html += `
+        <tr class="presensi-row">
+          <td style="text-align: center;">${index + 1}</td>
+          <td style="text-align: center;">${foto}</td>
+          <td style="font-weight: 600;">${s.student_name}</td>
+          <td>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button class="status-btn ${status === 'H' ? 'active-h' : ''}" onclick="setPresensiStatus('${s.id}', 'H')">H</button>
+              <button class="status-btn ${status === 'I' ? 'active-i' : ''}" onclick="setPresensiStatus('${s.id}', 'I')">I</button>
+              <button class="status-btn ${status === 'S' ? 'active-s' : ''}" onclick="setPresensiStatus('${s.id}', 'S')">S</button>
+              <button class="status-btn ${status === 'A' ? 'active-a' : ''}" onclick="setPresensiStatus('${s.id}', 'A')">A</button>
+              <button class="status-btn ${status === 'B' ? 'active-b' : ''}" onclick="setPresensiStatus('${s.id}', 'B')">B</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+
+  } catch (error) {
+    console.error('Error load presensi:', error);
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: red;">Gagal memuat data: ${error.message}</td></tr>`;
+  }
+}
+
+// Ubah status siswa
+function setPresensiStatus(siswaId, status) {
+  if (currentPresensiData[siswaId] === status) {
+    delete currentPresensiData[siswaId]; // Toggle off
+  } else {
+    currentPresensiData[siswaId] = status;
+  }
+  loadPresensiSiswa(); // Re-render untuk update UI tombol
+}
+
+// Hadir Semua
+function hadirSemua() {
+  const kelasId = document.getElementById('presensiKelasSelect').value;
+  if (!kelasId) return;
+  
+  // Ambil semua siswa di tabel dan set ke 'H'
+  const rows = document.querySelectorAll('#bodyPresensi tr');
+  rows.forEach(row => {
+    const buttons = row.querySelectorAll('.status-btn');
+    if (buttons.length > 0) {
+      const siswaId = buttons[0].getAttribute('onclick').match(/'([^']+)'/)[1];
+      currentPresensiData[siswaId] = 'H';
+    }
+  });
+  loadPresensiSiswa();
+  showToast('✅ Semua siswa ditandai Hadir', 'success');
+}
+
+// Simpan ke Firestore
+async function simpanPresensi() {
+  const kelasId = document.getElementById('presensiKelasSelect').value;
+  const tanggal = document.getElementById('presensiTanggal').value;
+  const kelasNama = document.getElementById('presensiKelasSelect').options[document.getElementById('presensiKelasSelect').selectedIndex].dataset.nama;
+  const btn = document.getElementById('btnSimpanPresensi');
+
+  if (!kelasId || !tanggal) {
+    showToast('Pilih kelas dan tanggal terlebih dahulu!', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+  try {
+    const presensiData = {
+      kelas_id: kelasId,
+      kelas_nama: kelasNama,
+      tanggal: tanggal,
+      guru_uid: currentUser.uid,
+      guru_nama: currentUser.displayName || currentUser.email,
+      records: currentPresensiData,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    // Cek apakah sudah ada
+    const existingSnap = await db.collection('presensi')
+      .where('kelas_id', '==', kelasId)
+      .where('tanggal', '==', tanggal)
+      .get();
+
+    if (!existingSnap.empty) {
+      // Update
+      const docId = existingSnap.docs[0].id;
+      await db.collection('presensi').doc(docId).update(presensiData);
+      showToast('✅ Data presensi berhasil diperbarui!', 'success');
+    } else {
+      // Create baru
+      presensiData.created_at = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('presensi').add(presensiData);
+      showToast('✅ Data presensi berhasil disimpan!', 'success');
+    }
+  } catch (error) {
+    console.error('Error simpan presensi:', error);
+    showToast('❌ Gagal menyimpan: ' + error.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fas fa-save"></i> Simpan Presensi';
+}
+
+// Hook ke loadPage agar initPresensiPage berjalan saat tab dibuka
+const originalLoadPage = loadPage;
+loadPage = function(page) {
+  originalLoadPage(page);
+  if (page === 'presensi') {
+    setTimeout(initPresensiPage, 100); // Delay sedikit agar DOM siap
+  }
+};
 
 // Init
 window.addEventListener('load', initSession);

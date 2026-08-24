@@ -465,3 +465,31 @@
     font-size: 1rem;
   }
 }
+
+/* ══════════════════════════════════════════════ */
+/* TOMBOL STATUS PRESENSI */
+/* ══════════════════════════════════════════════ */
+.status-btn {
+  padding: 6px 12px;
+  border: 2px solid var(--border);
+  background: white;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-secondary);
+  min-width: 40px;
+}
+
+.status-btn:hover { transform: translateY(-2px); }
+
+/* Warna Aktif */
+.status-btn.active-h { background: #10b981; border-color: #10b981; color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); }
+.status-btn.active-i { background: #3b82f6; border-color: #3b82f6; color: white; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+.status-btn.active-s { background: #f59e0b; border-color: #f59e0b; color: white; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); }
+.status-btn.active-a { background: #ef4444; border-color: #ef4444; color: white; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
+.status-btn.active-b { background: #8b5cf6; border-color: #8b5cf6; color: white; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3); }
+
+.presensi-row { transition: background 0.2s; }
+.presensi-row:hover { background: #f8fafc; }
