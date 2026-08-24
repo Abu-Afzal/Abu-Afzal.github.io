@@ -68,7 +68,7 @@ const CONFIG = {
             title: 'RPE & PROSEM', 
             desc: 'Hitung Hari Efektif & Generate Prosem', 
             color: '#0891b2', 
-            url: 'pages/kalkulator-prosem.html' 
+            url: 'pages/sipena-modern.html' 
         },
         { 
             id: 'Edu', 
