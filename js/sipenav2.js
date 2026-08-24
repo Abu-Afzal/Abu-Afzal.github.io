@@ -536,7 +536,6 @@ async function tambahSiswaDariSICAN(sicanId, nama, nis, foto) {
 
 async function tambahSiswaManual() {
   const nama = document.getElementById('inputNamaSiswaManual').value.trim();
-  const foto = document.getElementById('inputFotoSiswaManual').value.trim();
 
   if (!nama) {
     showToast('Nama siswa wajib diisi!', 'error');
@@ -548,13 +547,17 @@ async function tambahSiswaManual() {
       kelas_id: currentKelasId,
       student_name: nama,
       nis: '',
-      student_photo: foto || '',
+      student_photo: fotoSiswaBase64 || '', // Gunakan base64
       sumber: 'manual',
       created_at: firebase.firestore.FieldValue.serverTimestamp()
     });
+
     showToast(`Siswa "${nama}" berhasil ditambahkan!`, 'success');
+    
+    // Reset form
     document.getElementById('inputNamaSiswaManual').value = '';
-    document.getElementById('inputFotoSiswaManual').value = '';
+    hapusFotoPreview();
+    
     await loadDaftarSiswa();
   } catch (error) {
     showToast('Gagal: ' + error.message, 'error');
