@@ -595,6 +595,7 @@ function extractTingkat(nama) {
 // LOGIKA PRESENSI DIGITAL
 // ══════════════════════════════════════════════
 let currentPresensiData = {}; // Menyimpan status sementara: { siswaId: 'H' }
+let currentSiswaList = [];    // ✅ BARU: Daftar siswa yang sedang aktif
 
 // Saat halaman presensi dimuat, isi dropdown kelas
 async function initPresensiPage() {
@@ -652,6 +653,7 @@ async function loadPresensiSiswa() {
     
     // Urutkan berdasarkan nama
     siswaList.sort((a, b) => a.student_name.localeCompare(b.student_name));
+    currentSiswaList = siswaList;
 
     // 2. Cek apakah sudah ada data presensi untuk tanggal ini
     const presensiSnap = await db.collection('presensi')
@@ -712,20 +714,19 @@ function setPresensiStatus(siswaId, status) {
   loadPresensiSiswa(); // Re-render untuk update UI tombol
 }
 
-// Hadir Semua
+// Hadir Semua - DIPERBAIKI
 function hadirSemua() {
-  const kelasId = document.getElementById('presensiKelasSelect').value;
-  if (!kelasId) return;
+  if (currentSiswaList.length === 0) {
+    showToast('Tidak ada siswa untuk ditandai!', 'warning');
+    return;
+  }
   
-  // Ambil semua siswa di tabel dan set ke 'H'
-  const rows = document.querySelectorAll('#bodyPresensi tr');
-  rows.forEach(row => {
-    const buttons = row.querySelectorAll('.status-btn');
-    if (buttons.length > 0) {
-      const siswaId = buttons[0].getAttribute('onclick').match(/'([^']+)'/)[1];
-      currentPresensiData[siswaId] = 'H';
-    }
+  // Tandai semua siswa sebagai 'H'
+  currentSiswaList.forEach(siswa => {
+    currentPresensiData[siswa.id] = 'H';
   });
+  
+  // Re-render tabel untuk update UI tombol
   loadPresensiSiswa();
   showToast('✅ Semua siswa ditandai Hadir', 'success');
 }
