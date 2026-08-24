@@ -65,7 +65,7 @@ const CONFIG = {
         },
         { 
             icon: '🧮', 
-            title: 'sipenaV2', 
+            title: 'sipena V2', 
             desc: 'Penilaian dan Absensi, 
             color: '#0891b2', 
             url: 'pages/sipena-modern.html' 
