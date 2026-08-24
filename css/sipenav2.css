@@ -128,83 +128,73 @@
       color: var(--text-secondary);
     }
 
-    /* Stats Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
+    /* Stats Grid - 4 Card dalam 1 Baris */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* ✅ PAKSA 4 KOLOM */
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
 
-    .stat-card {
-      background: var(--bg-card);
-      padding: 1.5rem;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border-left: 4px solid var(--primary);
-      transition: transform 0.2s;
-    }
+/* Card lebih compact */
+.stat-card {
+  background: var(--bg-card);
+  padding: 1.25rem; /* Diperkecil dari 1.5rem */
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--primary);
+  transition: transform 0.2s;
+}
 
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    }
+.stat-card:hover {
+  transform: translateY(-2px); /* Diperkecil dari -4px */
+}
 
-    .stat-card.blue { border-left-color: var(--secondary); }
-    .stat-card.purple { border-left-color: #8b5cf6; }
-    .stat-card.orange { border-left-color: #f59e0b; }
+.stat-icon {
+  width: 40px; /* Diperkecil dari 48px */
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem; /* Diperkecil dari 1.5rem */
+  margin-bottom: 0.75rem;
+}
 
-    .stat-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
+.stat-value {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.75rem; /* Diperkecil dari 2rem */
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
 
-    .stat-icon.green { background: #ecfdf5; color: var(--primary); }
-    .stat-icon.blue { background: #eff6ff; color: var(--secondary); }
-    .stat-icon.purple { background: #f5f3ff; color: #8b5cf6; }
-    .stat-icon.orange { background: #fff7ed; color: #f59e0b; }
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.8rem; /* Diperkecil dari 0.875rem */
+}
 
-    .stat-value {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 2rem;
-      font-weight: 800;
-      margin-bottom: 0.25rem;
-    }
+/* Responsive: Tablet jadi 2 kolom */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 
-    .stat-label {
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-    }
-
-    /* Cards */
-    .card {
-      background: var(--bg-card);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      box-shadow: var(--shadow);
-      margin-bottom: 1.5rem;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .card-title {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
+/* Mobile: 2 kolom */
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+}
 
     /* Buttons */
     .btn {
