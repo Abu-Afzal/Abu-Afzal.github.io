@@ -313,7 +313,11 @@ async function loadDaftarSiswa() {
   container.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner"></div> Memuat data...</div>';
 
   try {
-    const siswaQuery = await db.collection('siswa').where('kelas_id', '==', currentKelasId).get();
+    // 1. Ambil siswa yang sudah ada di kelas ini
+    const siswaQuery = await db.collection('siswa')
+      .where('kelas_id', '==', currentKelasId)
+      .get();
+    
     const siswaDiKelas = [];
     const nisSudahAda = new Set();
     const namaSudahAda = new Set();
@@ -325,21 +329,29 @@ async function loadDaftarSiswa() {
       if (s.student_name) namaSudahAda.add(s.student_name.toLowerCase().trim());
     });
 
-    const sicanQuery = await db.collection('sican_siswa').get();
+    // 2. ✅ PERBAIKAN: Ambil dari SICAN HANYA yang kelasnya sesuai
+    const sicanQuery = await db.collection('sican_siswa')
+      .where('kelas', '==', currentKelasNama)  // Filter berdasarkan kelas yang dipilih
+      .get();
+    
     const sicanSiswa = [];
 
     sicanQuery.forEach(doc => {
       const data = doc.data();
       const nisLower = (data.nis || '').toLowerCase().trim();
       const namaLower = (data.nama || '').toLowerCase().trim();
+      
+      // Hanya tampilkan yang belum ada di kelas
       if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
         sicanSiswa.push({ id: doc.id, ...data, source: 'sican' });
       }
     });
 
+    // Update counters
     document.getElementById('totalSiswaKelas').textContent = siswaDiKelas.length;
     document.getElementById('totalSiswaSICAN').textContent = sicanSiswa.length;
 
+    // Render
     if (siswaDiKelas.length === 0 && sicanSiswa.length === 0) {
       container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Belum ada siswa di kelas ini.</div>';
       return;
@@ -347,24 +359,49 @@ async function loadDaftarSiswa() {
 
     let html = '<table><thead><tr><th width="50">Foto</th><th>Nama</th><th width="150">Aksi</th></tr></thead><tbody>';
 
+    // Siswa di kelas
     if (siswaDiKelas.length > 0) {
       html += `<tr style="background: #fef3c7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #92400e;">✅ Siswa di Kelas (${siswaDiKelas.length})</td></tr>`;
       siswaDiKelas.forEach((s, i) => {
-        const foto = s.student_photo ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
-        html += `<tr><td>${foto}</td><td style="font-weight: 600;">${i + 1}. ${s.student_name}</td><td><button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button></td></tr>`;
+        const foto = s.student_photo 
+          ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+          : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+        
+        html += `
+          <tr>
+            <td>${foto}</td>
+            <td style="font-weight: 600;">${i + 1}. ${s.student_name}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button>
+            </td>
+          </tr>
+        `;
       });
     }
 
+    // Siswa dari SICAN (yang kelasnya sesuai)
     if (sicanSiswa.length > 0) {
-      html += `<tr style="background: #dcfce7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #166534;">📥 Dari SICAN (${sicanSiswa.length})</td></tr>`;
+      html += `<tr style="background: #dcfce7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #166534;">📥 Dari SICAN - Kelas ${currentKelasNama} (${sicanSiswa.length})</td></tr>`;
       sicanSiswa.forEach((s, i) => {
-        const foto = s.foto ? `<img src="${s.foto}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
-        html += `<tr><td>${foto}</td><td style="font-weight: 600;">${s.nama} <span class="badge badge-blue" style="font-size: 0.65rem;">SICAN</span></td><td><button class="btn btn-success btn-sm" onclick="tambahSiswaDariSICAN('${s.id}', '${s.nama.replace(/'/g, "\\'")}', '${s.nis || ''}', '${s.foto || ''}')">+ Tambah</button></td></tr>`;
+        const foto = s.foto 
+          ? `<img src="${s.foto}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+          : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+        
+        html += `
+          <tr>
+            <td>${foto}</td>
+            <td style="font-weight: 600;">${s.nama} <span class="badge badge-blue" style="font-size: 0.65rem;">SICAN</span></td>
+            <td>
+              <button class="btn btn-success btn-sm" onclick="tambahSiswaDariSICAN('${s.id}', '${s.nama.replace(/'/g, "\\'")}', '${s.nis || ''}', '${s.foto || ''}')">+ Tambah</button>
+            </td>
+          </tr>
+        `;
       });
     }
 
     html += '</tbody></table>';
     container.innerHTML = html;
+
   } catch (error) {
     console.error(error);
     container.innerHTML = '<div style="text-align: center; padding: 2rem; color: red;">Gagal memuat data: ' + error.message + '</div>';
