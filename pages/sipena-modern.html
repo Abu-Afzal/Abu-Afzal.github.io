@@ -137,6 +137,17 @@
           <option value="genap">Genap</option>
         </select>
       </div>
+          <!-- ✅ TAMBAHAN: Field Mapel -->
+    <div class="form-group">
+      <label>Mata Pelajaran yang Diampu *</label>
+      <input type="text" id="inputMapel" placeholder="Contoh: Matematika, B.Indonesia, IPA">
+    </div>
+    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
+      <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>
+    </div>
+  </div>
+</div>
       <div style="display: flex; gap: 1rem; justify-content: flex-end;">
         <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
         <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>

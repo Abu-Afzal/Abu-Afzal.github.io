@@ -232,13 +232,17 @@ function renderRekap() { return `<div class="card" style="background: var(--bg-c
 async function loadStats() {
   if (!currentUser) return;
   try {
-    const kelasSnap = await db.collection('kelas').where('wali_kelas_uid', '==', currentUser.uid).where('archived', '==', false).get();
+    // ✅ Query kelas yang diajar guru ini
+    const kelasSnap = await db.collection('kelas')
+      .where('pengajar_uids', 'array-contains', currentUser.uid)
+      .where('archived', '==', false)
+      .get();
+    
     document.getElementById('statKelas').textContent = kelasSnap.size;
 
     const kelasIds = kelasSnap.docs.map(doc => doc.id);
     let totalSiswa = 0;
     
-    // Ambil semua siswa, lalu filter di client (lebih aman dari error index Firestore)
     const semuaSiswaSnap = await db.collection('siswa').get();
     semuaSiswaSnap.forEach(doc => {
       if (kelasIds.includes(doc.data().kelas_id)) {
@@ -259,7 +263,10 @@ async function loadKelasList() {
   if (!tbody || !currentUser) return;
 
   try {
-    const snapshot = await db.collection('kelas').where('wali_kelas_uid', '==', currentUser.uid).where('archived', '==', false).get();
+    const snapshot = await db.collection('kelas')
+      .where('pengajar_uids', 'array-contains', currentUser.uid)
+      .where('archived', '==', false)
+      .get();
 
     if (snapshot.empty) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Belum ada kelas. Klik "+ Tambah Kelas" untuk memulai.</td></tr>';
@@ -267,24 +274,29 @@ async function loadKelasList() {
     }
 
     tbody.innerHTML = '';
-    const semuaSiswaSnap = await db.collection('siswa').get(); // Ambil sekali saja untuk efisiensi
+    const semuaSiswaSnap = await db.collection('siswa').get();
     
     for (const docSnap of snapshot.docs) {
       const kelas = { id: docSnap.id, ...docSnap.data() };
       
-      // Hitung siswa untuk kelas ini
       let siswaCount = 0;
       semuaSiswaSnap.forEach(doc => {
         if (doc.data().kelas_id === kelas.id) siswaCount++;
       });
       
+      // Ambil mapel guru ini di kelas ini
+      const mapelGuru = kelas.pengajar?.[currentUser.uid]?.mapel || '-';
+      
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="font-weight: 600;">${kelas.nama}</td>
         <td>${kelas.tahun_ajaran}</td>
-        <td><span class="badge badge-green">👥 ${siswaCount} Siswa</span></td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="bukaKelolaSiswa('${kelas.id}', '${kelas.nama}')">👥 Kelola Siswa</button>
+          <span class="badge badge-green">👥 ${siswaCount} Siswa</span><br>
+          <small style="color: var(--text-secondary);">📚 ${mapelGuru}</small>
+        </td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="bukaKelolaSiswa('${kelas.id}', '${kelas.nama}')"> Kelola Siswa</button>
           <button class="btn btn-danger btn-sm" onclick="hapusKelas('${kelas.id}', '${kelas.nama}')" style="margin-left: 0.5rem;">🗑 Hapus</button>
         </td>`;
       tbody.appendChild(tr);
@@ -299,8 +311,12 @@ async function tambahKelas() {
   const nama = document.getElementById('inputNamaKelas').value.trim();
   const tahun = document.getElementById('inputTahunAjaran').value.trim();
   const semester = document.getElementById('inputSemester').value;
+  const mapel = document.getElementById('inputMapel').value.trim(); // ✅ Ambil dari input
 
-  if (!nama || !tahun) { showToast('Nama kelas dan tahun ajaran wajib diisi!', 'error'); return; }
+  if (!nama || !tahun || !mapel) {
+    showToast('Nama kelas, tahun ajaran, dan mapel wajib diisi!', 'error');
+    return;
+  }
 
   try {
     await db.collection('kelas').add({
@@ -308,16 +324,24 @@ async function tambahKelas() {
       tingkat: extractTingkat(nama),
       tahun_ajaran: tahun,
       semester: semester,
-      wali_kelas_uid: currentUser.uid,
-      wali_kelas_email: currentUser.email,
       archived: false,
-      created_at: firebase.firestore.FieldValue.serverTimestamp()
+      created_at: firebase.firestore.FieldValue.serverTimestamp(),
+      pengajar_uids: [currentUser.uid],
+      pengajar: {
+        [currentUser.uid]: {
+          nama: currentUserData.nama || currentUser.email,
+          email: currentUser.email,
+          mapel: mapel
+        }
+      }
     });
+
     showToast(`Kelas "${nama}" berhasil ditambahkan!`, 'success');
     closeModal('modalTambahKelas');
     loadKelasList();
     loadStats();
     document.getElementById('inputNamaKelas').value = '';
+    document.getElementById('inputMapel').value = '';
   } catch (error) {
     showToast('Gagal menyimpan: ' + error.message, 'error');
   }
@@ -519,6 +543,44 @@ async function hapusSiswa(siswaId, nama) {
   } catch (error) {
     showToast('Gagal: ' + error.message, 'error');
   }
+}
+
+async function initPresensiPage() {
+  if (!currentUser) return;
+  
+  const select = document.getElementById('presensiKelasSelect');
+  const tanggalInput = document.getElementById('presensiTanggal');
+  tanggalInput.valueAsDate = new Date();
+  
+  try {
+    // ✅ Query kelas yang diajar guru ini
+    const kelasSnap = await db.collection('kelas')
+      .where('pengajar_uids', 'array-contains', currentUser.uid)
+      .where('archived', '==', false)
+      .get();
+    
+    select.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+    
+    const kelasList = [];
+    kelasSnap.forEach(doc => kelasList.push({ id: doc.id, ...doc.data() }));
+    kelasList.sort((a, b) => a.nama.localeCompare(b.nama));
+    
+    kelasList.forEach(kelas => {
+      const mapel = kelas.pengajar?.[currentUser.uid]?.mapel || '';
+      const option = document.createElement('option');
+      option.value = kelas.id;
+      option.textContent = `${kelas.nama} (${mapel})`; // Tampilkan mapel
+      option.dataset.nama = kelas.nama;
+      option.dataset.mapel = mapel;
+      select.appendChild(option);
+    });
+    
+  } catch (error) {
+    console.error('Error:', error);
+  }
+
+  select.addEventListener('change', loadPresensiSiswa);
+  tanggalInput.addEventListener('change', loadPresensiSiswa);
 }
 
 function extractTingkat(nama) {
