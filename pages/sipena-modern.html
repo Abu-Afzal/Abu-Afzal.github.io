@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIPENA 2.0 - Modern</title>
+  
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --secondary: #3b82f6;
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Modern */
+    .sidebar {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      padding: 2rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .brand-logo {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-text h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .brand-text p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Navigation */
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-main);
+      color: var(--primary);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, #ecfdf5, var(--primary));
+      color: var(--primary-dark);
+      font-weight: 600;
+    }
+
+    .nav-item i { width: 20px; text-align: center; }
+
+    /* Main Content */
+    .main-content {
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      color: var(--text-secondary);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--primary);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card.blue { border-left-color: var(--secondary); }
+    .stat-card.purple { border-left-color: #8b5cf6; }
+    .stat-card.orange { border-left-color: #f59e0b; }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-icon.green { background: #ecfdf5; color: var(--primary); }
+    .stat-icon.blue { background: #eff6ff; color: var(--secondary); }
+    .stat-icon.purple { background: #f5f3ff; color: #8b5cf6; }
+    .stat-icon.orange { background: #fff7ed; color: #f59e0b; }
+
+    .stat-value {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      box-shadow: var(--shadow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-secondary {
+      background: var(--bg-main);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-main);
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+    }
+
+    tr:hover {
+      background: var(--bg-main);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-green {
+      background: #ecfdf5;
+      color: var(--primary);
+    }
+
+    .badge-blue {
+      background: #eff6ff;
+      color: var(--secondary);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Form */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 300px;
+      animation: slideIn 0.3s ease;
+      border-left: 4px solid var(--primary);
+    }
+
+    .toast.success { border-left-color: var(--primary); }
+    .toast.error { border-left-color: #ef4444; }
+    .toast.warning { border-left-color: #f59e0b; }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        z-index: 100;
+        transition: left 0.3s;
+      }
+      .sidebar.open { left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text">
+          <h1>SIPENA</h1>
+          <p>v2.0 Modern</p>
+        </div>
+      </div>
+      
+      <ul class="nav-menu">
+        <li class="nav-item active" data-page="dashboard">
+          <i class="fas fa-home"></i>
+          <span>Dashboard</span>
+        </li>
+        <li class="nav-item" data-page="kelas">
+          <i class="fas fa-chalkboard"></i>
+          <span>Kelola Kelas</span>
+        </li>
+        <li class="nav-item" data-page="presensi">
+          <i class="fas fa-check-circle"></i>
+          <span>Presensi</span>
+        </li>
+        <li class="nav-item" data-page="penilaian">
+          <i class="fas fa-star"></i>
+          <span>Penilaian</span>
+        </li>
+        <li class="nav-item" data-page="bank-soal">
+          <i class="fas fa-database"></i>
+          <span>Bank Soal</span>
+        </li>
+        <li class="nav-item" data-page="rekap">
+          <i class="fas fa-chart-bar"></i>
+          <span>Rekap</span>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Selamat datang kembali, Pak/Bu Guru</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-chalkboard"></i>
+          </div>
+          <div class="stat-value" id="statKelas">0</div>
+          <div class="stat-label">Kelas Diajar</div>
+        </div>
+        
+        <div class="stat-card blue">
+          <div class="stat-icon blue">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-value" id="statSiswa">0</div>
+          <div class="stat-label">Total Siswa</div>
+        </div>
+        
+        <div class="stat-card purple">
+          <div class="stat-icon purple">
+            <i class="fas fa-check-double"></i>
+          </div>
+          <div class="stat-value" id="statPresensi">0%</div>
+          <div class="stat-label">Kehadiran Hari Ini</div>
+        </div>
+        
+        <div class="stat-card orange">
+          <div class="stat-icon orange">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="stat-value" id="statSoal">0</div>
+          <div class="stat-label">Soal di Bank</div>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div id="pageContent">
+        <!-- Dynamic content loaded here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Modal Tambah Kelas -->
+  <div class="modal" id="modalTambahKelas">
+    <div class="modal-box">
+      <div class="modal-title">🏫 Tambah Kelas Baru</div>
+      <div class="form-group">
+        <label>Nama Kelas *</label>
+        <input type="text" id="inputNamaKelas" placeholder="Contoh: X.1 atau XI IPA 2">
+      </div>
+      <div class="form-group">
+        <label>Tahun Ajaran *</label>
+        <input type="text" id="inputTahunAjaran" placeholder="2026/2027" value="2026/2027">
+      </div>
+      <div class="form-group">
+        <label>Semester</label>
+        <select id="inputSemester">
+          <option value="ganjil">Ganjil</option>
+          <option value="genap">Genap</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
+        <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Kelola Siswa -->
+  <div class="modal" id="modalKelolaSiswa">
+    <div class="modal-box" style="max-width: 800px;">
+      <div class="modal-title" id="titleKelolaSiswa">👥 Kelola Siswa</div>
+      
+      <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div style="font-weight: 600; color: #0369a1;">
+             Total di Kelas: <span id="totalSiswaKelas">0</span> | Tersedia dari SICAN: <span id="totalSiswaSICAN">0</span>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="tambahkanSemuaSiswa()">
+            ➕ Tambahkan Semua
+          </button>
+        </div>
+      </div>
+
+      <div class="table-container" id="daftarSiswaModal">
+        <!-- Siswa list loaded here -->
+      </div>
+
+      <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+        <h4 style="margin-bottom: 1rem;">➕ Tambah Siswa Manual</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <input type="text" id="inputNamaSiswaManual" placeholder="Nama Siswa">
+          <input type="text" id="inputFotoSiswaManual" placeholder="URL Foto (opsional)">
+        </div>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="tambahSiswaManual()">
+          + Tambah Siswa
+        </button>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal('modalKelolaSiswa')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyB24GCKSTPGlN9HG9E6uhCECVa4ibCpKEA",
+      authDomain: "sipelita-digital.firebaseapp.com",
+      databaseURL: "https://sipelita-digital-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "sipelita-digital",
+      storageBucket: "sipelita-digital.firebasestorage.app",
+      messagingSenderId: "787840817745",
+      appId: "1:787840817745:web:e6b5237cfbb5e51be93670"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // State
+    let currentUser = null;
+    let currentKelasId = null;
+    let currentKelasNama = '';
+
+    // Toast System
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'times-circle' : 'exclamation-circle';
+      toast.innerHTML = `<i class="fas fa-${icon}"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Modal Functions
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        loadPage(item.dataset.page);
+      });
+    });
+
+    // Load Page Content
+    function loadPage(page) {
+      const content = document.getElementById('pageContent');
+      
+      switch(page) {
+        case 'dashboard':
+          content.innerHTML = renderDashboard();
+          loadStats();
+          break;
+        case 'kelas':
+          content.innerHTML = renderKelas();
+          loadKelasList();
+          break;
+        case 'presensi':
+          content.innerHTML = renderPresensi();
+          break;
+        case 'penilaian':
+          content.innerHTML = renderPenilaian();
+          break;
+        case 'bank-soal':
+          content.innerHTML = renderBankSoal();
+          break;
+        case 'rekap':
+          content.innerHTML = renderRekap();
+          break;
+      }
+    }
+
+    function renderDashboard() {
+      return `
+        <div class="card">
+          <h3 style="margin-bottom: 1rem;">📊 Ringkasan Sistem</h3>
+          <p>Selamat datang di SIPENA 2.0! Sistem Penilaian dan Presensi Digital yang modern dan terintegrasi dengan database SICAN.</p>
+          <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="padding: 1rem; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
+              <strong style="color: #166534;">✅ Firestore Database</strong>
+              <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Lebih aman dan scalable</p>
+            </div>
+            <div style="padding: 1rem; background: #eff6ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+              <strong style="color: #1e40af;">🔄 Integrasi SICAN</strong>
+              <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Sinkronisasi data siswa otomatis</p>
+            </div>
+            <div style="padding: 1rem; background: #f5f3ff; border-radius: 8px; border-left: 4px solid #8b5cf6;">
+              <strong style="color: #5b21b6;"> Modern UI/UX</strong>
+              <p style="font-size: 0.875rem; color: #64748b; margin-top: 0.25rem;">Desain bersih dan responsif</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderKelas() {
+      return `
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🏫 Kelola Kelas</h3>
+            <button class="btn btn-primary" onclick="openModal('modalTambahKelas')">
+              <i class="fas fa-plus"></i> Tambah Kelas
+            </button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama Kelas</th>
+                  <th>Tahun Ajaran</th>
+                  <th>Jumlah Siswa</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="kelasTableBody">
+                <tr><td colspan="4" style="text-align: center;">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPresensi() {
+      return `
+        <div class="card">
+          <h3 class="card-title">✅ Presensi Digital</h3>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem;">Fitur presensi sedang dalam pengembangan.</p>
+        </div>
+      `;
+    }
+
+    function renderPenilaian() {
+      return `
+        <div class="card">
+          <h3 class="card-title">⭐ Penilaian</h3>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+            <div class="stat-card blue">
+              <div class="stat-icon blue"><i class="fas fa-brain"></i></div>
+              <h4>Pengetahuan</h4>
+              <p style="font-size: 0.875rem; color: var(--text-secondary);">Tes tertulis & lisan</p>
+            </div>
+            <div class="stat-card purple">
+              <div class="stat-icon purple"><i class="fas fa-tools"></i></div>
+              <h4>Keterampilan</h4>
+              <p style="font-size: 0.875rem; color: var(--text-secondary);">Praktik & proyek</p>
+            </div>
+            <div class="stat-card orange">
+              <div class="stat-icon orange"><i class="fas fa-heart"></i></div>
+              <h4>Sikap</h4>
+              <p style="font-size: 0.875rem; color: var(--text-secondary);">Observasi & jurnal</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBankSoal() {
+      return `
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"> Bank Soal</h3>
+            <button class="btn btn-primary">
+              <i class="fas fa-plus"></i> Tambah Soal
+            </button>
+          </div>
+          <p style="color: var(--text-secondary);">Fitur bank soal sedang dalam pengembangan.</p>
+        </div>
+      `;
+    }
+
+    function renderRekap() {
+      return `
+        <div class="card">
+          <h3 class="card-title"> Rekap & Laporan</h3>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem;">Fitur rekap sedang dalam pengembangan.</p>
+        </div>
+      `;
+    }
+
+    // Load Stats
+    async function loadStats() {
+      if (!currentUser) return;
+      
+      try {
+        // Count kelas
+        const kelasSnap = await db.collection('kelas')
+          .where('wali_kelas_uid', '==', currentUser.uid)
+          .where('archived', '==', false)
+          .get();
+        document.getElementById('statKelas').textContent = kelasSnap.size;
+
+        // Count siswa
+        const kelasIds = kelasSnap.docs.map(doc => doc.id);
+        let totalSiswa = 0;
+        for (const kelasId of kelasIds) {
+          const siswaSnap = await db.collection('siswa')
+            .where('kelas_id', '==', kelasId)
+            .get();
+          totalSiswa += siswaSnap.size;
+        }
+        document.getElementById('statSiswa').textContent = totalSiswa;
+
+        // Placeholder untuk stats lainnya
+        document.getElementById('statPresensi').textContent = '0%';
+        document.getElementById('statSoal').textContent = '0';
+      } catch (error) {
+        console.error('Error loading stats:', error);
+      }
+    }
+
+    // Load Kelas List
+    async function loadKelasList() {
+      const tbody = document.getElementById('kelasTableBody');
+      if (!tbody || !currentUser) return;
+
+      try {
+        const snapshot = await db.collection('kelas')
+          .where('wali_kelas_uid', '==', currentUser.uid)
+          .where('archived', '==', false)
+          .orderBy('nama')
+          .get();
+
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Belum ada kelas. Klik "+ Tambah Kelas" untuk memulai.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        for (const docSnap of snapshot.docs) {
+          const kelas = { id: docSnap.id, ...docSnap.data() };
+          
+          // Count siswa
+          const siswaSnap = await db.collection('siswa')
+            .where('kelas_id', '==', kelas.id)
+            .get();
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-weight: 600;">${kelas.nama}</td>
+            <td>${kelas.tahun_ajaran}</td>
+            <td><span class="badge badge-green">👥 ${siswaSnap.size} Siswa</span></td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="bukaKelolaSiswa('${kelas.id}', '${kelas.nama}')">
+                👥 Kelola Siswa
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="hapusKelas('${kelas.id}', '${kelas.nama}')" style="margin-left: 0.5rem;">
+                 Hapus
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      } catch (error) {
+        console.error('Error loading kelas:', error);
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: red;">Gagal memuat data</td></tr>';
+      }
+    }
+
+    // Tambah Kelas
+    async function tambahKelas() {
+      const nama = document.getElementById('inputNamaKelas').value.trim();
+      const tahun = document.getElementById('inputTahunAjaran').value.trim();
+      const semester = document.getElementById('inputSemester').value;
+
+      if (!nama || !tahun) {
+        showToast('Nama kelas dan tahun ajaran wajib diisi!', 'error');
+        return;
+      }
+
+      try {
+        await db.collection('kelas').add({
+          nama: nama,
+          tingkat: extractTingkat(nama),
+          tahun_ajaran: tahun,
+          semester: semester,
+          wali_kelas_uid: currentUser.uid,
+          wali_kelas_email: currentUser.email,
+          archived: false,
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast(`Kelas "${nama}" berhasil ditambahkan!`, 'success');
+        closeModal('modalTambahKelas');
+        loadKelasList();
+        loadStats();
+        
+        // Reset form
+        document.getElementById('inputNamaKelas').value = '';
+      } catch (error) {
+        showToast('Gagal menyimpan: ' + error.message, 'error');
+      }
+    }
+
+    // Hapus Kelas (Soft Delete)
+    async function hapusKelas(kelasId, className) {
+      if (!confirm(`Arsipkan kelas "${className}"? Data siswa dan nilai tidak akan hilang.`)) return;
+
+      try {
+        await db.collection('kelas').doc(kelasId).update({
+          archived: true,
+          archived_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast(`Kelas "${className}" berhasil diarsipkan!`, 'success');
+        loadKelasList();
+        loadStats();
+      } catch (error) {
+        showToast('Gagal: ' + error.message, 'error');
+      }
+    }
+
+    // Buka Kelola Siswa
+    async function bukaKelolaSiswa(kelasId, className) {
+      currentKelasId = kelasId;
+      currentKelasNama = className;
+      document.getElementById('titleKelolaSiswa').textContent = `👥 Kelola Siswa — ${className}`;
+      openModal('modalKelolaSiswa');
+      await loadDaftarSiswa();
+    }
+
+    // Load Daftar Siswa
+    async function loadDaftarSiswa() {
+      const container = document.getElementById('daftarSiswaModal');
+      container.innerHTML = '<div style="text-align: center; padding: 2rem;"><div class="spinner"></div> Memuat data...</div>';
+
+      try {
+        // 1. Ambil siswa yang sudah ada di kelas
+        const siswaQuery = await db.collection('siswa')
+          .where('kelas_id', '==', currentKelasId)
+          .get();
+        
+        const siswaDiKelas = [];
+        const nisSudahAda = new Set();
+        const namaSudahAda = new Set();
+
+        siswaQuery.forEach(doc => {
+          const s = { id: doc.id, ...doc.data() };
+          siswaDiKelas.push(s);
+          if (s.nis) nisSudahAda.add(s.nis.toLowerCase().trim());
+          if (s.student_name) namaSudahAda.add(s.student_name.toLowerCase().trim());
+        });
+
+        // 2. Ambil dari SICAN
+        const sicanQuery = await db.collection('sican_siswa').get();
+        const sicanSiswa = [];
+
+        sicanQuery.forEach(doc => {
+          const data = doc.data();
+          const nisLower = (data.nis || '').toLowerCase().trim();
+          const namaLower = (data.nama || '').toLowerCase().trim();
+          
+          if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
+            sicanSiswa.push({ id: doc.id, ...data, source: 'sican' });
+          }
+        });
+
+        // Update counters
+        document.getElementById('totalSiswaKelas').textContent = siswaDiKelas.length;
+        document.getElementById('totalSiswaSICAN').textContent = sicanSiswa.length;
+
+        // Render
+        if (siswaDiKelas.length === 0 && sicanSiswa.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-secondary);">Belum ada siswa di kelas ini.</div>';
+          return;
+        }
+
+        let html = '<table><thead><tr><th width="50">Foto</th><th>Nama</th><th width="150">Aksi</th></tr></thead><tbody>';
+
+        // Siswa di kelas
+        if (siswaDiKelas.length > 0) {
+          html += `<tr style="background: #fef3c7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #92400e;">✅ Siswa di Kelas (${siswaDiKelas.length})</td></tr>`;
+          siswaDiKelas.forEach((s, i) => {
+            const foto = s.student_photo 
+              ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+              : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+            
+            html += `
+              <tr>
+                <td>${foto}</td>
+                <td style="font-weight: 600;">${i + 1}. ${s.student_name}</td>
+                <td>
+                  <button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button>
+                </td>
+              </tr>
+            `;
+          });
+        }
+
+        // Siswa dari SICAN
+        if (sicanSiswa.length > 0) {
+          html += `<tr style="background: #dcfce7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #166534;">📥 Dari SICAN (${sicanSiswa.length})</td></tr>`;
+          sicanSiswa.forEach((s, i) => {
+            const foto = s.foto 
+              ? `<img src="${s.foto}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+              : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+            
+            html += `
+              <tr>
+                <td>${foto}</td>
+                <td style="font-weight: 600;">${s.nama} <span class="badge badge-blue" style="font-size: 0.65rem;">SICAN</span></td>
+                <td>
+                  <button class="btn btn-success btn-sm" onclick="tambahSiswaDariSICAN('${s.id}', '${s.nama.replace(/'/g, "\\'")}', '${s.nis || ''}', '${s.foto || ''}')">+ Tambah</button>
+                </td>
+              </tr>
+            `;
+          });
+        }
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+
+      } catch (error) {
+        console.error(error);
+        container.innerHTML = '<div style="text-align: center; padding: 2rem; color: red;">Gagal memuat data: ' + error.message + '</div>';
+      }
+    }
+
+    // Tambahkan Semua Siswa dari SICAN
+    async function tambahkanSemuaSiswa() {
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Memproses...';
+
+      try {
+        // Ambil siswa yang sudah ada
+        const siswaQuery = await db.collection('siswa')
+          .where('kelas_id', '==', currentKelasId)
+          .get();
+        
+        const nisSudahAda = new Set();
+        const namaSudahAda = new Set();
+
+        siswaQuery.forEach(doc => {
+          const s = doc.data();
+          if (s.nis) nisSudahAda.add(s.nis.toLowerCase().trim());
+          if (s.student_name) namaSudahAda.add(s.student_name.toLowerCase().trim());
+        });
+
+        // Ambil dari SICAN dan tambahkan
+        const sicanQuery = await db.collection('sican_siswa').get();
+        const batch = db.batch();
+        let count = 0;
+
+        sicanQuery.forEach(doc => {
+          const s = doc.data();
+          const nisLower = (s.nis || '').toLowerCase().trim();
+          const namaLower = (s.nama || '').toLowerCase().trim();
+          
+          if (!nisSudahAda.has(nisLower) && !namaSudahAda.has(namaLower)) {
+            const newRef = db.collection('siswa').doc();
+            batch.set(newRef, {
+              kelas_id: currentKelasId,
+              student_name: s.nama,
+              nis: s.nis || '',
+              student_photo: s.foto || '',
+              sumber: 'sican',
+              created_at: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            count++;
+          }
+        });
+
+        if (count > 0) {
+          await batch.commit();
+          showToast(`✅ Berhasil menambahkan ${count} siswa!`, 'success');
+          await loadDaftarSiswa();
+        } else {
+          showToast('Tidak ada siswa baru untuk ditambahkan.', 'warning');
+        }
+
+      } catch (error) {
+        showToast('Gagal: ' + error.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '➕ Tambahkan Semua';
+    }
+
+    // Tambah Siswa dari SICAN
+    async function tambahSiswaDariSICAN(sicanId, nama, nis, foto) {
+      try {
+        await db.collection('siswa').add({
+          kelas_id: currentKelasId,
+          student_name: nama,
+          nis: nis,
+          student_photo: foto || '',
+          sumber: 'sican',
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast(`Siswa "${nama}" berhasil ditambahkan!`, 'success');
+        await loadDaftarSiswa();
+      } catch (error) {
+        showToast('Gagal: ' + error.message, 'error');
+      }
+    }
+
+    // Tambah Siswa Manual
+    async function tambahSiswaManual() {
+      const nama = document.getElementById('inputNamaSiswaManual').value.trim();
+      const foto = document.getElementById('inputFotoSiswaManual').value.trim();
+
+      if (!nama) {
+        showToast('Nama siswa wajib diisi!', 'error');
+        return;
+      }
+
+      try {
+        await db.collection('siswa').add({
+          kelas_id: currentKelasId,
+          student_name: nama,
+          nis: '',
+          student_photo: foto || '',
+          sumber: 'manual',
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast(`Siswa "${nama}" berhasil ditambahkan!`, 'success');
+        document.getElementById('inputNamaSiswaManual').value = '';
+        document.getElementById('inputFotoSiswaManual').value = '';
+        await loadDaftarSiswa();
+      } catch (error) {
+        showToast('Gagal: ' + error.message, 'error');
+      }
+    }
+
+    // Hapus Siswa
+    async function hapusSiswa(siswaId, nama) {
+      if (!confirm(`Hapus siswa "${nama}" dari kelas ini?`)) return;
+
+      try {
+        await db.collection('siswa').doc(siswaId).delete();
+        showToast(`Siswa "${nama}" dihapus.`, 'success');
+        await loadDaftarSiswa();
+      } catch (error) {
+        showToast('Gagal: ' + error.message, 'error');
+      }
+    }
+
+    // Helper: Ekstrak Tingkat
+    function extractTingkat(nama) {
+      const upper = nama.toUpperCase();
+      if (upper.includes('XII') || upper.includes('12')) return 'XII';
+      if (upper.includes('XI') || upper.includes('11')) return 'XI';
+      if (upper.includes('X') || upper.includes('10')) return 'X';
+      return 'Lainnya';
+    }
+
+    // Auth Listener
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        console.log('✅ Logged in:', user.email);
+        loadPage('dashboard');
+      } else {
+        window.location.href = 'index.html';
+      }
+    });
+
+    // Init
+    window.addEventListener('load', () => {
+      // Check if already logged in
+      if (auth.currentUser) {
+        currentUser = auth.currentUser;
+        loadPage('dashboard');
+      }
+    });
+  </script>
+</body>
+</html>
