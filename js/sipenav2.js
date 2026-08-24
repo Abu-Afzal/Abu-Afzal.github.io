@@ -19,6 +19,47 @@ let currentUserData = null;
 let currentKelasId = null;
 let currentKelasNama = '';
 
+// Variabel untuk menyimpan foto dalam base64
+let fotoSiswaBase64 = '';
+
+// Handle upload foto dari perangkat
+function handleFotoUpload(event) {
+  const file = event.target.files[0];
+  
+  if (!file) return;
+  
+  // Validasi ukuran file (maks 2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('❌ Ukuran foto maksimal 2MB!', 'error');
+    return;
+  }
+  
+  // Validasi tipe file
+  if (!file.type.startsWith('image/')) {
+    showToast('❌ File harus berupa gambar!', 'error');
+    return;
+  }
+  
+  // Baca file dan konversi ke base64
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    fotoSiswaBase64 = e.target.result;
+    
+    // Tampilkan preview
+    document.getElementById('fotoPreview').src = fotoSiswaBase64;
+    document.getElementById('fotoPreviewContainer').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// Hapus foto preview
+function hapusFotoPreview() {
+  fotoSiswaBase64 = '';
+  document.getElementById('inputFotoSiswaFile').value = '';
+  document.getElementById('fotoPreviewContainer').style.display = 'none';
+  document.getElementById('fotoPreview').src = '';
+}
+
 // ══════════════════════════════════════════════
 // SEAMLESS LOGIN & SAPAAN PERSONAL
 // ══════════════════════════════════════════════
