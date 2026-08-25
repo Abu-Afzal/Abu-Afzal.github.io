@@ -191,24 +191,43 @@
   </div>
 
   <!-- Modal Edit Siswa -->
-  <div class="modal" id="modalEditSiswa">
-    <div class="modal-box">
-      <div class="modal-title">✏️ Edit Data Siswa</div>
-      <input type="hidden" id="editSiswaId">
-      <div class="form-group">
-        <label>Nama Siswa *</label>
-        <input type="text" id="editSiswaNama" placeholder="Nama lengkap siswa">
+<div class="modal" id="modalEditSiswa">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Data Siswa</div>
+    <input type="hidden" id="editSiswaId">
+    <input type="hidden" id="editSiswaFotoBase64">
+    
+    <div class="form-group">
+      <label>Nama Siswa *</label>
+      <input type="text" id="editSiswaNama" placeholder="Nama lengkap siswa">
+    </div>
+
+    <!-- Upload Foto dari Perangkat -->
+    <div class="form-group">
+      <label>Foto Siswa</label>
+      <input type="file" id="editFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleEditFotoUpload(event)">
+      
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button class="btn btn-secondary" type="button" onclick="document.getElementById('editFotoSiswaFile').click()">
+          <i class="fas fa-camera"></i> Pilih Foto dari Perangkat
+        </button>
+        <button class="btn btn-danger btn-sm" id="btnHapusEditFoto" type="button" onclick="hapusEditFotoPreview()" style="display: none;">
+          Hapus Foto
+        </button>
       </div>
-      <div class="form-group">
-        <label>URL Foto (opsional)</label>
-        <input type="text" id="editSiswaFoto" placeholder="https://... atau kosongkan jika tidak ada">
-      </div>
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button class="btn btn-secondary" onclick="closeModal('modalEditSiswa')">Batal</button>
-        <button class="btn btn-primary" onclick="simpanEditSiswa()">💾 Simpan Perubahan</button>
+
+      <!-- Preview Foto -->
+      <div id="editFotoPreviewContainer" style="margin-top: 0.75rem; display: none;">
+        <img id="editFotoPreview" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary, #059669);">
       </div>
     </div>
+
+    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+      <button class="btn btn-secondary" onclick="closeModal('modalEditSiswa')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanEditSiswa()">💾 Simpan Perubahan</button>
+    </div>
   </div>
+</div>
 
   <!-- Custom JavaScript Internal / Handler Modal -->
   <script src="../js/sipenav2.js"></script>
