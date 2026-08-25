@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIPENA 2.0 - Modern</title>
 
+  <!-- Skip Splash Screen Script -->
   <script>
-    // Cek URL parameter secara INSTAN (sebelum render)
     if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
       document.documentElement.classList.add('nosplash');
       document.write('<style>.splash, #splashScreen, .loading-screen, .splash-screen { display: none !important; opacity: 0 !important; visibility: hidden !important; }</style>');
@@ -27,7 +27,7 @@
 </head>
 <body>
 
-  <!-- Tombol Kembali ke Dashboard -->
+  <!-- Tombol Kembali ke Dashboard - Pojok Kanan Atas -->
   <a href="../home.html?nosplash=true" class="btn-back-dashboard" title="Kembali ke Dashboard SIPELITA">
     <i class="fas fa-arrow-left"></i>
     <span>Dashboard SIPELITA</span>
@@ -163,18 +163,19 @@
         <!-- Siswa list loaded here -->
       </div>
 
-      <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border, #e2e8f0);">
+      <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
         <h4 style="margin-bottom: 1rem;">➕ Tambah Siswa Manual</h4>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
           <input type="text" id="inputNamaSiswaManual" placeholder="Nama Siswa">
           
+          <!-- Upload file dari perangkat -->
           <div>
             <input type="file" id="inputFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleFotoUpload(event)">
             <button class="btn btn-secondary" onclick="document.getElementById('inputFotoSiswaFile').click()" style="width: 100%;">
               <i class="fas fa-camera"></i> Pilih Foto
             </button>
             <div id="fotoPreviewContainer" style="margin-top: 0.5rem; display: none;">
-              <img id="fotoPreview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary, #059669);">
+              <img id="fotoPreview" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
               <button class="btn btn-danger btn-sm" onclick="hapusFotoPreview()" style="margin-left: 0.5rem;">Hapus</button>
             </div>
           </div>
@@ -191,96 +192,26 @@
   </div>
 
   <!-- Modal Edit Siswa -->
-<div class="modal" id="modalEditSiswa">
-  <div class="modal-box">
-    <div class="modal-title">✏️ Edit Data Siswa</div>
-    <input type="hidden" id="editSiswaId">
-    <input type="hidden" id="editSiswaFotoBase64">
-    
-    <div class="form-group">
-      <label>Nama Siswa *</label>
-      <input type="text" id="editSiswaNama" placeholder="Nama lengkap siswa">
-    </div>
-
-    <!-- Upload Foto dari Perangkat -->
-    <div class="form-group">
-      <label>Foto Siswa</label>
-      <input type="file" id="editFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleEditFotoUpload(event)">
-      
-      <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <button class="btn btn-secondary" type="button" onclick="document.getElementById('editFotoSiswaFile').click()">
-          <i class="fas fa-camera"></i> Pilih Foto dari Perangkat
-        </button>
-        <button class="btn btn-danger btn-sm" id="btnHapusEditFoto" type="button" onclick="hapusEditFotoPreview()" style="display: none;">
-          Hapus Foto
-        </button>
+  <div class="modal" id="modalEditSiswa">
+    <div class="modal-box">
+      <div class="modal-title">✏️ Edit Data Siswa</div>
+      <input type="hidden" id="editSiswaId">
+      <div class="form-group">
+        <label>Nama Siswa *</label>
+        <input type="text" id="editSiswaNama" placeholder="Nama lengkap siswa">
       </div>
-
-      <!-- Preview Foto -->
-      <div id="editFotoPreviewContainer" style="margin-top: 0.75rem; display: none;">
-        <img id="editFotoPreview" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary, #059669);">
+      <div class="form-group">
+        <label>URL Foto (opsional)</label>
+        <input type="text" id="editSiswaFoto" placeholder="https://... atau kosongkan jika tidak ada">
       </div>
-    </div>
-
-    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
-      <button class="btn btn-secondary" onclick="closeModal('modalEditSiswa')">Batal</button>
-      <button class="btn btn-primary" onclick="simpanEditSiswa()">💾 Simpan Perubahan</button>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeModal('modalEditSiswa')">Batal</button>
+        <button class="btn btn-primary" onclick="simpanEditSiswa()">💾 Simpan Perubahan</button>
+      </div>
     </div>
   </div>
-</div>
 
-  <!-- Custom JavaScript Internal / Handler Modal -->
+  <!-- Custom JavaScript -->
   <script src="../js/sipenav2.js"></script>
-
-  <script>
-    // ✅ Mengikat fungsi ke `window` agar selalu bisa dipanggil atribut onclick HTML
-    window.closeModal = function(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.classList.remove('active');
-    };
-
-    window.openModal = function(modalId) {
-      const modal = document.getElementById(modalId);
-      if (modal) modal.classList.add('active');
-    };
-
-    window.editSiswa = function(id, nama = '', foto = '') {
-      document.getElementById('editSiswaId').value = id;
-      document.getElementById('editSiswaNama').value = nama;
-      document.getElementById('editSiswaFoto').value = foto;
-      window.openModal('modalEditSiswa');
-    };
-
-    window.simpanEditSiswa = function() {
-      const id = document.getElementById('editSiswaId').value;
-      const namaBaru = document.getElementById('editSiswaNama').value.trim();
-      const fotoBaru = document.getElementById('editSiswaFoto').value.trim();
-
-      if (!namaBaru) {
-        alert('Nama siswa tidak boleh kosong!');
-        return;
-      }
-
-      // Jika ada fungsi simpan di sipenav2.js, panggil di sini atau update Firestore langsung
-      if (typeof window.updateSiswaData === 'function') {
-        window.updateSiswaData(id, { nama: namaBaru, foto: fotoBaru });
-      } else {
-        console.log("Menyimpan data siswa:", id, namaBaru, fotoBaru);
-      }
-
-      window.closeModal('modalEditSiswa');
-    };
-
-    window.hapusSiswa = function(id) {
-      if (confirm('Yakin ingin menghapus siswa ini?')) {
-        if (typeof window.deleteSiswaData === 'function') {
-          window.deleteSiswaData(id);
-        } else {
-          console.log("Menghapus siswa ID:", id);
-        }
-      }
-    };
-  </script>
-
 </body>
 </html>
