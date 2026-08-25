@@ -413,25 +413,13 @@ async function loadDaftarSiswa() {
 
     let html = '<table><thead><tr><th width="50">Foto</th><th>Nama</th><th width="150">Aksi</th></tr></thead><tbody>';
 
-if (siswaDiKelas.length > 0) {
-  html += `<tr style="background: #fef3c7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #92400e;">✅ Siswa di Kelas (${siswaDiKelas.length})</td></tr>`;
-  siswaDiKelas.forEach((s, i) => {
-    const foto = s.student_photo 
-      ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
-      : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
-    
-    html += `
-      <tr>
-        <td>${foto}</td>
-        <td style="font-weight: 600;">${i + 1}. ${s.student_name}</td>
-        <td style="display: flex; gap: 6px;">
-          <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}', '${s.student_photo || ''}')">✏️ Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button>
-        </td>
-      </tr>
-    `;
-  });
-}
+    if (siswaDiKelas.length > 0) {
+      html += `<tr style="background: #fef3c7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #92400e;">✅ Siswa di Kelas (${siswaDiKelas.length})</td></tr>`;
+      siswaDiKelas.forEach((s, i) => {
+        const foto = s.student_photo ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+        html += `<tr><td>${foto}</td><td style="font-weight: 600;">${i + 1}. ${s.student_name}</td><td><button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button></td></tr>`;
+      });
+    }
 
     if (sicanSiswa.length > 0) {
       html += `<tr style="background: #dcfce7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #166534;">📥 Dari SICAN - Kelas ${currentKelasNama} (${sicanSiswa.length})</td></tr>`;
@@ -558,94 +546,6 @@ async function hapusSiswa(siswaId, nama) {
     await loadKelasList();
   } catch (error) {
     showToast('Gagal: ' + error.message, 'error');
-  }
-}
-
-// Variable state untuk foto edit
-let editFotoSiswaBase64 = '';
-
-// ══════════════════════════════════════════════
-// EDIT SISWA & UPLOAD FOTO EDIT
-// ══════════════════════════════════════════════
-function editSiswa(id, nama = '', foto = '') {
-  document.getElementById('editSiswaId').value = id;
-  document.getElementById('editSiswaNama').value = nama;
-  editFotoSiswaBase64 = foto || '';
-
-  const preview = document.getElementById('editFotoPreview');
-  const previewContainer = document.getElementById('editFotoPreviewContainer');
-  const btnHapus = document.getElementById('btnHapusEditFoto');
-
-  if (foto) {
-    preview.src = foto;
-    previewContainer.style.display = 'block';
-    if (btnHapus) btnHapus.style.display = 'inline-block';
-  } else {
-    preview.src = '';
-    previewContainer.style.display = 'none';
-    if (btnHapus) btnHapus.style.display = 'none';
-  }
-
-  openModal('modalEditSiswa');
-}
-
-function handleEditFotoUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('❌ Ukuran foto maksimal 2MB!', 'error');
-    return;
-  }
-  if (!file.type.startsWith('image/')) {
-    showToast('❌ File harus berupa gambar!', 'error');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    editFotoSiswaBase64 = e.target.result;
-    document.getElementById('editFotoPreview').src = editFotoSiswaBase64;
-    document.getElementById('editFotoPreviewContainer').style.display = 'block';
-    const btnHapus = document.getElementById('btnHapusEditFoto');
-    if (btnHapus) btnHapus.style.display = 'inline-block';
-  };
-  reader.readAsDataURL(file);
-}
-
-function hapusEditFotoPreview() {
-  editFotoSiswaBase64 = '';
-  const input = document.getElementById('editFotoSiswaFile');
-  if (input) input.value = '';
-  document.getElementById('editFotoPreviewContainer').style.display = 'none';
-  document.getElementById('editFotoPreview').src = '';
-  const btnHapus = document.getElementById('btnHapusEditFoto');
-  if (btnHapus) btnHapus.style.display = 'none';
-}
-
-async function simpanEditSiswa() {
-  const id = document.getElementById('editSiswaId').value;
-  const namaBaru = document.getElementById('editSiswaNama').value.trim();
-
-  if (!namaBaru) {
-    showToast('❌ Nama siswa wajib diisi!', 'error');
-    return;
-  }
-
-  try {
-    await db.collection('siswa').doc(id).update({
-      student_name: namaBaru,
-      student_photo: editFotoSiswaBase64,
-      updated_at: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    showToast(`✅ Data siswa "${namaBaru}" berhasil diperbarui!`, 'success');
-    closeModal('modalEditSiswa');
-    await loadDaftarSiswa();
-    await loadStats();
-  } catch (error) {
-    console.error('Error update siswa:', error);
-    showToast('❌ Gagal memperbarui: ' + error.message, 'error');
   }
 }
 
