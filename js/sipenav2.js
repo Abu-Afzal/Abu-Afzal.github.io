@@ -413,13 +413,25 @@ async function loadDaftarSiswa() {
 
     let html = '<table><thead><tr><th width="50">Foto</th><th>Nama</th><th width="150">Aksi</th></tr></thead><tbody>';
 
-    if (siswaDiKelas.length > 0) {
-      html += `<tr style="background: #fef3c7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #92400e;">✅ Siswa di Kelas (${siswaDiKelas.length})</td></tr>`;
-      siswaDiKelas.forEach((s, i) => {
-        const foto = s.student_photo ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
-        html += `<tr><td>${foto}</td><td style="font-weight: 600;">${i + 1}. ${s.student_name}</td><td><button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button></td></tr>`;
-      });
-    }
+if (siswaDiKelas.length > 0) {
+  html += `<tr style="background: #fef3c7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #92400e;">✅ Siswa di Kelas (${siswaDiKelas.length})</td></tr>`;
+  siswaDiKelas.forEach((s, i) => {
+    const foto = s.student_photo 
+      ? `<img src="${s.student_photo}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">` 
+      : '<div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">👤</div>';
+    
+    html += `
+      <tr>
+        <td>${foto}</td>
+        <td style="font-weight: 600;">${i + 1}. ${s.student_name}</td>
+        <td style="display: flex; gap: 6px;">
+          <button class="btn btn-warning btn-sm" onclick="editSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}', '${s.student_photo || ''}')">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusSiswa('${s.id}', '${s.student_name.replace(/'/g, "\\'")}')">🗑 Hapus</button>
+        </td>
+      </tr>
+    `;
+  });
+}
 
     if (sicanSiswa.length > 0) {
       html += `<tr style="background: #dcfce7;"><td colspan="3" style="padding: 8px; font-weight: 600; color: #166534;">📥 Dari SICAN - Kelas ${currentKelasNama} (${sicanSiswa.length})</td></tr>`;
