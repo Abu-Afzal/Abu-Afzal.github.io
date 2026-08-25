@@ -561,6 +561,94 @@ async function hapusSiswa(siswaId, nama) {
   }
 }
 
+// Variable state untuk foto edit
+let editFotoSiswaBase64 = '';
+
+// ══════════════════════════════════════════════
+// EDIT SISWA & UPLOAD FOTO EDIT
+// ══════════════════════════════════════════════
+function editSiswa(id, nama = '', foto = '') {
+  document.getElementById('editSiswaId').value = id;
+  document.getElementById('editSiswaNama').value = nama;
+  editFotoSiswaBase64 = foto || '';
+
+  const preview = document.getElementById('editFotoPreview');
+  const previewContainer = document.getElementById('editFotoPreviewContainer');
+  const btnHapus = document.getElementById('btnHapusEditFoto');
+
+  if (foto) {
+    preview.src = foto;
+    previewContainer.style.display = 'block';
+    if (btnHapus) btnHapus.style.display = 'inline-block';
+  } else {
+    preview.src = '';
+    previewContainer.style.display = 'none';
+    if (btnHapus) btnHapus.style.display = 'none';
+  }
+
+  openModal('modalEditSiswa');
+}
+
+function handleEditFotoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('❌ Ukuran foto maksimal 2MB!', 'error');
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    showToast('❌ File harus berupa gambar!', 'error');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    editFotoSiswaBase64 = e.target.result;
+    document.getElementById('editFotoPreview').src = editFotoSiswaBase64;
+    document.getElementById('editFotoPreviewContainer').style.display = 'block';
+    const btnHapus = document.getElementById('btnHapusEditFoto');
+    if (btnHapus) btnHapus.style.display = 'inline-block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function hapusEditFotoPreview() {
+  editFotoSiswaBase64 = '';
+  const input = document.getElementById('editFotoSiswaFile');
+  if (input) input.value = '';
+  document.getElementById('editFotoPreviewContainer').style.display = 'none';
+  document.getElementById('editFotoPreview').src = '';
+  const btnHapus = document.getElementById('btnHapusEditFoto');
+  if (btnHapus) btnHapus.style.display = 'none';
+}
+
+async function simpanEditSiswa() {
+  const id = document.getElementById('editSiswaId').value;
+  const namaBaru = document.getElementById('editSiswaNama').value.trim();
+
+  if (!namaBaru) {
+    showToast('❌ Nama siswa wajib diisi!', 'error');
+    return;
+  }
+
+  try {
+    await db.collection('siswa').doc(id).update({
+      student_name: namaBaru,
+      student_photo: editFotoSiswaBase64,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    showToast(`✅ Data siswa "${namaBaru}" berhasil diperbarui!`, 'success');
+    closeModal('modalEditSiswa');
+    await loadDaftarSiswa();
+    await loadStats();
+  } catch (error) {
+    console.error('Error update siswa:', error);
+    showToast('❌ Gagal memperbarui: ' + error.message, 'error');
+  }
+}
+
 // ══════════════════════════════════════════════
 // LOGIKA PRESENSI DIGITAL
 // ══════════════════════════════════════════════
