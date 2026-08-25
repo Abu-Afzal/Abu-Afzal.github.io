@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIPENA 2.0 - Modern</title>
 
-  <!-- Skip Splash Screen Script -->
-  <script>
+      <script>
+    // Cek URL parameter secara INSTAN (sebelum render)
     if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
+      // Tambahkan class ke html tag untuk hide splash
       document.documentElement.classList.add('nosplash');
+      
+      // Atau langsung hide dengan inline style
       document.write('<style>.splash, #splashScreen, .loading-screen, .splash-screen { display: none !important; opacity: 0 !important; visibility: hidden !important; }</style>');
     }
   </script>
@@ -134,10 +137,17 @@
           <option value="genap">Genap</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>Mata Pelajaran yang Diampu *</label>
-        <input type="text" id="inputMapel" placeholder="Contoh: Matematika, B.Indonesia, IPA">
-      </div>
+          <!-- ✅ TAMBAHAN: Field Mapel -->
+    <div class="form-group">
+      <label>Mata Pelajaran yang Diampu *</label>
+      <input type="text" id="inputMapel" placeholder="Contoh: Matematika, B.Indonesia, IPA">
+    </div>
+    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
+      <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>
+    </div>
+  </div>
+</div>
       <div style="display: flex; gap: 1rem; justify-content: flex-end;">
         <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
         <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>
@@ -187,26 +197,6 @@
 
       <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
         <button class="btn btn-secondary" onclick="closeModal('modalKelolaSiswa')">Tutup</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Edit Siswa -->
-  <div class="modal" id="modalEditSiswa">
-    <div class="modal-box">
-      <div class="modal-title">✏️ Edit Data Siswa</div>
-      <input type="hidden" id="editSiswaId">
-      <div class="form-group">
-        <label>Nama Siswa *</label>
-        <input type="text" id="editSiswaNama" placeholder="Nama lengkap siswa">
-      </div>
-      <div class="form-group">
-        <label>URL Foto (opsional)</label>
-        <input type="text" id="editSiswaFoto" placeholder="https://... atau kosongkan jika tidak ada">
-      </div>
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button class="btn btn-secondary" onclick="closeModal('modalEditSiswa')">Batal</button>
-        <button class="btn btn-primary" onclick="simpanEditSiswa()">💾 Simpan Perubahan</button>
       </div>
     </div>
   </div>
