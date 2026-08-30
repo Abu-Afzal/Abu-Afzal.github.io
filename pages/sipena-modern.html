@@ -4,44 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SIPENA 2.0 - Modern</title>
-
-      <script>
-    // Cek URL parameter secara INSTAN (sebelum render)
-    if (new URLSearchParams(window.location.search).get('nosplash') === 'true') {
-      // Tambahkan class ke html tag untuk hide splash
-      document.documentElement.classList.add('nosplash');
-      
-      // Atau langsung hide dengan inline style
-      document.write('<style>.splash, #splashScreen, .loading-screen, .splash-screen { display: none !important; opacity: 0 !important; visibility: hidden !important; }</style>');
-    }
-  </script>
   
   <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="../css/sipenav2.css">
+  <link rel="stylesheet" href="../css/sipenav2.css?v=270830">
 </head>
 <body>
-
-  <!-- Tombol Kembali ke Dashboard - Pojok Kanan Atas -->
-  <a href="../home.html?nosplash=true" class="btn-back-dashboard" title="Kembali ke Dashboard SIPELITA">
-    <i class="fas fa-arrow-left"></i>
-    <span>Dashboard SIPELITA</span>
-  </a>
+  
+    <!-- Tombol Menu (Mobile) -->
+  <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
   <div class="app-container">
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-logo">
-          <i class="fas fa-graduation-cap"></i>
+          <i class="fas fa-pen-fancy"></i>
         </div>
         <div class="brand-text">
           <h1>SIPENA</h1>
@@ -50,31 +37,118 @@
       </div>
       
       <ul class="nav-menu">
-        <li class="nav-item active" data-page="dashboard">
+        <li class="nav-item" data-page="dashboard">
           <i class="fas fa-home"></i>
           <span>Dashboard</span>
         </li>
-        <li class="nav-item" data-page="kelas">
-          <i class="fas fa-chalkboard"></i>
-          <span>Kelola Kelas</span>
+        <!-- ✅ KELOLA KELAS + ACCORDION -->
+        <li class="nav-parent guru-only">
+          <div class="nav-toggle">
+            <i class="fas fa-chalkboard"></i>
+            <span>Kelola Kelas</span>
+            <i class="fas fa-chevron-down nav-arrow"></i>
+          </div>
+          <ul class="sub-menu">
+            <li class="nav-item sub-item" data-page="kelas">
+              <i class="fas fa-list"></i>
+              <span>Daftar Kelas</span>
+            </li>
+            <li class="nav-item sub-item" id="navTambahKelas">
+              <i class="fas fa-plus"></i>
+              <span>Tambah Kelas</span>
+            </li>
+            <li class="nav-item sub-item" id="navTambahSiswa">
+              <i class="fas fa-user-plus"></i>
+              <span>Tambah Siswa</span>
+            </li>
+          </ul>
         </li>
-        <li class="nav-item" data-page="presensi">
-          <i class="fas fa-check-circle"></i>
-          <span>Presensi</span>
+
+        <!-- ✅ PRESENSI + ACCORDION -->
+        <li class="nav-parent">
+          <div class="nav-toggle">
+            <i class="fas fa-check-circle"></i>
+            <span>Presensi</span>
+            <i class="fas fa-chevron-down nav-arrow"></i>
+          </div>
+          <ul class="sub-menu">
+            <li class="nav-item sub-item guru-only" data-page="presensi">
+              <i class="fas fa-edit"></i>
+              <span>Input Presensi</span>
+            </li>
+            <li class="nav-item sub-item" data-page="rekap">
+              <i class="fas fa-chart-bar"></i>
+              <span>Rekap Presensi</span>
+            </li>
+          </ul>
         </li>
-        <li class="nav-item" data-page="penilaian">
-          <i class="fas fa-star"></i>
-          <span>Penilaian</span>
+
+        <!-- ✅ PENILAIAN + ACCORDION (3 SUB-FITUR) -->
+        <li class="nav-parent guru-only">
+          <div class="nav-toggle">
+            <i class="fas fa-star"></i>
+            <span>Penilaian</span>
+            <i class="fas fa-chevron-down nav-arrow"></i>
+          </div>
+          <ul class="sub-menu">
+            <li class="nav-item sub-item" data-page="penilaian">
+              <i class="fas fa-edit"></i>
+              <span>Input Penilaian</span>
+            </li>
+            <li class="nav-item sub-item" data-page="rekap-nilai">
+              <i class="fas fa-chart-line"></i>
+              <span>Rekap Nilai</span>
+            </li>
+            <li class="nav-item sub-item" data-page="analisis">
+              <i class="fas fa-chart-pie"></i>
+              <span>Analisis Nilai</span>
+            </li>
+          </ul>
         </li>
-        <li class="nav-item" data-page="bank-soal">
-          <i class="fas fa-database"></i>
-          <span>Bank Soal</span>
+
+        <!-- ✅ BANK SOAL + ACCORDION -->
+        <li class="nav-parent guru-only">
+          <div class="nav-toggle">
+            <i class="fas fa-database"></i>
+            <span>Bank Soal</span>
+            <i class="fas fa-chevron-down nav-arrow"></i>
+          </div>
+          <ul class="sub-menu">
+            <li class="nav-item sub-item" id="navUploadSoal">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <span>Upload Soal</span>
+            </li>
+            <li class="nav-item sub-item" data-page="bank-soal">
+              <i class="fas fa-eye"></i>
+              <span>Lihat Soal</span>
+             </li>
+          </ul>
         </li>
-        <li class="nav-item" data-page="rekap">
-          <i class="fas fa-chart-bar"></i>
-          <span>Rekap</span>
+        <!-- ✅ JURNAL MENGAJAR + ACCORDION -->
+        <li class="nav-parent">
+          <div class="nav-toggle">
+            <i class="fas fa-book"></i>
+            <span>Jurnal Mengajar</span>
+            <i class="fas fa-chevron-down nav-arrow"></i>
+          </div>
+          <ul class="sub-menu">
+            <li class="nav-item sub-item guru-only" data-page="jurnal">
+              <i class="fas fa-edit"></i>
+              <span>Input Jurnal</span>
+            </li>
+            <li class="nav-item sub-item" data-page="rekap-jurnal">
+              <i class="fas fa-file-alt"></i>
+              <span>Rekap Jurnal</span>
+            </li>
+          </ul>
         </li>
-      </ul>
+            </ul>
+
+      <!-- ✅ Tombol Kembali ke Dashboard SIPELITA (bawah sidebar) -->
+      <a href="../index.html" class="btn-back-dashboard" title="Kembali ke Dashboard SIPELITA">
+        <i class="fas fa-arrow-left"></i>
+        <span>Dashboard SIPELITA</span>
+      </a>
     </aside>
 
     <!-- Main Content -->
@@ -137,17 +211,10 @@
           <option value="genap">Genap</option>
         </select>
       </div>
-          <!-- ✅ TAMBAHAN: Field Mapel -->
-    <div class="form-group">
-      <label>Mata Pelajaran yang Diampu *</label>
-      <input type="text" id="inputMapel" placeholder="Contoh: Matematika, B.Indonesia, IPA">
-    </div>
-    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-      <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
-      <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>
-    </div>
-  </div>
-</div>
+      <div class="form-group">
+        <label>Mata Pelajaran yang Diampu *</label>
+        <input type="text" id="inputMapel" placeholder="Contoh: Matematika, B.Indonesia, IPA">
+      </div>
       <div style="display: flex; gap: 1rem; justify-content: flex-end;">
         <button class="btn btn-secondary" onclick="closeModal('modalTambahKelas')">Batal</button>
         <button class="btn btn-primary" onclick="tambahKelas()">Simpan</button>
@@ -200,8 +267,106 @@
       </div>
     </div>
   </div>
+  
+  <!-- Modal Edit Kelas -->
+<div class="modal" id="modalEditKelas">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Kelas</div>
+    <input type="hidden" id="editKelasId">
+    <div class="form-group">
+      <label>Nama Kelas *</label>
+      <input type="text" id="editNamaKelas" placeholder="Contoh: X.1 atau XI IPA 2">
+    </div>
+    <div class="form-group">
+      <label>Tahun Ajaran *</label>
+      <input type="text" id="editTahunAjaran" placeholder="2026/2027">
+    </div>
+    <div class="form-group">
+      <label>Semester</label>
+      <select id="editSemester">
+        <option value="ganjil">Ganjil</option>
+        <option value="genap">Genap</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Mata Pelajaran yang Diampu *</label>
+      <input type="text" id="editMapel" placeholder="Contoh: Matematika, B.Indonesia, IPA">
+    </div>
+    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+      <button class="btn btn-secondary" onclick="closeModal('modalEditKelas')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanEditKelas()"> Simpan Perubahan</button>
+    </div>
+  </div>
+</div>
 
-  <!-- Custom JavaScript -->
-  <script src="../js/sipenav2.js"></script>
+<!-- Modal Edit Siswa -->
+<div class="modal" id="modalEditSiswa">
+  <div class="modal-box">
+    <div class="modal-title">️ Edit Data Siswa</div>
+    <input type="hidden" id="editSiswaId">
+    
+    <div class="form-group">
+      <label>Nama Siswa *</label>
+      <input type="text" id="editSiswaNama" placeholder="Nama lengkap siswa">
+    </div>
+    
+    <div class="form-group">
+      <label>Foto Siswa</label>
+      
+      <!-- Preview foto saat ini -->
+      <div id="editFotoCurrentContainer" style="margin-bottom: 1rem;">
+        <img id="editFotoCurrent" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border);">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Foto saat ini</p>
+      </div>
+      
+      <!-- Upload foto baru -->
+      <div style="margin-top: 1rem;">
+        <input type="file" id="editFotoSiswaFile" accept="image/*" style="display: none;" onchange="handleEditFotoUpload(event)">
+        <button class="btn btn-secondary" onclick="document.getElementById('editFotoSiswaFile').click()" style="width: 100%; margin-bottom: 0.5rem;">
+          <i class="fas fa-camera"></i> Upload Foto Baru
+        </button>
+        
+        <!-- Preview foto baru -->
+        <div id="editFotoNewContainer" style="display: none;">
+          <img id="editFotoNew" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Foto baru</p>
+          <button class="btn btn-danger btn-sm" onclick="hapusEditFotoBaru()" style="margin-top: 0.5rem;">
+            <i class="fas fa-trash"></i> Batal Upload
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+      <button class="btn btn-secondary" onclick="closeModal('modalEditSiswa')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanEditSiswa()">💾 Simpan Perubahan</button>
+    </div>
+  </div>
+</div>
+
+  <!-- Modal Pilih Kelas untuk Tambah Siswa -->
+  <div class="modal" id="modalPilihKelasSiswa">
+    <div class="modal-box">
+      <div class="modal-title">👥 Tambah Siswa — Pilih Kelas</div>
+      <div class="form-group">
+        <label>Pilih Kelas *</label>
+        <select id="selectKelasUntukSiswa">
+          <option value="">-- Pilih Kelas --</option>
+        </select>
+      </div>
+      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeModal('modalPilihKelasSiswa')">Batal</button>
+        <button class="btn btn-primary" onclick="konfirmasiTambahSiswa()">Lanjut Kelola Siswa</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Custom JavaScript -->
+  <script src="../js/sipenav2.js?v=270827"></script>
+  <script src="../js/sipenav2-penilaian.js?v=270828"></script>
+  <script src="../js/sipenav2-rekapnilai.js?v=270828"></script>
+  <script src="../js/sipenav2-analisis.js?v=270828"></script>
+  <script src="../js/sipenav2-banksoal.js?v=270828"></script>
+  <script src="../js/sipenav2-jurnal.js?v=270843"></script>
 </body>
 </html>
