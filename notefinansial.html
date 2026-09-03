@@ -39,7 +39,6 @@
 </head>
 <body class="flex h-screen">
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-white z-[60] flex items-center justify-center">
         <div class="text-center">
             <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
@@ -58,7 +57,7 @@
         <nav class="flex-1 mt-4">
             <button onclick="navAction('dashboard')" id="nav-dashboard" class="sidebar-item active w-full flex items-center px-8 py-4 text-sm font-semibold transition-all text-left">📊 Dashboard</button>
             <button onclick="navAction('transaksi')" id="nav-transaksi" class="sidebar-item w-full flex items-center px-8 py-4 text-sm font-semibold transition-all text-left">💸 Transaksi</button>
-            <button onclick="navAction('rekap')" id="nav-rekap" class="sidebar-item w-full flex items-center px-8 py-4 text-sm font-semibold transition-all text-left">📜 Rekap Transaksi</button>
+            <button onclick="navAction('rekap')" id="nav-rekap" class="sidebar-item w-full flex items-center px-8 py-4 text-sm font-semibold transition-all text-left"> Rekap Transaksi</button>
             <button onclick="navAction('manajemen')" id="nav-manajemen" class="sidebar-item w-full flex items-center px-8 py-4 text-sm font-semibold transition-all text-left">👥 Kelola Pemilik</button>
         </nav>
 
@@ -109,7 +108,9 @@
                         </div>
                         <div>
                             <label class="text-[10px] uppercase font-bold text-slate-400">Nominal</label>
-                            <input type="number" id="amount" class="w-full bg-white border rounded-xl px-4 py-2 outline-none font-bold text-blue-600">
+                            <!-- ✅ DIUBAH: type="text" dengan placeholder -->
+                            <input type="text" id="amount" placeholder="Contoh: 15.187.000" 
+                                   class="w-full bg-white border rounded-xl px-4 py-2 outline-none font-bold text-blue-600">
                         </div>
                         <div>
                             <label class="text-[10px] uppercase font-bold text-slate-400">Keterangan</label>
@@ -152,8 +153,6 @@
             <section id="section-manajemen" class="content-section">
                 <h2 class="text-xl font-bold mb-6">Kelola Pemilik</h2>
                 <div class="grid grid-cols-1 gap-6">
-                    
-                    <!-- Bagian Tambah Pemilik Baru -->
                     <div class="glass-card p-5 rounded-2xl">
                         <h4 class="font-bold mb-4 text-xs uppercase tracking-wider text-slate-400">Tambah Pemilik Baru</h4>
                         <div class="flex flex-col sm:flex-row gap-3">
@@ -210,6 +209,26 @@
         let transactions = [];
         let currentType = 'in';
         let currentUid = null;
+
+        // ✅ FUNGSI FORMAT RIBUAN
+        const formatRibuan = (angka) => {
+            return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        };
+
+        const parseRibuan = (angka) => {
+            return parseInt(angka.toString().replace(/\./g, "")) || 0;
+        };
+
+        // ✅ AUTO-FORMAT SAAT MENGETIK
+        document.getElementById('amount').addEventListener('input', function(e) {
+            let value = this.value.replace(/\./g, "");
+            value = value.replace(/\D/g, "");
+            if (value) {
+                this.value = formatRibuan(value);
+            } else {
+                this.value = "";
+            }
+        });
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -338,7 +357,8 @@
             if (!currentUid) return;
             
             const ownerId = document.getElementById('owner-select').value;
-            const amount = parseInt(document.getElementById('amount').value);
+            // ✅ DIUBAH: menggunakan parseRibuan
+            const amount = parseRibuan(document.getElementById('amount').value);
             const desc = document.getElementById('desc').value;
             if(!amount || !desc || !ownerId) return;
 
@@ -360,7 +380,8 @@
             const t = transactions.find(x => x.id === tId);
             const owner = owners.find(o => o.id === t.ownerId);
             update(ref(db, `finSync/users/${currentUid}/owners/${t.ownerId}`), { balance: owner.balance + (t.type === 'in' ? -t.amount : t.amount) });
-            document.getElementById('amount').value = t.amount;
+            // ✅ DIUBAH: menggunakan formatRibuan
+            document.getElementById('amount').value = formatRibuan(t.amount);
             document.getElementById('desc').value = t.desc;
             document.getElementById('owner-select').value = t.ownerId;
             setType(t.type);
