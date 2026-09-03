@@ -338,7 +338,11 @@
                     </div>
                     <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
                 </div>
-                
+            
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+    <input type="checkbox" id="remember-me" style="width: 16px; height: 16px; cursor: pointer;">
+    <label for="remember-me" style="font-size: 13px; color: #64748b; cursor: pointer; font-weight: 500;">Ingat Saya (Simpan Password)</label>
+</div>
                 <button type="submit" class="btn-primary">Masuk</button>
             </form>
             
@@ -410,6 +414,37 @@
         const auth = getAuth(app);
         const db = getDatabase(app);
 
+        // === FITUR SIMPAN PASSWORD ===
+const REMEMBER_KEY = 'finsync_remember_me';
+
+// Fungsi untuk menyimpan kredensial
+function saveCredentials(email, password) {
+    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, password }));
+}
+
+// Fungsi untuk menghapus kredensial
+function clearCredentials() {
+    localStorage.removeItem(REMEMBER_KEY);
+}
+
+// Fungsi untuk memuat kredensial tersimpan
+function loadCredentials() {
+    const saved = localStorage.getItem(REMEMBER_KEY);
+    if (saved) {
+        try {
+            const { email, password } = JSON.parse(saved);
+            document.getElementById('login-email').value = email;
+            document.getElementById('login-password').value = password;
+            document.getElementById('remember-me').checked = true;
+        } catch (e) {
+            console.error('Error loading saved credentials:', e);
+        }
+    }
+}
+
+// Panggil saat halaman dimuat
+loadCredentials();
+// === END FITUR SIMPAN PASSWORD ===
         // Navigation Functions
         window.showLogin = () => {
             document.getElementById('form-login').style.display = 'block';
@@ -473,22 +508,33 @@
         }
 
         // Handle Login
-        document.getElementById('form-login').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            hideMessages();
-            
-            try {
-                await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value);
-                window.location.href = 'index.html';
-            } catch (error) {
-                let msg = 'Login gagal.';
-                if (error.code === 'auth/user-not-found') msg = 'Email tidak terdaftar. Silakan daftar terlebih dahulu.';
-                else if (error.code === 'auth/wrong-password') msg = 'Password salah. Silakan periksa kembali atau gunakan fitur Lupa Password.';
-                else if (error.code === 'auth/invalid-email') msg = 'Format email tidak valid.';
-                showError(msg);
-            }
-        });
-
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessages();
+    
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const rememberMe = document.getElementById('remember-me').checked;
+    
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+        
+        // Simpan atau hapus kredensial berdasarkan checkbox
+        if (rememberMe) {
+            saveCredentials(email, password);
+        } else {
+            clearCredentials();
+        }
+        
+        window.location.href = 'index.html';
+    } catch (error) {
+        let msg = 'Login gagal.';
+        if (error.code === 'auth/user-not-found') msg = 'Email tidak terdaftar. Silakan daftar terlebih dahulu.';
+        else if (error.code === 'auth/wrong-password') msg = 'Password salah. Silakan periksa kembali atau gunakan fitur Lupa Password.';
+        else if (error.code === 'auth/invalid-email') msg = 'Format email tidak valid.';
+        showError(msg);
+    }
+});
         // Handle Register
         document.getElementById('form-register').addEventListener('submit', async (e) => {
             e.preventDefault();
