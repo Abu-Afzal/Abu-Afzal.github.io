@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abu Afzal Finansial</title>
+    <title>Abu Afzal Finansial - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -40,6 +40,14 @@
 </head>
 <body class="flex h-screen">
 
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white z-[60] flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-500 font-semibold">Memuat data...</p>
+        </div>
+    </div>
+
     <div id="overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/20 hidden z-40"></div>
 
     <aside id="sidebar" class="fixed md:relative w-64 h-full bg-white border-r border-slate-200 flex flex-col closed md:transform-none">
@@ -55,9 +63,20 @@
             <button onclick="navAction('manajemen')" id="nav-manajemen" class="sidebar-item w-full flex items-center px-8 py-4 text-sm font-semibold transition-all text-left">👥 Kelola Pemilik</button>
         </nav>
 
+        <!-- ✅ BAGIAN SAPAAN & LOGOUT -->
         <div class="p-6 border-t border-slate-100 bg-slate-50">
-            <p class="text-[10px] text-slate-400 uppercase font-bold">Total Saldo Rekening</p>
-            <p id="total-rekening-sidebar" class="text-lg font-bold text-blue-600">Rp 0</p>
+            <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Halo,</p>
+            <p id="user-greeting" class="text-sm font-bold text-slate-800 mb-4 truncate">Memuat...</p>
+            
+            <p class="text-[10px] text-slate-400 uppercase font-bold mb-1">Total Saldo Rekening</p>
+            <p id="total-rekening-sidebar" class="text-lg font-bold text-blue-600 mb-5">Rp 0</p>
+            
+            <button onclick="logoutUser()" class="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2.5 rounded-xl transition-all text-sm border border-red-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Keluar
+            </button>
         </div>
     </aside>
 
@@ -69,7 +88,8 @@
                 </svg>
             </button>
             <span class="font-bold text-blue-600 text-sm">Abu Afzal Finansial</span>
-            <div class="w-6"></div> </header>
+            <div class="w-6"></div> 
+        </header>
 
         <div class="p-4 md:p-8">
             <section id="section-dashboard" class="content-section active">
@@ -103,76 +123,74 @@
             </section>
 
             <section id="section-rekap" class="content-section">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-        <h2 class="text-xl font-bold">Histori Transaksi</h2>
-        
-        <div class="w-full sm:w-auto">
-            <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Filter Pemilik:</label>
-            <select id="filter-owner" onchange="render()" class="w-full sm:w-48 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-500">
-                <option value="all">Semua Pemilik</option>
-                </select>
-        </div>
-    </div>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 class="text-xl font-bold">Histori Transaksi</h2>
+                    <div class="w-full sm:w-auto">
+                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Filter Pemilik:</label>
+                        <select id="filter-owner" onchange="render()" class="w-full sm:w-48 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-blue-500">
+                            <option value="all">Semua Pemilik</option>
+                        </select>
+                    </div>
+                </div>
 
-    <div class="glass-card rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm">
-                <thead class="bg-slate-50 text-[10px] uppercase text-slate-400">
-                    <tr>
-                        <th class="px-4 py-3">Waktu</th>
-                        <th class="px-4 py-3">Pemilik</th>
-                        <th class="px-4 py-3">Deskripsi</th>
-                        <th class="px-4 py-3">Nominal</th>
-                        <th class="px-4 py-3 text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="full-history-logs" class="divide-y divide-slate-100">
-                    </tbody>
-            </table>
-        </div>
-    </div>
-</section>
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-[10px] uppercase text-slate-400">
+                                <tr>
+                                    <th class="px-4 py-3">Waktu</th>
+                                    <th class="px-4 py-3">Pemilik</th>
+                                    <th class="px-4 py-3">Deskripsi</th>
+                                    <th class="px-4 py-3">Nominal</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="full-history-logs" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
 
             <section id="section-manajemen" class="content-section">
-    <h2 class="text-xl font-bold mb-6">Kelola Pemilik</h2>
-    <div class="grid grid-cols-1 gap-6">
-        
-        <div class="glass-card p-5 rounded-2xl">
-            <h4 class="font-bold mb-4 text-xs uppercase tracking-wider text-slate-400">Tambah Pemilik Baru</h4>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="flex-1">
-                    <input type="text" id="new-owner-name" placeholder="Ketik nama..." 
-                           class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-all">
-                </div>
-                <button id="add-owner-btn" 
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95">
-                    Simpan
-                </button>
-            </div>
-        </div>
+                <h2 class="text-xl font-bold mb-6">Kelola Pemilik</h2>
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="glass-card p-5 rounded-2xl">
+                        <h4 class="font-bold mb-4 text-xs uppercase tracking-wider text-slate-400">Tambah Pemilik Baru</h4>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="flex-1">
+                                <input type="text" id="new-owner-name" placeholder="Ketik nama..." 
+                                       class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-500 transition-all">
+                            </div>
+                            <button id="add-owner-btn" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95">
+                                Simpan
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="glass-card rounded-2xl overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 border-b border-slate-100">
-                        <tr>
-                            <th class="px-4 py-3 font-bold text-slate-500">Nama</th>
-                            <th class="px-4 py-3 font-bold text-slate-500">Saldo</th>
-                            <th class="px-4 py-3 text-center font-bold text-slate-500">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="owner-list-table" class="divide-y divide-slate-100">
-                        </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</section>
+                    <div class="glass-card rounded-2xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 border-b border-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-3 font-bold text-slate-500">Nama</th>
+                                        <th class="px-4 py-3 font-bold text-slate-500">Saldo</th>
+                                        <th class="px-4 py-3 text-center font-bold text-slate-500">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="owner-list-table" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
     <script type="module">
+        // ✅ TAMBAHKAN IMPORT AUTH
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
@@ -186,11 +204,43 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getDatabase(app);
 
         let owners = [];
         let transactions = [];
         let currentType = 'in';
+        let currentUid = null; // Menyimpan UID user yang sedang login
+
+        // ✅ CEK STATUS LOGIN SAAT APLIKASI DIMUAT
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUid = user.uid;
+                // Tampilkan sapaan (Nama jika ada, jika tidak pakai email)
+                document.getElementById('user-greeting').textContent = user.displayName || user.email;
+                document.getElementById('loading-overlay').style.display = 'none';
+                
+                // Muat data khusus untuk user ini
+                loadDataForUser(currentUid);
+            } else {
+                // Jika tidak login, paksa kembali ke halaman login
+                window.location.href = 'login.html';
+            }
+        });
+
+        // ✅ FUNGSI MEMUAT DATA BERDASARKAN UID
+        function loadDataForUser(uid) {
+            onValue(ref(db, `finSync/users/${uid}/owners`), (s) => {
+                const data = s.val();
+                owners = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
+                render();
+            });
+            onValue(ref(db, `finSync/users/${uid}/transactions`), (s) => {
+                const data = s.val();
+                transactions = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })).reverse() : [];
+                render();
+            });
+        }
 
         // --- TOGGLE MENU MOBILE ---
         window.toggleMenu = () => {
@@ -203,7 +253,7 @@
 
         window.navAction = (id) => {
             showSection(id);
-            if (window.innerWidth < 768) toggleMenu(); // Tutup menu setelah klik di mobile
+            if (window.innerWidth < 768) toggleMenu();
         };
 
         window.showSection = (id) => {
@@ -222,82 +272,86 @@
         };
 
         const render = () => {
-    // 1. Render Kartu Saldo (Dashboard)
-    document.getElementById('balance-cards').innerHTML = owners.map(o => `
-        <div class="glass-card p-5 rounded-2xl border-l-4 border-blue-500">
-            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">${o.name}</p>
-            <h3 class="text-lg font-bold mt-1 text-slate-700">${formatIDR(o.balance)}</h3>
-        </div>`).join('');
+            if (!currentUid) return; // Jangan render jika belum ada UID
 
-    // 2. Render Dropdown Pilihan di Form Transaksi & Filter Rekap
-    const ownerOptions = owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
-    document.getElementById('owner-select').innerHTML = ownerOptions;
-    
-    // Update Dropdown Filter di Rekap (pertahankan opsi "Semua")
-    const filterSelect = document.getElementById('filter-owner');
-    const currentFilter = filterSelect.value;
-    filterSelect.innerHTML = `<option value="all">Semua Pemilik</option>` + ownerOptions;
-    filterSelect.value = currentFilter;
+            // 1. Render Kartu Saldo
+            document.getElementById('balance-cards').innerHTML = owners.map(o => `
+                <div class="glass-card p-5 rounded-2xl border-l-4 border-blue-500">
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">${o.name}</p>
+                    <h3 class="text-lg font-bold mt-1 text-slate-700">${formatIDR(o.balance)}</h3>
+                </div>`).join('');
 
-    // 3. Logika Filter Tabel Histori
-    const selectedFilter = filterSelect.value;
-    const filteredTransactions = selectedFilter === 'all' 
-        ? transactions 
-        : transactions.filter(t => t.ownerId === selectedFilter);
+            // 2. Render Dropdown
+            const ownerOptions = owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+            document.getElementById('owner-select').innerHTML = ownerOptions;
+            
+            const filterSelect = document.getElementById('filter-owner');
+            const currentFilter = filterSelect.value;
+            filterSelect.innerHTML = `<option value="all">Semua Pemilik</option>` + ownerOptions;
+            filterSelect.value = currentFilter;
 
-    // 4. Render Tabel Rekap
-    document.getElementById('full-history-logs').innerHTML = filteredTransactions.map((t) => `
-        <tr class="bg-white">
-            <td class="px-4 py-3 text-slate-400 text-[10px]">${t.date}<br>${t.time}</td>
-            <td class="px-4 py-3 font-bold text-slate-600 text-xs">${t.ownerName}</td>
-            <td class="px-4 py-3 text-slate-500 text-xs">${t.desc}</td>
-            <td class="px-4 py-3 font-bold text-xs ${t.type === 'in' ? 'text-emerald-500' : 'text-red-500'}">
-                ${t.type === 'in' ? '+' : '-'} ${formatIDR(t.amount)}
-            </td>
-            <td class="px-4 py-3 text-center">
-                <button onclick="editTransaction('${t.id}')" class="text-blue-400 font-bold text-[10px] border border-blue-100 px-2 py-1 rounded">EDIT</button>
-            </td>
-        </tr>`).join('');
+            // 3. Logika Filter Tabel Histori
+            const selectedFilter = filterSelect.value;
+            const filteredTransactions = selectedFilter === 'all' 
+                ? transactions 
+                : transactions.filter(t => t.ownerId === selectedFilter);
 
-    // 5. Render Tabel Manajemen Pemilik
-    document.getElementById('owner-list-table').innerHTML = owners.map(o => `
-        <tr class="bg-white">
-            <td class="px-4 py-3 font-bold text-slate-600">${o.name}</td>
-            <td class="px-4 py-3 text-blue-600 font-bold">${formatIDR(o.balance)}</td>
-            <td class="px-4 py-3 text-center">
-                <button onclick="editOwner('${o.id}', '${o.name}')" class="text-blue-500 mr-3 text-xs font-bold">Edit</button>
-                <button onclick="deleteOwner('${o.id}')" class="text-red-400 text-xs font-bold">Hapus</button>
-            </td>
-        </tr>`).join('');
+            // 4. Render Tabel Rekap
+            document.getElementById('full-history-logs').innerHTML = filteredTransactions.map((t) => `
+                <tr class="bg-white">
+                    <td class="px-4 py-3 text-slate-400 text-[10px]">${t.date}<br>${t.time}</td>
+                    <td class="px-4 py-3 font-bold text-slate-600 text-xs">${t.ownerName}</td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">${t.desc}</td>
+                    <td class="px-4 py-3 font-bold text-xs ${t.type === 'in' ? 'text-emerald-500' : 'text-red-500'}">
+                        ${t.type === 'in' ? '+' : '-'} ${formatIDR(t.amount)}
+                    </td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="editTransaction('${t.id}')" class="text-blue-400 font-bold text-[10px] border border-blue-100 px-2 py-1 rounded">EDIT</button>
+                    </td>
+                </tr>`).join('');
 
-    // 6. Update Total Saldo Gabungan
-    const total = owners.reduce((a, b) => a + (b.balance || 0), 0);
-    document.getElementById('total-rekening-sidebar').innerText = formatIDR(total);
-};
+            // 5. Render Tabel Manajemen Pemilik
+            document.getElementById('owner-list-table').innerHTML = owners.map(o => `
+                <tr class="bg-white">
+                    <td class="px-4 py-3 font-bold text-slate-600">${o.name}</td>
+                    <td class="px-4 py-3 text-blue-600 font-bold">${formatIDR(o.balance)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="editOwner('${o.id}', '${o.name}')" class="text-blue-500 mr-3 text-xs font-bold">Edit</button>
+                        <button onclick="deleteOwner('${o.id}')" class="text-red-400 text-xs font-bold">Hapus</button>
+                    </td>
+                </tr>`).join('');
 
-        // SYNC DATA
-        onValue(ref(db, 'finSync/owners'), (s) => {
-            const data = s.val();
-            owners = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
-            render();
-        });
-        onValue(ref(db, 'finSync/transactions'), (s) => {
-            const data = s.val();
-            transactions = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })).reverse() : [];
-            render();
-        });
-
-        // ACTIONS
-        document.getElementById('add-owner-btn').onclick = () => {
-            const name = document.getElementById('new-owner-name').value.trim();
-            if(name) { push(ref(db, 'finSync/owners'), { name, balance: 0 }); document.getElementById('new-owner-name').value = ""; }
+            // 6. Update Total Saldo Gabungan
+            const total = owners.reduce((a, b) => a + (b.balance || 0), 0);
+            document.getElementById('total-rekening-sidebar').innerText = formatIDR(total);
         };
 
-        window.deleteOwner = (id) => { if(confirm('Hapus?')) remove(ref(db, `finSync/owners/${id}`)); };
-        window.editOwner = (id, old) => { const n = prompt('Nama baru:', old); if(n) update(ref(db, `finSync/owners/${id}`), { name: n }); };
+        // ✅ ACTIONS (Diperbarui agar menggunakan currentUid)
+        document.getElementById('add-owner-btn').onclick = () => {
+            const name = document.getElementById('new-owner-name').value.trim();
+            if(name && currentUid) { 
+                push(ref(db, `finSync/users/${currentUid}/owners`), { name, balance: 0 }); 
+                document.getElementById('new-owner-name').value = ""; 
+            }
+        };
+
+        window.deleteOwner = (id) => { 
+            if(confirm('Hapus pemilik ini?') && currentUid) {
+                remove(ref(db, `finSync/users/${currentUid}/owners/${id}`)); 
+            }
+        };
+        
+        window.editOwner = (id, old) => { 
+            const n = prompt('Nama baru:', old); 
+            if(n && currentUid) {
+                update(ref(db, `finSync/users/${currentUid}/owners/${id}`), { name: n }); 
+            }
+        };
 
         document.getElementById('finance-form').onsubmit = (e) => {
             e.preventDefault();
+            if (!currentUid) return;
+            
             const ownerId = document.getElementById('owner-select').value;
             const amount = parseInt(document.getElementById('amount').value);
             const desc = document.getElementById('desc').value;
@@ -305,31 +359,44 @@
 
             const owner = owners.find(o => o.id === ownerId);
             const now = new Date();
-            const tRef = push(ref(db, 'finSync/transactions'));
+            const tRef = push(ref(db, `finSync/users/${currentUid}/transactions`));
             set(tRef, {
                 ownerId, ownerName: owner.name, amount, desc, type: currentType,
                 date: now.toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}),
                 time: now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})
             });
-            update(ref(db, `finSync/owners/${ownerId}`), { balance: owner.balance + (currentType === 'in' ? amount : -amount) });
+            update(ref(db, `finSync/users/${currentUid}/owners/${ownerId}`), { balance: owner.balance + (currentType === 'in' ? amount : -amount) });
             e.target.reset();
             showSection('rekap');
         };
 
         window.editTransaction = (tId) => {
+            if (!currentUid) return;
             const t = transactions.find(x => x.id === tId);
             const owner = owners.find(o => o.id === t.ownerId);
-            update(ref(db, `finSync/owners/${t.ownerId}`), { balance: owner.balance + (t.type === 'in' ? -t.amount : t.amount) });
+            update(ref(db, `finSync/users/${currentUid}/owners/${t.ownerId}`), { balance: owner.balance + (t.type === 'in' ? -t.amount : t.amount) });
             document.getElementById('amount').value = t.amount;
             document.getElementById('desc').value = t.desc;
             document.getElementById('owner-select').value = t.ownerId;
             setType(t.type);
-            remove(ref(db, `finSync/transactions/${tId}`));
+            remove(ref(db, `finSync/users/${currentUid}/transactions/${tId}`));
             showSection('transaksi');
         };
+
+        // ✅ FUNGSI LOGOUT
+        window.logoutUser = async () => {
+            if(confirm('Apakah Anda yakin ingin keluar dari aplikasi?')) {
+                try {
+                    await signOut(auth);
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error("Gagal logout:", error);
+                    alert("Terjadi kesalahan saat keluar.");
+                }
+            }
+        };
         
-        // Daftarkan fungsi render ke window agar bisa dipanggil oleh onchange di HTML
-window.render = render;
+        window.render = render;
     </script>
 </body>
 </html>
