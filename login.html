@@ -127,6 +127,48 @@
         .toggle-password:hover {
             color: #0ea5e9;
         }
+
+        /* ✅ PENYELARASAN INGAT SAYA & LUPA PASSWORD */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .remember-me input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #0ea5e9;
+        }
+        
+        .remember-me label {
+            font-size: 13px;
+            color: #0ea5e9;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .forgot-link {
+            color: #0ea5e9;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .forgot-link:hover {
+            color: #0284c7;
+            text-decoration: underline;
+        }
         
         .btn-primary {
             width: 100%;
@@ -147,63 +189,24 @@
             box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
         }
         
-        .forgot-link {
-    display: block;
-    text-align: right;
-    color: #0ea5e9;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    margin-top: 8px;  /* Ubah dari -10px ke 8px */
-    margin-bottom: 0;  /* Hapus margin bottom */
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.forgot-link:hover {
-    color: #0284c7;
-    text-decoration: underline;
-}
-
-/* Pastikan message box tersembunyi default */
-.message-box {
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 13px;
-    margin-bottom: 16px;  /* Jarak sebelum tombol */
-    display: none;  /* Pastikan hidden default */
-}
-
-.message-box.error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-}
-
-.message-box.success {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #16a34a;
-}
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 24px 0;
-            color: #94a3b8;
+        .message-box {
+            padding: 12px 16px;
+            border-radius: 10px;
             font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
         }
         
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
+        .message-box.error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
         }
         
-        .divider span {
-            padding: 0 12px;
+        .message-box.success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
         }
         
         @media (max-width: 640px) {
@@ -233,37 +236,40 @@
         </div>
         
         <!-- Login Form -->
-<form id="form-login">
-    <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" id="login-email" required class="form-input" placeholder="nama@email.com">
-    </div>
-    
-    <div class="form-group">
-        <label class="form-label">Password</label>
-        <div class="password-wrapper">
-            <input type="password" id="login-password" required minlength="6" class="form-input" placeholder="Masukkan password">
-            <button type="button" onclick="togglePassword('login-password', this)" class="toggle-password">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                </svg>
-            </button>
-        </div>
-        <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
-    </div>
-    
-    <div class="remember-me">
-        <input type="checkbox" id="remember-me">
-        <label for="remember-me">Ingat Saya (Simpan Password)</label>
-    </div>
-    
-    <!-- Pesan Error & Success (dipindah ke atas tombol) -->
-    <div id="error-message" class="message-box error" style="display: none;"></div>
-    <div id="success-message" class="message-box success" style="display: none;"></div>
-    
-    <button type="submit" class="btn-primary">Masuk</button>
-</form>
+        <form id="form-login">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="login-email" required class="form-input" placeholder="nama@email.com">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="login-password" required minlength="6" class="form-input" placeholder="Masukkan password">
+                    <button type="button" onclick="togglePassword('login-password', this)" class="toggle-password">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ✅ INGAT SAYA & LUPA PASSWORD SEJAJAR -->
+            <div class="form-options">
+                <div class="remember-me">
+                    <input type="checkbox" id="remember-me">
+                    <label for="remember-me">Ingat Saya</label>
+                </div>
+                <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
+            </div>
+            
+            <!-- Pesan Error & Success (Hanya 1 pasang, di atas tombol) -->
+            <div id="error-message" class="message-box error"></div>
+            <div id="success-message" class="message-box success"></div>
+            
+            <button type="submit" class="btn-primary">Masuk</button>
+        </form>
         
         <!-- Register Form -->
         <form id="form-register" style="display: none;">
@@ -307,10 +313,6 @@
             <button type="submit" class="btn-primary">Kirim Link Reset</button>
             <button type="button" onclick="showLogin()" style="width: 100%; padding: 12px; background: none; border: none; color: #64748b; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 10px;">← Kembali ke Login</button>
         </form>
-        
-        <!-- Messages -->
-        <div id="error-message" class="message-box error"></div>
-        <div id="success-message" class="message-box success"></div>
     </div>
 
     <script type="module">
@@ -402,23 +404,23 @@
         };
 
         function showError(msg) {
-    const el = document.getElementById('error-message');
-    el.textContent = msg;
-    el.style.display = 'block';
-    document.getElementById('success-message').style.display = 'none';
-}
+            const el = document.getElementById('error-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('success-message').style.display = 'none';
+        }
 
-function showSuccess(msg) {
-    const el = document.getElementById('success-message');
-    el.textContent = msg;
-    el.style.display = 'block';
-    document.getElementById('error-message').style.display = 'none';
-}
+        function showSuccess(msg) {
+            const el = document.getElementById('success-message');
+            el.textContent = msg;
+            el.style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        }
 
-function hideMessages() {
-    document.getElementById('error-message').style.display = 'none';
-    document.getElementById('success-message').style.display = 'none';
-}
+        function hideMessages() {
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
 
         document.getElementById('form-login').addEventListener('submit', async (e) => {
             e.preventDefault();
