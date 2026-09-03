@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - FinSync Family</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #ecfdf5 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -20,76 +20,37 @@
             padding: 20px;
         }
         
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+        .login-card {
+            background: white;
             border-radius: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
             overflow: hidden;
-            max-width: 900px;
+            max-width: 480px;
             width: 100%;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            padding: 48px 40px;
         }
         
-        .login-left {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            padding: 60px 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .login-left::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-        
-        .login-left-content {
-            position: relative;
-            z-index: 1;
+        .logo-wrapper {
             text-align: center;
+            margin-bottom: 32px;
         }
         
         .logo-icon {
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 24px;
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 30px;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .login-right {
-            padding: 60px 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
         }
         
         .tab-switcher {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 8px;
+            margin-bottom: 32px;
             background: #f1f5f9;
             padding: 6px;
             border-radius: 12px;
@@ -109,9 +70,9 @@
         }
         
         .tab-btn.active {
-            background: #2563eb;
-            color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            background: white;
+            color: #0ea5e9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         
         .form-group {
@@ -120,11 +81,9 @@
         
         .form-label {
             display: block;
-            font-size: 12px;
-            font-weight: 700;
+            font-size: 13px;
+            font-weight: 600;
             color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
             margin-bottom: 8px;
         }
         
@@ -135,13 +94,14 @@
             border-radius: 12px;
             font-size: 14px;
             transition: all 0.3s;
-            background: white;
+            background: #f8fafc;
         }
         
         .form-input:focus {
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            border-color: #0ea5e9;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
         }
         
         .password-wrapper {
@@ -161,16 +121,17 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: color 0.3s;
         }
         
         .toggle-password:hover {
-            color: #2563eb;
+            color: #0ea5e9;
         }
         
         .btn-primary {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
             color: white;
             border: none;
             border-radius: 12px;
@@ -178,32 +139,51 @@
             font-size: 15px;
             cursor: pointer;
             transition: all 0.3s;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-        }
-        
-        .btn-primary:active {
-            transform: translateY(0);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
         }
         
         .forgot-link {
             display: block;
             text-align: right;
-            color: #2563eb;
+            color: #0ea5e9;
             font-size: 13px;
             font-weight: 600;
             text-decoration: none;
             margin-top: -10px;
             margin-bottom: 20px;
             cursor: pointer;
+            transition: color 0.3s;
         }
         
         .forgot-link:hover {
+            color: #0284c7;
             text-decoration: underline;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .remember-me input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #0ea5e9;
+        }
+        
+        .remember-me label {
+            font-size: 13px;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 500;
         }
         
         .message-box {
@@ -215,184 +195,140 @@
         }
         
         .message-box.error {
-            background: #fee2e2;
+            background: #fef2f2;
             border: 1px solid #fecaca;
             color: #dc2626;
             display: block;
         }
         
         .message-box.success {
-            background: #dcfce7;
+            background: #f0fdf4;
             border: 1px solid #bbf7d0;
             color: #16a34a;
             display: block;
         }
         
-        .feature-list {
-            list-style: none;
-            padding: 0;
-            margin: 30px 0 0 0;
-        }
-        
-        .feature-list li {
+        .divider {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            font-size: 14px;
+            margin: 24px 0;
+            color: #94a3b8;
+            font-size: 13px;
         }
         
-        .feature-icon {
-            width: 32px;
-            height: 32px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
         }
         
-        @media (max-width: 768px) {
-            .login-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .login-left {
-                padding: 40px 30px;
-            }
-            
-            .login-right {
-                padding: 40px 30px;
+        .divider span {
+            padding: 0 12px;
+        }
+        
+        @media (max-width: 640px) {
+            .login-card {
+                padding: 40px 24px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <!-- Left Side - Branding -->
-        <div class="login-left">
-            <div class="login-left-content">
-                <div class="logo-icon">
-                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                    </svg>
-                </div>
-                <h1 style="font-size: 32px; font-weight: 800; margin: 0 0 10px 0;">FinSync Family</h1>
-                <p style="font-size: 16px; opacity: 0.9; margin: 0 0 40px 0;">Kelola Titipan Dana Keluarga</p>
-                
-                <ul class="feature-list">
-                    <li>
-                        <div class="feature-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 6L9 17l-5-5"/>
-                            </svg>
-                        </div>
-                        <span>Catat transaksi real-time</span>
-                    </li>
-                    <li>
-                        <div class="feature-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 6L9 17l-5-5"/>
-                            </svg>
-                        </div>
-                        <span>Data aman & terpisah</span>
-                    </li>
-                    <li>
-                        <div class="feature-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20 6L9 17l-5-5"/>
-                            </svg>
-                        </div>
-                        <span>Akses dari mana saja</span>
-                    </li>
-                </ul>
+    <div class="login-card">
+        <!-- Logo & Title -->
+        <div class="logo-wrapper">
+            <div class="logo-icon">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
             </div>
+            <h1 style="font-size: 28px; font-weight: 700; color: #0f172a; margin: 0 0 8px 0;">FinSync Family</h1>
+            <p style="font-size: 14px; color: #64748b; margin: 0;">Kelola Titipan Dana Keluarga</p>
         </div>
         
-        <!-- Right Side - Form -->
-        <div class="login-right">
-            <!-- Tab Switcher -->
-            <div id="tab-switcher" class="tab-switcher">
-                <button onclick="showLogin()" id="tab-login" class="tab-btn active">Masuk</button>
-                <button onclick="showRegister()" id="tab-register" class="tab-btn">Daftar</button>
+        <!-- Tab Switcher -->
+        <div id="tab-switcher" class="tab-switcher">
+            <button onclick="showLogin()" id="tab-login" class="tab-btn active">Masuk</button>
+            <button onclick="showRegister()" id="tab-register" class="tab-btn">Daftar</button>
+        </div>
+        
+        <!-- Login Form -->
+        <form id="form-login">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="login-email" required class="form-input" placeholder="nama@email.com">
             </div>
             
-            <!-- Login Form -->
-            <form id="form-login">
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" id="login-email" required class="form-input" placeholder="nama@email.com">
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="login-password" required minlength="6" class="form-input" placeholder="Masukkan password">
+                    <button type="button" onclick="togglePassword('login-password', this)" class="toggle-password">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="login-password" required minlength="6" class="form-input" placeholder="Masukkan password">
-                        <button type="button" onclick="togglePassword('login-password', this)" class="toggle-password">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
-                </div>
+                <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
+            </div>
             
-<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-    <input type="checkbox" id="remember-me" style="width: 16px; height: 16px; cursor: pointer;">
-    <label for="remember-me" style="font-size: 13px; color: #64748b; cursor: pointer; font-weight: 500;">Ingat Saya (Simpan Password)</label>
-</div>
-                <button type="submit" class="btn-primary">Masuk</button>
-            </form>
+            <div class="remember-me">
+                <input type="checkbox" id="remember-me">
+                <label for="remember-me">Ingat Saya (Simpan Password)</label>
+            </div>
             
-            <!-- Register Form -->
-            <form id="form-register" style="display: none;">
-                <div class="form-group">
-                    <label class="form-label">Nama Lengkap</label>
-                    <input type="text" id="register-name" required class="form-input" placeholder="Masukkan nama lengkap">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" id="register-email" required class="form-input" placeholder="nama@email.com">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password (min. 6 karakter)</label>
-                    <div class="password-wrapper">
-                        <input type="password" id="register-password" required minlength="6" class="form-input" placeholder="Buat password kuat">
-                        <button type="button" onclick="togglePassword('register-password', this)" class="toggle-password">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-primary">Daftar Akun</button>
-            </form>
+            <button type="submit" class="btn-primary">Masuk</button>
+        </form>
+        
+        <!-- Register Form -->
+        <form id="form-register" style="display: none;">
+            <div class="form-group">
+                <label class="form-label">Nama Lengkap</label>
+                <input type="text" id="register-name" required class="form-input" placeholder="Masukkan nama lengkap">
+            </div>
             
-            <!-- Forgot Password Form -->
-            <form id="form-forgot" style="display: none;">
-                <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-                    <p style="font-size: 13px; color: #1e40af; margin: 0;">📧 Masukkan email Anda, kami akan mengirimkan link untuk mengatur ulang password.</p>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" id="forgot-email" required class="form-input" placeholder="nama@email.com">
-                </div>
-                
-                <button type="submit" class="btn-primary">Kirim Link Reset</button>
-                <button type="button" onclick="showLogin()" style="width: 100%; padding: 12px; background: none; border: none; color: #64748b; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 10px;">← Kembali ke Login</button>
-            </form>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="register-email" required class="form-input" placeholder="nama@email.com">
+            </div>
             
-            <!-- Messages -->
-            <div id="error-message" class="message-box error"></div>
-            <div id="success-message" class="message-box success"></div>
-        </div>
+            <div class="form-group">
+                <label class="form-label">Password (min. 6 karakter)</label>
+                <div class="password-wrapper">
+                    <input type="password" id="register-password" required minlength="6" class="form-input" placeholder="Buat password kuat">
+                    <button type="button" onclick="togglePassword('register-password', this)" class="toggle-password">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-primary">Daftar Akun</button>
+        </form>
+        
+        <!-- Forgot Password Form -->
+        <form id="form-forgot" style="display: none;">
+            <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                <p style="font-size: 13px; color: #0369a1; margin: 0;">📧 Masukkan email Anda, kami akan mengirimkan link untuk mengatur ulang password.</p>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="forgot-email" required class="form-input" placeholder="nama@email.com">
+            </div>
+            
+            <button type="submit" class="btn-primary">Kirim Link Reset</button>
+            <button type="button" onclick="showLogin()" style="width: 100%; padding: 12px; background: none; border: none; color: #64748b; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 10px;">← Kembali ke Login</button>
+        </form>
+        
+        <!-- Messages -->
+        <div id="error-message" class="message-box error"></div>
+        <div id="success-message" class="message-box success"></div>
     </div>
 
     <script type="module">
@@ -415,37 +351,33 @@
         const db = getDatabase(app);
 
         // === FITUR SIMPAN PASSWORD ===
-const REMEMBER_KEY = 'finsync_remember_me';
+        const REMEMBER_KEY = 'finsync_remember_me';
 
-// Fungsi untuk menyimpan kredensial
-function saveCredentials(email, password) {
-    localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, password }));
-}
-
-// Fungsi untuk menghapus kredensial
-function clearCredentials() {
-    localStorage.removeItem(REMEMBER_KEY);
-}
-
-// Fungsi untuk memuat kredensial tersimpan
-function loadCredentials() {
-    const saved = localStorage.getItem(REMEMBER_KEY);
-    if (saved) {
-        try {
-            const { email, password } = JSON.parse(saved);
-            document.getElementById('login-email').value = email;
-            document.getElementById('login-password').value = password;
-            document.getElementById('remember-me').checked = true;
-        } catch (e) {
-            console.error('Error loading saved credentials:', e);
+        function saveCredentials(email, password) {
+            localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email, password }));
         }
-    }
-}
 
-// Panggil saat halaman dimuat
-loadCredentials();
-// === END FITUR SIMPAN PASSWORD ===
-        // Navigation Functions
+        function clearCredentials() {
+            localStorage.removeItem(REMEMBER_KEY);
+        }
+
+        function loadCredentials() {
+            const saved = localStorage.getItem(REMEMBER_KEY);
+            if (saved) {
+                try {
+                    const { email, password } = JSON.parse(saved);
+                    document.getElementById('login-email').value = email;
+                    document.getElementById('login-password').value = password;
+                    document.getElementById('remember-me').checked = true;
+                } catch (e) {
+                    console.error('Error loading saved credentials:', e);
+                }
+            }
+        }
+
+        loadCredentials();
+        // === END FITUR SIMPAN PASSWORD ===
+
         window.showLogin = () => {
             document.getElementById('form-login').style.display = 'block';
             document.getElementById('form-register').style.display = 'none';
@@ -476,7 +408,6 @@ loadCredentials();
             hideMessages();
         };
 
-        // Toggle Password Visibility
         window.togglePassword = (inputId, btn) => {
             const input = document.getElementById(inputId);
             if (input.type === 'password') {
@@ -507,35 +438,33 @@ loadCredentials();
             document.getElementById('success-message').style.display = 'none';
         }
 
-        // Handle Login
-document.getElementById('form-login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideMessages();
-    
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const rememberMe = document.getElementById('remember-me').checked;
-    
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        
-        // Simpan atau hapus kredensial berdasarkan checkbox
-        if (rememberMe) {
-            saveCredentials(email, password);
-        } else {
-            clearCredentials();
-        }
-        
-        window.location.href = 'index.html';
-    } catch (error) {
-        let msg = 'Login gagal.';
-        if (error.code === 'auth/user-not-found') msg = 'Email tidak terdaftar. Silakan daftar terlebih dahulu.';
-        else if (error.code === 'auth/wrong-password') msg = 'Password salah. Silakan periksa kembali atau gunakan fitur Lupa Password.';
-        else if (error.code === 'auth/invalid-email') msg = 'Format email tidak valid.';
-        showError(msg);
-    }
-});
-        // Handle Register
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideMessages();
+            
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                
+                if (rememberMe) {
+                    saveCredentials(email, password);
+                } else {
+                    clearCredentials();
+                }
+                
+                window.location.href = 'index.html';
+            } catch (error) {
+                let msg = 'Login gagal.';
+                if (error.code === 'auth/user-not-found') msg = 'Email tidak terdaftar. Silakan daftar terlebih dahulu.';
+                else if (error.code === 'auth/wrong-password') msg = 'Password salah. Silakan periksa kembali atau gunakan fitur Lupa Password.';
+                else if (error.code === 'auth/invalid-email') msg = 'Format email tidak valid.';
+                showError(msg);
+            }
+        });
+
         document.getElementById('form-register').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideMessages();
@@ -562,7 +491,6 @@ document.getElementById('form-login').addEventListener('submit', async (e) => {
             }
         });
 
-        // Handle Forgot Password
         document.getElementById('form-forgot').addEventListener('submit', async (e) => {
             e.preventDefault();
             hideMessages();
