@@ -120,7 +120,7 @@
             hideMessages();
             try {
                 await signInWithEmailAndPassword(auth, document.getElementById('login-email').value.trim(), document.getElementById('login-password').value);
-                window.location.href = 'index.html'; // Redirect ke dashboard
+                window.location.href = 'notefinansial.html'; // Redirect ke dashboard
             } catch (error) {
                 let msg = 'Login gagal.';
                 if (error.code === 'auth/user-not-found') msg = 'Email tidak terdaftar.';
