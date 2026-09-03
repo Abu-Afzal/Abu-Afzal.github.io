@@ -402,23 +402,23 @@
         };
 
         function showError(msg) {
-            const el = document.getElementById('error-message');
-            el.textContent = msg;
-            el.style.display = 'block';
-            document.getElementById('success-message').style.display = 'none';
-        }
+    const el = document.getElementById('error-message');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('success-message').style.display = 'none';
+}
 
-        function showSuccess(msg) {
-            const el = document.getElementById('success-message');
-            el.textContent = msg;
-            el.style.display = 'block';
-            document.getElementById('error-message').style.display = 'none';
-        }
+function showSuccess(msg) {
+    const el = document.getElementById('success-message');
+    el.textContent = msg;
+    el.style.display = 'block';
+    document.getElementById('error-message').style.display = 'none';
+}
 
-        function hideMessages() {
-            document.getElementById('error-message').style.display = 'none';
-            document.getElementById('success-message').style.display = 'none';
-        }
+function hideMessages() {
+    document.getElementById('error-message').style.display = 'none';
+    document.getElementById('success-message').style.display = 'none';
+}
 
         document.getElementById('form-login').addEventListener('submit', async (e) => {
             e.preventDefault();
