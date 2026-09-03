@@ -255,33 +255,37 @@
         </div>
         
         <!-- Login Form -->
-        <form id="form-login">
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" id="login-email" required class="form-input" placeholder="nama@email.com">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Password</label>
-                <div class="password-wrapper">
-                    <input type="password" id="login-password" required minlength="6" class="form-input" placeholder="Masukkan password">
-                    <button type="button" onclick="togglePassword('login-password', this)" class="toggle-password">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
-                </div>
-                <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
-            </div>
-            
-            <div class="remember-me">
-                <input type="checkbox" id="remember-me">
-                <label for="remember-me">Ingat Saya (Simpan Password)</label>
-            </div>
-            
-            <button type="submit" class="btn-primary">Masuk</button>
-        </form>
+<form id="form-login">
+    <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="login-email" required class="form-input" placeholder="nama@email.com">
+    </div>
+    
+    <div class="form-group">
+        <label class="form-label">Password</label>
+        <div class="password-wrapper">
+            <input type="password" id="login-password" required minlength="6" class="form-input" placeholder="Masukkan password">
+            <button type="button" onclick="togglePassword('login-password', this)" class="toggle-password">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+            </button>
+        </div>
+        <a onclick="showForgotPassword()" class="forgot-link">Lupa Password?</a>
+    </div>
+    
+    <div class="remember-me">
+        <input type="checkbox" id="remember-me">
+        <label for="remember-me">Ingat Saya (Simpan Password)</label>
+    </div>
+    
+    <!-- Pesan Error & Success (dipindah ke atas tombol) -->
+    <div id="error-message" class="message-box error" style="display: none;"></div>
+    <div id="success-message" class="message-box success" style="display: none;"></div>
+    
+    <button type="submit" class="btn-primary">Masuk</button>
+</form>
         
         <!-- Register Form -->
         <form id="form-register" style="display: none;">
